@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LikeTapper - UI Mockups</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --zinc-950: #09090b;
+    --zinc-900: #18181b;
+    --zinc-800: #27272a;
+    --zinc-700: #3f3f46;
+    --zinc-600: #52525b;
+    --zinc-500: #71717a;
+    --zinc-400: #a1a1aa;
+    --zinc-300: #d4d4d8;
+    --zinc-200: #e4e4e7;
+    --zinc-100: #f4f4f5;
+    --like-500: #ec4899;
+    --like-400: #f472b6;
+    --like-600: #db2777;
+    --like-700: #be185d;
+    --amber-300: #fcd34d;
+    --amber-400: #fbbf24;
+    --emerald-300: #6ee7b7;
+    --emerald-400: #34d399;
+    --emerald-500: #10b981;
+    --rose-400: #fb7185;
+    --rose-500: #f43f5e;
+    --blue-300: #93c5fd;
+    --blue-400: #60a5fa;
+    --blue-500: #3b82f6;
+    --purple-400: #c084fc;
+    --purple-500: #a855f7;
+    --orange-400: #fb923c;
+    --glass: rgba(24, 24, 27, 0.7);
+    --glass-border: rgba(63, 63, 70, 0.5);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+  }
+
+  html { scroll-behavior: smooth; background: var(--zinc-950); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', sans-serif;
+    color: var(--zinc-300);
+    background: var(--zinc-950);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Sticky Nav ── */
+  .mockup-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(9, 9, 11, 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 48px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .mockup-nav::-webkit-scrollbar { display: none; }
+  .mockup-nav .logo {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--like-500);
+    white-space: nowrap;
+    margin-right: 12px;
+    letter-spacing: -0.3px;
+  }
+  .mockup-nav a {
+    color: var(--zinc-400);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .mockup-nav a:hover { color: var(--zinc-100); background: var(--zinc-800); }
+
+  /* ── Section Layout ── */
+  .section {
+    min-height: 100vh;
+    padding: 80px 32px 64px;
+    max-width: 1400px;
+    margin: 0 auto;
+    scroll-margin-top: 56px;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--like-500);
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--zinc-100);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .section-desc {
+    font-size: 14px;
+    color: var(--zinc-500);
+    margin-bottom: 40px;
+    max-width: 600px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-glass {
+    background: linear-gradient(135deg, rgba(24,24,27,0.8), rgba(24,24,27,0.5));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(63,63,70,0.4);
+    border-radius: var(--radius);
+  }
+
+  /* ── Utility ── */
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .gap-4 { gap: 16px; }
+  .gap-6 { gap: 24px; }
+  .grid { display: grid; }
+  .text-xs { font-size: 12px; }
+  .text-sm { font-size: 13px; }
+  .text-lg { font-size: 18px; }
+  .text-xl { font-size: 22px; }
+  .text-2xl { font-size: 28px; }
+  .text-3xl { font-size: 36px; }
+  .font-medium { font-weight: 500; }
+  .font-semibold { font-weight: 600; }
+  .font-bold { font-weight: 700; }
+  .font-mono { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .w-full { width: 100%; }
+
+  /* Color helpers */
+  .text-zinc-100 { color: var(--zinc-100); }
+  .text-zinc-400 { color: var(--zinc-400); }
+  .text-zinc-500 { color: var(--zinc-500); }
+  .text-like { color: var(--like-500); }
+  .text-amber { color: var(--amber-300); }
+  .text-emerald { color: var(--emerald-300); }
+  .text-rose { color: var(--rose-400); }
+  .text-blue { color: var(--blue-300); }
+  .text-purple { color: var(--purple-400); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--like-500), var(--like-600));
+    color: white;
+    box-shadow: 0 2px 12px rgba(236,72,153,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 4px 20px rgba(236,72,153,0.5); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--zinc-400);
+    border: 1px solid var(--zinc-800);
+  }
+  .btn-ghost:hover { color: var(--zinc-100); border-color: var(--zinc-700); background: var(--zinc-800); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── Input ── */
+  .input {
+    background: var(--zinc-900);
+    border: 1px solid var(--zinc-800);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--zinc-100);
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .input:focus { border-color: var(--like-500); }
+  .input::placeholder { color: var(--zinc-600); }
+
+  /* ── Pills / Badges ── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .pill-live { background: rgba(236,72,153,0.15); color: var(--like-400); }
+  .pill-live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--like-500); animation: pulse 1.5s infinite; }
+  .pill-offline { background: rgba(113,113,122,0.15); color: var(--zinc-500); }
+  .pill-online { background: rgba(16,185,129,0.15); color: var(--emerald-400); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-mod { background: rgba(236,72,153,0.15); color: var(--like-400); }
+  .badge-sub { background: rgba(168,85,247,0.15); color: var(--purple-400); }
+  .badge-follow { background: rgba(59,130,246,0.15); color: var(--blue-300); }
+
+  /* ── Toggle ── */
+  .toggle {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--zinc-700);
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.15s;
+  }
+  .toggle.active { background: var(--like-500); }
+  .toggle.active::after { transform: translateX(16px); }
+
+  /* ── Avatar ── */
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+  }
+  .avatar-lg { width: 56px; height: 56px; font-size: 20px; }
+  .avatar-xl { width: 72px; height: 72px; font-size: 28px; }
+  .avatar-pink { background: linear-gradient(135deg, var(--like-500), var(--like-700)); }
+  .avatar-blue { background: linear-gradient(135deg, var(--blue-400), #2563eb); }
+  .avatar-purple { background: linear-gradient(135deg, var(--purple-400), #7c3aed); }
+  .avatar-emerald { background: linear-gradient(135deg, var(--emerald-400), #059669); }
+  .avatar-amber { background: linear-gradient(135deg, var(--amber-300), #d97706); }
+  .avatar-orange { background: linear-gradient(135deg, var(--orange-400), #ea580c); }
+
+  /* ── Rank ── */
+  .rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #451a03; }
+  .rank-2 { background: linear-gradient(135deg, #d4d4d8, #a1a1aa); color: #27272a; }
+  .rank-3 { background: linear-gradient(135deg, #f97316, #ea580c); color: #431407; }
+  .rank-default { background: var(--zinc-800); color: var(--zinc-400); }
+
+  /* ── Animations ── */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fadeUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes toastIn {
+    from { transform: translateX(-120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--zinc-700); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--zinc-600); }
+
+  /* ── Specific Components ── */
+
+  /* Stat card */
+  .stat-card {
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--zinc-900);
+    border: 1px solid var(--zinc-800);
+  }
+  .stat-card .stat-label { font-size: 11px; color: var(--zinc-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-card .stat-value { font-size: 24px; font-weight: 700; color: var(--zinc-100); font-variant-numeric: tabular-nums; }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    gap: 2px;
+    background: var(--zinc-900);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    border: 1px solid var(--zinc-800);
+  }
+  .tab-bar .tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--zinc-500);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-bar .tab.active {
+    background: var(--zinc-800);
+    color: var(--zinc-100);
+  }
+  .tab-bar .tab:hover:not(.active) { color: var(--zinc-300); }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--zinc-800);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  /* ── Section-specific ── */
+
+  /* Dashboard top bar */
+  .dashboard-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--zinc-900);
+    border: 1px solid var(--zinc-800);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+  }
+  .toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--zinc-400);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .toolbar-btn:hover { color: var(--zinc-100); background: var(--zinc-800); }
+  .toolbar-btn.active { color: var(--like-400); background: rgba(236,72,153,0.1); }
+  .toolbar-divider { width: 1px; height: 24px; background: var(--zinc-800); flex-shrink: 0; }
+
+  /* Toast */
+  .toast {
+    position: relative;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid;
+    font-size: 13px;
+    animation: toastIn 0.3s ease-out;
+  }
+  .toast-gift { background: rgba(251,191,36,0.08); border-color: var(--amber-300); }
+  .toast-keyword { background: rgba(236,72,153,0.08); border-color: var(--like-500); }
+  .toast-follow { background: rgba(96,165,250,0.08); border-color: var(--blue-400); }
+
+  /* Word cloud */
+  .word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 14px;
+    padding: 24px;
+  }
+  .word-cloud span {
+    cursor: default;
+    transition: opacity 0.15s;
+  }
+  .word-cloud span:hover { opacity: 0.7; }
+
+  /* OBS overlays */
+  .obs-preview {
+    background: repeating-conic-gradient(#1a1a1d 0% 25%, #0f0f12 0% 50%) 50% / 20px 20px;
+    border-radius: var(--radius);
+    padding: 32px;
+    border: 1px solid var(--zinc-800);
+    position: relative;
+    overflow: hidden;
+  }
+  .obs-preview::before {
+    content: 'TRANSPARENT BG';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--zinc-600);
+    font-weight: 600;
+  }
+
+  /* Chart bars */
+  .chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chart-bar-label { width: 60px; font-size: 11px; color: var(--zinc-500); text-align: right; flex-shrink: 0; }
+  .chart-bar-track { flex: 1; height: 24px; background: var(--zinc-900); border-radius: 4px; overflow: hidden; }
+  .chart-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); min-width: 32px; }
+
+  /* Delta indicators */
+  .delta { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 600; }
+  .delta-up { color: var(--emerald-400); }
+  .delta-down { color: var(--rose-400); }
+
+  /* Session comparison bar */
+  .compare-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    gap: 2px;
+  }
+
+  /* Checkbox */
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid var(--zinc-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .checkbox.checked {
+    background: var(--like-500);
+    border-color: var(--like-500);
+  }
+  .checkbox.checked::after {
+    content: '';
+    width: 8px;
+    height: 5px;
+    border-left: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+
+  /* Separator */
+  .separator { height: 1px; background: var(--zinc-800); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- NAVIGATION -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<nav class="mockup-nav">
+  <span class="logo">LikeTapper</span>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#history">History</a>
+  <a href="#leaderboard">Leaderboard</a>
+  <a href="#alerts">Alerts</a>
+  <a href="#multiroom">Multi-Room</a>
+  <a href="#insights">Insights</a>
+  <a href="#user-drawer">User Drawer</a>
+  <a href="#obs">OBS Overlay</a>
+  <a href="#settings">Settings</a>
+  <a href="#webhooks">Webhooks</a>
+  <a href="#moderation">Moderation</a>
+  <a href="#analytics">Analytics</a>
+  <a href="#comparison">Comparison</a>
+  <a href="#watchlist">Watchlist</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 1. MAIN DASHBOARD -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="dashboard">
+  <div class="section-label">Screen 1</div>
+  <div class="section-title">Main Dashboard</div>
+  <div class="section-desc">Primary monitoring view with live stats, contributors, and comment feeds.</div>
+
+  <!-- Top Bar -->
+  <div class="dashboard-topbar">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="color:var(--zinc-500);font-size:13px;">@</span>
+      <input class="input" style="width:180px;" placeholder="username" value="dancequeen_live">
+      <button class="btn btn-primary">Connect</button>
+    </div>
+    <div class="pill pill-live"><span class="dot"></span> LIVE</div>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn active">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+      Watch
+    </button>
+    <button class="toolbar-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Insights
+    </button>
+    <button class="toolbar-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Alerts
+    </button>
+    <button class="toolbar-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Multi
+    </button>
+    <button class="toolbar-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M6 20V4"/><path d="M18 20v-6"/></svg>
+      Leaderboard
+    </button>
+    <button class="toolbar-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m-7-7H1m22 0h-4m-1.5-6.5l-3 3m-5 5l-3 3m0-11l3 3m5 5l3 3"/></svg>
+      History
+    </button>
+    <div style="flex:1;"></div>
+    <button class="toolbar-btn" style="color:var(--zinc-500);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <!-- 3-column layout -->
+  <div style="display:grid; grid-template-columns: 300px 280px 1fr 320px; gap:16px; align-items:start;">
+
+    <!-- LEFT: Host & Stats -->
+    <div class="flex-col gap-4" style="display:flex;flex-direction:column;gap:16px;">
+      <!-- Host Banner -->
+      <div class="card" style="padding:20px; text-align:center; position:relative; overflow:hidden;">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(236,72,153,0.12) 0%, transparent 60%);pointer-events:none;"></div>
+        <div class="avatar avatar-lg avatar-pink" style="margin:0 auto 12px;">D</div>
+        <div style="font-size:16px;font-weight:700;color:var(--zinc-100);">DanceQueen</div>
+        <div style="font-size:12px;color:var(--zinc-500);margin-bottom:12px;">@dancequeen_live</div>
+        <div class="pill pill-live" style="margin-bottom:16px;"><span class="dot"></span> LIVE for 1h 24m</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="text-align:center;padding:8px;background:var(--zinc-900);border-radius:8px;">
+            <div style="font-size:18px;font-weight:700;color:var(--zinc-100);" class="tabular">12.4K</div>
+            <div style="font-size:10px;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;">Viewers</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--zinc-900);border-radius:8px;">
+            <div style="font-size:18px;font-weight:700;color:var(--zinc-100);" class="tabular">847</div>
+            <div style="font-size:10px;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;">Comments</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Likes Counter -->
+      <div class="card" style="padding:20px;text-align:center;background:linear-gradient(135deg, rgba(236,72,153,0.08), rgba(24,24,27,0.7));">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--like-400);margin-bottom:4px;">Total Likes</div>
+        <div style="font-size:42px;font-weight:800;color:var(--like-400);letter-spacing:-1px;" class="tabular">284,392</div>
+        <div style="font-size:11px;color:var(--zinc-500);margin-top:4px;">+1,247 / min</div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="card" style="padding:16px; display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--zinc-500);">Diamonds</span>
+          <span style="font-size:14px;font-weight:700;color:var(--amber-300);" class="tabular">9,428</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--zinc-500);">Gifts</span>
+          <span style="font-size:14px;font-weight:700;color:var(--purple-400);" class="tabular">312</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--zinc-500);">New Followers</span>
+          <span style="font-size:14px;font-weight:700;color:var(--blue-300);" class="tabular">89</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--zinc-500);">Shares</span>
+          <span style="font-size:14px;font-weight:700;color:var(--emerald-300);" class="tabular">156</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Top Contributors -->
+    <div class="card" style="padding:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:12px;">Top Contributors</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <!-- Contributor 1 -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank rank-1">1</div>
+          <div class="avatar avatar-amber" style="width:28px;height:28px;font-size:11px;">S</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">SparkleGirl</div>
+            <div style="font-size:11px;color:var(--amber-300);" class="tabular">2,340 diamonds</div>
+          </div>
+        </div>
+        <!-- Contributor 2 -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank rank-2">2</div>
+          <div class="avatar avatar-blue" style="width:28px;height:28px;font-size:11px;">M</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">MoonWalker99</div>
+            <div style="font-size:11px;color:var(--amber-300);" class="tabular">1,892 diamonds</div>
+          </div>
+        </div>
+        <!-- Contributor 3 -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank rank-3">3</div>
+          <div class="avatar avatar-purple" style="width:28px;height:28px;font-size:11px;">K</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">KingCrypto</div>
+            <div style="font-size:11px;color:var(--amber-300);" class="tabular">1,456 diamonds</div>
+          </div>
+        </div>
+        <!-- Contributor 4 -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank rank-default">4</div>
+          <div class="avatar avatar-emerald" style="width:28px;height:28px;font-size:11px;">L</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">LilyVibes</div>
+            <div style="font-size:11px;color:var(--amber-300);" class="tabular">987 diamonds</div>
+          </div>
+        </div>
+        <!-- Contributor 5 -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank rank-default">5</div>
+          <div class="avatar avatar-orange" style="width:28px;height:28px;font-size:11px;">T</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">TechNova</div>
+            <div style="font-size:11px;color:var(--amber-300);" class="tabular">654 diamonds</div>
+          </div>
+        </div>
+        <!-- Contributor 6 -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank rank-default">6</div>
+          <div class="avatar avatar-pink" style="width:28px;height:28px;font-size:11px;">R</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">RosePetal</div>
+            <div style="font-size:11px;color:var(--amber-300);" class="tabular">432 diamonds</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT-CENTER: Tabbed Feed -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--zinc-800);">
+        <div class="tab-bar">
+          <div class="tab active">Comments</div>
+          <div class="tab">Gifts</div>
+          <div class="tab">Q&amp;A</div>
+        </div>
+      </div>
+      <div style="padding:12px 16px;flex:1;display:flex;flex-direction:column;gap:8px;max-height:460px;overflow-y:auto;">
+        <!-- Comment items -->
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-blue" style="width:24px;height:24px;font-size:10px;">A</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--like-400);">AlexDance</span> <span style="font-size:12px;color:var(--zinc-400);">This choreography is insane!! 🔥🔥</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-emerald" style="width:24px;height:24px;font-size:10px;">J</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--emerald-300);">JennyPop</span> <span style="font-size:12px;color:var(--zinc-400);">How long did it take to learn this?</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-amber" style="width:24px;height:24px;font-size:10px;">S</div>
+          <div>
+            <span style="font-size:12px;font-weight:600;color:var(--amber-300);">SparkleGirl</span>
+            <span style="font-size:12px;color:var(--zinc-400);">sent</span>
+            <span style="font-size:12px;font-weight:600;color:var(--amber-300);">Rose x5</span>
+            <span style="font-size:12px;color:var(--zinc-500);">💎 250</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-purple" style="width:24px;height:24px;font-size:10px;">M</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--purple-400);">MikeBeats</span> <span style="font-size:12px;color:var(--zinc-400);">Can you do the tutorial again?</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-pink" style="width:24px;height:24px;font-size:10px;">N</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--like-400);">NightOwl</span> <span style="font-size:12px;color:var(--zinc-400);">First time here, you're amazing!</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-orange" style="width:24px;height:24px;font-size:10px;">T</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--orange-400);">TechNova</span> <span style="font-size:12px;color:var(--zinc-400);">Where are you streaming from?</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-blue" style="width:24px;height:24px;font-size:10px;">K</div>
+          <div>
+            <span style="font-size:12px;font-weight:600;color:var(--blue-300);">KingCrypto</span>
+            <span style="font-size:12px;color:var(--zinc-400);">sent</span>
+            <span style="font-size:12px;font-weight:600;color:var(--amber-300);">Drama Queen x1</span>
+            <span style="font-size:12px;color:var(--zinc-500);">💎 500</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-emerald" style="width:24px;height:24px;font-size:10px;">Z</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--emerald-300);">ZenMaster</span> <span style="font-size:12px;color:var(--zinc-400);">Love the energy tonight! 🎶</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-amber" style="width:24px;height:24px;font-size:10px;">L</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--amber-300);">LilyVibes</span> <span style="font-size:12px;color:var(--zinc-400);">You should collab with @danceking!</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="avatar avatar-purple" style="width:24px;height:24px;font-size:10px;">R</div>
+          <div><span style="font-size:12px;font-weight:600;color:var(--purple-400);">RosePetal</span> <span style="font-size:12px;color:var(--zinc-400);">Do the Macarena next! 😂</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAR RIGHT: Stream Player Panel -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--zinc-800);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:600;color:var(--zinc-400);">Stream Preview</span>
+        <div class="pill pill-live" style="font-size:10px;"><span class="dot"></span> LIVE</div>
+      </div>
+      <div style="aspect-ratio:9/16;background:linear-gradient(180deg, #1a0a1e 0%, #0d1117 50%, #0a0e14 100%);display:flex;align-items:center;justify-content:center;position:relative;">
+        <div style="text-align:center;">
+          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg, var(--like-500), var(--purple-500));margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          </div>
+          <div style="font-size:13px;color:var(--zinc-400);">Stream Player</div>
+          <div style="font-size:11px;color:var(--zinc-600);">@dancequeen_live</div>
+        </div>
+        <!-- Floating stats at bottom -->
+        <div style="position:absolute;bottom:12px;left:12px;right:12px;display:flex;gap:8px;">
+          <div style="flex:1;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);border-radius:6px;padding:6px 8px;text-align:center;">
+            <div style="font-size:13px;font-weight:700;color:white;" class="tabular">12.4K</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.5);">VIEWERS</div>
+          </div>
+          <div style="flex:1;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);border-radius:6px;padding:6px 8px;text-align:center;">
+            <div style="font-size:13px;font-weight:700;color:var(--like-400);" class="tabular">284K</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.5);">LIKES</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 2. SESSION HISTORY -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="history">
+  <div class="section-label">Screen 2</div>
+  <div class="section-title">Session History</div>
+  <div class="section-desc">Browse past monitoring sessions with AI summaries and exportable data.</div>
+
+  <div class="card" style="display:flex;min-height:560px;">
+    <!-- Sidebar -->
+    <div style="width:300px;border-right:1px solid var(--zinc-800);display:flex;flex-direction:column;">
+      <div style="padding:16px;border-bottom:1px solid var(--zinc-800);">
+        <input class="input w-full" placeholder="Search sessions...">
+      </div>
+      <div style="flex:1;overflow-y:auto;">
+        <!-- Session item - active -->
+        <div style="padding:14px 16px;background:rgba(236,72,153,0.06);border-left:2px solid var(--like-500);cursor:pointer;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:600;color:var(--zinc-100);">@dancequeen_live</span>
+            <span style="font-size:11px;color:var(--zinc-500);">2h 14m</span>
+          </div>
+          <div style="font-size:11px;color:var(--zinc-500);margin-bottom:6px;">May 4, 2026 - 8:30 PM</div>
+          <div style="display:flex;gap:12px;font-size:11px;">
+            <span class="text-like tabular">284K likes</span>
+            <span class="text-amber tabular">9.4K 💎</span>
+            <span class="text-zinc-500 tabular">847 msgs</span>
+          </div>
+        </div>
+        <!-- Session 2 -->
+        <div style="padding:14px 16px;border-left:2px solid transparent;cursor:pointer;border-bottom:1px solid var(--zinc-800);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:600;color:var(--zinc-300);">@beats_master</span>
+            <span style="font-size:11px;color:var(--zinc-500);">1h 42m</span>
+          </div>
+          <div style="font-size:11px;color:var(--zinc-500);margin-bottom:6px;">May 3, 2026 - 9:15 PM</div>
+          <div style="display:flex;gap:12px;font-size:11px;">
+            <span class="text-like tabular">156K likes</span>
+            <span class="text-amber tabular">5.2K 💎</span>
+            <span class="text-zinc-500 tabular">423 msgs</span>
+          </div>
+        </div>
+        <!-- Session 3 -->
+        <div style="padding:14px 16px;border-left:2px solid transparent;cursor:pointer;border-bottom:1px solid var(--zinc-800);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:600;color:var(--zinc-300);">@fashionista_uk</span>
+            <span style="font-size:11px;color:var(--zinc-500);">3h 08m</span>
+          </div>
+          <div style="font-size:11px;color:var(--zinc-500);margin-bottom:6px;">May 2, 2026 - 7:00 PM</div>
+          <div style="display:flex;gap:12px;font-size:11px;">
+            <span class="text-like tabular">412K likes</span>
+            <span class="text-amber tabular">14.1K 💎</span>
+            <span class="text-zinc-500 tabular">1.2K msgs</span>
+          </div>
+        </div>
+        <!-- Session 4 -->
+        <div style="padding:14px 16px;border-left:2px solid transparent;cursor:pointer;border-bottom:1px solid var(--zinc-800);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:600;color:var(--zinc-300);">@dancequeen_live</span>
+            <span style="font-size:11px;color:var(--zinc-500);">1h 56m</span>
+          </div>
+          <div style="font-size:11px;color:var(--zinc-500);margin-bottom:6px;">May 1, 2026 - 8:00 PM</div>
+          <div style="display:flex;gap:12px;font-size:11px;">
+            <span class="text-like tabular">198K likes</span>
+            <span class="text-amber tabular">7.8K 💎</span>
+            <span class="text-zinc-500 tabular">612 msgs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div style="flex:1;padding:24px;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+        <div>
+          <div style="font-size:20px;font-weight:700;color:var(--zinc-100);">@dancequeen_live</div>
+          <div style="font-size:13px;color:var(--zinc-500);">May 4, 2026 - 8:30 PM to 10:44 PM (2h 14m)</div>
+        </div>
+        <div style="position:relative;">
+          <button class="btn btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Summary -->
+      <div style="padding:16px;border-radius:var(--radius-sm);background:linear-gradient(135deg, rgba(236,72,153,0.06), rgba(168,85,247,0.04));border:1px solid rgba(236,72,153,0.15);margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--like-400);margin-bottom:6px;">AI Summary</div>
+        <div style="font-size:13px;color:var(--zinc-300);line-height:1.6;">
+          High-energy dance session with strong audience engagement. Peak viewership of 18.2K at 9:15 PM during the freestyle segment. SparkleGirl was the top gifter contributing 2,340 diamonds. Chat sentiment was overwhelmingly positive (87%) with frequent requests for tutorials. Notable spike in followers during the last 30 minutes.
+        </div>
+      </div>
+
+      <!-- Totals Grid -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-label">Total Likes</div>
+          <div class="stat-value text-like">284K</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Diamonds</div>
+          <div class="stat-value text-amber">9,428</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Comments</div>
+          <div class="stat-value">847</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Peak Viewers</div>
+          <div class="stat-value text-blue">18.2K</div>
+        </div>
+      </div>
+
+      <!-- Comments & Gifts -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:12px;">Top Comments</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="padding:10px;background:var(--zinc-900);border-radius:8px;font-size:12px;">
+              <span style="font-weight:600;color:var(--like-400);">AlexDance:</span>
+              <span style="color:var(--zinc-400);"> This choreography is insane!!</span>
+              <div style="font-size:10px;color:var(--zinc-600);margin-top:4px;">8:45 PM</div>
+            </div>
+            <div style="padding:10px;background:var(--zinc-900);border-radius:8px;font-size:12px;">
+              <span style="font-weight:600;color:var(--emerald-300);">JennyPop:</span>
+              <span style="color:var(--zinc-400);"> How long did it take to learn this?</span>
+              <div style="font-size:10px;color:var(--zinc-600);margin-top:4px;">9:02 PM</div>
+            </div>
+            <div style="padding:10px;background:var(--zinc-900);border-radius:8px;font-size:12px;">
+              <span style="font-weight:600;color:var(--purple-400);">MikeBeats:</span>
+              <span style="color:var(--zinc-400);"> Can you do the tutorial again?</span>
+              <div style="font-size:10px;color:var(--zinc-600);margin-top:4px;">9:18 PM</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:12px;">Gift Log</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="padding:10px;background:var(--zinc-900);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--amber-300);">SparkleGirl</div>
+                <div style="font-size:11px;color:var(--zinc-500);">Drama Queen x3</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--amber-300);" class="tabular">1,500 💎</div>
+            </div>
+            <div style="padding:10px;background:var(--zinc-900);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--blue-300);">KingCrypto</div>
+                <div style="font-size:11px;color:var(--zinc-500);">Rose x20</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--amber-300);" class="tabular">1,000 💎</div>
+            </div>
+            <div style="padding:10px;background:var(--zinc-900);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--emerald-300);">LilyVibes</div>
+                <div style="font-size:11px;color:var(--zinc-500);">TikTok Universe x1</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--amber-300);" class="tabular">500 💎</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 3. ALL-TIME LEADERBOARD -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="leaderboard">
+  <div class="section-label">Screen 3</div>
+  <div class="section-title">All-Time Leaderboard</div>
+  <div class="section-desc">Top contributors ranked across all monitored sessions.</div>
+
+  <div class="card">
+    <!-- Sort Tabs -->
+    <div style="padding:16px 16px 0;">
+      <div class="tab-bar" style="display:inline-flex;">
+        <div class="tab active">Diamonds</div>
+        <div class="tab">Comments</div>
+        <div class="tab">Gifts</div>
+        <div class="tab">Sessions</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="padding:16px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--zinc-800);">
+            <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;width:60px;">#</th>
+            <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;">User</th>
+            <th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:600;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;">Diamonds</th>
+            <th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:600;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;">Comments</th>
+            <th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:600;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;">Gifts</th>
+            <th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:600;color:var(--zinc-500);text-transform:uppercase;letter-spacing:0.5px;">Sessions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--zinc-800);">
+            <td style="padding:12px;"><div class="rank rank-1">1</div></td>
+            <td style="padding:12px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar avatar-amber">S</div>
+                <div><div style="font-weight:600;color:var(--zinc-100);">SparkleGirl</div><div style="font-size:11px;color:var(--zinc-500);">@sparkle_girl99</div></div>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:right;font-weight:600;color:var(--amber-300);" class="tabular">48,240</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">2,341</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">187</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">34</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--zinc-800);">
+            <td style="padding:12px;"><div class="rank rank-2">2</div></td>
+            <td style="padding:12px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar avatar-blue">M</div>
+                <div><div style="font-weight:600;color:var(--zinc-100);">MoonWalker99</div><div style="font-size:11px;color:var(--zinc-500);">@moonwalker_99</div></div>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:right;font-weight:600;color:var(--amber-300);" class="tabular">35,892</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">1,456</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">142</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">28</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--zinc-800);">
+            <td style="padding:12px;"><div class="rank rank-3">3</div></td>
+            <td style="padding:12px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar avatar-purple">K</div>
+                <div><div style="font-weight:600;color:var(--zinc-100);">KingCrypto</div><div style="font-size:11px;color:var(--zinc-500);">@king_crypto</div></div>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:right;font-weight:600;color:var(--amber-300);" class="tabular">28,456</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">892</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">98</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">22</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--zinc-800);">
+            <td style="padding:12px;"><div class="rank rank-default">4</div></td>
+            <td style="padding:12px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar avatar-emerald">L</div>
+                <div><div style="font-weight:600;color:var(--zinc-100);">LilyVibes</div><div style="font-size:11px;color:var(--zinc-500);">@lily_vibes</div></div>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:right;font-weight:600;color:var(--amber-300);" class="tabular">21,987</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">3,210</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">76</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">41</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--zinc-800);">
+            <td style="padding:12px;"><div class="rank rank-default">5</div></td>
+            <td style="padding:12px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar avatar-orange">T</div>
+                <div><div style="font-weight:600;color:var(--zinc-100);">TechNova</div><div style="font-size:11px;color:var(--zinc-500);">@technova_x</div></div>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:right;font-weight:600;color:var(--amber-300);" class="tabular">18,654</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">567</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">54</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">18</td>
+          </tr>
+          <tr>
+            <td style="padding:12px;"><div class="rank rank-default">6</div></td>
+            <td style="padding:12px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar avatar-pink">R</div>
+                <div><div style="font-weight:600;color:var(--zinc-100);">RosePetal</div><div style="font-size:11px;color:var(--zinc-500);">@rosepetal_22</div></div>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:right;font-weight:600;color:var(--amber-300);" class="tabular">14,321</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">4,567</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">43</td>
+            <td style="padding:12px;text-align:right;color:var(--zinc-300);" class="tabular">52</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 4. REAL-TIME ALERTS -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="alerts">
+  <div class="section-label">Screen 4</div>
+  <div class="section-title">Real-Time Alerts</div>
+  <div class="section-desc">Configure alert rules and see toast notifications for stream events.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+    <!-- Config Panel -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:15px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Alert Rules</div>
+
+      <!-- Add Rule -->
+      <div style="padding:16px;background:var(--zinc-900);border-radius:var(--radius-sm);border:1px dashed var(--zinc-700);margin-bottom:20px;">
+        <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin-bottom:12px;">Add New Rule</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <select class="input" style="flex:1;appearance:none;">
+            <option>Keyword Match</option>
+          </select>
+          <input class="input" style="flex:2;" placeholder="Enter keyword...">
+        </div>
+        <button class="btn btn-primary btn-sm">Add Rule</button>
+      </div>
+
+      <!-- Active Rules -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--zinc-900);border-radius:var(--radius-sm);">
+          <div class="toggle active"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Keyword: "collab"</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Triggers on keyword match in chat</div>
+          </div>
+          <div class="pill" style="background:rgba(236,72,153,0.1);color:var(--like-400);">Keyword</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--zinc-900);border-radius:var(--radius-sm);">
+          <div class="toggle active"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Gift Threshold: 500+ diamonds</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Alerts on gifts worth 500+ diamonds</div>
+          </div>
+          <div class="pill" style="background:rgba(251,191,36,0.1);color:var(--amber-300);">Gift</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--zinc-900);border-radius:var(--radius-sm);">
+          <div class="toggle active"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Gift Name: "Drama Queen"</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Alerts when specific gift is sent</div>
+          </div>
+          <div class="pill" style="background:rgba(251,191,36,0.1);color:var(--amber-300);">Gift</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--zinc-900);border-radius:var(--radius-sm);">
+          <div class="toggle"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--zinc-400);">New Follower</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Triggers on every new follower</div>
+          </div>
+          <div class="pill" style="background:rgba(96,165,250,0.1);color:var(--blue-300);">Follow</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--zinc-900);border-radius:var(--radius-sm);">
+          <div class="toggle active"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Viewer Threshold: 15K+</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Alerts when viewer count exceeds limit</div>
+          </div>
+          <div class="pill" style="background:rgba(16,185,129,0.1);color:var(--emerald-300);">Viewers</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications Preview -->
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--zinc-400);margin-bottom:12px;">Toast Notifications (bottom-left)</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="toast toast-gift">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--amber-300);">Gift Alert</div>
+              <div style="font-size:12px;color:var(--zinc-300);">SparkleGirl sent <strong>Drama Queen x1</strong> (500 diamonds)</div>
+            </div>
+            <span style="font-size:10px;color:var(--zinc-500);">just now</span>
+          </div>
+        </div>
+
+        <div class="toast toast-keyword">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--like-400);">Keyword Match</div>
+              <div style="font-size:12px;color:var(--zinc-300);">MikeBeats: "We should do a <strong>collab</strong> stream!"</div>
+            </div>
+            <span style="font-size:10px;color:var(--zinc-500);">2s ago</span>
+          </div>
+        </div>
+
+        <div class="toast toast-follow">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--blue-300);">Viewer Milestone</div>
+              <div style="font-size:12px;color:var(--zinc-300);">Viewer count hit <strong>15,000</strong>!</div>
+            </div>
+            <span style="font-size:10px;color:var(--zinc-500);">15s ago</span>
+          </div>
+        </div>
+
+        <div class="toast toast-gift" style="opacity:0.7;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--amber-300);">Gift Alert</div>
+              <div style="font-size:12px;color:var(--zinc-300);">KingCrypto sent <strong>Rose x50</strong> (2,500 diamonds)</div>
+            </div>
+            <span style="font-size:10px;color:var(--zinc-500);">1m ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 5. MULTI-ROOM MONITOR -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="multiroom">
+  <div class="section-label">Screen 5</div>
+  <div class="section-title">Multi-Room Monitor</div>
+  <div class="section-desc">Watch multiple TikTok Live rooms simultaneously in a grid layout.</div>
+
+  <!-- Add Room -->
+  <div style="display:flex;gap:8px;margin-bottom:20px;">
+    <input class="input" style="width:280px;" placeholder="Enter @username to add room...">
+    <button class="btn btn-primary">Add Room</button>
+  </div>
+
+  <!-- Room Grid -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+    <!-- Room 1 -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--zinc-800);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--emerald-400);animation:pulse 1.5s infinite;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">DanceQueen</div>
+          <div style="font-size:11px;color:var(--zinc-500);" class="truncate">Friday Night Dance Party</div>
+        </div>
+      </div>
+      <div style="padding:10px 16px;display:flex;gap:12px;border-bottom:1px solid var(--zinc-800);font-size:11px;">
+        <span class="tabular" style="color:var(--zinc-400);">12.4K <span style="color:var(--zinc-600);">viewers</span></span>
+        <span class="tabular" style="color:var(--like-400);">284K <span style="color:var(--zinc-600);">likes</span></span>
+        <span class="tabular" style="color:var(--amber-300);">9.4K <span style="color:var(--zinc-600);">💎</span></span>
+      </div>
+      <div style="padding:8px 16px;flex:1;display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto;">
+        <div style="font-size:11px;"><span style="color:var(--like-400);font-weight:600;">AlexDance</span> <span style="color:var(--zinc-500);">Fire!!</span></div>
+        <div style="font-size:11px;"><span style="color:var(--emerald-300);font-weight:600;">JennyPop</span> <span style="color:var(--zinc-500);">Love this song</span></div>
+        <div style="font-size:11px;"><span style="color:var(--amber-300);font-weight:600;">SparkleGirl</span> <span style="color:var(--zinc-500);">sent Rose x5</span></div>
+        <div style="font-size:11px;"><span style="color:var(--purple-400);font-weight:600;">NightOwl</span> <span style="color:var(--zinc-500);">Tutorial please!</span></div>
+      </div>
+    </div>
+
+    <!-- Room 2 -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--zinc-800);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--emerald-400);animation:pulse 1.5s infinite;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">BeatsMaster</div>
+          <div style="font-size:11px;color:var(--zinc-500);" class="truncate">Late Night Beats &amp; Chill</div>
+        </div>
+      </div>
+      <div style="padding:10px 16px;display:flex;gap:12px;border-bottom:1px solid var(--zinc-800);font-size:11px;">
+        <span class="tabular" style="color:var(--zinc-400);">8.1K <span style="color:var(--zinc-600);">viewers</span></span>
+        <span class="tabular" style="color:var(--like-400);">156K <span style="color:var(--zinc-600);">likes</span></span>
+        <span class="tabular" style="color:var(--amber-300);">5.2K <span style="color:var(--zinc-600);">💎</span></span>
+      </div>
+      <div style="padding:8px 16px;flex:1;display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto;">
+        <div style="font-size:11px;"><span style="color:var(--blue-300);font-weight:600;">MusicFan</span> <span style="color:var(--zinc-500);">This beat is sick</span></div>
+        <div style="font-size:11px;"><span style="color:var(--orange-400);font-weight:600;">VibeCheck</span> <span style="color:var(--zinc-500);">Drop that bass!</span></div>
+        <div style="font-size:11px;"><span style="color:var(--like-400);font-weight:600;">Luna</span> <span style="color:var(--zinc-500);">sent Galaxy x1</span></div>
+        <div style="font-size:11px;"><span style="color:var(--emerald-300);font-weight:600;">ChillGuy</span> <span style="color:var(--zinc-500);">Vibes are immaculate</span></div>
+      </div>
+    </div>
+
+    <!-- Room 3 -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--zinc-800);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--zinc-600);"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--zinc-400);" class="truncate">FashionistaUK</div>
+          <div style="font-size:11px;color:var(--zinc-600);" class="truncate">Offline</div>
+        </div>
+      </div>
+      <div style="padding:10px 16px;display:flex;gap:12px;border-bottom:1px solid var(--zinc-800);font-size:11px;">
+        <span class="tabular" style="color:var(--zinc-600);">-- <span>viewers</span></span>
+        <span class="tabular" style="color:var(--zinc-600);">-- <span>likes</span></span>
+        <span class="tabular" style="color:var(--zinc-600);">-- <span>💎</span></span>
+      </div>
+      <div style="padding:16px;flex:1;display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;">
+          <div style="font-size:12px;color:var(--zinc-600);">Waiting for stream...</div>
+          <div style="font-size:11px;color:var(--zinc-700);margin-top:4px;">Last seen 3h ago</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room 4 -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--zinc-800);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--emerald-400);animation:pulse 1.5s infinite;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--zinc-100);" class="truncate">GamerPro_TTV</div>
+          <div style="font-size:11px;color:var(--zinc-500);" class="truncate">Ranked Grind to Diamond</div>
+        </div>
+      </div>
+      <div style="padding:10px 16px;display:flex;gap:12px;border-bottom:1px solid var(--zinc-800);font-size:11px;">
+        <span class="tabular" style="color:var(--zinc-400);">21.7K <span style="color:var(--zinc-600);">viewers</span></span>
+        <span class="tabular" style="color:var(--like-400);">502K <span style="color:var(--zinc-600);">likes</span></span>
+        <span class="tabular" style="color:var(--amber-300);">18.3K <span style="color:var(--zinc-600);">💎</span></span>
+      </div>
+      <div style="padding:8px 16px;flex:1;display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto;">
+        <div style="font-size:11px;"><span style="color:var(--rose-400);font-weight:600;">ProGamer</span> <span style="color:var(--zinc-500);">GG that was close</span></div>
+        <div style="font-size:11px;"><span style="color:var(--blue-300);font-weight:600;">Clutch</span> <span style="color:var(--zinc-500);">sent Lion x1</span></div>
+        <div style="font-size:11px;"><span style="color:var(--amber-300);font-weight:600;">NoobSlayer</span> <span style="color:var(--zinc-500);">Carry me next!</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 6. CHAT INSIGHTS -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="insights">
+  <div class="section-label">Screen 6</div>
+  <div class="section-title">Chat Insights</div>
+  <div class="section-desc">Sentiment analysis, word cloud, and trending topics from live chat.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+    <!-- Left Column -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <!-- Sentiment Bar -->
+      <div class="card" style="padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Sentiment Analysis</div>
+        <div style="display:flex;gap:4px;height:32px;border-radius:8px;overflow:hidden;margin-bottom:12px;">
+          <div style="width:67%;background:linear-gradient(90deg, #059669, var(--emerald-400));border-radius:6px 0 0 6px;display:flex;align-items:center;padding-left:10px;font-size:12px;font-weight:700;color:white;">67%</div>
+          <div style="width:21%;background:var(--zinc-700);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--zinc-300);">21%</div>
+          <div style="width:12%;background:linear-gradient(90deg, var(--rose-400), var(--rose-500));border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;">12%</div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--emerald-400);"></div><span style="color:var(--zinc-400);">Positive (67%)</span></div>
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--zinc-600);"></div><span style="color:var(--zinc-400);">Neutral (21%)</span></div>
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--rose-400);"></div><span style="color:var(--zinc-400);">Negative (12%)</span></div>
+        </div>
+      </div>
+
+      <!-- Trending Topics -->
+      <div class="card" style="padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Trending Topics</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:16px;font-weight:700;color:var(--like-400);">#1</span>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Dance Tutorial</div>
+              <div style="font-size:11px;color:var(--zinc-500);">142 mentions</div>
+            </div>
+            <div class="progress-bar" style="width:100px;"><div class="progress-fill" style="width:92%;background:var(--like-500);"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:16px;font-weight:700;color:var(--zinc-400);">#2</span>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Collab Request</div>
+              <div style="font-size:11px;color:var(--zinc-500);">89 mentions</div>
+            </div>
+            <div class="progress-bar" style="width:100px;"><div class="progress-fill" style="width:64%;background:var(--blue-400);"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:16px;font-weight:700;color:var(--zinc-400);">#3</span>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Song Requests</div>
+              <div style="font-size:11px;color:var(--zinc-500);">67 mentions</div>
+            </div>
+            <div class="progress-bar" style="width:100px;"><div class="progress-fill" style="width:48%;background:var(--purple-400);"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:16px;font-weight:700;color:var(--zinc-400);">#4</span>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:500;color:var(--zinc-100);">Outfit / Fashion</div>
+              <div style="font-size:11px;color:var(--zinc-500);">43 mentions</div>
+            </div>
+            <div class="progress-bar" style="width:100px;"><div class="progress-fill" style="width:31%;background:var(--amber-300);"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Word Cloud -->
+    <div class="card" style="padding:20px;display:flex;flex-direction:column;">
+      <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:12px;">Word Cloud</div>
+      <div class="word-cloud" style="flex:1;min-height:280px;">
+        <span style="font-size:36px;font-weight:800;color:var(--like-400);">dance</span>
+        <span style="font-size:28px;font-weight:700;color:var(--emerald-300);">amazing</span>
+        <span style="font-size:24px;font-weight:600;color:var(--blue-300);">tutorial</span>
+        <span style="font-size:20px;font-weight:600;color:var(--amber-300);">fire</span>
+        <span style="font-size:32px;font-weight:700;color:var(--purple-400);">love</span>
+        <span style="font-size:16px;font-weight:500;color:var(--zinc-400);">music</span>
+        <span style="font-size:22px;font-weight:600;color:var(--like-400);">collab</span>
+        <span style="font-size:14px;font-weight:500;color:var(--zinc-500);">please</span>
+        <span style="font-size:18px;font-weight:600;color:var(--emerald-300);">energy</span>
+        <span style="font-size:26px;font-weight:700;color:var(--orange-400);">insane</span>
+        <span style="font-size:15px;font-weight:500;color:var(--zinc-400);">song</span>
+        <span style="font-size:20px;font-weight:600;color:var(--blue-300);">talent</span>
+        <span style="font-size:13px;font-weight:500;color:var(--zinc-500);">stream</span>
+        <span style="font-size:18px;font-weight:600;color:var(--amber-300);">queen</span>
+        <span style="font-size:16px;font-weight:500;color:var(--rose-400);">vibes</span>
+        <span style="font-size:14px;font-weight:500;color:var(--zinc-400);">learn</span>
+        <span style="font-size:22px;font-weight:600;color:var(--like-400);">moves</span>
+        <span style="font-size:12px;font-weight:500;color:var(--zinc-600);">night</span>
+        <span style="font-size:17px;font-weight:600;color:var(--purple-400);">wow</span>
+        <span style="font-size:13px;font-weight:500;color:var(--zinc-500);">freestyle</span>
+        <span style="font-size:19px;font-weight:600;color:var(--emerald-300);">cool</span>
+        <span style="font-size:15px;font-weight:500;color:var(--blue-300);">outfit</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 7. USER DETAIL DRAWER -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="user-drawer">
+  <div class="section-label">Screen 7</div>
+  <div class="section-title">User Detail Drawer</div>
+  <div class="section-desc">Slide-in panel showing user profile, stats, and activity history.</div>
+
+  <div style="display:flex;gap:24px;align-items:flex-start;">
+    <!-- Main content (blurred bg placeholder) -->
+    <div style="flex:1;background:var(--zinc-900);border-radius:var(--radius);height:560px;display:flex;align-items:center;justify-content:center;opacity:0.4;">
+      <span style="font-size:14px;color:var(--zinc-600);">Dashboard content (dimmed)</span>
+    </div>
+
+    <!-- Drawer -->
+    <div class="card" style="width:360px;animation:slideIn 0.3s ease-out;flex-shrink:0;">
+      <!-- Header -->
+      <div style="padding:24px;text-align:center;position:relative;background:linear-gradient(180deg, rgba(236,72,153,0.08) 0%, transparent 100%);">
+        <div class="avatar avatar-xl avatar-amber" style="margin:0 auto 12px;">S</div>
+        <div style="font-size:18px;font-weight:700;color:var(--zinc-100);">SparkleGirl</div>
+        <div style="font-size:13px;color:var(--zinc-500);margin-bottom:10px;">@sparkle_girl99</div>
+        <div style="display:flex;gap:6px;justify-content:center;">
+          <span class="badge badge-mod">MOD</span>
+          <span class="badge badge-sub">SUB</span>
+          <span class="badge badge-follow">FOLLOW</span>
+        </div>
+      </div>
+
+      <div style="padding:0 20px 20px;">
+        <!-- Session Stats -->
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--zinc-500);margin-bottom:8px;">This Session</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;">
+          <div style="text-align:center;padding:10px;background:var(--zinc-900);border-radius:8px;">
+            <div style="font-size:16px;font-weight:700;color:var(--amber-300);" class="tabular">2,340</div>
+            <div style="font-size:10px;color:var(--zinc-500);">Diamonds</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--zinc-900);border-radius:8px;">
+            <div style="font-size:16px;font-weight:700;color:var(--zinc-100);" class="tabular">47</div>
+            <div style="font-size:10px;color:var(--zinc-500);">Comments</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--zinc-900);border-radius:8px;">
+            <div style="font-size:16px;font-weight:700;color:var(--purple-400);" class="tabular">12</div>
+            <div style="font-size:10px;color:var(--zinc-500);">Gifts</div>
+          </div>
+        </div>
+
+        <!-- All-Time Stats -->
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--zinc-500);margin-bottom:8px;">All Time</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+          <div style="padding:10px;background:var(--zinc-900);border-radius:8px;display:flex;justify-content:space-between;">
+            <span style="font-size:12px;color:var(--zinc-500);">Diamonds</span>
+            <span style="font-size:12px;font-weight:600;color:var(--amber-300);" class="tabular">48,240</span>
+          </div>
+          <div style="padding:10px;background:var(--zinc-900);border-radius:8px;display:flex;justify-content:space-between;">
+            <span style="font-size:12px;color:var(--zinc-500);">Sessions</span>
+            <span style="font-size:12px;font-weight:600;color:var(--zinc-100);" class="tabular">34</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--zinc-500);margin-bottom:8px;">Notes</div>
+        <textarea class="input" style="width:100%;height:64px;resize:vertical;margin-bottom:16px;" placeholder="Add private notes about this user...">Top supporter. Always sends Drama Queen gifts during dance segments.</textarea>
+
+        <!-- Recent Activity -->
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--zinc-500);margin-bottom:8px;">Recent Activity</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+          <div style="font-size:12px;display:flex;justify-content:space-between;">
+            <span style="color:var(--zinc-400);">Sent Drama Queen x1</span>
+            <span style="color:var(--zinc-600);">2m ago</span>
+          </div>
+          <div style="font-size:12px;display:flex;justify-content:space-between;">
+            <span style="color:var(--zinc-400);">"This choreo is everything!"</span>
+            <span style="color:var(--zinc-600);">5m ago</span>
+          </div>
+          <div style="font-size:12px;display:flex;justify-content:space-between;">
+            <span style="color:var(--zinc-400);">Sent Rose x5</span>
+            <span style="color:var(--zinc-600);">12m ago</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" style="flex:1;">Block</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1;">Watchlist</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;">View Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 8. OBS OVERLAY PREVIEW -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="obs">
+  <div class="section-label">Screen 8</div>
+  <div class="section-title">OBS Overlay Preview</div>
+  <div class="section-desc">Browser sources for OBS: chat overlay, stats bar, and gift feed.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+    <!-- Chat Overlay -->
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin-bottom:8px;">Chat Overlay (transparent background)</div>
+      <div class="obs-preview" style="min-height:320px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;">
+        <div style="display:flex;gap:8px;align-items:center;animation:fadeUp 0.3s;padding:6px 12px;background:rgba(0,0,0,0.5);border-radius:20px;width:fit-content;backdrop-filter:blur(8px);">
+          <span style="font-size:12px;font-weight:700;color:var(--like-400);">AlexDance</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.85);">This choreography is insane!!</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;animation:fadeUp 0.3s;padding:6px 12px;background:rgba(0,0,0,0.5);border-radius:20px;width:fit-content;backdrop-filter:blur(8px);">
+          <span style="font-size:12px;font-weight:700;color:var(--emerald-300);">JennyPop</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.85);">How long to learn this?</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;animation:fadeUp 0.3s;padding:6px 12px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.2);border-radius:20px;width:fit-content;backdrop-filter:blur(8px);">
+          <span style="font-size:12px;font-weight:700;color:var(--amber-300);">SparkleGirl</span>
+          <span style="font-size:12px;color:var(--amber-300);">sent Rose x5 (250 💎)</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;animation:fadeUp 0.3s;padding:6px 12px;background:rgba(0,0,0,0.5);border-radius:20px;width:fit-content;backdrop-filter:blur(8px);">
+          <span style="font-size:12px;font-weight:700;color:var(--purple-400);">MikeBeats</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.85);">Can you do the tutorial?</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin-bottom:8px;">Stats Bar (compact horizontal)</div>
+      <div class="obs-preview" style="min-height:120px;display:flex;align-items:center;justify-content:center;">
+        <div style="display:flex;gap:2px;background:rgba(0,0,0,0.7);border-radius:10px;padding:4px;backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);">
+          <div style="padding:8px 16px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:white;" class="tabular">12.4K</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">Viewers</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.08);margin:6px 0;"></div>
+          <div style="padding:8px 16px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:var(--like-400);" class="tabular">284K</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">Likes</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.08);margin:6px 0;"></div>
+          <div style="padding:8px 16px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:var(--amber-300);" class="tabular">9.4K</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">Diamonds</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.08);margin:6px 0;"></div>
+          <div style="padding:8px 16px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:var(--emerald-300);" class="tabular">89</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">Follows</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gift Feed -->
+      <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin:16px 0 8px;">Gift Feed (animated cards)</div>
+      <div class="obs-preview" style="min-height:200px;display:flex;flex-direction:column;gap:10px;padding:24px;">
+        <div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04));border:1px solid rgba(251,191,36,0.15);border-radius:12px;padding:12px 16px;animation:fadeUp 0.4s;">
+          <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #fbbf24, #f59e0b);display:flex;align-items:center;justify-content:center;font-size:20px;">🌹</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:white;">SparkleGirl sent Rose x5</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);">250 diamonds</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg, rgba(168,85,247,0.12), rgba(168,85,247,0.04));border:1px solid rgba(168,85,247,0.15);border-radius:12px;padding:12px 16px;animation:fadeUp 0.4s;opacity:0.8;">
+          <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #a855f7, #7c3aed);display:flex;align-items:center;justify-content:center;font-size:20px;">👑</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:white;">KingCrypto sent Drama Queen x1</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);">500 diamonds</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 9. SETTINGS PANEL -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="settings">
+  <div class="section-label">Screen 9</div>
+  <div class="section-title">Settings Panel</div>
+  <div class="section-desc">Dropdown panel from the gear icon with app configuration.</div>
+
+  <div class="card" style="max-width:420px;padding:0;">
+    <!-- Header -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--zinc-800);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:15px;font-weight:600;color:var(--zinc-100);">Settings</span>
+      <span style="font-size:12px;color:var(--zinc-600);cursor:pointer;">ESC to close</span>
+    </div>
+
+    <div style="padding:20px;display:flex;flex-direction:column;gap:20px;">
+      <!-- API Key -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin-bottom:8px;">API Configuration</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div>
+            <label style="font-size:11px;color:var(--zinc-500);display:block;margin-bottom:4px;">TikTok Session ID</label>
+            <input class="input w-full" type="password" value="sid_xxxxxxxxxxxxxxxx" style="font-family:monospace;font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--zinc-500);display:block;margin-bottom:4px;">OpenAI API Key (for AI summaries)</label>
+            <input class="input w-full" type="password" value="sk-xxxx...xxxx" style="font-family:monospace;font-size:12px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <!-- OBS URL -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin-bottom:8px;">OBS Overlay URLs</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--zinc-900);border-radius:6px;">
+            <span style="font-size:11px;color:var(--zinc-500);width:50px;">Chat</span>
+            <code style="font-size:11px;color:var(--zinc-300);flex:1;font-family:monospace;">http://localhost:3847/obs/chat</code>
+            <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px;">Copy</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--zinc-900);border-radius:6px;">
+            <span style="font-size:11px;color:var(--zinc-500);width:50px;">Stats</span>
+            <code style="font-size:11px;color:var(--zinc-300);flex:1;font-family:monospace;">http://localhost:3847/obs/stats</code>
+            <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px;">Copy</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--zinc-900);border-radius:6px;">
+            <span style="font-size:11px;color:var(--zinc-500);width:50px;">Gifts</span>
+            <code style="font-size:11px;color:var(--zinc-300);flex:1;font-family:monospace;">http://localhost:3847/obs/gifts</code>
+            <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px;">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <!-- Auto-connect -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin-bottom:10px;">Preferences</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:13px;color:var(--zinc-100);">Auto-connect on launch</div>
+              <div style="font-size:11px;color:var(--zinc-500);">Reconnect to last session automatically</div>
+            </div>
+            <div class="toggle active"></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:13px;color:var(--zinc-100);">Desktop notifications</div>
+              <div style="font-size:11px;color:var(--zinc-500);">Show native OS notifications for alerts</div>
+            </div>
+            <div class="toggle active"></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:13px;color:var(--zinc-100);">Sound effects</div>
+              <div style="font-size:11px;color:var(--zinc-500);">Play sounds for gifts and milestones</div>
+            </div>
+            <div class="toggle"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <!-- Moderation link -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--zinc-400);margin-bottom:8px;">More</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <a href="#webhooks" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--zinc-900);border-radius:6px;text-decoration:none;">
+            <span style="font-size:13px;color:var(--zinc-300);">Webhook Config</span>
+            <span style="font-size:12px;color:var(--zinc-600);">&#8250;</span>
+          </a>
+          <a href="#moderation" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--zinc-900);border-radius:6px;text-decoration:none;">
+            <span style="font-size:13px;color:var(--zinc-300);">Moderation</span>
+            <span style="font-size:12px;color:var(--zinc-600);">&#8250;</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 10. WEBHOOK CONFIG -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="webhooks">
+  <div class="section-label">Screen 10</div>
+  <div class="section-title">Webhook Config</div>
+  <div class="section-desc">Configure webhook integrations for Discord, Slack, and custom HTTP endpoints.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;">
+    <!-- Webhook URLs -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:15px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Webhook Endpoints</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <label style="font-size:12px;font-weight:500;color:var(--zinc-400);display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <div style="width:18px;height:18px;border-radius:4px;background:#5865F2;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:10px;color:white;font-weight:700;">D</span>
+            </div>
+            Discord Webhook URL
+          </label>
+          <input class="input w-full" placeholder="https://discord.com/api/webhooks/..." value="https://discord.com/api/webhooks/1234.../abcXYZ">
+          <div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--emerald-400);"></div>
+            <span style="font-size:11px;color:var(--emerald-400);">Connected</span>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:12px;font-weight:500;color:var(--zinc-400);display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <div style="width:18px;height:18px;border-radius:4px;background:#E01E5A;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:10px;color:white;font-weight:700;">S</span>
+            </div>
+            Slack Webhook URL
+          </label>
+          <input class="input w-full" placeholder="https://hooks.slack.com/services/...">
+          <div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--zinc-600);"></div>
+            <span style="font-size:11px;color:var(--zinc-500);">Not configured</span>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:12px;font-weight:500;color:var(--zinc-400);display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <div style="width:18px;height:18px;border-radius:4px;background:var(--zinc-700);display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:10px;color:var(--zinc-300);font-weight:700;">{}</span>
+            </div>
+            Custom HTTP Endpoint
+          </label>
+          <input class="input w-full" placeholder="https://your-api.com/webhook" value="https://api.mysite.com/tiktok-events">
+          <div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--emerald-400);"></div>
+            <span style="font-size:11px;color:var(--emerald-400);">Connected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Types -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:15px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Event Types</div>
+      <div style="font-size:12px;color:var(--zinc-500);margin-bottom:16px;">Select which events trigger webhook notifications.</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="checkbox checked"></div>
+          <div>
+            <div style="font-size:13px;color:var(--zinc-100);">Gifts Received</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Notify when gifts are sent</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="checkbox checked"></div>
+          <div>
+            <div style="font-size:13px;color:var(--zinc-100);">New Followers</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Notify on new follower events</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="checkbox checked"></div>
+          <div>
+            <div style="font-size:13px;color:var(--zinc-100);">Keyword Matches</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Notify when alert keywords appear</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="checkbox"></div>
+          <div>
+            <div style="font-size:13px;color:var(--zinc-100);">Viewer Milestones</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Notify at 1K, 5K, 10K, 50K thresholds</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <div class="checkbox"></div>
+          <div>
+            <div style="font-size:13px;color:var(--zinc-100);">Session Start / End</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Notify when streams go live or end</div>
+          </div>
+        </label>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 11. MODERATION PANEL -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="moderation">
+  <div class="section-label">Screen 11</div>
+  <div class="section-title">Moderation Panel</div>
+  <div class="section-desc">Manage blocked users, keyword filters, and spam detection settings.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;max-width:1100px;">
+    <!-- Blocked Users -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:14px;font-weight:600;color:var(--zinc-100);margin-bottom:12px;">Blocked Users</div>
+      <div style="display:flex;gap:6px;margin-bottom:16px;">
+        <input class="input" style="flex:1;" placeholder="@username">
+        <button class="btn btn-ghost btn-sm">Block</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--zinc-900);border-radius:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="avatar avatar-pink" style="width:24px;height:24px;font-size:10px;">T</div>
+            <span style="font-size:12px;color:var(--zinc-300);">@troll_master</span>
+          </div>
+          <button style="background:none;border:none;color:var(--zinc-600);cursor:pointer;font-size:14px;">&#x2715;</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--zinc-900);border-radius:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="avatar avatar-orange" style="width:24px;height:24px;font-size:10px;">S</div>
+            <span style="font-size:12px;color:var(--zinc-300);">@spam_bot_42</span>
+          </div>
+          <button style="background:none;border:none;color:var(--zinc-600);cursor:pointer;font-size:14px;">&#x2715;</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--zinc-900);border-radius:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="avatar avatar-purple" style="width:24px;height:24px;font-size:10px;">H</div>
+            <span style="font-size:12px;color:var(--zinc-300);">@hate_account</span>
+          </div>
+          <button style="background:none;border:none;color:var(--zinc-600);cursor:pointer;font-size:14px;">&#x2715;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyword Blocklist -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:14px;font-weight:600;color:var(--zinc-100);margin-bottom:12px;">Keyword Blocklist</div>
+      <div style="display:flex;gap:6px;margin-bottom:16px;">
+        <input class="input" style="flex:1;" placeholder="Add keyword...">
+        <button class="btn btn-ghost btn-sm">Add</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);border-radius:6px;font-size:12px;color:var(--rose-400);">
+          scam <button style="background:none;border:none;color:var(--rose-400);cursor:pointer;font-size:12px;opacity:0.6;">&#x2715;</button>
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);border-radius:6px;font-size:12px;color:var(--rose-400);">
+          crypto <button style="background:none;border:none;color:var(--rose-400);cursor:pointer;font-size:12px;opacity:0.6;">&#x2715;</button>
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);border-radius:6px;font-size:12px;color:var(--rose-400);">
+          buy now <button style="background:none;border:none;color:var(--rose-400);cursor:pointer;font-size:12px;opacity:0.6;">&#x2715;</button>
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);border-radius:6px;font-size:12px;color:var(--rose-400);">
+          free money <button style="background:none;border:none;color:var(--rose-400);cursor:pointer;font-size:12px;opacity:0.6;">&#x2715;</button>
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);border-radius:6px;font-size:12px;color:var(--rose-400);">
+          link in bio <button style="background:none;border:none;color:var(--rose-400);cursor:pointer;font-size:12px;opacity:0.6;">&#x2715;</button>
+        </span>
+      </div>
+    </div>
+
+    <!-- Spam Detection -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:14px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Spam Detection</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;color:var(--zinc-100);">Enable spam detection</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Auto-hide suspected spam</div>
+          </div>
+          <div class="toggle active"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;color:var(--zinc-100);">Duplicate message filter</div>
+            <div style="font-size:11px;color:var(--zinc-500);">Hide repeated messages</div>
+          </div>
+          <div class="toggle active"></div>
+        </div>
+        <div class="separator"></div>
+        <div>
+          <div style="font-size:12px;color:var(--zinc-400);margin-bottom:8px;">Auto-hide threshold</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;height:4px;background:var(--zinc-800);border-radius:2px;position:relative;">
+              <div style="position:absolute;left:0;top:0;width:60%;height:100%;background:var(--like-500);border-radius:2px;"></div>
+              <div style="position:absolute;left:60%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:white;border:2px solid var(--like-500);"></div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:var(--zinc-100);width:20px;" class="tabular">3</span>
+          </div>
+          <div style="font-size:11px;color:var(--zinc-500);margin-top:6px;">Hide after 3 flagged messages per user</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 12. CREATOR ANALYTICS -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="analytics">
+  <div class="section-label">Screen 12</div>
+  <div class="section-title">Creator Analytics</div>
+  <div class="section-desc">Session trends, viewer peaks, gift revenue, and follower growth over time.</div>
+
+  <!-- Date Range -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+    <div class="tab-bar" style="display:inline-flex;">
+      <div class="tab">7D</div>
+      <div class="tab active">30D</div>
+      <div class="tab">90D</div>
+      <div class="tab">All</div>
+    </div>
+    <span style="font-size:12px;color:var(--zinc-500);">Apr 5 - May 5, 2026</span>
+  </div>
+
+  <!-- Stat Summary -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+    <div class="stat-card">
+      <div class="stat-label">Total Sessions</div>
+      <div class="stat-value" class="tabular">24</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Peak Viewers</div>
+      <div class="stat-value text-blue" style="font-variant-numeric:tabular-nums;">14.2K</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Diamonds</div>
+      <div class="stat-value text-amber" style="font-variant-numeric:tabular-nums;">186K</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">New Followers</div>
+      <div class="stat-value text-emerald" style="font-variant-numeric:tabular-nums;">2,847</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <!-- Viewer Peaks Chart -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Viewer Peaks</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 1</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:68%;background:linear-gradient(90deg, var(--blue-500), var(--blue-300));">12.4K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 2</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:85%;background:linear-gradient(90deg, var(--blue-500), var(--blue-300));">15.8K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 3</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:100%;background:linear-gradient(90deg, var(--blue-500), var(--blue-300));">18.2K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 4</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:78%;background:linear-gradient(90deg, var(--blue-500), var(--blue-300));">14.1K</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gift Revenue Chart -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Gift Revenue (Diamonds)</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 1</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:55%;background:linear-gradient(90deg, #d97706, var(--amber-300));">32K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 2</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:72%;background:linear-gradient(90deg, #d97706, var(--amber-300));">42K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 3</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:100%;background:linear-gradient(90deg, #d97706, var(--amber-300));">58K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 4</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:92%;background:linear-gradient(90deg, #d97706, var(--amber-300));">54K</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comment Volume -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Comment Volume</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 1</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:62%;background:linear-gradient(90deg, var(--like-600), var(--like-400));">4.2K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 2</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:78%;background:linear-gradient(90deg, var(--like-600), var(--like-400));">5.4K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 3</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:95%;background:linear-gradient(90deg, var(--like-600), var(--like-400));">6.8K</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 4</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:100%;background:linear-gradient(90deg, var(--like-600), var(--like-400));">7.1K</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Follower Growth -->
+    <div class="card" style="padding:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--zinc-100);margin-bottom:16px;">Follower Growth</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 1</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:48%;background:linear-gradient(90deg, #059669, var(--emerald-300));">412</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 2</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:72%;background:linear-gradient(90deg, #059669, var(--emerald-300));">623</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 3</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:100%;background:linear-gradient(90deg, #059669, var(--emerald-300));">894</div></div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Week 4</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:82%;background:linear-gradient(90deg, #059669, var(--emerald-300));">718</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 13. SESSION COMPARISON -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="comparison">
+  <div class="section-label">Screen 13</div>
+  <div class="section-title">Session Comparison</div>
+  <div class="section-desc">Side-by-side comparison of two sessions with delta indicators.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:0;max-width:1000px;">
+    <!-- Session A -->
+    <div class="card" style="padding:20px;border-radius:var(--radius) 0 0 var(--radius);border-right:none;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div class="pill pill-live" style="margin-bottom:8px;"><span class="dot"></span> Session A</div>
+        <div style="font-size:16px;font-weight:700;color:var(--zinc-100);">@dancequeen_live</div>
+        <div style="font-size:12px;color:var(--zinc-500);">May 4, 2026 - 2h 14m</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Peak Viewers</span>
+            <span style="font-size:14px;font-weight:700;color:var(--blue-300);" class="tabular">18,200</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--blue-400);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Total Likes</span>
+            <span style="font-size:14px;font-weight:700;color:var(--like-400);" class="tabular">284,392</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--like-500);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Diamonds</span>
+            <span style="font-size:14px;font-weight:700;color:var(--amber-300);" class="tabular">9,428</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:82%;background:var(--amber-300);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Comments</span>
+            <span style="font-size:14px;font-weight:700;color:var(--zinc-100);" class="tabular">847</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:69%;background:var(--zinc-400);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">New Followers</span>
+            <span style="font-size:14px;font-weight:700;color:var(--emerald-300);" class="tabular">89</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--emerald-400);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delta Column -->
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding-top:80px;background:var(--zinc-900);border-top:1px solid var(--zinc-800);border-bottom:1px solid var(--zinc-800);">
+      <div class="delta delta-up" title="+21%">&#9650; 21%</div>
+      <div class="delta delta-up" title="+44%">&#9650; 44%</div>
+      <div class="delta delta-down" title="-18%">&#9660; 18%</div>
+      <div class="delta delta-down" title="-31%">&#9660; 31%</div>
+      <div class="delta delta-up" title="+48%">&#9650; 48%</div>
+    </div>
+
+    <!-- Session B -->
+    <div class="card" style="padding:20px;border-radius:0 var(--radius) var(--radius) 0;border-left:none;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div class="pill pill-offline" style="margin-bottom:8px;">Session B</div>
+        <div style="font-size:16px;font-weight:700;color:var(--zinc-100);">@dancequeen_live</div>
+        <div style="font-size:12px;color:var(--zinc-500);">May 1, 2026 - 1h 56m</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Peak Viewers</span>
+            <span style="font-size:14px;font-weight:700;color:var(--blue-300);" class="tabular">15,040</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:83%;background:var(--blue-400);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Total Likes</span>
+            <span style="font-size:14px;font-weight:700;color:var(--like-400);" class="tabular">197,621</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:70%;background:var(--like-500);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Diamonds</span>
+            <span style="font-size:14px;font-weight:700;color:var(--amber-300);" class="tabular">11,502</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--amber-300);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">Comments</span>
+            <span style="font-size:14px;font-weight:700;color:var(--zinc-100);" class="tabular">1,228</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--zinc-400);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:var(--zinc-500);">New Followers</span>
+            <span style="font-size:14px;font-weight:700;color:var(--emerald-300);" class="tabular">60</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:67%;background:var(--emerald-400);"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 14. FOLLOWER WATCHLIST -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="watchlist">
+  <div class="section-label">Screen 14</div>
+  <div class="section-title">Follower Watchlist</div>
+  <div class="section-desc">Track specific users with online/offline indicators and notification preferences.</div>
+
+  <!-- Add User -->
+  <div style="display:flex;gap:8px;margin-bottom:20px;max-width:500px;">
+    <input class="input" style="flex:1;" placeholder="Add @username to watchlist...">
+    <button class="btn btn-primary">Watch</button>
+  </div>
+
+  <div class="card" style="max-width:700px;">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--zinc-800);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:12px;color:var(--zinc-500);">6 users watched</span>
+      <div class="tab-bar" style="display:inline-flex;">
+        <div class="tab active">All</div>
+        <div class="tab">Online</div>
+        <div class="tab">Offline</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;">
+      <!-- User 1 - Online -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--zinc-800);">
+        <div style="position:relative;">
+          <div class="avatar avatar-amber">S</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;background:var(--emerald-400);border:2px solid var(--zinc-900);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:14px;font-weight:600;color:var(--zinc-100);">SparkleGirl</span>
+            <span class="pill pill-online" style="font-size:10px;">LIVE NOW</span>
+          </div>
+          <div style="font-size:12px;color:var(--zinc-500);">@sparkle_girl99</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--emerald-300);">Streaming now</div>
+          <div style="font-size:10px;color:var(--zinc-600);">Last seen: just now</div>
+        </div>
+        <div class="toggle active" title="Notify when live"></div>
+      </div>
+
+      <!-- User 2 - Online -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--zinc-800);">
+        <div style="position:relative;">
+          <div class="avatar avatar-blue">M</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;background:var(--emerald-400);border:2px solid var(--zinc-900);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:14px;font-weight:600;color:var(--zinc-100);">MoonWalker99</span>
+            <span class="pill pill-online" style="font-size:10px;">LIVE NOW</span>
+          </div>
+          <div style="font-size:12px;color:var(--zinc-500);">@moonwalker_99</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--emerald-300);">Streaming now</div>
+          <div style="font-size:10px;color:var(--zinc-600);">Last seen: just now</div>
+        </div>
+        <div class="toggle active" title="Notify when live"></div>
+      </div>
+
+      <!-- User 3 - Offline -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--zinc-800);">
+        <div style="position:relative;">
+          <div class="avatar avatar-purple" style="opacity:0.6;">K</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;background:var(--zinc-600);border:2px solid var(--zinc-900);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--zinc-400);">KingCrypto</div>
+          <div style="font-size:12px;color:var(--zinc-600);">@king_crypto</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--zinc-500);">Offline</div>
+          <div style="font-size:10px;color:var(--zinc-600);">Last seen: 2h ago</div>
+        </div>
+        <div class="toggle active" title="Notify when live"></div>
+      </div>
+
+      <!-- User 4 - Offline -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--zinc-800);">
+        <div style="position:relative;">
+          <div class="avatar avatar-emerald" style="opacity:0.6;">L</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;background:var(--zinc-600);border:2px solid var(--zinc-900);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--zinc-400);">LilyVibes</div>
+          <div style="font-size:12px;color:var(--zinc-600);">@lily_vibes</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--zinc-500);">Offline</div>
+          <div style="font-size:10px;color:var(--zinc-600);">Last seen: 5h ago</div>
+        </div>
+        <div class="toggle" title="Notify when live"></div>
+      </div>
+
+      <!-- User 5 - Offline -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--zinc-800);">
+        <div style="position:relative;">
+          <div class="avatar avatar-orange" style="opacity:0.6;">T</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;background:var(--zinc-600);border:2px solid var(--zinc-900);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--zinc-400);">TechNova</div>
+          <div style="font-size:12px;color:var(--zinc-600);">@technova_x</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--zinc-500);">Offline</div>
+          <div style="font-size:10px;color:var(--zinc-600);">Last seen: 1d ago</div>
+        </div>
+        <div class="toggle active" title="Notify when live"></div>
+      </div>
+
+      <!-- User 6 - Offline -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;">
+        <div style="position:relative;">
+          <div class="avatar avatar-pink" style="opacity:0.6;">R</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;background:var(--zinc-600);border:2px solid var(--zinc-900);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--zinc-400);">RosePetal</div>
+          <div style="font-size:12px;color:var(--zinc-600);">@rosepetal_22</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--zinc-500);">Offline</div>
+          <div style="font-size:10px;color:var(--zinc-600);">Last seen: 3d ago</div>
+        </div>
+        <div class="toggle" title="Notify when live"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer spacer -->
+<div style="height:80px;"></div>
+
+</body>
+</html>

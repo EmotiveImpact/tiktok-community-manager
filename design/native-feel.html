@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Native Feel — Option B vs C</title>
+<style>
+  :root {
+    --accent-blue: #007aff;       /* macOS Sequoia accent */
+    --accent-pink: #ff2d92;
+    --label: rgba(255,255,255,0.92);
+    --secondary-label: rgba(235,235,245,0.6);
+    --tertiary-label: rgba(235,235,245,0.3);
+    --quaternary-label: rgba(235,235,245,0.16);
+    --separator: rgba(84,84,88,0.65);
+    --fill-thick: rgba(118,118,128,0.36);
+    --fill-thin: rgba(118,118,128,0.18);
+    --bg-window: rgba(28,28,30,0.72);  /* translucent for vibrancy */
+    --bg-content: rgba(44,44,46,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: #1a1a1a url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1600') center/cover fixed;
+    padding: 32px;
+    color: var(--label);
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: -1;
+  }
+  h1 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 28px 0 10px;
+    color: var(--label);
+  }
+  h1:first-child { margin-top: 0; }
+  .subtitle {
+    font-size: 12px;
+    color: var(--secondary-label);
+    margin-bottom: 14px;
+    line-height: 1.5;
+    max-width: 720px;
+  }
+
+  .window {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 0.5px rgba(255,255,255,0.06),
+      0 24px 60px rgba(0,0,0,0.5),
+      0 4px 16px rgba(0,0,0,0.3);
+    backdrop-filter: blur(40px) saturate(140%);
+    -webkit-backdrop-filter: blur(40px) saturate(140%);
+    background: var(--bg-window);
+    margin-bottom: 20px;
+  }
+
+  /* === OPTION B: Electron with native macOS feel === */
+
+  .b-toolbar {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px 0 78px;
+    border-bottom: 0.5px solid var(--separator);
+    background: rgba(28,28,30,0.4);
+  }
+  .traffic {
+    position: absolute;
+    left: 14px;
+    top: 11px;
+    display: flex;
+    gap: 8px;
+  }
+  .traffic span {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+  .traffic span:nth-child(1) { background: #ff5f57; }
+  .traffic span:nth-child(2) { background: #febc2e; }
+  .traffic span:nth-child(3) { background: #28c840; }
+
+  .b-input {
+    height: 22px;
+    width: 200px;
+    background: var(--fill-thin);
+    border: 0.5px solid var(--separator);
+    border-radius: 5px;
+    color: var(--label);
+    font-size: 12px;
+    padding: 0 8px;
+    outline: none;
+  }
+  .b-input::placeholder { color: var(--tertiary-label); }
+  .b-input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.25);
+  }
+  .b-btn {
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 0.5px solid var(--separator);
+    background: var(--fill-thin);
+    color: var(--label);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .b-btn:hover { background: var(--fill-thick); }
+  .b-btn-primary {
+    background: var(--accent-blue);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 0.5px 2px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .b-btn-primary:hover {
+    background: #0a84ff;
+  }
+  .b-btn-active {
+    background: rgba(0,122,255,0.18);
+    color: var(--accent-blue);
+    border-color: transparent;
+  }
+  .b-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .b-status .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .b-status.live { color: #ff453a; }
+  .b-status.live .dot { background: #ff453a; box-shadow: 0 0 6px #ff453a; animation: pulse 1.4s infinite; }
+  .b-status.idle { color: var(--secondary-label); }
+  .b-status.idle .dot { background: var(--secondary-label); }
+  .b-divider { width: 0.5px; height: 16px; background: var(--separator); margin: 0 4px; }
+  .spacer { flex: 1; }
+
+  /* SF Symbols substitution via unicode */
+  .sf {
+    font-size: 13px;
+    line-height: 1;
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .b-stats {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 8px 16px 8px 78px;
+    border-bottom: 0.5px solid var(--separator);
+    font-size: 11px;
+    background: rgba(28,28,30,0.25);
+  }
+  .b-stat .v { font-weight: 600; color: var(--label); font-feature-settings: "tnum"; font-size: 12px; }
+  .b-stat .l { color: var(--secondary-label); margin-left: 3px; }
+
+  .b-content {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    height: 380px;
+  }
+  .b-sidebar {
+    background: rgba(28,28,30,0.3);
+    border-right: 0.5px solid var(--separator);
+    padding: 8px;
+    overflow-y: auto;
+  }
+  .b-sidebar-section {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--tertiary-label);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 8px 8px 4px;
+  }
+  .b-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: var(--label);
+    cursor: pointer;
+  }
+  .b-sidebar-item:hover { background: var(--fill-thin); }
+  .b-sidebar-item.active {
+    background: var(--accent-blue);
+    color: white;
+  }
+  .b-sidebar-item .count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--secondary-label);
+  }
+  .b-sidebar-item.active .count { color: rgba(255,255,255,0.7); }
+  .b-main { padding: 14px; overflow-y: auto; }
+
+  .b-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+  }
+  .b-row:hover { background: var(--fill-thin); }
+  .b-row .avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff2d92, #af52de);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .b-row .name {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .b-row .name.tracked { color: #ff9500; }
+  .b-row .text {
+    font-size: 12px;
+    color: var(--secondary-label);
+    margin-left: 4px;
+  }
+  .b-row .time {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--tertiary-label);
+  }
+
+  /* === OPTION C: True Native (SwiftUI / NSToolbar) === */
+
+  .c-toolbar {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px 0 78px;
+    background: rgba(40,40,40,0.55);
+    border-bottom: 0.5px solid var(--separator);
+    backdrop-filter: blur(30px) saturate(180%);
+  }
+  .c-segmented {
+    display: inline-flex;
+    background: rgba(118,118,128,0.24);
+    border-radius: 7px;
+    padding: 2px;
+    height: 26px;
+  }
+  .c-segmented button {
+    border: none;
+    background: transparent;
+    color: var(--label);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 100ms;
+  }
+  .c-segmented button.selected {
+    background: rgba(99,99,102,0.95);
+    box-shadow: 0 0.5px 2px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.18);
+  }
+
+  .c-tb-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--label);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .c-tb-btn:hover { background: var(--fill-thin); }
+
+  .c-tb-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .c-tb-subtitle {
+    font-size: 11px;
+    color: var(--secondary-label);
+    text-align: center;
+    margin-top: 1px;
+  }
+
+  .c-content {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    height: 380px;
+  }
+  .c-sidebar {
+    background: rgba(28,28,30,0.4);
+    border-right: 0.5px solid var(--separator);
+    padding: 8px 0;
+  }
+  .c-section-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--secondary-label);
+    padding: 12px 14px 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .c-section-chevron { font-size: 9px; opacity: 0.6; }
+  .c-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 14px;
+    font-size: 13px;
+    color: var(--label);
+    cursor: pointer;
+    border-radius: 5px;
+    margin: 0 6px;
+  }
+  .c-sidebar-item:hover { background: var(--fill-thin); }
+  .c-sidebar-item.active { background: var(--fill-thick); }
+  .c-sidebar-item .icon {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--accent-blue);
+  }
+  .c-sidebar-item .badge {
+    margin-left: auto;
+    background: var(--fill-thick);
+    border-radius: 9px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .c-main {
+    background: rgba(28,28,30,0.45);
+    overflow-y: auto;
+  }
+  .c-toolbar-secondary {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border-bottom: 0.5px solid var(--separator);
+    gap: 10px;
+  }
+
+  .c-list-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-bottom: 0.5px solid var(--separator);
+    font-size: 13px;
+  }
+  .c-list-row:hover { background: var(--fill-thin); }
+  .c-list-row .leading {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff2d92, #af52de);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .c-list-row .title { font-weight: 500; }
+  .c-list-row .secondary {
+    color: var(--secondary-label);
+    font-size: 12px;
+  }
+  .c-list-row .trailing {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--secondary-label);
+    font-feature-settings: "tnum";
+  }
+
+  .c-tag {
+    background: var(--accent-blue);
+    color: white;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  /* status indicator native style */
+  .c-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    background: rgba(255,69,58,0.14);
+    color: #ff453a;
+    font-weight: 500;
+  }
+  .c-status .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #ff453a;
+    box-shadow: 0 0 6px #ff453a;
+    animation: pulse 1.4s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Comparison notes */
+  .legend {
+    background: rgba(28,28,30,0.7);
+    border-radius: 10px;
+    padding: 16px 20px;
+    border: 0.5px solid var(--separator);
+    margin-top: 32px;
+  }
+  .legend h2 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .legend p {
+    font-size: 12px;
+    color: var(--secondary-label);
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+  .legend strong { color: var(--label); font-weight: 600; }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Option B — Electron with native macOS feel</h1>
+<p class="subtitle">
+  Same React + Tailwind app you have today, but with native window vibrancy, SF Pro typography at native sizes, system accent color, 0.5px separators, and native control geometry. <strong>No rewrite — same code, dramatically more native feel.</strong> Implementation: ~2 hours.
+</p>
+
+<div class="window">
+  <div style="position: relative">
+    <div class="traffic"><span></span><span></span><span></span></div>
+    <div class="b-toolbar">
+      <input class="b-input" placeholder="username" value="badmibad5">
+      <button class="b-btn b-btn-primary">Connect</button>
+      <span class="b-status idle"><span class="dot"></span>Idle</span>
+      <span class="spacer"></span>
+      <button class="b-btn">Watch</button>
+      <button class="b-btn">★ Tracked <span style="opacity:0.6;margin-left:2px">5</span></button>
+      <button class="b-btn">Alerts</button>
+      <span class="b-divider"></span>
+      <button class="b-btn">Tools <span style="opacity:0.6">▾</span></button>
+      <button class="b-btn" style="width: 22px; padding: 0; justify-content: center;">⚙</button>
+    </div>
+  </div>
+
+  <div class="b-stats">
+    <div class="b-stat"><span style="color:#ff453a">♥</span> <span class="v">5,678</span><span class="l">+2.3/s</span></div>
+    <div class="b-stat"><span class="sf">👁</span> <span class="v">1,234</span><span class="l">viewers</span></div>
+    <div class="b-stat"><span class="sf">💬</span> <span class="v">234</span><span class="l">comments</span></div>
+    <div class="b-stat"><span style="color:#ff9500">◆</span> <span class="v">1,234</span><span class="l">23 gifts</span></div>
+    <div class="b-stat"><span style="color:#0a84ff">+</span> <span class="v">42</span><span class="l">follows</span></div>
+  </div>
+
+  <div class="b-content">
+    <div class="b-sidebar">
+      <div class="b-sidebar-section">Audience</div>
+      <div class="b-sidebar-item active">★ Tracked <span class="count">5</span></div>
+      <div class="b-sidebar-item">📝 Fan Notes <span class="count">12</span></div>
+      <div class="b-sidebar-item">👥 Room <span class="count">847</span></div>
+      <div class="b-sidebar-item">🏆 Leaderboard</div>
+      <div class="b-sidebar-section">Live</div>
+      <div class="b-sidebar-item">🔔 Alerts <span class="count">3</span></div>
+      <div class="b-sidebar-item">🛡 Moderation</div>
+      <div class="b-sidebar-item">🎙 Transcript</div>
+      <div class="b-sidebar-item">🎬 Highlights</div>
+      <div class="b-sidebar-section">Insights</div>
+      <div class="b-sidebar-item">📊 Chat Insights</div>
+      <div class="b-sidebar-item">📈 Analytics</div>
+      <div class="b-sidebar-item">🕒 History</div>
+    </div>
+    <div class="b-main">
+      <div class="b-row"><div class="avatar">M</div><span class="name tracked">★ Miss H Woah-Woah</span><span class="text">"omg yes do the collab!!"</span><span class="time">just now</span></div>
+      <div class="b-row"><div class="avatar" style="background:linear-gradient(135deg,#5ac8fa,#0a84ff)">J</div><span class="name">Jaja</span><span class="text">"first time here, love this vibe"</span><span class="time">5s</span></div>
+      <div class="b-row"><div class="avatar" style="background:linear-gradient(135deg,#ff9500,#ff6200)">B</div><span class="name">brett.codes</span><span class="text">"dropping a gift 🎁"</span><span class="time">12s</span></div>
+      <div class="b-row"><div class="avatar" style="background:linear-gradient(135deg,#34c759,#30d158)">A</div><span class="name">aliva.dance</span><span class="text">"can you talk about react native?"</span><span class="time">28s</span></div>
+      <div class="b-row"><div class="avatar">P</div><span class="name tracked">★ pierre_dvbz</span><span class="text">"the lighting looks great today"</span><span class="time">42s</span></div>
+    </div>
+  </div>
+</div>
+
+<h1>Option C — True Native (SwiftUI / AppKit)</h1>
+<p class="subtitle">
+  Rewrite as a native macOS app using SwiftUI + AppKit. NSToolbar with SF Symbols, NSSplitView with native sidebar, NSTableView for lists, system controls everywhere. Reads as "Mac app" not "web app." <strong>This is what Notes, Mail, and Sequoia-era system apps look like.</strong> Implementation: 2-4 weeks for feature parity.
+</p>
+
+<div class="window">
+  <div style="position: relative">
+    <div class="traffic"><span></span><span></span><span></span></div>
+    <div class="c-toolbar">
+      <button class="c-tb-btn">⊞</button>
+      <button class="c-tb-btn">‹</button>
+      <button class="c-tb-btn">›</button>
+      <span class="b-divider"></span>
+      <span class="c-status"><span class="dot"></span>Live · @badmibad5 · 12m</span>
+      <span class="spacer"></span>
+      <div class="c-segmented">
+        <button>Comments</button>
+        <button class="selected">Top</button>
+        <button>Gifts</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="c-tb-btn" title="Watch">▶</button>
+      <button class="c-tb-btn" title="Notifications">🔔</button>
+      <button class="c-tb-btn" title="Share">⎘</button>
+      <button class="c-tb-btn" title="More">⋯</button>
+    </div>
+  </div>
+
+  <div class="c-content">
+    <div class="c-sidebar">
+      <div class="c-section-header"><span class="c-section-chevron">▾</span> AUDIENCE</div>
+      <div class="c-sidebar-item active"><span class="icon">★</span>Tracked<span class="badge">5</span></div>
+      <div class="c-sidebar-item"><span class="icon">📝</span>Fan Notes<span class="badge">12</span></div>
+      <div class="c-sidebar-item"><span class="icon">👥</span>Room<span class="badge">847</span></div>
+      <div class="c-sidebar-item"><span class="icon">🏆</span>Leaderboard</div>
+
+      <div class="c-section-header"><span class="c-section-chevron">▾</span> LIVE</div>
+      <div class="c-sidebar-item"><span class="icon">🔔</span>Alerts<span class="badge">3</span></div>
+      <div class="c-sidebar-item"><span class="icon">🛡</span>Moderation</div>
+      <div class="c-sidebar-item"><span class="icon">🎙</span>Transcript</div>
+      <div class="c-sidebar-item"><span class="icon">🎬</span>Highlights</div>
+
+      <div class="c-section-header"><span class="c-section-chevron">▾</span> INSIGHTS</div>
+      <div class="c-sidebar-item"><span class="icon">📊</span>Chat Insights</div>
+      <div class="c-sidebar-item"><span class="icon">📈</span>Analytics</div>
+      <div class="c-sidebar-item"><span class="icon">🕒</span>History</div>
+    </div>
+    <div class="c-main">
+      <div class="c-toolbar-secondary">
+        <span style="font-size:13px;font-weight:600">Tracked Users</span>
+        <span class="c-tag">5</span>
+        <span class="spacer"></span>
+        <button class="c-tb-btn" title="Sort">⇅</button>
+        <button class="c-tb-btn" title="Filter">⊕</button>
+        <button class="c-tb-btn" title="Add">＋</button>
+      </div>
+      <div class="c-list-row">
+        <div class="leading">M</div>
+        <div>
+          <div class="title">Miss H Woah-Woah</div>
+          <div class="secondary">@miss_h_woah · 14 sessions · 2.3K diamonds</div>
+        </div>
+        <div class="trailing">2m ago</div>
+      </div>
+      <div class="c-list-row">
+        <div class="leading" style="background:linear-gradient(135deg,#5ac8fa,#0a84ff)">J</div>
+        <div>
+          <div class="title">Jaja</div>
+          <div class="secondary">@jaja_dan · 8 sessions · 1.4K diamonds</div>
+        </div>
+        <div class="trailing">5m ago</div>
+      </div>
+      <div class="c-list-row">
+        <div class="leading" style="background:linear-gradient(135deg,#ff9500,#ff6200)">B</div>
+        <div>
+          <div class="title">brett.codes</div>
+          <div class="secondary">@brett_codes · 22 sessions · 4.1K diamonds</div>
+        </div>
+        <div class="trailing">12m ago</div>
+      </div>
+      <div class="c-list-row">
+        <div class="leading" style="background:linear-gradient(135deg,#34c759,#30d158)">A</div>
+        <div>
+          <div class="title">aliva.dance</div>
+          <div class="secondary">@aliva · 3 sessions · 256 diamonds</div>
+        </div>
+        <div class="trailing">28m ago</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <h2>How they differ</h2>
+  <div class="grid2">
+    <div>
+      <p style="font-weight:600;color:var(--label);margin-bottom:8px">Option B (Electron, Native Feel)</p>
+      <p>✓ Window <strong>vibrancy</strong> — real macOS blur shows through</p>
+      <p>✓ SF Pro at <strong>native sizes</strong> (12/13/14px)</p>
+      <p>✓ <strong>0.5px separators</strong> instead of 1px borders</p>
+      <p>✓ <strong>22px control height</strong> matches macOS HIG</p>
+      <p>✓ <strong>System accent blue</strong> (#007aff) for primary actions</p>
+      <p>✓ <strong>5–6px corners</strong> instead of 8px</p>
+      <p>✓ <strong>Sidebar pattern</strong> with sectioned sources list</p>
+      <p>✗ Still rendered by Chromium — no real NSView controls</p>
+      <p>✗ Animations don't match native easing curves perfectly</p>
+    </div>
+    <div>
+      <p style="font-weight:600;color:var(--label);margin-bottom:8px">Option C (True Native, SwiftUI)</p>
+      <p>✓ Real <strong>NSToolbar</strong> with SF Symbols (genuine system icons)</p>
+      <p>✓ Real <strong>NSSplitView</strong> sidebar (collapses, system gestures)</p>
+      <p>✓ Real <strong>NSTableView</strong> rows with native selection animation</p>
+      <p>✓ Native <strong>menu bar, shortcuts, services</strong> for free</p>
+      <p>✓ <strong>50% smaller binary</strong>, no Chromium runtime</p>
+      <p>✓ <strong>Spotlight, share sheet, drag/drop</strong> all work natively</p>
+      <p>✓ <strong>Light/dark mode</strong> tracks system instantly</p>
+      <p>✗ Need to rewrite TikTok connection layer in Swift (or bridge via XPC to a Node helper)</p>
+      <p>✗ ~2-4 weeks of work for feature parity</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
