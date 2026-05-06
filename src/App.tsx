@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ConnectBar } from './components/ConnectBar';
+import { Sidebar, type SidebarPanel } from './components/Sidebar';
 import { CommentFeed } from './components/CommentFeed';
 import { GiftFeed } from './components/GiftFeed';
 import { AllFeed } from './components/AllFeed';
@@ -140,6 +141,7 @@ function ConnectBarTools({
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('comments');
+  const [activePanel, setActivePanel] = useState<SidebarPanel>('live');
   const [showHistory, setShowHistory] = useState(false);
   const [showStream, setShowStream] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -267,6 +269,30 @@ export default function App() {
       <StatsStrip />
 
       <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          active={activePanel}
+          onSelect={(id) => {
+            setActivePanel(id);
+            // Open the matching panel overlay (Live = no overlay = main feed)
+            if (id === 'tracked') setShowTracked(true);
+            else if (id === 'notes') setShowFanNotes(true);
+            else if (id === 'room') setShowRoomMembers(true);
+            else if (id === 'leaderboard') setShowLeaderboard(true);
+            else if (id === 'watchlist') setShowWatchlist(true);
+            else if (id === 'alerts') setShowAlerts(true);
+            else if (id === 'mod') setShowModeration(true);
+            else if (id === 'transcript') setShowTranscript(true);
+            else if (id === 'highlights') setShowHighlights(true);
+            else if (id === 'liker') setShowLiker(true);
+            else if (id === 'insights') setShowWordCloud(true);
+            else if (id === 'analytics') setShowAnalytics(true);
+            else if (id === 'compare') setShowComparison(true);
+            else if (id === 'history') setShowHistory(true);
+            else if (id === 'multi') setShowMultiRoom(true);
+          }}
+          showStream={showStream}
+          onToggleStream={() => setShowStream((v) => !v)}
+        />
         <main className="flex flex-1 gap-3 overflow-hidden p-3">
           <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
             {status === 'connected' ? (
@@ -299,20 +325,20 @@ export default function App() {
       </div>
 
       <UserDetailDrawer />
-      {showWordCloud && <WordCloud onClose={() => setShowWordCloud(false)} />}
-      {showModeration && <ModerationPanel onClose={() => setShowModeration(false)} />}
-      {showAlerts && <AlertsPanel onClose={() => setShowAlerts(false)} />}
-      {showLeaderboard && <AllTimeLeaderboard onClose={() => setShowLeaderboard(false)} />}
-      {showMultiRoom && <MultiRoom onClose={() => setShowMultiRoom(false)} />}
-      {showAnalytics && <CreatorAnalytics onClose={() => setShowAnalytics(false)} />}
-      {showComparison && <SessionComparison onClose={() => setShowComparison(false)} />}
-      {showWatchlist && <FollowerWatchlist onClose={() => setShowWatchlist(false)} />}
-      {showTranscript && <TranscriptPanel onClose={() => setShowTranscript(false)} />}
-      {showHighlights && <HighlightsPanel onClose={() => setShowHighlights(false)} />}
-      {showLiker && <LikerPanel onClose={() => setShowLiker(false)} />}
-      {showFanNotes && <FanNotesPanel onClose={() => setShowFanNotes(false)} />}
-      {showRoomMembers && <RoomMembersPanel onClose={() => setShowRoomMembers(false)} />}
-      {showTracked && <TrackedUsersPanel onClose={() => setShowTracked(false)} />}
+      {showWordCloud && <WordCloud onClose={() => { setShowWordCloud(false); setActivePanel('live'); }} />}
+      {showModeration && <ModerationPanel onClose={() => { setShowModeration(false); setActivePanel('live'); }} />}
+      {showAlerts && <AlertsPanel onClose={() => { setShowAlerts(false); setActivePanel('live'); }} />}
+      {showLeaderboard && <AllTimeLeaderboard onClose={() => { setShowLeaderboard(false); setActivePanel('live'); }} />}
+      {showMultiRoom && <MultiRoom onClose={() => { setShowMultiRoom(false); setActivePanel('live'); }} />}
+      {showAnalytics && <CreatorAnalytics onClose={() => { setShowAnalytics(false); setActivePanel('live'); }} />}
+      {showComparison && <SessionComparison onClose={() => { setShowComparison(false); setActivePanel('live'); }} />}
+      {showWatchlist && <FollowerWatchlist onClose={() => { setShowWatchlist(false); setActivePanel('live'); }} />}
+      {showTranscript && <TranscriptPanel onClose={() => { setShowTranscript(false); setActivePanel('live'); }} />}
+      {showHighlights && <HighlightsPanel onClose={() => { setShowHighlights(false); setActivePanel('live'); }} />}
+      {showLiker && <LikerPanel onClose={() => { setShowLiker(false); setActivePanel('live'); }} />}
+      {showFanNotes && <FanNotesPanel onClose={() => { setShowFanNotes(false); setActivePanel('live'); }} />}
+      {showRoomMembers && <RoomMembersPanel onClose={() => { setShowRoomMembers(false); setActivePanel('live'); }} />}
+      {showTracked && <TrackedUsersPanel onClose={() => { setShowTracked(false); setActivePanel('live'); }} />}
       {showCommandPalette && (
         <CommandPalette
           onClose={() => setShowCommandPalette(false)}
@@ -342,7 +368,7 @@ export default function App() {
           ]}
         />
       )}
-      {showHistory && <HistoryView onClose={() => setShowHistory(false)} />}
+      {showHistory && <HistoryView onClose={() => { setShowHistory(false); setActivePanel('live'); }} />}
       <AlertToasts />
     </div>
   );
