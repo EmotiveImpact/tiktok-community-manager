@@ -47,7 +47,7 @@ export function Reminders() {
       <div className="relative flex flex-none items-center gap-1.5">
         {snoozeFor === r.id ? (
           <>
-            {[1, 3, 7, 30].map((d) => (
+            {[1, 3, 7, 14, 30].map((d) => (
               <button key={d} onClick={() => act(r.id, 'snooze', d)} className="panel-btn no-drag">{d}d</button>
             ))}
             <button onClick={() => setSnoozeFor(null)} className="panel-btn panel-btn-icon no-drag" aria-label="Cancel snooze">✕</button>
@@ -76,7 +76,9 @@ export function Reminders() {
         <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
           <div className="glass p-4" style={{ borderRadius: 18 }}>
             <h3 className="mb-1 flex items-center gap-2 text-sm font-bold">
-              <img src="./assets/png/icon_heart_3d.png" alt="" className="h-6 w-6" draggable={false} />
+              <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full" style={{ background: 'rgba(238, 29, 82, 0.14)' }}>
+                <img src="./assets/png/icon_heart_3d.png" alt="" className="h-5 w-5" draggable={false} />
+              </span>
               Upcoming birthdays
             </h3>
             {birthdays.length === 0 ? (
@@ -89,7 +91,9 @@ export function Reminders() {
           </div>
           <div className="glass p-4" style={{ borderRadius: 18 }}>
             <h3 className="mb-1 flex items-center gap-2 text-sm font-bold">
-              <img src="./assets/png/icon_clock_3d.png" alt="" className="h-6 w-6" draggable={false} />
+              <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full" style={{ background: 'rgba(168, 85, 247, 0.16)' }}>
+                <img src="./assets/png/icon_crown_3d.png" alt="" className="h-5 w-5" draggable={false} />
+              </span>
               Quiet VIPs
             </h3>
             {quiet.length === 0 ? (

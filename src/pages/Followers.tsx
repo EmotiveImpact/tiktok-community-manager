@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /** Followers — the fan CRM table. Search, tag/tier filters, bulk tag, add fan, detail drawer. */
 import { useCallback, useEffect, useState } from 'react';
 import type { Fan, ListFansResult, Tier } from '../types';
@@ -9,6 +10,31 @@ import { FanDrawer } from '../components/FanDrawer';
 
 type Props = { onGoImport: () => void; onGoLive: () => void };
 
+// Optional ui store from a parallel workstream — loaded defensively so the
+// build never breaks if src/state/ui.ts doesn't exist.
+const uiModules = import.meta.glob('../state/ui.ts', { eager: true }) as Record<string, unknown>;
+const uiMod = Object.values(uiModules)[0] as
+  | { useUi?: { getState?: () => Record<string, unknown> }; useUiStore?: { getState?: () => Record<string, unknown> } }
+  | undefined;
+
+/** Fan to preselect: ?fan= query param, else ui-store fanFocus (consumed once). */
+function initialFanFocus(): string | null {
+  try {
+    const q = new URLSearchParams(window.location.search).get('fan');
+    if (q) return q;
+    const store = uiMod?.useUi ?? uiMod?.useUiStore;
+    const st = store?.getState?.();
+    if (st && typeof st.fanFocus === 'string' && st.fanFocus) {
+      const focus = st.fanFocus;
+      if (typeof st.setFanFocus === 'function') (st.setFanFocus as (f: string | null) => void)(null);
+      return focus;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 export function Followers({ onGoImport, onGoLive }: Props) {
   const pushToast = useAlerts((s) => s.pushToast);
   const [q, setQ] = useState('');
@@ -17,7 +43,7 @@ export function Followers({ onGoImport, onGoLive }: Props) {
   const [page, setPage] = useState(1);
   const [resp, setResp] = useState<ListFansResult>({ data: [], total: 0, page: 1, pageSize: 25, allTags: [] });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [openFan, setOpenFan] = useState<string | null>(null);
+  const [openFan, setOpenFan] = useState<string | null>(() => initialFanFocus());
   const [showAdd, setShowAdd] = useState(false);
   const [bulkTag, setBulkTag] = useState('');
   const [loaded, setLoaded] = useState(false);

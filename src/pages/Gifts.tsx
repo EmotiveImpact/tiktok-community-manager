@@ -54,13 +54,18 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
       {/* Totals header */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Diamonds this week', value: resp.diamondsWeek },
-          { label: 'Diamonds this month', value: resp.diamondsMonth },
-          { label: 'Diamonds all-time', value: resp.diamondsAll },
+          { label: 'Diamonds this week', value: resp.diamondsWeek, tint: 'rgba(238, 29, 82, 0.14)' },
+          { label: 'Diamonds this month', value: resp.diamondsMonth, tint: 'rgba(105, 201, 208, 0.18)' },
+          { label: 'Diamonds all-time', value: resp.diamondsAll, tint: 'rgba(168, 85, 247, 0.16)' },
         ].map((s) => (
-          <div key={s.label} className="glass brand-top-border p-4" style={{ borderRadius: 18 }}>
-            <div className="text-xs font-medium" style={{ color: 'var(--secondary-label)' }}>{s.label}</div>
-            <div className="mt-1 text-[22px] font-extrabold tracking-tight">{formatNumber(s.value)} 💎</div>
+          <div key={s.label} className="glass brand-top-border flex items-center gap-3 p-4" style={{ borderRadius: 18 }}>
+            <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full" style={{ background: s.tint }}>
+              <img src="./assets/png/icon_diamond_3d.png" alt="" className="h-7 w-7 object-contain" draggable={false} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-xs font-medium" style={{ color: 'var(--secondary-label)' }}>{s.label}</div>
+              <div className="mt-0.5 truncate text-[22px] font-extrabold leading-tight tracking-tight">{formatNumber(s.value)} 💎</div>
+            </div>
           </div>
         ))}
       </div>
