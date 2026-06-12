@@ -144,6 +144,28 @@ const api = {
   likerShow: () => ipcRenderer.invoke('liker:show') as Promise<{ ok: boolean }>,
   likerHide: () => ipcRenderer.invoke('liker:hide') as Promise<{ ok: boolean }>,
 
+  // Fan CRM
+  fansList: (q?: any) => ipcRenderer.invoke('fans:list', q) as Promise<any>,
+  fansGet: (uniqueId: string) => ipcRenderer.invoke('fans:get', uniqueId) as Promise<any>,
+  fansAdd: (payload: any) => ipcRenderer.invoke('fans:add', payload) as Promise<any>,
+  fansUpdate: (uniqueId: string, patch: any) =>
+    ipcRenderer.invoke('fans:update', uniqueId, patch) as Promise<any>,
+  fansBulkTag: (payload: { ids: string[]; add: string[]; remove: string[] }) =>
+    ipcRenderer.invoke('fans:bulkTag', payload) as Promise<{ ok: boolean; updated: number }>,
+  fansLogGift: (payload: any) =>
+    ipcRenderer.invoke('fans:logGift', payload) as Promise<{ ok: boolean; error?: string }>,
+  giftsList: (q?: any) => ipcRenderer.invoke('gifts:list', q) as Promise<any>,
+  remindersList: (withinDays?: number) =>
+    ipcRenderer.invoke('reminders:list', withinDays) as Promise<any[]>,
+  reminderAction: (payload: { id: string; action: 'done' | 'snooze'; days?: number }) =>
+    ipcRenderer.invoke('reminders:action', payload) as Promise<{ ok: boolean; error?: string }>,
+  fansImportCsv: (csvText: string) => ipcRenderer.invoke('fans:importCsv', csvText) as Promise<any>,
+  fansImportCsvFile: () => ipcRenderer.invoke('fans:importCsvFile') as Promise<any>,
+  fansExportCsv: () =>
+    ipcRenderer.invoke('fans:exportCsv') as Promise<{ ok: boolean; path?: string; error?: string }>,
+  fansClear: () => ipcRenderer.invoke('fans:clear') as Promise<{ ok: boolean }>,
+  fansDataDir: () => ipcRenderer.invoke('fans:dataDir') as Promise<string>,
+
   watchlistPoke: () => ipcRenderer.invoke('watchlist:poke') as Promise<{ ok: boolean }>,
   onWatchlistLive: (cb: (d: { username: string; detectedAt: number }) => void) => {
     const handler = (_e: unknown, d: any) => cb(d);

@@ -12,6 +12,7 @@ import { startLog, appendLog, stopLog, getLogDir } from './chatlog';
 import { WatchlistPoller } from './watchlist-poller';
 import { startRollingBuffer, stopRollingBuffer, captureClip, isFfmpegAvailable, getClipsDir, listClips } from './highlights';
 import { setupLikerIpc, closeLikerWindow } from './liker';
+import * as fans from './fans';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -19,6 +20,7 @@ const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
 let mainWindow: BrowserWindow | null = null;
 let session: TikTokSession | null = null;
+let currentSessionId: string | null = null;
 const multiSessions = new Map<string, TikTokSession>();
 const watchlistPoller = new WatchlistPoller({
   onLiveDetected: (evt) => broadcast('watchlist:live', evt),
@@ -74,12 +76,13 @@ ipcMain.handle('tt:connect', async (_e, username: string) => {
     onStatus: (status, error) => broadcast('tt:status', { status, error }),
     onEvent: (evt) => {
       if (evt.type === 'roomInfo') {
-        sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
+        currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
         startLog(evt.info.hostUniqueId);
         if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
       } else {
         sessions.append(evt);
         appendLog(evt);
+        fans.ingestLiveEvent(evt, currentSessionId);
       }
       broadcast('tt:event', evt);
       pushOverlayEvent(evt);
@@ -425,6 +428,58 @@ ipcMain.handle('notes:delete', (_e, uniqueId: string) => {
   return { ok: true };
 });
 
+// ---------------------------------------------------------------------------
+// Fan CRM IPC
+
+ipcMain.handle('fans:list', (_e, q: fans.ListFansQuery) => fans.listFans(q ?? {}));
+ipcMain.handle('fans:get', (_e, uniqueId: string) => fans.getFan(uniqueId));
+ipcMain.handle('fans:add', (_e, payload: fans.UpsertFanPayload) => fans.upsertFan(payload));
+ipcMain.handle('fans:update', (_e, uniqueId: string, patch: any) => fans.updateFan(uniqueId, patch ?? {}));
+ipcMain.handle('fans:bulkTag', (_e, payload: { ids: string[]; add: string[]; remove: string[] }) =>
+  fans.bulkTag(payload?.ids ?? [], payload?.add ?? [], payload?.remove ?? []),
+);
+ipcMain.handle('fans:logGift', (_e, payload: { uniqueId: string; nickname?: string; giftName: string; diamonds: number; at?: number }) =>
+  fans.logGift(payload),
+);
+ipcMain.handle('gifts:list', (_e, q: fans.ListGiftsQuery) => fans.listGifts(q ?? {}));
+ipcMain.handle('reminders:list', (_e, withinDays?: number) => fans.listReminders(withinDays ?? 30));
+ipcMain.handle('reminders:action', (_e, payload: { id: string; action: 'done' | 'snooze'; days?: number }) =>
+  fans.reminderAction(payload?.id, payload?.action, payload?.days),
+);
+ipcMain.handle('fans:importCsv', (_e, csvText: string) => fans.importCsv(String(csvText ?? '')));
+ipcMain.handle('fans:importCsvFile', async () => {
+  const { dialog } = await import('electron');
+  const result = await dialog.showOpenDialog(mainWindow!, {
+    filters: [{ name: 'CSV Files', extensions: ['csv', 'txt'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || !result.filePaths[0]) return { ok: false, created: 0, updated: 0, skipped: 0, errors: [], canceled: true };
+  try {
+    const fsNode = await import('node:fs');
+    const text = fsNode.readFileSync(result.filePaths[0], 'utf8');
+    return fans.importCsv(text);
+  } catch (err: any) {
+    return { ok: false, created: 0, updated: 0, skipped: 0, errors: [err?.message ?? String(err)] };
+  }
+});
+ipcMain.handle('fans:exportCsv', async () => {
+  const { dialog } = await import('electron');
+  const result = await dialog.showSaveDialog(mainWindow!, {
+    defaultPath: `fans-${new Date().toISOString().slice(0, 10)}.csv`,
+    filters: [{ name: 'CSV Files', extensions: ['csv'] }],
+  });
+  if (result.canceled || !result.filePath) return { ok: false };
+  try {
+    const fsNode = await import('node:fs');
+    fsNode.writeFileSync(result.filePath, fans.exportCsvText(), 'utf8');
+    return { ok: true, path: result.filePath };
+  } catch (err: any) {
+    return { ok: false, error: err?.message ?? String(err) };
+  }
+});
+ipcMain.handle('fans:clear', () => fans.clearAll());
+ipcMain.handle('fans:dataDir', () => fans.fansDir());
+
 app.whenReady().then(async () => {
   createWindow();
   await startOverlayServer();
@@ -439,12 +494,13 @@ app.whenReady().then(async () => {
           onStatus: (status, error) => broadcast('tt:status', { status, error }),
           onEvent: (evt) => {
             if (evt.type === 'roomInfo') {
-              sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
+              currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
               startLog(evt.info.hostUniqueId);
               if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
             } else {
               sessions.append(evt);
               appendLog(evt);
+              fans.ingestLiveEvent(evt, currentSessionId);
             }
             broadcast('tt:event', evt);
             pushOverlayEvent(evt);
@@ -480,4 +536,5 @@ app.on('before-quit', async () => {
   }
   multiSessions.clear();
   sessions.end();
+  fans.flush();
 });

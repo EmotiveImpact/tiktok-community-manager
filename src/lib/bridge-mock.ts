@@ -10,7 +10,11 @@
  */
 import type {
   ConnectionStatus,
+  Fan,
+  GiftRecord,
+  ImportResult,
   LiveEvent,
+  Reminder,
   RoomInfo,
   SessionRecord,
   SessionSummary,
@@ -18,6 +22,7 @@ import type {
   UserNote,
   WebhookConfig,
 } from '../types';
+import { tierForDiamonds } from './tier';
 
 type TikTokBridge = Window['tiktok'];
 
@@ -161,6 +166,78 @@ export function installBridgeMock(): void {
       ]
     : [];
 
+  // --- In-memory fan CRM (browser demo) -------------------------------------
+  type RawFan = Omit<Fan, 'tier'>;
+  const mmdd = (offsetDays: number) => {
+    const d = new Date(Date.now() + offsetDays * day);
+    return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const mkFan = (
+    u: UserBrief, diamonds: number, gifts: number, lastSeenDaysAgo: number, tags: string[],
+    notes = '', birthday?: string, displayName?: string,
+  ): RawFan => ({
+    uniqueId: u.uniqueId,
+    nickname: u.nickname,
+    displayName,
+    avatarUrl: null,
+    firstSeenAt: Date.now() - 90 * day,
+    lastSeenAt: Date.now() - lastSeenDaysAgo * day,
+    lastGiftAt: gifts > 0 ? Date.now() - lastSeenDaysAgo * day : undefined,
+    totalDiamonds: diamonds,
+    giftCount: gifts,
+    tags,
+    notes,
+    birthday,
+  });
+  const fanMap = new Map<string, RawFan>();
+  if (demoSeed) {
+    const extra: UserBrief[] = Array.from({ length: 22 }, (_, i) => ({
+      uniqueId: `fan_${String(i + 1).padStart(2, '0')}`,
+      nickname: ['Nova', 'Jess', 'Marco', 'Tia', 'Ollie', 'Rae', 'Kit', 'Dani', 'Theo', 'Mira', 'Cass'][i % 11] + ` ${i + 1}`,
+      profilePictureUrl: null,
+    }));
+    const seedFans: RawFan[] = [
+      mkFan(DEMO_USERS[0], 18420, 96, 0, ['superfan', 'mod-team'], 'Real name Kendra. Loves the gaming streams, always first in chat.', mmdd(3), 'Kendra M.'),
+      mkFan(DEMO_USERS[1], 6200, 41, 1, ['superfan'], 'Subscribed since March. Ask about her dog Biscuit.', mmdd(12)),
+      mkFan(DEMO_USERS[2], 2840, 28, 17, ['foodie'], 'Runs a food account — shouted us out twice.', mmdd(45)),
+      mkFan(DEMO_USERS[3], 540, 9, 2, ['mod-team'], 'Volunteer mod, UK timezone.'),
+      mkFan(DEMO_USERS[4], 12100, 64, 21, ['gamer', 'superfan'], 'Big Galaxy gifter on launch nights.', mmdd(8)),
+      mkFan(DEMO_USERS[5], 130, 4, 5, [], '', mmdd(2)),
+      mkFan(DEMO_USERS[6], 45, 2, 9, ['new-friend']),
+      mkFan(DEMO_USERS[7], 1750, 15, 3, [], 'Pixie — always brings friends to the stream.'),
+      ...extra.map((u, i) => mkFan(u, Math.max(0, 900 - i * 47), Math.max(0, 12 - i), i % 20, i % 3 === 0 ? ['regular'] : [])),
+    ];
+    for (const f of seedFans) fanMap.set(f.uniqueId, f);
+  }
+  const giftLog: GiftRecord[] = [];
+  if (demoSeed) {
+    let gi = 0;
+    for (const f of [...fanMap.values()].slice(0, 12)) {
+      for (let k = 0; k < Math.min(4, f.giftCount); k++) {
+        const g = DEMO_GIFTS[(gi + k) % DEMO_GIFTS.length];
+        giftLog.push({
+          id: `demo-gift-${gi}-${k}`,
+          fanUniqueId: f.uniqueId,
+          fanNickname: f.nickname,
+          giftName: g.giftName,
+          diamonds: g.diamondCount * (1 + (k % 3)),
+          repeatCount: 1 + (k % 3),
+          sessionId: `demo-${k * 2}`,
+          at: Date.now() - (gi * 5 + k * 26) * 3600000,
+        });
+      }
+      gi++;
+    }
+    giftLog.sort((a, b) => b.at - a.at);
+  }
+  const reminderHidden = new Set<string>();
+  const fanWithTier = (f: RawFan): Fan => ({ ...f, tier: tierForDiamonds(f.totalDiamonds) });
+  const normBday = (b?: string | null) => {
+    if (!b) return undefined;
+    const m = String(b).match(/^(?:\d{4}-)?(\d{1,2})-(\d{1,2})$/);
+    return m ? `${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}` : undefined;
+  };
+
   const bridge: TikTokBridge = {
     connect: async () => {
       setStatus('connecting');
@@ -236,6 +313,163 @@ export function installBridgeMock(): void {
       eventListeners.add(cb);
       return () => eventListeners.delete(cb);
     },
+    fansList: async (q = {}) => {
+      const search = (q.search ?? '').toLowerCase().trim();
+      const allTags = new Set<string>();
+      let rows = [...fanMap.values()].map(fanWithTier);
+      for (const f of rows) f.tags.forEach((t) => allTags.add(t));
+      if (search) rows = rows.filter((f) => `${f.uniqueId} ${f.nickname} ${f.displayName ?? ''} ${f.notes}`.toLowerCase().includes(search));
+      if (q.tag) rows = rows.filter((f) => f.tags.includes(q.tag!));
+      if (q.tier) rows = rows.filter((f) => f.tier === q.tier);
+      const sort = q.sort ?? 'diamonds';
+      rows.sort((a, b) =>
+        sort === 'name' ? (a.displayName || a.nickname).localeCompare(b.displayName || b.nickname)
+        : sort === 'lastSeen' ? b.lastSeenAt - a.lastSeenAt
+        : b.totalDiamonds - a.totalDiamonds);
+      const page = q.page ?? 1;
+      const pageSize = q.pageSize ?? 25;
+      return { data: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length, page, pageSize, allTags: [...allTags].sort() };
+    },
+    fansGet: async (uniqueId) => {
+      const f = fanMap.get(uniqueId);
+      return f ? fanWithTier(f) : null;
+    },
+    fansAdd: async (payload) => {
+      const uid = payload.uniqueId.replace(/^@/, '').trim();
+      if (!uid) return { ok: false, error: 'Username is required' };
+      const created = !fanMap.has(uid);
+      const existing = fanMap.get(uid) ?? {
+        uniqueId: uid, nickname: payload.nickname || payload.displayName || uid,
+        avatarUrl: null, firstSeenAt: Date.now(), lastSeenAt: Date.now(),
+        totalDiamonds: 0, giftCount: 0, tags: [], notes: '',
+      };
+      if (payload.displayName !== undefined) existing.displayName = payload.displayName || undefined;
+      if (payload.tags) existing.tags = payload.tags;
+      if (payload.notes !== undefined) existing.notes = payload.notes;
+      if (payload.birthday !== undefined) existing.birthday = normBday(payload.birthday);
+      if (payload.totalDiamonds !== undefined && created) existing.totalDiamonds = payload.totalDiamonds;
+      fanMap.set(uid, existing);
+      return { ok: true, fan: fanWithTier(existing), created };
+    },
+    fansUpdate: async (uniqueId, patch) => {
+      const f = fanMap.get(uniqueId);
+      if (!f) return { ok: false, error: 'Fan not found' };
+      if (patch.tags !== undefined) f.tags = patch.tags;
+      if (patch.notes !== undefined) f.notes = patch.notes;
+      if (patch.birthday !== undefined) f.birthday = normBday(patch.birthday);
+      if (patch.displayName !== undefined) f.displayName = patch.displayName || undefined;
+      return { ok: true, fan: fanWithTier(f) };
+    },
+    fansBulkTag: async ({ ids, add, remove }) => {
+      let updated = 0;
+      for (const id of ids) {
+        const f = fanMap.get(id);
+        if (!f) continue;
+        f.tags = [...f.tags.filter((t) => !remove.includes(t)), ...add.filter((t) => !f.tags.includes(t))];
+        updated++;
+      }
+      return { ok: true, updated };
+    },
+    fansLogGift: async ({ uniqueId, nickname, giftName, diamonds, at }) => {
+      const uid = uniqueId.replace(/^@/, '').trim();
+      if (!uid) return { ok: false, error: 'Fan username is required' };
+      if (!giftName.trim()) return { ok: false, error: 'Gift name is required' };
+      if (!(diamonds > 0)) return { ok: false, error: 'Diamonds must be a positive number' };
+      let f = fanMap.get(uid);
+      if (!f) {
+        f = { uniqueId: uid, nickname: nickname || uid, avatarUrl: null, firstSeenAt: Date.now(), lastSeenAt: Date.now(), totalDiamonds: 0, giftCount: 0, tags: [], notes: '' };
+        fanMap.set(uid, f);
+      }
+      f.totalDiamonds += diamonds;
+      f.giftCount++;
+      f.lastGiftAt = at ?? Date.now();
+      giftLog.unshift({ id: `m-${Date.now()}`, fanUniqueId: uid, fanNickname: f.nickname, giftName, diamonds, repeatCount: 1, manual: true, at: at ?? Date.now() });
+      return { ok: true };
+    },
+    giftsList: async (q = {}) => {
+      const now = Date.now();
+      const cutoff = q.range === '7d' ? now - 7 * day : q.range === '90d' ? now - 90 * day : q.range === 'all' ? 0 : now - 30 * day;
+      const fanQ = (q.fan ?? '').toLowerCase().replace(/^@/, '').trim();
+      let diamondsWeek = 0, diamondsMonth = 0, diamondsAll = 0;
+      for (const g of giftLog) {
+        diamondsAll += g.diamonds;
+        if (g.at >= now - 7 * day) diamondsWeek += g.diamonds;
+        if (g.at >= now - 30 * day) diamondsMonth += g.diamonds;
+      }
+      const rows = giftLog.filter((g) => g.at >= cutoff && (!fanQ || g.fanUniqueId.toLowerCase().includes(fanQ) || g.fanNickname.toLowerCase().includes(fanQ)));
+      const page = q.page ?? 1;
+      const pageSize = q.pageSize ?? 25;
+      return { data: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length, page, pageSize, diamondsWeek, diamondsMonth, diamondsAll };
+    },
+    remindersList: async (withinDays = 30) => {
+      const out: Reminder[] = [];
+      const now = new Date();
+      const year = now.getFullYear();
+      for (const raw of fanMap.values()) {
+        const f = fanWithTier(raw);
+        if (f.birthday) {
+          const m = f.birthday.match(/^(\d{2})-(\d{2})$/);
+          if (m) {
+            const today = new Date(year, now.getMonth(), now.getDate());
+            let next = new Date(year, Number(m[1]) - 1, Number(m[2]));
+            if (next < today) next = new Date(year + 1, Number(m[1]) - 1, Number(m[2]));
+            const days = Math.round((next.getTime() - today.getTime()) / day);
+            const id = `bday:${f.uniqueId}:${year}`;
+            if (days <= withinDays && !reminderHidden.has(id)) out.push({ id, kind: 'birthday', fan: f, days, date: f.birthday });
+          }
+        }
+        if ((f.tier === 'VIP' || f.tier === 'Whale')) {
+          const daysSince = Math.floor((Date.now() - f.lastSeenAt) / day);
+          const id = `quiet:${f.uniqueId}:0`;
+          if (daysSince > 14 && !reminderHidden.has(id)) out.push({ id, kind: 'quiet', fan: f, days: daysSince });
+        }
+      }
+      out.sort((a, b) => (a.kind === b.kind ? a.days - b.days : a.kind === 'birthday' ? -1 : 1));
+      return out;
+    },
+    reminderAction: async ({ id }) => {
+      reminderHidden.add(id);
+      return ok;
+    },
+    fansImportCsv: async (csvText) => {
+      const lines = csvText.split(/\r?\n/).filter((l) => l.trim());
+      const result: ImportResult = { ok: true, created: 0, updated: 0, skipped: 0, errors: [] };
+      if (lines.length === 0) return { ...result, ok: false, errors: ['CSV is empty'] };
+      const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+      const iUser = header.indexOf('username');
+      if (iUser === -1) return { ...result, ok: false, errors: ['Missing required "username" column in header row'] };
+      const iDisplay = header.indexOf('displayname');
+      const iBday = header.indexOf('birthday');
+      const iTags = header.indexOf('tags');
+      const iNotes = header.indexOf('notes');
+      const iDia = header.indexOf('totaldiamonds');
+      for (let r = 1; r < lines.length; r++) {
+        const c = lines[r].split(','); // demo-mode parser: simple split
+        const uid = (c[iUser] ?? '').replace(/^@/, '').trim();
+        if (!uid) { result.skipped++; continue; }
+        const created = !fanMap.has(uid);
+        const res = await bridge.fansAdd({
+          uniqueId: uid,
+          displayName: iDisplay >= 0 ? c[iDisplay] : undefined,
+          birthday: iBday >= 0 ? c[iBday] : undefined,
+          tags: iTags >= 0 && c[iTags] ? c[iTags].split(/[;|]/).map((t) => t.trim()).filter(Boolean) : undefined,
+          notes: iNotes >= 0 ? c[iNotes] : undefined,
+          totalDiamonds: iDia >= 0 ? Number(c[iDia]) || undefined : undefined,
+        });
+        if (!res.ok) result.errors.push(`Row ${r + 1}: ${res.error}`);
+        else if (created) result.created++;
+        else result.updated++;
+      }
+      return result;
+    },
+    fansImportCsvFile: async () => ({ ok: false, created: 0, updated: 0, skipped: 0, errors: ['File picker not available in browser mode — paste CSV text instead'], canceled: false }),
+    fansExportCsv: async () => ({ ok: false, error: 'Not available in browser mode' }),
+    fansClear: async () => {
+      fanMap.clear();
+      giftLog.length = 0;
+      return ok;
+    },
+    fansDataDir: async () => '~/Documents/LikeTapperMac/fans',
     watchlistPoke: async () => ok,
     onWatchlistLive: () => () => {},
     trackedList: async () => tracked,

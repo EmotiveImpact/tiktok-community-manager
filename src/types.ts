@@ -112,6 +112,107 @@ export type RoomInfo = {
   startedAt: number | null;
 };
 
+// --- Fan CRM ---------------------------------------------------------------
+
+export type Tier = 'New' | 'Regular' | 'VIP' | 'Whale';
+
+export type Fan = {
+  uniqueId: string;
+  nickname: string;
+  displayName?: string;
+  avatarUrl?: string | null;
+  firstSeenAt: number;
+  lastSeenAt: number;
+  lastGiftAt?: number;
+  totalDiamonds: number;
+  giftCount: number;
+  tags: string[];
+  notes: string;
+  birthday?: string; // 'MM-DD'
+  createdManually?: boolean;
+  tier: Tier;
+};
+
+export type GiftRecord = {
+  id: string;
+  fanUniqueId: string;
+  fanNickname: string;
+  giftName: string;
+  diamonds: number;
+  repeatCount: number;
+  sessionId?: string;
+  manual?: boolean;
+  at: number;
+};
+
+export type ListFansQuery = {
+  search?: string;
+  tag?: string;
+  tier?: Tier;
+  page?: number;
+  pageSize?: number;
+  sort?: 'diamonds' | 'lastSeen' | 'name';
+};
+
+export type ListFansResult = {
+  data: Fan[];
+  total: number;
+  page: number;
+  pageSize: number;
+  allTags: string[];
+};
+
+export type ListGiftsQuery = {
+  range?: '7d' | '30d' | '90d' | 'all';
+  fan?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type ListGiftsResult = {
+  data: GiftRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  diamondsWeek: number;
+  diamondsMonth: number;
+  diamondsAll: number;
+};
+
+export type Reminder = {
+  id: string;
+  kind: 'birthday' | 'quiet';
+  fan: Fan;
+  days: number;
+  date?: string;
+};
+
+export type UpsertFanPayload = {
+  uniqueId: string;
+  nickname?: string;
+  displayName?: string;
+  tags?: string[];
+  notes?: string;
+  birthday?: string | null;
+  totalDiamonds?: number;
+};
+
+export type FanPatch = {
+  tags?: string[];
+  notes?: string;
+  birthday?: string | null;
+  displayName?: string;
+};
+
+export type ImportResult = {
+  ok: boolean;
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: string[];
+  canceled?: boolean;
+};
+
 export type ConnectionStatus =
   | 'idle'
   | 'connecting'
@@ -170,6 +271,20 @@ declare global {
       onMultiEvent: (cb: (d: { username: string; evt: LiveEvent }) => void) => () => void;
       onStatus: (cb: (s: { status: ConnectionStatus; error?: string }) => void) => () => void;
       onEvent: (cb: (evt: LiveEvent) => void) => () => void;
+      fansList: (q?: ListFansQuery) => Promise<ListFansResult>;
+      fansGet: (uniqueId: string) => Promise<Fan | null>;
+      fansAdd: (payload: UpsertFanPayload) => Promise<{ ok: boolean; fan?: Fan; created?: boolean; error?: string }>;
+      fansUpdate: (uniqueId: string, patch: FanPatch) => Promise<{ ok: boolean; fan?: Fan; error?: string }>;
+      fansBulkTag: (payload: { ids: string[]; add: string[]; remove: string[] }) => Promise<{ ok: boolean; updated: number }>;
+      fansLogGift: (payload: { uniqueId: string; nickname?: string; giftName: string; diamonds: number; at?: number }) => Promise<{ ok: boolean; error?: string }>;
+      giftsList: (q?: ListGiftsQuery) => Promise<ListGiftsResult>;
+      remindersList: (withinDays?: number) => Promise<Reminder[]>;
+      reminderAction: (payload: { id: string; action: 'done' | 'snooze'; days?: number }) => Promise<{ ok: boolean; error?: string }>;
+      fansImportCsv: (csvText: string) => Promise<ImportResult>;
+      fansImportCsvFile: () => Promise<ImportResult>;
+      fansExportCsv: () => Promise<{ ok: boolean; path?: string; error?: string }>;
+      fansClear: () => Promise<{ ok: boolean }>;
+      fansDataDir: () => Promise<string>;
       watchlistPoke: () => Promise<{ ok: boolean }>;
       onWatchlistLive: (cb: (d: { username: string; detectedAt: number }) => void) => () => void;
       trackedList: () => Promise<Array<{ uniqueId: string; nickname: string; addedAt: number }>>;
