@@ -68,9 +68,10 @@ const NAVY_MUTED = 'rgba(148, 163, 184, 0.9)';
 const NAVY_FAINT = 'rgba(120, 130, 165, 0.55)';
 const NAVY_HOVER = 'rgba(255, 255, 255, 0.05)';
 
+/* Compact, confident selected pill (spec item 6) */
 const ACTIVE_PILL = {
-  background: 'linear-gradient(90deg, #EE1D52, #ff4d76)',
-  boxShadow: '0 6px 16px rgba(238,29,82,0.35)',
+  background: 'linear-gradient(135deg, #EE1D52, #ff467b)',
+  boxShadow: '0 12px 28px rgba(238,29,82,0.32)',
   color: 'white',
 } as const;
 
@@ -154,7 +155,7 @@ export function Sidebar({ showStream, onToggleStream }: Props) {
                   type="button"
                   onClick={() => setPage(it.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className="group flex w-full items-center gap-3 rounded-xl px-3.5 py-2 text-left text-[13px] font-medium transition-colors"
+                  className="group flex h-10 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium transition-colors"
                   style={isActive ? ACTIVE_PILL : { color: NAVY_MUTED }}
                   {...hoverable(isActive)}
                 >
@@ -212,7 +213,7 @@ export function Sidebar({ showStream, onToggleStream }: Props) {
               isActive={liveTool === 'feed'}
               onClick={() => openLiveTool('feed')}
               extra={connected ? (
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: liveTool === 'feed' ? '#ff5b85' : '#ee1d52', boxShadow: '0 0 6px rgba(238,29,82,0.8)' }} />
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: liveTool === 'feed' ? 'white' : '#ee1d52', boxShadow: '0 0 6px rgba(238,29,82,0.8)' }} />
               ) : undefined}
             />
 
@@ -282,10 +283,11 @@ function LiveItem({ item, isActive, onClick, count, extra }: {
       type="button"
       onClick={onClick}
       aria-current={isActive ? 'true' : undefined}
-      className="no-drag mb-0.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-[5px] text-left text-[12px] transition"
+      className="no-drag mb-0.5 flex w-full items-center gap-2 rounded-xl px-3 py-[7px] text-left text-[12px] transition"
       style={{
-        background: isActive ? 'rgba(238, 29, 82, 0.16)' : 'transparent',
-        color: isActive ? '#ff5b85' : NAVY_MUTED,
+        background: isActive ? 'linear-gradient(135deg, #EE1D52, #ff467b)' : 'transparent',
+        boxShadow: isActive ? '0 10px 22px rgba(238,29,82,0.28)' : undefined,
+        color: isActive ? 'white' : NAVY_MUTED,
         fontWeight: isActive ? 700 : 500,
       }}
       onMouseEnter={(e) => {
