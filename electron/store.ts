@@ -28,6 +28,31 @@ export type TrackedUser = {
   addedAt: number;
 };
 
+export type EarningsSettings = {
+  enabled: boolean;
+  /** payout per 1,000 diamonds, in the selected currency */
+  ratePer1000: number;
+  currency: '£' | '$' | '€';
+};
+
+export type CommunitySettings = {
+  /** VIP/Whale counts as "quiet" after this many days unseen */
+  quietDays: number;
+  /** birthday reminders surface within this many days */
+  birthdayWindowDays: number;
+  /** diamond cutoffs for tiers (must be ascending) */
+  tiers: { regular: number; vip: number; whale: number };
+};
+
+export const DEFAULT_EARNINGS: EarningsSettings = { enabled: false, ratePer1000: 10, currency: '£' };
+export const DEFAULT_COMMUNITY: CommunitySettings = {
+  quietDays: 14,
+  birthdayWindowDays: 30,
+  tiers: { regular: 100, vip: 1000, whale: 10000 },
+};
+export const DEFAULT_THANK_TEMPLATE =
+  'Hey {nickname}! Thank you so much for the {giftName} 💕 You made my stream!';
+
 type Schema = {
   lastUsername: string;
   signApiKey: string;
@@ -38,6 +63,9 @@ type Schema = {
   webhooks: WebhookConfig;
   watchlist: string[];
   trackedUsers: TrackedUser[];
+  thankTemplate: string;
+  earnings: EarningsSettings;
+  community: CommunitySettings;
 };
 
 const DEFAULTS: Schema = {
@@ -55,6 +83,9 @@ const DEFAULTS: Schema = {
   },
   watchlist: [],
   trackedUsers: [],
+  thankTemplate: DEFAULT_THANK_TEMPLATE,
+  earnings: DEFAULT_EARNINGS,
+  community: DEFAULT_COMMUNITY,
 };
 
 let cache: Schema | null = null;

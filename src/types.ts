@@ -113,6 +113,20 @@ export type RoomInfo = {
   startedAt: number | null;
 };
 
+// --- Settings --------------------------------------------------------------
+
+export type EarningsSettings = {
+  enabled: boolean;
+  ratePer1000: number;
+  currency: '£' | '$' | '€';
+};
+
+export type CommunitySettings = {
+  quietDays: number;
+  birthdayWindowDays: number;
+  tiers: { regular: number; vip: number; whale: number };
+};
+
 // --- Fan CRM ---------------------------------------------------------------
 
 export type Tier = 'New' | 'Regular' | 'VIP' | 'Whale';
@@ -131,6 +145,7 @@ export type Fan = {
   notes: string;
   birthday?: string; // 'MM-DD'
   createdManually?: boolean;
+  lastThankedAt?: number;
   tier: Tier;
 };
 
@@ -235,6 +250,9 @@ declare global {
         chatLogEnabled: boolean;
         webhooks: WebhookConfig;
         watchlist: string[];
+        thankTemplate: string;
+        earnings: EarningsSettings;
+        community: CommunitySettings;
       }>;
       setSignApiKey: (key: string) => Promise<{ ok: boolean }>;
       setAnthropicKey: (key: string) => Promise<{ ok: boolean }>;
@@ -242,6 +260,10 @@ declare global {
       setChatLog: (val: boolean) => Promise<{ ok: boolean }>;
       setWebhooks: (cfg: WebhookConfig) => Promise<{ ok: boolean }>;
       setWatchlist: (list: string[]) => Promise<{ ok: boolean }>;
+      setThankTemplate: (tpl: string) => Promise<{ ok: boolean }>;
+      setEarnings: (cfg: EarningsSettings) => Promise<{ ok: boolean }>;
+      setCommunity: (cfg: CommunitySettings) => Promise<{ ok: boolean; error?: string }>;
+      openExternal: (url: string) => Promise<{ ok: boolean; error?: string }>;
       chatLogDir: () => Promise<string>;
       backupExport: () => Promise<{ ok: boolean; path?: string }>;
       backupImport: () => Promise<{ ok: boolean; error?: string }>;
@@ -282,6 +304,7 @@ declare global {
       remindersList: (withinDays?: number) => Promise<Reminder[]>;
       reminderAction: (payload: { id: string; action: 'done' | 'snooze'; days?: number }) => Promise<{ ok: boolean; error?: string }>;
       reminderAddThank: (uniqueId: string) => Promise<{ ok: boolean; deduped?: boolean; error?: string }>;
+      fansMarkThanked: (uniqueId: string) => Promise<{ ok: boolean; fan?: Fan; error?: string }>;
       fansImportCsv: (csvText: string) => Promise<ImportResult>;
       fansImportCsvFile: () => Promise<ImportResult>;
       fansExportCsv: () => Promise<{ ok: boolean; path?: string; error?: string }>;

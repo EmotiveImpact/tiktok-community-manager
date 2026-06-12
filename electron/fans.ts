@@ -28,6 +28,8 @@ export type Fan = {
   /** 'MM-DD' */
   birthday?: string;
   createdManually?: boolean;
+  /** last time the creator marked this fan as thanked */
+  lastThankedAt?: number;
 };
 
 export type FanWithTier = Fan & { tier: Tier };
@@ -46,9 +48,34 @@ export type GiftRecord = {
 
 export type Tier = 'New' | 'Regular' | 'VIP' | 'Whale';
 
+export type CommunityRules = {
+  quietDays: number;
+  birthdayWindowDays: number;
+  tiers: { regular: number; vip: number; whale: number };
+};
+
+export const DEFAULT_RULES: CommunityRules = {
+  quietDays: 14,
+  birthdayWindowDays: 30,
+  tiers: { regular: 100, vip: 1000, whale: 10000 },
+};
+
+/** Injected by main.ts so thresholds come from the settings store. */
+let rulesGetter: () => CommunityRules = () => DEFAULT_RULES;
+export function setRulesGetter(fn: () => CommunityRules) {
+  rulesGetter = () => {
+    try {
+      const r = fn();
+      if (r && r.tiers) return r;
+    } catch { /* fall through */ }
+    return DEFAULT_RULES;
+  };
+}
+
 /** Diamond thresholds (mirrors web tier.ts shape; unit here is diamonds). */
 export function tierForDiamonds(d: number): Tier {
-  return d >= 10000 ? 'Whale' : d >= 1000 ? 'VIP' : d >= 100 ? 'Regular' : 'New';
+  const t = rulesGetter().tiers;
+  return d >= t.whale ? 'Whale' : d >= t.vip ? 'VIP' : d >= t.regular ? 'Regular' : 'New';
 }
 
 export type ReminderEvent = {
@@ -524,8 +551,6 @@ export function addThankReminder(uniqueId: string): { ok: boolean; deduped?: boo
 // ---------------------------------------------------------------------------
 // reminders
 
-const QUIET_DAYS = 14;
-
 function birthdayDaysAway(mmdd: string, now = new Date()): number | null {
   const m = mmdd.match(/^(\d{2})-(\d{2})$/);
   if (!m) return null;
@@ -537,7 +562,9 @@ function birthdayDaysAway(mmdd: string, now = new Date()): number | null {
   return Math.round((next.getTime() - today.getTime()) / 86400000);
 }
 
-export function listReminders(withinDays = 30): Reminder[] {
+export function listReminders(withinDays?: number): Reminder[] {
+  const rules = rulesGetter();
+  const window = withinDays ?? rules.birthdayWindowDays;
   const events = loadReminderEvents();
   const now = Date.now();
   const yearKey = new Date().getFullYear();
@@ -562,7 +589,7 @@ export function listReminders(withinDays = 30): Reminder[] {
     const fan = withTier(f);
     if (f.birthday) {
       const days = birthdayDaysAway(f.birthday);
-      if (days !== null && days <= withinDays) {
+      if (days !== null && days <= window) {
         const id = `bday:${f.uniqueId}:${yearKey}`;
         if (!isSuppressed(id, String(yearKey))) {
           out.push({ id, kind: 'birthday', fan, days, date: f.birthday });
@@ -571,7 +598,7 @@ export function listReminders(withinDays = 30): Reminder[] {
     }
     if ((fan.tier === 'VIP' || fan.tier === 'Whale') && f.lastSeenAt) {
       const daysSince = Math.floor((now - f.lastSeenAt) / 86400000);
-      if (daysSince > QUIET_DAYS) {
+      if (daysSince > rules.quietDays) {
         // bucket by month so a "done" silences it for ~30 days
         const bucket = Math.floor(now / (30 * 86400000));
         const id = `quiet:${f.uniqueId}:${bucket}`;
@@ -585,7 +612,7 @@ export function listReminders(withinDays = 30): Reminder[] {
     const f = loadFans().get(t.uniqueId);
     if (!f) continue;
     const days = Math.max(0, Math.floor((now - new Date(t.date + 'T00:00:00').getTime()) / 86400000));
-    if (days > withinDays) continue;
+    if (days > window) continue;
     const id = `thank:${t.uniqueId}:${t.date}`;
     if (!isSuppressed(id, t.date)) out.push({ id, kind: 'thank', fan: withTier(f), days });
   }
@@ -605,6 +632,31 @@ export function reminderAction(id: string, action: 'done' | 'snooze', days?: num
   loadReminderEvents().push(evt);
   saveReminderEvents();
   return { ok: true };
+}
+
+/**
+ * Record a thank-you: stamps `lastThankedAt` on the fan and marks any open
+ * thank/birthday reminders for them as done.
+ */
+export function markThanked(uniqueId: string): { ok: boolean; fan?: FanWithTier; error?: string } {
+  const uid = (uniqueId ?? '').replace(/^@/, '').trim();
+  if (!uid) return { ok: false, error: 'Username is required' };
+  const fan = loadFans().get(uid);
+  if (!fan) return { ok: false, error: 'Fan not found' };
+  fan.lastThankedAt = Date.now();
+  markDirty();
+  // Close any open thank / birthday reminders for this fan.
+  const events = loadReminderEvents();
+  let changed = false;
+  for (const r of listReminders()) {
+    if (r.fan.uniqueId !== uid) continue;
+    if (r.kind !== 'thank' && r.kind !== 'birthday') continue;
+    events.push({ reminderId: r.id, action: 'done', at: Date.now() });
+    changed = true;
+  }
+  if (changed) saveReminderEvents();
+  flush();
+  return { ok: true, fan: withTier(fan) };
 }
 
 // ---------------------------------------------------------------------------

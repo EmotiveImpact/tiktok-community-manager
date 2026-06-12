@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TikTokSession } from './tiktok';
-import { settings, notesStore } from './store';
+import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, type CommunitySettings, type EarningsSettings } from './store';
 import * as sessions from './sessions';
 import { summarize, type SummaryInput } from './summarize';
 import { exportSession, type ExportType } from './export';
@@ -15,6 +15,9 @@ import { setupLikerIpc, closeLikerWindow } from './liker';
 import * as fans from './fans';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Tier/quiet/birthday thresholds come from the settings store (Settings → Community rules).
+fans.setRulesGetter(() => settings.get('community', DEFAULT_COMMUNITY));
 
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
@@ -127,7 +130,17 @@ ipcMain.handle('multi:connect', async (_e, username: string) => {
   if (multiSessions.has(handle)) return { ok: true };
   const ms = new TikTokSession(handle, {
     onStatus: (status, error) => broadcast('multi:status', { username: handle, status, error }),
-    onEvent: (evt) => broadcast('multi:event', { username: handle, evt }),
+    onEvent: (evt) => {
+      // Multi-room events also feed the fan ledger (tagged with the room handle).
+      // ingestLiveEvent is internally fail-safe + write-batched, but stay defensive
+      // so the multi-room pipeline can never break.
+      try {
+        if (evt.type !== 'roomInfo') fans.ingestLiveEvent(evt, `multi:${handle}`);
+      } catch (err) {
+        console.error('[multi] fan ingest failed:', err);
+      }
+      broadcast('multi:event', { username: handle, evt });
+    },
   });
   multiSessions.set(handle, ms);
   try {
@@ -187,7 +200,55 @@ ipcMain.handle('settings:get', () => {
     chatLogEnabled: settings.get('chatLogEnabled', false),
     webhooks: settings.get('webhooks', { discordUrl: '', slackUrl: '', customUrl: '', events: { gifts: true, follows: true, keywords: false, milestones: true } }),
     watchlist: settings.get('watchlist', []),
+    thankTemplate: settings.get('thankTemplate', DEFAULT_THANK_TEMPLATE),
+    earnings: settings.get('earnings', DEFAULT_EARNINGS),
+    community: settings.get('community', DEFAULT_COMMUNITY),
   };
+});
+
+ipcMain.handle('settings:setThankTemplate', (_e, tpl: string) => {
+  settings.set('thankTemplate', String(tpl ?? '').slice(0, 2000) || DEFAULT_THANK_TEMPLATE);
+  return { ok: true };
+});
+
+ipcMain.handle('settings:setEarnings', (_e, cfg: EarningsSettings) => {
+  const cur = cfg?.currency;
+  settings.set('earnings', {
+    enabled: !!cfg?.enabled,
+    ratePer1000: Math.max(0, Number(cfg?.ratePer1000) || 0),
+    currency: cur === '$' || cur === '€' ? cur : '£',
+  });
+  return { ok: true };
+});
+
+ipcMain.handle('settings:setCommunity', (_e, cfg: CommunitySettings) => {
+  const num = (v: unknown, fb: number, min = 1) => {
+    const n = Math.floor(Number(v));
+    return Number.isFinite(n) && n >= min ? n : fb;
+  };
+  const regular = num(cfg?.tiers?.regular, DEFAULT_COMMUNITY.tiers.regular);
+  const vip = num(cfg?.tiers?.vip, DEFAULT_COMMUNITY.tiers.vip);
+  const whale = num(cfg?.tiers?.whale, DEFAULT_COMMUNITY.tiers.whale);
+  if (!(regular < vip && vip < whale)) return { ok: false, error: 'Tier thresholds must be ascending (Regular < VIP < Whale)' };
+  settings.set('community', {
+    quietDays: Math.min(365, num(cfg?.quietDays, DEFAULT_COMMUNITY.quietDays)),
+    birthdayWindowDays: Math.min(365, num(cfg?.birthdayWindowDays, DEFAULT_COMMUNITY.birthdayWindowDays)),
+    tiers: { regular, vip, whale },
+  });
+  return { ok: true };
+});
+
+ipcMain.handle('shell:openExternal', (_e, url: string) => {
+  try {
+    const u = new URL(String(url));
+    const host = u.hostname.toLowerCase();
+    const allowed = u.protocol === 'https:' && (host === 'tiktok.com' || host.endsWith('.tiktok.com'));
+    if (!allowed) return { ok: false, error: 'Only tiktok.com links can be opened' };
+    shell.openExternal(u.toString());
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Invalid URL' };
+  }
 });
 
 ipcMain.handle('settings:setSignApiKey', (_e, key: string) => {
@@ -442,11 +503,12 @@ ipcMain.handle('fans:logGift', (_e, payload: { uniqueId: string; nickname?: stri
   fans.logGift(payload),
 );
 ipcMain.handle('gifts:list', (_e, q: fans.ListGiftsQuery) => fans.listGifts(q ?? {}));
-ipcMain.handle('reminders:list', (_e, withinDays?: number) => fans.listReminders(withinDays ?? 30));
+ipcMain.handle('reminders:list', (_e, withinDays?: number) => fans.listReminders(withinDays));
 ipcMain.handle('reminders:action', (_e, payload: { id: string; action: 'done' | 'snooze'; days?: number }) =>
   fans.reminderAction(payload?.id, payload?.action, payload?.days),
 );
 ipcMain.handle('reminders:addThank', (_e, uniqueId: string) => fans.addThankReminder(String(uniqueId ?? '')));
+ipcMain.handle('fans:markThanked', (_e, uniqueId: string) => fans.markThanked(String(uniqueId ?? '')));
 ipcMain.handle('fans:importCsv', (_e, csvText: string) => fans.importCsv(String(csvText ?? '')));
 ipcMain.handle('fans:importCsvFile', async () => {
   const { dialog } = await import('electron');
