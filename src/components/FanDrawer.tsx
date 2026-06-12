@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Fan, GiftRecord } from '../types';
 import { formatNumber, formatDate, daysAgoLabel } from '../lib/format';
 import { useAlerts } from '../state/alerts';
+import { ThankComposer } from './ThankComposer';
 import { FanAvatar, TierChip, TagsEditor, FieldLabel, inputCls, birthdayValid, fanName } from './crm';
 
 export function FanDrawer({
@@ -24,6 +25,7 @@ export function FanDrawer({
   const [tags, setTags] = useState<string[]>([]);
   const [gifts, setGifts] = useState<GiftRecord[]>([]);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [showThank, setShowThank] = useState(false);
   const loaded = useRef(false);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -164,11 +166,27 @@ export function FanDrawer({
           </div>
 
           <div className="flex items-center gap-2 border-t pt-3 text-[12px]" style={{ borderColor: 'var(--separator)', color: 'var(--secondary-label)' }}>
-            <span>First seen {formatDate(fan.firstSeenAt)}</span>
-            <button onClick={() => window.tiktok.openProfile(fan.uniqueId)} className="panel-btn no-drag ml-auto">Profile ↗</button>
+            <span>
+              First seen {formatDate(fan.firstSeenAt)}
+              {fan.lastThankedAt ? ` · Last thanked ${formatDate(fan.lastThankedAt)} 💌` : ''}
+            </span>
+            <button onClick={() => setShowThank(true)} className="panel-btn panel-btn-primary no-drag ml-auto">💌 Thank</button>
+            <button onClick={() => window.tiktok.openProfile(fan.uniqueId)} className="panel-btn no-drag">Profile ↗</button>
           </div>
         </div>
       </aside>
+      {showThank && (
+        <ThankComposer
+          uniqueId={fan.uniqueId}
+          nickname={fanName(fan)}
+          onClose={() => setShowThank(false)}
+          onThanked={(updated) => {
+            if (updated) setFan(updated);
+            else window.tiktok.fansGet(uniqueId).then((f) => f && setFan(f)).catch(() => {});
+            onChanged();
+          }}
+        />
+      )}
     </>
   );
 }

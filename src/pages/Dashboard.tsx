@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Calendar, Clock, Gift, Heart, Star, Users } from 'lucide-react';
 import type { Fan, GiftRecord, Reminder, SessionRecord, SessionSummary, UserNote } from '../types';
-import { formatDiamonds, formatNumber } from '../lib/format';
+import { estimateMoney, formatDiamonds, formatNumber } from '../lib/format';
+import { useSettingsLoad } from '../state/settings';
+import { ThankComposer } from '../components/ThankComposer';
 import { FanAvatar, TierChip, fanName } from '../components/crm';
 
 // ---------------------------------------------------------------------------
@@ -105,9 +107,11 @@ function IconChip({ bg, color, children, size = 44 }: { bg: string; color?: stri
   );
 }
 
-function StatCard({ label, value, trend, trendColor, icon, tint }: {
+function StatCard({ label, value, sub, trend, trendColor, icon, tint }: {
   label: string;
   value: string;
+  /** secondary text rendered next to the value (e.g. money estimate) */
+  sub?: string | null;
   trend?: string;
   trendColor?: string;
   icon: string;
@@ -119,7 +123,10 @@ function StatCard({ label, value, trend, trendColor, icon, tint }: {
         <img src={icon} alt="" className="h-7 w-7 object-contain" draggable={false} />
       </IconChip>
       <div className="mt-2.5 text-xs font-medium" style={{ color: 'var(--secondary-label)' }}>{label}</div>
-      <div className="mt-0.5 truncate text-[26px] font-extrabold leading-tight tracking-tight">{value}</div>
+      <div className="mt-0.5 truncate text-[26px] font-extrabold leading-tight tracking-tight">
+        {value}
+        {sub && <span className="ml-1.5 text-[13px] font-semibold" style={{ color: 'var(--secondary-label)' }}>{sub}</span>}
+      </div>
       <div className="mt-1 h-4 text-[11px] font-semibold" style={{ color: trendColor ?? 'var(--secondary-label)' }}>
         {trend ?? ''}
       </div>
@@ -172,6 +179,8 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
   const [notes, setNotes] = useState<Record<string, UserNote>>({});
   const [supporterGifts, setSupporterGifts] = useState<GiftRecord[] | null>(null);
   const [gifterRange, setGifterRange] = useState<'month' | 'all'>('month');
+  const [showThank, setShowThank] = useState(false);
+  const { earnings } = useSettingsLoad();
 
   useEffect(() => {
     window.tiktok.sessionsList().then((list) => {
@@ -183,7 +192,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
       setRecentFans(r.data);
     }).catch(() => {});
     window.tiktok.fansList({ sort: 'diamonds', pageSize: 50 }).then((r) => setTopFans(r.data.filter((f) => f.totalDiamonds > 0))).catch(() => {});
-    window.tiktok.remindersList(30).then((r) => setReminders(r ?? [])).catch(() => {});
+    window.tiktok.remindersList().then((r) => setReminders(r ?? [])).catch(() => {});
     window.tiktok.giftsList({ range: '90d', pageSize: 500 }).then((r) =>
       setGifts90({ data: r.data, total: r.total, diamondsMonth: r.diamondsMonth }),
     ).catch(() => {});
@@ -354,6 +363,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
           <StatCard
             label="Gifts this month"
             value={gifts90 ? formatDiamonds(gifts90.diamondsMonth) : '—'}
+            sub={gifts90 ? estimateMoney(gifts90.diamondsMonth, earnings) : null}
             trend={monthTrend ? `${monthTrend.up ? '↑' : '↓'} ${Math.abs(monthTrend.pct)}% vs last month` : undefined}
             trendColor={monthTrend?.up ? '#34c77b' : '#e0245e'}
             icon="./assets/png/icon_diamond_3d.png"
@@ -431,7 +441,12 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                       <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>@{g.uniqueId}</span>
                     </span>
                     <span className="w-12 text-right text-[12px] tabular-nums" style={{ color: 'var(--secondary-label)' }}>{formatNumber(g.gifts)}</span>
-                    <span className="w-16 text-right text-[12px] font-bold tabular-nums">{formatDiamonds(g.diamonds)}</span>
+                    <span className="text-right text-[12px] font-bold tabular-nums" style={{ minWidth: 64 }}>
+                      {formatDiamonds(g.diamonds)}
+                      {estimateMoney(g.diamonds, earnings) && (
+                        <span className="ml-1 font-medium" style={{ color: 'var(--secondary-label)' }}>{estimateMoney(g.diamonds, earnings)}</span>
+                      )}
+                    </span>
                     {g.fan && <TierChip tier={g.fan.tier} />}
                   </li>
                 ))}
@@ -584,7 +599,9 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                 </div>
                 <div className="rounded-xl p-2 text-center" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--card-border)' }}>
                   <div className="text-[15px] font-extrabold">{formatNumber(supporter.totalDiamonds)}</div>
-                  <div className="text-[10px]" style={{ color: 'var(--secondary-label)' }}>Total value 💎</div>
+                  <div className="text-[10px]" style={{ color: 'var(--secondary-label)' }}>
+                    Total value 💎{estimateMoney(supporter.totalDiamonds, earnings) ? ` ${estimateMoney(supporter.totalDiamonds, earnings)}` : ''}
+                  </div>
                 </div>
                 <div className="rounded-xl p-2 text-center" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--card-border)' }}>
                   <div className="text-[15px] font-extrabold">
@@ -632,7 +649,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
               )}
 
               <button
-                onClick={() => navTo('followers', supporter.uniqueId)}
+                onClick={() => setShowThank(true)}
                 className="panel-btn panel-btn-primary no-drag mt-4 !h-9 w-full justify-center"
               >
                 Send a thank-you message 💌
@@ -641,6 +658,15 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
           </div>
         )}
       </aside>
+
+      {showThank && supporter && (
+        <ThankComposer
+          uniqueId={supporter.uniqueId}
+          nickname={fanName(supporter)}
+          onClose={() => setShowThank(false)}
+          onThanked={() => window.tiktok.remindersList().then((r) => setReminders(r ?? [])).catch(() => {})}
+        />
+      )}
     </div>
   );
 }

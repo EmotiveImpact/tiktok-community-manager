@@ -9,9 +9,11 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { useUI } from '../state/ui';
-import { formatNumber, formatDate } from '../lib/format';
+import { formatNumber, formatDate, estimateMoney } from '../lib/format';
 import { tierClass } from '../lib/tier';
 import { avatarGradient } from '../lib/avatars';
+import { useSettingsLoad } from '../state/settings';
+import { ThankComposer } from './ThankComposer';
 import type { Fan, GiftRecord } from '../types';
 
 function birthdayInfo(mmdd?: string): { label: string; days: number } | null {
@@ -51,7 +53,9 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
   const [tagDraft, setTagDraft] = useState('');
   const [addingTag, setAddingTag] = useState(false);
   const [thanked, setThanked] = useState(false);
+  const [showThank, setShowThank] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const { earnings } = useSettingsLoad();
   const loadedFor = useRef<string | null>(null);
   const notesDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -71,6 +75,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
     loadedFor.current = fanMemoryId;
     setLoaded(false);
     setThanked(false);
+    setShowThank(false);
     setAddingTag(false);
     refresh(fanMemoryId).then(() => {
       // sync notes textarea after fan loads
@@ -199,7 +204,12 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   </div>
                   <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 p-2.5 text-center">
                     <div className="text-base font-extrabold tabular-nums text-like-400">{formatNumber(fan.totalDiamonds)}</div>
-                    <div className="text-[10px] text-zinc-500">💎 Total value</div>
+                    <div className="text-[10px] text-zinc-500">
+                      💎 Total value{' '}
+                      {estimateMoney(fan.totalDiamonds, earnings) && (
+                        <span className="text-zinc-600">{estimateMoney(fan.totalDiamonds, earnings)}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -215,6 +225,11 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                     <div>
                       Birthday: <span className="font-semibold text-zinc-200">{bday.label}</span>
                       <span className="text-zinc-600"> ({bday.days === 0 ? 'today' : `in ${bday.days} day${bday.days === 1 ? '' : 's'}`})</span> 🎂
+                    </div>
+                  )}
+                  {fan.lastThankedAt && (
+                    <div>
+                      Last thanked: <span className="font-semibold text-emerald-400">{formatDate(fan.lastThankedAt)}</span> 💌
                     </div>
                   )}
                 </div>
@@ -264,12 +279,18 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
 
                 {/* Actions */}
                 <button
-                  onClick={thank}
-                  disabled={thanked}
-                  className="mt-3 w-full rounded-full px-3 py-2 text-xs font-bold text-white shadow-[0_2px_10px_rgba(238,29,82,0.35)] transition disabled:opacity-80"
+                  onClick={() => setShowThank(true)}
+                  className="mt-3 w-full rounded-full px-3 py-2 text-xs font-bold text-white shadow-[0_2px_10px_rgba(238,29,82,0.35)] transition"
                   style={{ background: 'var(--gradient-pink)' }}
                 >
-                  {thanked ? 'Reminder set ✓' : '💌 Thank after LIVE'}
+                  💌 Send a thank-you
+                </button>
+                <button
+                  onClick={thank}
+                  disabled={thanked}
+                  className="mt-1.5 w-full rounded-full border border-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 disabled:opacity-70"
+                >
+                  {thanked ? 'Reminder set ✓' : 'Remind me after LIVE'}
                 </button>
                 <button
                   onClick={() => openFanProfile(fan.uniqueId)}
@@ -301,6 +322,15 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
           </button>
         </div>
       </section>
+
+      {showThank && fanMemoryId && (
+        <ThankComposer
+          uniqueId={fanMemoryId}
+          nickname={fan?.displayName || fan?.nickname || sessionUser?.nickname}
+          onClose={() => setShowThank(false)}
+          onThanked={() => refresh(fanMemoryId)}
+        />
+      )}
     </aside>
   );
 });

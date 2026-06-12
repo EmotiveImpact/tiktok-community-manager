@@ -1,18 +1,22 @@
-/** Reminders — upcoming birthdays + quiet VIPs, with snooze/done persisted. */
+/** Reminders — upcoming birthdays + quiet VIPs + thank-after-LIVE, with snooze/done persisted. */
 import { useCallback, useEffect, useState } from 'react';
 import type { Reminder } from '../types';
 import { formatNumber } from '../lib/format';
 import { useAlerts } from '../state/alerts';
+import { useSettingsLoad } from '../state/settings';
+import { ThankComposer } from '../components/ThankComposer';
 import { FanAvatar, TierChip, PageShell, fanName } from '../components/crm';
 
 export function Reminders() {
   const pushToast = useAlerts((s) => s.pushToast);
+  const { community } = useSettingsLoad();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [snoozeFor, setSnoozeFor] = useState<string | null>(null);
+  const [thankFan, setThankFan] = useState<{ uniqueId: string; nickname?: string } | null>(null);
 
   const refresh = useCallback(() => {
-    window.tiktok.remindersList(30).then((r) => { setReminders(r ?? []); setLoaded(true); }).catch(() => setLoaded(true));
+    window.tiktok.remindersList().then((r) => { setReminders(r ?? []); setLoaded(true); }).catch(() => setLoaded(true));
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -28,7 +32,7 @@ export function Reminders() {
   };
 
   const birthdays = reminders.filter((r) => r.kind === 'birthday');
-  const quiet = reminders.filter((r) => r.kind === 'quiet');
+  const quiet = reminders.filter((r) => r.kind !== 'birthday');
 
   const Row = ({ r }: { r: Reminder }) => (
     <li className="flex items-center gap-3 border-t py-2.5 first:border-t-0" style={{ borderColor: 'var(--separator)' }}>
@@ -41,7 +45,10 @@ export function Reminders() {
         <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>
           {r.kind === 'birthday'
             ? r.days === 0 ? '🎂 Birthday today!' : `🎂 Birthday in ${r.days} day${r.days === 1 ? '' : 's'} (${r.date})`
-            : `Hasn't been seen in ${r.days} days · ${formatNumber(r.fan.totalDiamonds)} 💎 all-time`}
+            : r.kind === 'thank'
+              ? `💌 Thank them for their gifts${r.days === 0 ? ' — from today’s LIVE' : ` · ${r.days} day${r.days === 1 ? '' : 's'} ago`}`
+              : `Hasn't been seen in ${r.days} days · ${formatNumber(r.fan.totalDiamonds)} 💎 all-time`}
+          {r.fan.lastThankedAt ? ` · Last thanked ${new Date(r.fan.lastThankedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
         </span>
       </span>
       <div className="relative flex flex-none items-center gap-1.5">
@@ -54,6 +61,7 @@ export function Reminders() {
           </>
         ) : (
           <>
+            <button onClick={() => setThankFan({ uniqueId: r.fan.uniqueId, nickname: fanName(r.fan) })} className="panel-btn no-drag">💌 Thank</button>
             <button onClick={() => setSnoozeFor(r.id)} className="panel-btn no-drag">Snooze</button>
             <button onClick={() => act(r.id, 'done')} className="panel-btn panel-btn-primary no-drag">Done</button>
           </>
@@ -69,7 +77,7 @@ export function Reminders() {
           <img src="./assets/png/icon_thank_you_envelope_3d.png" alt="" className="h-20 w-20 object-contain" draggable={false} />
           <h2 className="text-base font-extrabold">All caught up</h2>
           <p className="max-w-sm text-[13px]" style={{ color: 'var(--secondary-label)' }}>
-            No birthdays in the next 30 days and no VIPs going quiet. Add birthdays to fans on the Followers page to get nudges here.
+            No birthdays in the next {community.birthdayWindowDays} days and no VIPs going quiet. Add birthdays to fans on the Followers page to get nudges here.
           </p>
         </div>
       ) : (
@@ -94,17 +102,25 @@ export function Reminders() {
               <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full" style={{ background: 'rgba(168, 85, 247, 0.16)' }}>
                 <img src="./assets/png/icon_crown_3d.png" alt="" className="h-5 w-5" draggable={false} />
               </span>
-              Quiet VIPs
+              Quiet VIPs &amp; thank-yous
             </h3>
             {quiet.length === 0 ? (
               <p className="py-4 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
-                All your VIPs and Whales have been around in the last 14 days. 🎉
+                No thank-yous queued, and all your VIPs and Whales have been around in the last {community.quietDays} days. 🎉
               </p>
             ) : (
               <ul className="text-[13px]">{quiet.map((r) => <Row key={r.id} r={r} />)}</ul>
             )}
           </div>
         </div>
+      )}
+      {thankFan && (
+        <ThankComposer
+          uniqueId={thankFan.uniqueId}
+          nickname={thankFan.nickname}
+          onClose={() => setThankFan(null)}
+          onThanked={refresh}
+        />
       )}
     </PageShell>
   );
