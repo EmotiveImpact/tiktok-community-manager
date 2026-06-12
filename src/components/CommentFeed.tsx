@@ -117,7 +117,13 @@ const ChatRow = memo(function ChatRow({
   const pinMessage = useStore((s) => s.pinMessage);
   const unpinMessage = useStore((s) => s.unpinMessage);
   return (
-    <li className={`group flex items-start gap-2.5 rounded-lg px-2 py-1.5 hover:bg-zinc-900/60 ${tag ? TAG_BORDER[tag] ?? '' : ''} ${tracked ? 'border-l-2 border-l-amber-400 bg-amber-500/[0.03]' : ''}`}>
+    <li
+      className={`group flex min-h-[48px] items-start gap-2.5 rounded-xl border px-2.5 py-2 transition-colors ${
+        pinned || tracked
+          ? 'border-[#EE1D52]/25 bg-gradient-to-r from-[#EE1D52]/15 to-[#EE1D52]/[0.045]'
+          : 'border-transparent hover:bg-[var(--fill-quaternary)]'
+      } ${tag ? TAG_BORDER[tag] ?? '' : ''}`}
+    >
       <Avatar src={item.user.profilePictureUrl} name={item.user.nickname} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
@@ -147,7 +153,7 @@ const EventRow = memo(function EventRow({ item }: { item: FeedItem }) {
     <li>
       <button
         onClick={() => focusFanMemory(user.uniqueId)}
-        className="flex w-full items-center gap-2 rounded-lg border border-like-500/15 bg-like-500/[0.07] px-3 py-1.5 text-left transition hover:bg-like-500/[0.12]"
+        className="flex h-[30px] w-full items-center gap-2 rounded-[9px] border border-[#EE1D52]/25 bg-[#EE1D52]/[0.12] px-3 text-left transition hover:bg-[#EE1D52]/[0.18]"
       >
         <span className="min-w-0 flex-1 truncate text-xs text-zinc-300">
           <span className="font-semibold text-like-400">{user.nickname}</span>

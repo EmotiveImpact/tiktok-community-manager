@@ -267,7 +267,7 @@ export default function App() {
             <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
               {status === 'connected' ? (
                 <>
-                  <div className="flex items-center gap-1 border-b border-zinc-800/50 px-2 py-1.5">
+                  <div className="flex h-[54px] flex-none items-center gap-2 border-b border-zinc-800/50 px-3">
                     <TabButton active={tab === 'comments'} onClick={() => setTab('comments')}>Comments</TabButton>
                     <TabButton active={tab === 'gifts'} onClick={() => setTab('gifts')}>Gifts</TabButton>
                     <TabButton active={tab === 'questions'} onClick={() => setTab('questions')}>Q&amp;A</TabButton>
@@ -491,8 +491,8 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-        active ? 'bg-pink-gradient text-white shadow-[0_2px_8px_rgba(238,29,82,0.35)]' : 'text-zinc-500 hover:text-zinc-300'
+      className={`flex h-[30px] items-center rounded-full px-3.5 text-xs font-bold transition ${
+        active ? 'bg-pink-gradient text-white shadow-[0_10px_26px_rgba(238,29,82,0.32)]' : 'text-zinc-500 hover:text-zinc-300'
       }`}
     >
       {children}
