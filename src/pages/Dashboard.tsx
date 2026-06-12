@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 /** Dashboard — community at a glance: stats, follow-ups, top gifters, birthdays, VIP watchlist, top supporter. */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Calendar, Clock, Gift, Heart, Star, Users } from 'lucide-react';
+import { Calendar, Clock, Gift, Heart, Radio, Star, Users } from 'lucide-react';
 import type { Fan, GiftRecord, Reminder, SessionRecord, SessionSummary, UserNote } from '../types';
 import { estimateMoney, formatDiamonds, formatNumber } from '../lib/format';
 import { useSettingsLoad } from '../state/settings';
@@ -107,7 +107,7 @@ function IconChip({ bg, color, children, size = 44 }: { bg: string; color?: stri
   );
 }
 
-function StatCard({ label, value, sub, trend, trendColor, icon, tint }: {
+function StatCard({ label, value, sub, trend, trendColor, icon, tint, onOpen }: {
   label: string;
   value: string;
   /** secondary text rendered next to the value (e.g. money estimate) */
@@ -116,9 +116,17 @@ function StatCard({ label, value, sub, trend, trendColor, icon, tint }: {
   trendColor?: string;
   icon: string;
   tint: string;
+  /** when set, the whole card becomes a shortcut to the relevant page */
+  onOpen?: () => void;
 }) {
+  const Tag = onOpen ? 'button' : 'div';
   return (
-    <div className="glass brand-top-border relative p-4" style={{ borderRadius: 18 }}>
+    <Tag
+      onClick={onOpen}
+      className={`glass brand-top-border relative p-4 text-left ${onOpen ? 'no-drag hover-lift cursor-pointer' : ''}`}
+      style={{ borderRadius: 18 }}
+      {...(onOpen ? { title: `Open ${label.toLowerCase()}` } : {})}
+    >
       <IconChip bg={tint}>
         <img src={icon} alt="" className="h-7 w-7 object-contain" draggable={false} />
       </IconChip>
@@ -130,7 +138,7 @@ function StatCard({ label, value, sub, trend, trendColor, icon, tint }: {
       <div className="mt-1 h-4 text-[11px] font-semibold" style={{ color: trendColor ?? 'var(--secondary-label)' }}>
         {trend ?? ''}
       </div>
-    </div>
+    </Tag>
   );
 }
 
@@ -338,7 +346,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
           >
             <Calendar size={13} /> {weekRangeLabel()}
           </span>
-          <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag !h-8 !px-4 whitespace-nowrap">Go LIVE ((•))</button>
+          <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag !h-8 !px-4 whitespace-nowrap"><Radio size={13} className="mr-1.5" /> Go LIVE</button>
           <button onClick={() => navTo('followers')} className="panel-btn no-drag !h-8 !px-4 whitespace-nowrap">Fan profile</button>
         </div>
 
@@ -351,6 +359,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
             trendColor="#34c77b"
             icon="./assets/png/icon_heart_3d.png"
             tint="rgba(238, 29, 82, 0.14)"
+            onOpen={() => navTo('followers')}
           />
           <StatCard
             label="Thank-yous due"
@@ -359,6 +368,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
             trendColor="var(--brand-pink)"
             icon="./assets/png/icon_thank_you_envelope_3d.png"
             tint="rgba(255, 94, 126, 0.14)"
+            onOpen={onGoReminders}
           />
           <StatCard
             label="Gifts this month"
@@ -368,6 +378,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
             trendColor={monthTrend?.up ? '#34c77b' : '#e0245e'}
             icon="./assets/png/icon_diamond_3d.png"
             tint="rgba(105, 201, 208, 0.18)"
+            onOpen={() => navTo('gifts')}
           />
           <StatCard
             label="Whales to follow up"
@@ -376,6 +387,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
             trendColor="#a855f7"
             icon="./assets/png/icon_crown_3d.png"
             tint="rgba(168, 85, 247, 0.16)"
+            onOpen={onGoReminders}
           />
         </div>
 
@@ -433,7 +445,13 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
             ) : (
               <ul className="text-[13px]">
                 {gifters.map((g, i) => (
-                  <li key={g.uniqueId} className={`flex items-center gap-3 py-2 ${i > 0 ? 'border-t' : ''}`} style={{ borderColor: 'var(--separator)' }}>
+                  <li
+                    key={g.uniqueId}
+                    onClick={() => navTo('followers', g.uniqueId)}
+                    title={`Open @${g.uniqueId}'s profile`}
+                    className={`no-drag flex cursor-pointer items-center gap-3 rounded-lg px-1 py-2 transition-colors hover:bg-[var(--fill-quaternary)] ${i > 0 ? 'border-t' : ''}`}
+                    style={{ borderColor: 'var(--separator)' }}
+                  >
                     <RankBadge i={i} />
                     <FanAvatar name={g.fan ? fanName(g.fan) : g.name} url={g.fan?.avatarUrl} />
                     <span className="min-w-0 flex-1 leading-tight">
@@ -540,7 +558,11 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                     <span className="block truncate font-semibold">{s.roomTitle || `@${s.hostUniqueId}`}</span>
                     <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>
                       {new Date(s.startedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
-                      {s.endedAt === null ? ' · live' : ''}
+                      {s.endedAt === null
+                        ? ' · live'
+                        : s.endedAt
+                          ? ` · ${Math.max(1, Math.round((s.endedAt - s.startedAt) / 60000))} min`
+                          : ''}
                     </span>
                   </span>
                   <span className="text-[12px] font-bold tabular-nums">{formatDiamonds(s.totals?.diamonds ?? 0)}</span>
