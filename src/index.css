@@ -56,8 +56,20 @@
   --fill-thin: rgba(120, 134, 178, 0.14);
   --fill-quaternary: rgba(120, 134, 178, 0.09);
 
+  /* Panel system (layout-improvements.md item 1/2) */
+  --sidebar: #050816;
+  --window-bg: #070b17;
+  --panel-bg: rgba(9, 14, 29, 0.86);
+  --panel-bg-strong: #0b1020;
+  --panel-border: rgba(255, 255, 255, 0.105);
+  --panel-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.022)), #0b1020;
+  --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --text-primary: #f6f7fb;
+  --text-secondary: #9aa3b8;
+  --btn-secondary-bg: #141b2e;
+
   /* Backgrounds */
-  --app-bg: #050816;
+  --app-bg: #070b17;
   --bg-window: rgba(8, 11, 24, 0.78);
   --bg-content: rgba(13, 17, 34, 0.78);
   --bg-grouped: rgba(8, 11, 24, 0.55);
@@ -97,6 +109,17 @@
   --fill: rgba(100, 116, 139, 0.14);
   --fill-thin: rgba(100, 116, 139, 0.09);
   --fill-quaternary: rgba(100, 116, 139, 0.06);
+
+  /* Panel system — light equivalents */
+  --window-bg: #f8fafc;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-bg-strong: #ffffff;
+  --panel-border: #e5e7eb;
+  --panel-surface: #ffffff;
+  --panel-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 14px 40px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --btn-secondary-bg: #f1f5f9;
 
   --app-bg: #f8fafc;
   --bg-window: rgba(248, 250, 252, 0.9);
@@ -156,12 +179,23 @@ body {
   50% { opacity: 0.4; }
 }
 
-/* === Card surface (was vibrancy glass) === */
-.glass {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
+/* === App panel — the one true card surface (spec item 2).
+   `.glass` is kept as an alias so existing call sites pick it up. === */
+.glass,
+.app-panel {
+  background: var(--panel-surface);
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  box-shadow: var(--panel-shadow);
+}
+
+/* Hover micro-detail (spec item 15) — clickable cards only, never table rows */
+.hover-lift {
+  transition: transform 130ms ease, filter 130ms ease, box-shadow 130ms ease;
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
 }
 
 /* Brand-gradient top border for stat cards */
@@ -209,25 +243,26 @@ body {
   gap: 5px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 120ms, border-color 120ms, color 120ms;
+  transition: background 120ms, border-color 120ms, color 120ms, transform 120ms, filter 120ms;
   outline: none;
   -webkit-app-region: no-drag;
   letter-spacing: -0.005em;
 }
-.panel-btn:hover { background: var(--fill); }
+.panel-btn:hover { background: var(--fill); transform: translateY(-1px); }
 .panel-btn:disabled { opacity: 0.4; cursor: default; }
-.panel-btn:disabled:hover { background: var(--fill-thin); }
+.panel-btn:disabled:hover { background: var(--fill-thin); transform: none; filter: none; }
 
 .panel-btn-primary {
   background: var(--gradient-pink);
   color: white;
+  font-weight: 800;
   border-color: transparent;
-  box-shadow: 0 2px 8px rgba(238, 29, 82, 0.35), inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 30px rgba(238, 29, 82, 0.34), inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
 }
 .panel-btn-primary:hover { filter: brightness(1.08); background: var(--gradient-pink); }
 
 .panel-btn-secondary {
-  background: var(--fill-thin);
+  background: var(--btn-secondary-bg);
   border-color: var(--separator);
   color: var(--label);
 }
