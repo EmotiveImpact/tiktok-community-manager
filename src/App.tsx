@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ConnectBar } from './components/ConnectBar';
-import { Sidebar, type SidebarPanel, type Page } from './components/Sidebar';
+import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { Followers } from './pages/Followers';
 import { Gifts } from './pages/Gifts';
@@ -38,7 +38,7 @@ import { NoteComposer } from './components/NoteComposer';
 import { useStore } from './state/store';
 import { useAlerts } from './state/alerts';
 import { useTracked } from './state/tracked';
-import { useUI, type FeedFilter } from './state/ui';
+import { useUI, type FeedFilter, type LiveTool } from './state/ui';
 
 function ToolbarBtn({ active, onClick, children, title, badge, badgeAccent }: { active?: boolean; onClick: () => void; children: React.ReactNode; title?: string; badge?: number; badgeAccent?: boolean }) {
   return (
@@ -55,7 +55,7 @@ function ToolbarBtn({ active, onClick, children, title, badge, badgeAccent }: { 
   );
 }
 
-const TOOLS_GROUPS: { group: string; items: { id: string; label: string; icon: string }[] }[] = [
+const TOOLS_GROUPS: { group: string; items: { id: LiveTool; label: string; icon: string }[] }[] = [
   {
     group: 'Audience',
     items: [
@@ -83,7 +83,7 @@ const TOOLS_GROUPS: { group: string; items: { id: string; label: string; icon: s
       { id: 'analytics', label: 'Creator Analytics', icon: '📈' },
       { id: 'compare', label: 'Compare Sessions', icon: '⚖️' },
       { id: 'history', label: 'Session History', icon: '🕒' },
-      { id: 'multi', label: 'Multi-Room', icon: '🪟' },
+      { id: 'multiroom', label: 'Multi-Room', icon: '🪟' },
     ],
   },
 ];
@@ -102,7 +102,7 @@ function ConnectBarTools({
   setShowStream: React.Dispatch<React.SetStateAction<boolean>>;
   trackedCount: number;
   alertCount: number;
-  onOpen: (panel: string) => void;
+  onOpen: (tool: LiveTool) => void;
   moreRef: React.MutableRefObject<HTMLDivElement | null>;
   showMore: boolean;
   setShowMore: React.Dispatch<React.SetStateAction<boolean>>;
@@ -155,24 +155,10 @@ export default function App() {
   const setTab = useUI((s) => s.setTab);
   const page = useUI((s) => s.page);
   const setPage = useUI((s) => s.setPage);
-  const [activePanel, setActivePanel] = useState<SidebarPanel>('live');
-  const [showHistory, setShowHistory] = useState(false);
+  const liveTool = useUI((s) => s.liveTool);
+  const openLiveTool = useUI((s) => s.openLiveTool);
   const [showStream, setShowStream] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showAlerts, setShowAlerts] = useState(false);
-  const [showWordCloud, setShowWordCloud] = useState(false);
-  const [showMultiRoom, setShowMultiRoom] = useState(false);
-  const [showModeration, setShowModeration] = useState(false);
-  const [showComparison, setShowComparison] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [showWatchlist, setShowWatchlist] = useState(false);
-  const [showTranscript, setShowTranscript] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [showHighlights, setShowHighlights] = useState(false);
-  const [showLiker, setShowLiker] = useState(false);
-  const [showFanNotes, setShowFanNotes] = useState(false);
-  const [showRoomMembers, setShowRoomMembers] = useState(false);
-  const [showTracked, setShowTracked] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
 
@@ -231,18 +217,20 @@ export default function App() {
       if (mod && e.key === '2') { e.preventDefault(); setTab('gifts'); }
       if (mod && e.key === '3') { e.preventDefault(); setTab('questions'); }
       if (mod && e.key === '4') { e.preventDefault(); setTab('all'); }
-      if (mod && e.key === 'h') { e.preventDefault(); setShowHistory((v) => !v); }
-      if (mod && e.key === 'l') { e.preventDefault(); setShowLeaderboard((v) => !v); }
-      if (mod && e.key === 'm') { e.preventDefault(); setShowMultiRoom((v) => !v); }
-      if (mod && e.key === 'i') { e.preventDefault(); setShowWordCloud((v) => !v); }
+      const ui = useUI.getState();
+      const toggleTool = (tool: LiveTool) =>
+        ui.page === 'live' && ui.liveTool === tool ? ui.openLiveTool('feed') : ui.openLiveTool(tool);
+      if (mod && e.key === 'h') { e.preventDefault(); toggleTool('history'); }
+      if (mod && e.key === 'l') { e.preventDefault(); toggleTool('leaderboard'); }
+      if (mod && e.key === 'm') { e.preventDefault(); toggleTool('multiroom'); }
+      if (mod && e.key === 'i') { e.preventDefault(); toggleTool('insights'); }
       if (mod && e.key === 'w') { e.preventDefault(); setShowStream((v) => !v); }
-      if (mod && e.key === 't') { e.preventDefault(); setShowTranscript((v) => !v); }
+      if (mod && e.key === 't') { e.preventDefault(); toggleTool('transcript'); }
       if (mod && e.key === 'k') { e.preventDefault(); setShowCommandPalette((v) => !v); }
       if (e.key === 'Escape') {
-        setShowHistory(false); setShowLeaderboard(false); setShowAlerts(false);
-        setShowWordCloud(false); setShowMultiRoom(false); setShowModeration(false);
-        setShowComparison(false); setShowAnalytics(false); setShowWatchlist(false);
-        setShowTranscript(false); setShowCommandPalette(false); setShowHighlights(false); setShowMore(false);
+        setShowCommandPalette(false); setShowMore(false);
+        // Esc backs an in-content tool out to the live feed
+        if (ui.page === 'live' && ui.liveTool !== 'feed') ui.openLiveTool('feed');
       }
     };
     window.addEventListener('keydown', handler);
@@ -258,23 +246,7 @@ export default function App() {
             setShowStream={setShowStream}
             trackedCount={trackedCount}
             alertCount={alertCount}
-            onOpen={(panel) => {
-              if (panel === 'tracked') setShowTracked(true);
-              if (panel === 'notes') setShowFanNotes(true);
-              if (panel === 'alerts') setShowAlerts(true);
-              if (panel === 'room') setShowRoomMembers(true);
-              if (panel === 'insights') setShowWordCloud(true);
-              if (panel === 'mod') setShowModeration(true);
-              if (panel === 'multi') setShowMultiRoom(true);
-              if (panel === 'leaderboard') setShowLeaderboard(true);
-              if (panel === 'history') setShowHistory(true);
-              if (panel === 'transcript') setShowTranscript(true);
-              if (panel === 'highlights') setShowHighlights(true);
-              if (panel === 'analytics') setShowAnalytics(true);
-              if (panel === 'compare') setShowComparison(true);
-              if (panel === 'watchlist') setShowWatchlist(true);
-              if (panel === 'liker') setShowLiker(true);
-            }}
+            onOpen={openLiveTool}
             moreRef={moreRef}
             showMore={showMore}
             setShowMore={setShowMore}
@@ -285,34 +257,12 @@ export default function App() {
       {page === 'live' && <StatsStrip />}
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          page={page}
-          onNavigate={setPage}
-          active={activePanel}
-          onSelect={(id) => {
-            setActivePanel(id);
-            // Open the matching panel overlay (Live = no overlay = main feed)
-            if (id === 'tracked') setShowTracked(true);
-            else if (id === 'notes') setShowFanNotes(true);
-            else if (id === 'room') setShowRoomMembers(true);
-            else if (id === 'leaderboard') setShowLeaderboard(true);
-            else if (id === 'watchlist') setShowWatchlist(true);
-            else if (id === 'alerts') setShowAlerts(true);
-            else if (id === 'mod') setShowModeration(true);
-            else if (id === 'transcript') setShowTranscript(true);
-            else if (id === 'highlights') setShowHighlights(true);
-            else if (id === 'liker') setShowLiker(true);
-            else if (id === 'insights') setShowWordCloud(true);
-            else if (id === 'analytics') setShowAnalytics(true);
-            else if (id === 'compare') setShowComparison(true);
-            else if (id === 'history') setShowHistory(true);
-            else if (id === 'multi') setShowMultiRoom(true);
-          }}
-          showStream={showStream}
-          onToggleStream={() => setShowStream((v) => !v)}
-        />
+        <Sidebar showStream={showStream} onToggleStream={() => setShowStream((v) => !v)} />
         {page === 'live' && (
           <main className="flex flex-1 gap-3 overflow-hidden p-3">
+            {liveTool !== 'feed' ? (
+              <LiveToolView tool={liveTool} onClose={() => openLiveTool('feed')} />
+            ) : (
             <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
               {status === 'connected' ? (
                 <>
@@ -338,18 +288,21 @@ export default function App() {
                 </>
               ) : (
                 <EmptyState
-                  onOpenHistory={() => setShowHistory(true)}
-                  onOpenTracked={() => setShowTracked(true)}
+                  onOpenHistory={() => openLiveTool('history')}
+                  onOpenTracked={() => openLiveTool('tracked')}
                 />
               )}
             </section>
-            {showStream && status === 'connected' && <StreamPlayer onClose={() => setShowStream(false)} />}
+            )}
+            {showStream && status === 'connected' && !WIDE_TOOLS.has(liveTool) && (
+              <StreamPlayer onClose={() => setShowStream(false)} />
+            )}
             {status === 'connected' && <FanMemoryPanel />}
           </main>
         )}
         {page === 'dashboard' && (
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <Dashboard onOpenHistory={() => setShowHistory(true)} onGoLive={() => setPage('live')} onGoReminders={() => setPage('reminders')} />
+            <Dashboard onOpenHistory={() => openLiveTool('history')} onGoLive={() => setPage('live')} onGoReminders={() => setPage('reminders')} />
           </main>
         )}
         {page !== 'live' && page !== 'dashboard' && (
@@ -365,20 +318,6 @@ export default function App() {
       </div>
 
       <UserDetailDrawer />
-      {showWordCloud && <WordCloud onClose={() => { setShowWordCloud(false); setActivePanel('live'); }} />}
-      {showModeration && <ModerationPanel onClose={() => { setShowModeration(false); setActivePanel('live'); }} />}
-      {showAlerts && <AlertsPanel onClose={() => { setShowAlerts(false); setActivePanel('live'); }} />}
-      {showLeaderboard && <AllTimeLeaderboard onClose={() => { setShowLeaderboard(false); setActivePanel('live'); }} />}
-      {showMultiRoom && <MultiRoom onClose={() => { setShowMultiRoom(false); setActivePanel('live'); }} />}
-      {showAnalytics && <CreatorAnalytics onClose={() => { setShowAnalytics(false); setActivePanel('live'); }} />}
-      {showComparison && <SessionComparison onClose={() => { setShowComparison(false); setActivePanel('live'); }} />}
-      {showWatchlist && <FollowerWatchlist onClose={() => { setShowWatchlist(false); setActivePanel('live'); }} />}
-      {showTranscript && <TranscriptPanel onClose={() => { setShowTranscript(false); setActivePanel('live'); }} />}
-      {showHighlights && <HighlightsPanel onClose={() => { setShowHighlights(false); setActivePanel('live'); }} />}
-      {showLiker && <LikerPanel onClose={() => { setShowLiker(false); setActivePanel('live'); }} />}
-      {showFanNotes && <FanNotesPanel onClose={() => { setShowFanNotes(false); setActivePanel('live'); }} />}
-      {showRoomMembers && <RoomMembersPanel onClose={() => { setShowRoomMembers(false); setActivePanel('live'); }} />}
-      {showTracked && <TrackedUsersPanel onClose={() => { setShowTracked(false); setActivePanel('live'); }} />}
       {showCommandPalette && (
         <CommandPalette
           onClose={() => setShowCommandPalette(false)}
@@ -388,30 +327,62 @@ export default function App() {
             { id: 'tab-questions', label: 'Switch to Q&A', hint: '⌘3', group: 'Tabs', icon: '❓', run: () => setTab('questions') },
             { id: 'tab-all', label: 'Switch to All events', hint: '⌘4', group: 'Tabs', icon: '📜', run: () => setTab('all') },
             { id: 'panel-stream', label: 'Toggle stream player', hint: '⌘W', group: 'Panels', icon: '▶️', run: () => setShowStream((v) => !v) },
-            { id: 'panel-history', label: 'Open Session History', hint: '⌘H', group: 'Panels', icon: '🕒', run: () => setShowHistory(true) },
-            { id: 'panel-leaderboard', label: 'Open All-Time Leaderboard', hint: '⌘L', group: 'Panels', icon: '🏆', run: () => setShowLeaderboard(true) },
-            { id: 'panel-multi', label: 'Open Multi-Room Monitor', hint: '⌘M', group: 'Panels', icon: '🪟', run: () => setShowMultiRoom(true) },
-            { id: 'panel-insights', label: 'Open Chat Insights', hint: '⌘I', group: 'Panels', icon: '📊', run: () => setShowWordCloud(true) },
-            { id: 'panel-transcript', label: 'Open Live Transcript', hint: '⌘T', group: 'Panels', icon: '🎙️', run: () => setShowTranscript(true) },
-            { id: 'panel-alerts', label: 'Open Alerts', group: 'Panels', icon: '🔔', run: () => setShowAlerts(true) },
-            { id: 'panel-mod', label: 'Open Moderation', group: 'Panels', icon: '🛡️', run: () => setShowModeration(true) },
-            { id: 'panel-analytics', label: 'Open Creator Analytics', group: 'Panels', icon: '📈', run: () => setShowAnalytics(true) },
-            { id: 'panel-compare', label: 'Compare Sessions', group: 'Panels', icon: '⚖️', run: () => setShowComparison(true) },
-            { id: 'panel-watchlist', label: 'Open Watchlist', group: 'Panels', icon: '👀', run: () => setShowWatchlist(true) },
-            { id: 'panel-highlights', label: 'Open Highlight Clips', group: 'Panels', icon: '🎬', run: () => setShowHighlights(true) },
-            { id: 'panel-liker', label: 'Open Live Liker', group: 'Panels', icon: '❤️', run: () => setShowLiker(true) },
-            { id: 'panel-fan-notes', label: 'Open Fan Notes', group: 'Panels', icon: '📝', run: () => setShowFanNotes(true) },
-            { id: 'panel-room-members', label: 'Open Room Members', group: 'Panels', icon: '👥', run: () => setShowRoomMembers(true) },
-            { id: 'panel-tracked', label: 'Open Tracked Users', group: 'Panels', icon: '★', run: () => setShowTracked(true) },
+            { id: 'panel-feed', label: 'Open Live Feed', group: 'Panels', icon: '📡', run: () => openLiveTool('feed') },
+            { id: 'panel-history', label: 'Open Session History', hint: '⌘H', group: 'Panels', icon: '🕒', run: () => openLiveTool('history') },
+            { id: 'panel-leaderboard', label: 'Open All-Time Leaderboard', hint: '⌘L', group: 'Panels', icon: '🏆', run: () => openLiveTool('leaderboard') },
+            { id: 'panel-multi', label: 'Open Multi-Room Monitor', hint: '⌘M', group: 'Panels', icon: '🪟', run: () => openLiveTool('multiroom') },
+            { id: 'panel-insights', label: 'Open Chat Insights', hint: '⌘I', group: 'Panels', icon: '📊', run: () => openLiveTool('insights') },
+            { id: 'panel-transcript', label: 'Open Live Transcript', hint: '⌘T', group: 'Panels', icon: '🎙️', run: () => openLiveTool('transcript') },
+            { id: 'panel-alerts', label: 'Open Alerts', group: 'Panels', icon: '🔔', run: () => openLiveTool('alerts') },
+            { id: 'panel-mod', label: 'Open Moderation', group: 'Panels', icon: '🛡️', run: () => openLiveTool('mod') },
+            { id: 'panel-analytics', label: 'Open Creator Analytics', group: 'Panels', icon: '📈', run: () => openLiveTool('analytics') },
+            { id: 'panel-compare', label: 'Compare Sessions', group: 'Panels', icon: '⚖️', run: () => openLiveTool('compare') },
+            { id: 'panel-watchlist', label: 'Open Watchlist', group: 'Panels', icon: '👀', run: () => openLiveTool('watchlist') },
+            { id: 'panel-highlights', label: 'Open Highlight Clips', group: 'Panels', icon: '🎬', run: () => openLiveTool('highlights') },
+            { id: 'panel-liker', label: 'Open Live Liker', group: 'Panels', icon: '❤️', run: () => openLiveTool('liker') },
+            { id: 'panel-fan-notes', label: 'Open Fan Notes', group: 'Panels', icon: '📝', run: () => openLiveTool('notes') },
+            { id: 'panel-room-members', label: 'Open Room Members', group: 'Panels', icon: '👥', run: () => openLiveTool('room') },
+            { id: 'panel-tracked', label: 'Open Tracked Users', group: 'Panels', icon: '★', run: () => openLiveTool('tracked') },
             { id: 'capture-clip', label: 'Capture last 60s as clip', group: 'Actions', icon: '✂️', run: () => window.tiktok.highlightsCapture('manual') },
             { id: 'disconnect', label: 'Disconnect', group: 'Connection', icon: '⏹️', run: () => window.tiktok.disconnect() },
           ]}
         />
       )}
-      {showHistory && <HistoryView onClose={() => { setShowHistory(false); setActivePanel('live'); }} />}
       <AlertToasts />
     </div>
   );
+}
+
+/**
+ * Tools that need horizontal room (grids / side-by-side charts). For these we
+ * hide the StreamPlayer column but keep the Fan Memory panel visible.
+ */
+const WIDE_TOOLS = new Set<LiveTool>(['analytics', 'compare', 'history', 'multiroom']);
+
+/**
+ * Renders the selected live tool inside the content slot. Each panel already
+ * renders into PanelShell (now an in-content card), so they slot straight in.
+ * Closing a tool returns to the live feed.
+ */
+function LiveToolView({ tool, onClose }: { tool: LiveTool; onClose: () => void }) {
+  switch (tool) {
+    case 'tracked': return <TrackedUsersPanel onClose={onClose} />;
+    case 'notes': return <FanNotesPanel onClose={onClose} />;
+    case 'room': return <RoomMembersPanel onClose={onClose} />;
+    case 'leaderboard': return <AllTimeLeaderboard onClose={onClose} />;
+    case 'watchlist': return <FollowerWatchlist onClose={onClose} />;
+    case 'alerts': return <AlertsPanel onClose={onClose} />;
+    case 'mod': return <ModerationPanel onClose={onClose} />;
+    case 'transcript': return <TranscriptPanel onClose={onClose} />;
+    case 'highlights': return <HighlightsPanel onClose={onClose} />;
+    case 'liker': return <LikerPanel onClose={onClose} />;
+    case 'insights': return <WordCloud onClose={onClose} />;
+    case 'analytics': return <CreatorAnalytics onClose={onClose} />;
+    case 'compare': return <SessionComparison onClose={onClose} />;
+    case 'history': return <HistoryView onClose={onClose} />;
+    case 'multiroom': return <MultiRoom onClose={onClose} />;
+    default: return null;
+  }
 }
 
 const FILTER_LABELS: Record<FeedFilter, string> = {

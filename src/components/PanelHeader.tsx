@@ -16,7 +16,7 @@ export function PanelHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="no-drag flex h-11 flex-none items-center gap-2 overflow-hidden border-b border-zinc-800 bg-zinc-950/85 pl-[78px] pr-3 backdrop-blur">
+    <header className="no-drag flex h-11 flex-none items-center gap-2 overflow-hidden border-b border-zinc-800/50 pl-3 pr-3">
       <div className="flex flex-none items-center gap-2">
         <h2 className="whitespace-nowrap text-sm font-bold text-zinc-100">{title}</h2>
         {badge !== undefined && (
@@ -40,6 +40,15 @@ export function PanelHeader({
   );
 }
 
+/**
+ * Tool panel surface. Previously a fixed full-screen overlay; now an in-content
+ * card that fills the live page's content slot, so the sidebar and the
+ * StreamPlayer / Fan Memory columns stay visible around it.
+ */
 export function PanelShell({ children }: { children: ReactNode }) {
-  return <div className="no-drag fixed inset-0 z-40 flex flex-col bg-zinc-950">{children}</div>;
+  return (
+    <section className="glass no-drag flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
+      {children}
+    </section>
+  );
 }
