@@ -223,7 +223,7 @@ export function installBridgeMock(): void {
           diamonds: g.diamondCount * (1 + (k % 3)),
           repeatCount: 1 + (k % 3),
           sessionId: `demo-${k * 2}`,
-          at: Date.now() - (gi * 5 + k * 26) * 3600000,
+          at: Date.now() - Math.round((gi * 2.2 + k * 0.9) * day),
         });
       }
       gi++;

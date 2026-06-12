@@ -127,7 +127,11 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
                     <td className="py-2">{g.giftName}{g.repeatCount > 1 ? ` ×${g.repeatCount}` : ''}</td>
                     <td className="py-2 text-right font-bold tabular-nums">{formatNumber(g.diamonds)} 💎</td>
                     <td className="py-2 pl-4 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
-                      {g.manual ? 'Manual' : g.sessionId ? `LIVE · ${g.sessionId.split('-').slice(1).join('-') || g.sessionId}` : 'LIVE'}
+                      {(() => {
+                        if (g.manual) return 'Manual';
+                        const host = g.sessionId?.split('-').slice(1).join('-');
+                        return host && /[a-z]/i.test(host) ? `LIVE · @${host}` : 'LIVE';
+                      })()}
                     </td>
                   </tr>
                 ))}
