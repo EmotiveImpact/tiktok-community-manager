@@ -1,8 +1,11 @@
 import type { Tier } from '../types';
 
-/** Diamond totals → tier (mirrors electron/fans.ts thresholds). */
-export function tierForDiamonds(d: number): Tier {
-  return d >= 10000 ? 'Whale' : d >= 1000 ? 'VIP' : d >= 100 ? 'Regular' : 'New';
+export type TierThresholds = { regular: number; vip: number; whale: number };
+export const DEFAULT_TIER_THRESHOLDS: TierThresholds = { regular: 100, vip: 1000, whale: 10000 };
+
+/** Diamond totals → tier (mirrors electron/fans.ts; thresholds configurable in Settings). */
+export function tierForDiamonds(d: number, t: TierThresholds = DEFAULT_TIER_THRESHOLDS): Tier {
+  return d >= t.whale ? 'Whale' : d >= t.vip ? 'VIP' : d >= t.regular ? 'Regular' : 'New';
 }
 
 export function tierClass(tier: string): string {

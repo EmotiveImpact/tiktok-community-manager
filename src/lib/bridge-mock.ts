@@ -9,7 +9,9 @@
  *     feeds, stats and leaderboards render with data.
  */
 import type {
+  CommunitySettings,
   ConnectionStatus,
+  EarningsSettings,
   Fan,
   GiftRecord,
   ImportResult,
@@ -232,7 +234,25 @@ export function installBridgeMock(): void {
   }
   const reminderHidden = new Set<string>();
   const thankRequests: { uniqueId: string; date: string }[] = [];
-  const fanWithTier = (f: RawFan): Fan => ({ ...f, tier: tierForDiamonds(f.totalDiamonds) });
+
+  // Persisted (localStorage) settings so the browser demo behaves like the app.
+  type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings };
+  const SETTINGS_KEY = 'mock-settings-v1';
+  const defaultSettings = (): MockSettings => ({
+    thankTemplate: 'Hey {nickname}! Thank you so much for the {giftName} 💕 You made my stream!',
+    earnings: { enabled: false, ratePer1000: 10, currency: '£' },
+    community: { quietDays: 14, birthdayWindowDays: 30, tiers: { regular: 100, vip: 1000, whale: 10000 } },
+  });
+  let mockSettings: MockSettings = defaultSettings();
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) mockSettings = { ...defaultSettings(), ...JSON.parse(raw) };
+  } catch { /* fresh */ }
+  const saveSettings = () => {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(mockSettings)); } catch { /* ignore */ }
+  };
+
+  const fanWithTier = (f: RawFan): Fan => ({ ...f, tier: tierForDiamonds(f.totalDiamonds, mockSettings.community.tiers) });
   const normBday = (b?: string | null) => {
     if (!b) return undefined;
     const m = String(b).match(/^(?:\d{4}-)?(\d{1,2})-(\d{1,2})$/);
@@ -258,6 +278,9 @@ export function installBridgeMock(): void {
       chatLogEnabled: false,
       webhooks: { discordUrl: '', slackUrl: '', customUrl: '', events: { gifts: true, follows: true, keywords: false, milestones: true } } as WebhookConfig,
       watchlist: [],
+      thankTemplate: mockSettings.thankTemplate,
+      earnings: mockSettings.earnings,
+      community: mockSettings.community,
     }),
     setSignApiKey: async () => ok,
     setAnthropicKey: async () => ok,
@@ -265,6 +288,35 @@ export function installBridgeMock(): void {
     setChatLog: async () => ok,
     setWebhooks: async () => ok,
     setWatchlist: async () => ok,
+    setThankTemplate: async (tpl) => {
+      mockSettings.thankTemplate = tpl;
+      saveSettings();
+      return ok;
+    },
+    setEarnings: async (cfg) => {
+      mockSettings.earnings = cfg;
+      saveSettings();
+      return ok;
+    },
+    setCommunity: async (cfg) => {
+      const { regular, vip, whale } = cfg.tiers;
+      if (!(regular > 0 && regular < vip && vip < whale)) {
+        return { ok: false, error: 'Tier thresholds must be ascending (Regular < VIP < Whale)' };
+      }
+      mockSettings.community = cfg;
+      saveSettings();
+      return ok;
+    },
+    openExternal: async (url) => {
+      try {
+        const u = new URL(url);
+        if (u.protocol === 'https:' && (u.hostname === 'tiktok.com' || u.hostname.endsWith('.tiktok.com'))) {
+          window.open(url, '_blank', 'noopener');
+          return ok;
+        }
+      } catch { /* invalid */ }
+      return { ok: false, error: 'Only tiktok.com links can be opened' };
+    },
     chatLogDir: async () => '~/Library/Application Support/LikeTapperMac/chatlogs',
     backupExport: async () => ({ ok: false }),
     backupImport: async () => ({ ok: false, error: 'Not available in browser mode' }),
@@ -402,7 +454,9 @@ export function installBridgeMock(): void {
       const pageSize = q.pageSize ?? 25;
       return { data: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length, page, pageSize, diamondsWeek, diamondsMonth, diamondsAll };
     },
-    remindersList: async (withinDays = 30) => {
+    remindersList: async (withinDays) => {
+      const rules = mockSettings.community;
+      const window = withinDays ?? rules.birthdayWindowDays;
       const out: Reminder[] = [];
       const now = new Date();
       const year = now.getFullYear();
@@ -416,13 +470,13 @@ export function installBridgeMock(): void {
             if (next < today) next = new Date(year + 1, Number(m[1]) - 1, Number(m[2]));
             const days = Math.round((next.getTime() - today.getTime()) / day);
             const id = `bday:${f.uniqueId}:${year}`;
-            if (days <= withinDays && !reminderHidden.has(id)) out.push({ id, kind: 'birthday', fan: f, days, date: f.birthday });
+            if (days <= window && !reminderHidden.has(id)) out.push({ id, kind: 'birthday', fan: f, days, date: f.birthday });
           }
         }
         if ((f.tier === 'VIP' || f.tier === 'Whale')) {
           const daysSince = Math.floor((Date.now() - f.lastSeenAt) / day);
           const id = `quiet:${f.uniqueId}:0`;
-          if (daysSince > 14 && !reminderHidden.has(id)) out.push({ id, kind: 'quiet', fan: f, days: daysSince });
+          if (daysSince > rules.quietDays && !reminderHidden.has(id)) out.push({ id, kind: 'quiet', fan: f, days: daysSince });
         }
       }
       for (const t of thankRequests) {
@@ -448,6 +502,18 @@ export function installBridgeMock(): void {
       if (thankRequests.some((t) => t.uniqueId === uid && t.date === date)) return { ok: true, deduped: true };
       thankRequests.push({ uniqueId: uid, date });
       return ok;
+    },
+    fansMarkThanked: async (uniqueId) => {
+      const uid = uniqueId.replace(/^@/, '').trim();
+      const f = fanMap.get(uid);
+      if (!f) return { ok: false, error: 'Fan not found' };
+      f.lastThankedAt = Date.now();
+      // close open thank/birthday reminders for this fan
+      const open = await bridge.remindersList();
+      for (const r of open) {
+        if (r.fan.uniqueId === uid && (r.kind === 'thank' || r.kind === 'birthday')) reminderHidden.add(r.id);
+      }
+      return { ok: true, fan: fanWithTier(f) };
     },
     fansImportCsv: async (csvText) => {
       const lines = csvText.split(/\r?\n/).filter((l) => l.trim());

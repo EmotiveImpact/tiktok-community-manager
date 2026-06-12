@@ -1,8 +1,9 @@
 /** Gifts — permanent gift ledger across all LIVEs + manual logging. */
 import { useCallback, useEffect, useState } from 'react';
 import type { ListGiftsResult } from '../types';
-import { formatNumber } from '../lib/format';
+import { estimateMoney, formatNumber } from '../lib/format';
 import { useAlerts } from '../state/alerts';
+import { useSettingsLoad } from '../state/settings';
 import { FanAvatar, Pager, PageShell, FieldLabel, inputCls } from '../components/crm';
 
 const RANGES = [
@@ -22,6 +23,7 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
   const [resp, setResp] = useState<ListGiftsResult>({ data: [], total: 0, page: 1, pageSize: 25, diamondsWeek: 0, diamondsMonth: 0, diamondsAll: 0 });
   const [showLog, setShowLog] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const { earnings } = useSettingsLoad();
 
   const refresh = useCallback(() => {
     window.tiktok.giftsList({ range, fan: fan || undefined, page, pageSize: 25 })
@@ -64,7 +66,12 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
             </span>
             <div className="min-w-0">
               <div className="text-xs font-medium" style={{ color: 'var(--secondary-label)' }}>{s.label}</div>
-              <div className="mt-0.5 truncate text-[22px] font-extrabold leading-tight tracking-tight">{formatNumber(s.value)} 💎</div>
+              <div className="mt-0.5 truncate text-[22px] font-extrabold leading-tight tracking-tight">
+                {formatNumber(s.value)} 💎
+                {estimateMoney(s.value, earnings) && (
+                  <span className="ml-1.5 text-[13px] font-semibold" style={{ color: 'var(--secondary-label)' }}>{estimateMoney(s.value, earnings)}</span>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -134,6 +141,7 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
                     <td className="py-2 pl-4 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
                       {(() => {
                         if (g.manual) return 'Manual';
+                        if (g.sessionId?.startsWith('multi:')) return `Multi-room · @${g.sessionId.slice(6)}`;
                         const host = g.sessionId?.split('-').slice(1).join('-');
                         return host && /[a-z]/i.test(host) ? `LIVE · @${host}` : 'LIVE';
                       })()}

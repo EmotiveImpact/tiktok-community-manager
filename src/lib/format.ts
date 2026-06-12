@@ -19,12 +19,18 @@ export function formatDiamonds(n: number): string {
 }
 
 /**
- * Rough £ estimate (~£0.005/diamond creator payout). OFF by default —
- * call sites must opt in explicitly; never show without a "≈" qualifier.
+ * Optional money estimate next to diamond counts (Settings → Earnings estimate).
+ * OFF by default; diamonds stay the primary unit. Returns e.g. "(~£124)" or
+ * null when the estimate is disabled / not meaningful.
  */
-export const SHOW_MONEY_ESTIMATE = false;
-export function estimateGbp(diamonds: number): string {
-  return `≈ £${(diamonds * 0.005).toFixed(2)}`;
+export type EarningsLike = { enabled: boolean; ratePer1000: number; currency: string } | null | undefined;
+export function estimateMoney(diamonds: number, earnings: EarningsLike): string | null {
+  if (!earnings?.enabled) return null;
+  const rate = Number(earnings.ratePer1000);
+  if (!Number.isFinite(rate) || rate <= 0 || !Number.isFinite(diamonds)) return null;
+  const money = (diamonds / 1000) * rate;
+  const amount = money >= 100 ? Math.round(money).toLocaleString() : money.toFixed(2);
+  return `(~${earnings.currency}${amount})`;
 }
 
 export function formatDate(ts: number): string {
