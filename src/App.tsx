@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ConnectBar } from './components/ConnectBar';
-import { Sidebar, type SidebarPanel } from './components/Sidebar';
+import { Sidebar, type SidebarPanel, type Page } from './components/Sidebar';
+import { Dashboard } from './pages/Dashboard';
+import { PlaceholderPage } from './pages/Placeholder';
 import { CommentFeed } from './components/CommentFeed';
 import { GiftFeed } from './components/GiftFeed';
 import { AllFeed } from './components/AllFeed';
@@ -141,6 +143,7 @@ function ConnectBarTools({
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('comments');
+  const [page, setPage] = useState<Page>('dashboard');
   const [activePanel, setActivePanel] = useState<SidebarPanel>('live');
   const [showHistory, setShowHistory] = useState(false);
   const [showStream, setShowStream] = useState(false);
@@ -266,10 +269,12 @@ export default function App() {
         }
       />
 
-      <StatsStrip />
+      {page === 'live' && <StatsStrip />}
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
+          page={page}
+          onNavigate={setPage}
           active={activePanel}
           onSelect={(id) => {
             setActivePanel(id);
@@ -293,35 +298,47 @@ export default function App() {
           showStream={showStream}
           onToggleStream={() => setShowStream((v) => !v)}
         />
-        <main className="flex flex-1 gap-3 overflow-hidden p-3">
-          <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
-            {status === 'connected' ? (
-              <>
-                <div className="flex items-center gap-1 border-b border-zinc-800/50 px-2 py-1.5">
-                  <TabButton active={tab === 'comments'} onClick={() => setTab('comments')}>Comments</TabButton>
-                  <TabButton active={tab === 'gifts'} onClick={() => setTab('gifts')}>Gifts</TabButton>
-                  <TabButton active={tab === 'questions'} onClick={() => setTab('questions')}>Q&amp;A</TabButton>
-                  <TabButton active={tab === 'top'} onClick={() => setTab('top')}>Top</TabButton>
-                  <TabButton active={tab === 'all'} onClick={() => setTab('all')}>All</TabButton>
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                  {tab === 'comments' && <CommentFeed />}
-                  {tab === 'gifts' && <GiftFeed />}
-                  {tab === 'questions' && <QuestionFeed />}
-                  {tab === 'top' && <TopContributors />}
-                  {tab === 'all' && <AllFeed />}
-                </div>
-              </>
-            ) : (
-              <EmptyState
-                onOpenHistory={() => setShowHistory(true)}
-                onOpenTracked={() => setShowTracked(true)}
-              />
-            )}
-          </section>
-        </main>
+        {page === 'live' && (
+          <main className="flex flex-1 gap-3 overflow-hidden p-3">
+            <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
+              {status === 'connected' ? (
+                <>
+                  <div className="flex items-center gap-1 border-b border-zinc-800/50 px-2 py-1.5">
+                    <TabButton active={tab === 'comments'} onClick={() => setTab('comments')}>Comments</TabButton>
+                    <TabButton active={tab === 'gifts'} onClick={() => setTab('gifts')}>Gifts</TabButton>
+                    <TabButton active={tab === 'questions'} onClick={() => setTab('questions')}>Q&amp;A</TabButton>
+                    <TabButton active={tab === 'top'} onClick={() => setTab('top')}>Top</TabButton>
+                    <TabButton active={tab === 'all'} onClick={() => setTab('all')}>All</TabButton>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    {tab === 'comments' && <CommentFeed />}
+                    {tab === 'gifts' && <GiftFeed />}
+                    {tab === 'questions' && <QuestionFeed />}
+                    {tab === 'top' && <TopContributors />}
+                    {tab === 'all' && <AllFeed />}
+                  </div>
+                </>
+              ) : (
+                <EmptyState
+                  onOpenHistory={() => setShowHistory(true)}
+                  onOpenTracked={() => setShowTracked(true)}
+                />
+              )}
+            </section>
+          </main>
+        )}
+        {page === 'dashboard' && (
+          <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <Dashboard onOpenHistory={() => setShowHistory(true)} onGoLive={() => setPage('live')} />
+          </main>
+        )}
+        {page !== 'live' && page !== 'dashboard' && (
+          <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <PlaceholderPage id={page} />
+          </main>
+        )}
 
-        {showStream && status === 'connected' && <StreamPlayer onClose={() => setShowStream(false)} />}
+        {page === 'live' && showStream && status === 'connected' && <StreamPlayer onClose={() => setShowStream(false)} />}
       </div>
 
       <UserDetailDrawer />

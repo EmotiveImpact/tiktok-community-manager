@@ -1,5 +1,13 @@
+import {
+  LayoutDashboard, Radio, Users, Gift, CalendarDays, Upload, Settings, ChevronRight,
+  Star, StickyNote, Trophy, Eye, Bell, Shield, Mic, Clapperboard, Heart,
+  BarChart3, TrendingUp, Scale, History, Grid2x2, Play,
+  type LucideIcon,
+} from 'lucide-react';
 import { useTracked } from '../state/tracked';
 import { useStore } from '../state/store';
+
+export type Page = 'dashboard' | 'live' | 'followers' | 'gifts' | 'reminders' | 'import' | 'settings';
 
 export type SidebarPanel =
   | 'live'
@@ -7,48 +15,54 @@ export type SidebarPanel =
   | 'alerts' | 'mod' | 'transcript' | 'highlights' | 'liker'
   | 'insights' | 'analytics' | 'compare' | 'history' | 'multi';
 
-type Item = { id: SidebarPanel; label: string; icon: string };
+const PRIMARY: { id: Page; label: string; icon: LucideIcon }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'live', label: 'Live Feed', icon: Radio },
+  { id: 'followers', label: 'Followers', icon: Users },
+  { id: 'gifts', label: 'Gifts', icon: Gift },
+  { id: 'reminders', label: 'Reminders', icon: CalendarDays },
+  { id: 'import', label: 'Import', icon: Upload },
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
 
-const SECTIONS: { group: string; items: Item[] }[] = [
-  {
-    group: 'Feed',
-    items: [
-      { id: 'live', label: 'Live Feed', icon: '💬' },
-    ],
-  },
+type Item = { id: SidebarPanel; label: string; icon: LucideIcon };
+
+const LIVE_SECTIONS: { group: string; items: Item[] }[] = [
   {
     group: 'Audience',
     items: [
-      { id: 'tracked', label: 'Tracked Users', icon: '★' },
-      { id: 'notes', label: 'Fan Notes', icon: '📝' },
-      { id: 'room', label: 'Room Members', icon: '👥' },
-      { id: 'leaderboard', label: 'Leaderboard', icon: '🏆' },
-      { id: 'watchlist', label: 'Watchlist', icon: '👀' },
+      { id: 'tracked', label: 'Tracked Users', icon: Star },
+      { id: 'notes', label: 'Fan Notes', icon: StickyNote },
+      { id: 'room', label: 'Room Members', icon: Users },
+      { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+      { id: 'watchlist', label: 'Watchlist', icon: Eye },
     ],
   },
   {
-    group: 'Live',
+    group: 'Live tools',
     items: [
-      { id: 'alerts', label: 'Alerts', icon: '🔔' },
-      { id: 'mod', label: 'Moderation', icon: '🛡️' },
-      { id: 'transcript', label: 'Transcript', icon: '🎙️' },
-      { id: 'highlights', label: 'Highlight Clips', icon: '🎬' },
-      { id: 'liker', label: 'Live Liker', icon: '❤️' },
+      { id: 'alerts', label: 'Alerts', icon: Bell },
+      { id: 'mod', label: 'Moderation', icon: Shield },
+      { id: 'transcript', label: 'Transcript', icon: Mic },
+      { id: 'highlights', label: 'Highlight Clips', icon: Clapperboard },
+      { id: 'liker', label: 'Live Liker', icon: Heart },
     ],
   },
   {
     group: 'Insights',
     items: [
-      { id: 'insights', label: 'Chat Insights', icon: '📊' },
-      { id: 'analytics', label: 'Creator Analytics', icon: '📈' },
-      { id: 'compare', label: 'Compare', icon: '⚖️' },
-      { id: 'history', label: 'Session History', icon: '🕒' },
-      { id: 'multi', label: 'Multi-Room', icon: '🪟' },
+      { id: 'insights', label: 'Chat Insights', icon: BarChart3 },
+      { id: 'analytics', label: 'Creator Analytics', icon: TrendingUp },
+      { id: 'compare', label: 'Compare', icon: Scale },
+      { id: 'history', label: 'Session History', icon: History },
+      { id: 'multi', label: 'Multi-Room', icon: Grid2x2 },
     ],
   },
 ];
 
 type Props = {
+  page: Page;
+  onNavigate: (page: Page) => void;
   active: SidebarPanel;
   onSelect: (id: SidebarPanel) => void;
   showStream: boolean;
@@ -57,31 +71,33 @@ type Props = {
 
 /* Sidebar keeps its navy gradient in both themes (brand mockup). */
 const NAVY_TEXT = 'rgba(226, 232, 248, 0.9)';
-const NAVY_MUTED = 'rgba(148, 158, 190, 0.85)';
+const NAVY_MUTED = 'rgba(148, 163, 184, 0.9)';
 const NAVY_FAINT = 'rgba(120, 130, 165, 0.55)';
-const NAVY_HOVER = 'rgba(120, 134, 178, 0.12)';
+const NAVY_HOVER = 'rgba(255, 255, 255, 0.05)';
 
 function LogoMark() {
   return (
-    <div className="flex items-center gap-2.5 px-3 pb-3 pt-4">
-      {/* TikTok-note glyph in a pink-gradient rounded square */}
-      <div
-        className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px]"
-        style={{ background: 'var(--gradient-pink)', boxShadow: '0 4px 12px rgba(238,29,82,0.4)' }}
+    <div className="mb-4 flex items-center gap-3 px-1 pt-4">
+      <span
+        className="flex h-10 w-10 flex-none items-center justify-center rounded-2xl"
+        style={{ background: '#10142a' }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" aria-hidden>
-          <path d="M16.6 5.82a4.28 4.28 0 0 1-1.05-2.82H12.4v12.4a2.6 2.6 0 1 1-2.6-2.6c.27 0 .53.04.78.12V9.69a5.83 5.83 0 0 0-.78-.05 5.86 5.86 0 1 0 5.86 5.86V9.93a7.5 7.5 0 0 0 4.34 1.38V8.1a4.33 4.33 0 0 1-3.4-2.28z" />
+        {/* TikTok-style note mark (matches web app) */}
+        <svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <path d="M30 8v20.5a9.5 9.5 0 1 1-9.5-9.5" stroke="#69C9D0" strokeWidth="5" strokeLinecap="round" />
+          <path d="M33 11c3.8 4.1 7.1 5.9 11 6.4" stroke="#EE1D52" strokeWidth="5" strokeLinecap="round" />
+          <path d="M26 8v21a7 7 0 1 1-7-7" stroke="white" strokeWidth="4" strokeLinecap="round" />
         </svg>
-      </div>
-      <div className="min-w-0 leading-tight">
-        <div className="text-[13px] font-bold" style={{ color: 'white' }}>TikTok</div>
-        <div className="text-[10px] font-semibold" style={{ color: NAVY_MUTED }}>Community Manager</div>
-      </div>
+      </span>
+      <span className="min-w-0 leading-tight">
+        <span className="block text-[15px] font-extrabold text-white">TikTok</span>
+        <span className="block text-xs font-medium" style={{ color: NAVY_MUTED }}>Community Manager</span>
+      </span>
     </div>
   );
 }
 
-export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props) {
+export function Sidebar({ page, onNavigate, active, onSelect, showStream, onToggleStream }: Props) {
   const trackedCount = useTracked((s) => s.list.length);
   const roomCount = useStore((s) => s.roomMembers.size);
   const status = useStore((s) => s.status);
@@ -94,7 +110,7 @@ export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props)
 
   return (
     <aside
-      className="flex h-full min-h-0 w-[210px] flex-none flex-col"
+      className="flex h-full min-h-0 w-[230px] flex-none flex-col px-4 pb-4"
       style={{
         background: 'var(--gradient-sidebar)',
         borderRight: '1px solid rgba(120, 134, 178, 0.14)',
@@ -102,109 +118,134 @@ export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props)
     >
       <LogoMark />
 
-      {/* Watch Stream button */}
-      <div className="flex-none px-2 pb-1">
-        <button
-          type="button"
-          onClick={onToggleStream}
-          disabled={!connected}
-          className="no-drag flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
-          style={{
-            background: showStream ? 'rgba(238, 29, 82, 0.18)' : 'transparent',
-            color: showStream ? '#ff5b85' : NAVY_TEXT,
-            border: showStream ? '1px solid rgba(238, 29, 82, 0.35)' : '1px solid transparent',
-          }}
-          onMouseEnter={(e) => {
-            if (!showStream && connected) e.currentTarget.style.background = NAVY_HOVER;
-          }}
-          onMouseLeave={(e) => {
-            if (!showStream) e.currentTarget.style.background = 'transparent';
-          }}
-        >
-          <span className="text-[14px]">▶︎</span>
-          <span className="flex-1">Watch Stream</span>
-          {showStream && (
-            <span
-              className="h-1.5 w-1.5 animate-pulse rounded-full"
-              style={{ background: '#ee1d52', boxShadow: '0 0 6px #ee1d52' }}
-            />
-          )}
-        </button>
-      </div>
-
-      {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-2 pb-2">
-        {SECTIONS.map((section) => (
-          <div key={section.group} className="mt-2">
-            <div
-              className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wider"
-              style={{ color: NAVY_FAINT }}
+      {/* Primary nav — matches web app */}
+      <nav aria-label="Main navigation" className="no-drag flex-none space-y-1.5">
+        {PRIMARY.map((it) => {
+          const isActive = page === it.id;
+          const Icon = it.icon;
+          return (
+            <button
+              key={it.id}
+              type="button"
+              onClick={() => onNavigate(it.id)}
+              aria-current={isActive ? 'page' : undefined}
+              className="group flex w-full items-center gap-3 rounded-xl px-3.5 py-2 text-left text-[13px] font-medium transition-colors"
+              style={
+                isActive
+                  ? { background: 'linear-gradient(90deg, #EE1D52, #ff4d76)', boxShadow: '0 6px 16px rgba(238,29,82,0.35)', color: 'white' }
+                  : { color: NAVY_MUTED }
+              }
+              onMouseEnter={(e) => {
+                if (!isActive) { e.currentTarget.style.background = NAVY_HOVER; e.currentTarget.style.color = 'white'; }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = NAVY_MUTED; }
+              }}
             >
-              {section.group}
-            </div>
-            {section.items.map((item) => {
-              const isActive = active === item.id;
-              const count = counts[item.id];
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onSelect(item.id)}
-                  className="no-drag mb-0.5 flex w-full items-center gap-2 rounded-full px-2.5 py-[5px] text-left text-[12px] transition"
-                  style={{
-                    background: isActive ? 'var(--gradient-pink)' : 'transparent',
-                    color: isActive ? 'white' : NAVY_MUTED,
-                    fontWeight: isActive ? 700 : 500,
-                    boxShadow: isActive ? '0 4px 12px rgba(238, 29, 82, 0.35)' : 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = NAVY_HOVER;
-                      e.currentTarget.style.color = NAVY_TEXT;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = NAVY_MUTED;
-                    }
-                  }}
-                >
-                  <span className="w-4 flex-none text-center text-[12px]">{item.icon}</span>
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {count !== undefined && count > 0 && (
-                    <span
-                      className="inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
-                      style={{
-                        background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(120, 134, 178, 0.2)',
-                        color: isActive ? 'white' : NAVY_MUTED,
-                      }}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ))}
+              <Icon size={17} style={{ color: isActive ? 'white' : undefined }} className="flex-none" />
+              <span className="flex-1">{it.label}</span>
+              {it.id === 'live' && connected && (
+                <span
+                  className="h-1.5 w-1.5 animate-pulse rounded-full"
+                  style={{ background: isActive ? 'white' : '#ee1d52', boxShadow: '0 0 6px rgba(238,29,82,0.8)' }}
+                />
+              )}
+            </button>
+          );
+        })}
       </nav>
 
-      {/* Mission mini-card */}
-      <div className="flex-none p-2.5">
-        <div
-          className="flex items-center gap-2.5 rounded-[14px] p-2.5"
-          style={{
-            background: 'rgba(120, 134, 178, 0.08)',
-            border: '1px solid rgba(120, 134, 178, 0.14)',
-          }}
+      {/* LIVE sub-sections — only while on the Live Feed page */}
+      <div className="no-drag mt-2 min-h-0 flex-1 overflow-y-auto">
+        {page === 'live' && (
+          <>
+            <div className="px-1 pb-1">
+              <button
+                type="button"
+                onClick={onToggleStream}
+                disabled={!connected}
+                className="no-drag flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+                style={{
+                  background: showStream ? 'rgba(238, 29, 82, 0.18)' : 'transparent',
+                  color: showStream ? '#ff5b85' : NAVY_TEXT,
+                  border: showStream ? '1px solid rgba(238, 29, 82, 0.35)' : '1px solid transparent',
+                }}
+                onMouseEnter={(e) => { if (!showStream && connected) e.currentTarget.style.background = NAVY_HOVER; }}
+                onMouseLeave={(e) => { if (!showStream) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <Play size={13} className="flex-none" />
+                <span className="flex-1">Watch Stream</span>
+                {showStream && (
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: '#ee1d52', boxShadow: '0 0 6px #ee1d52' }} />
+                )}
+              </button>
+            </div>
+            {LIVE_SECTIONS.map((section) => (
+              <div key={section.group} className="mt-1.5">
+                <div className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: NAVY_FAINT }}>
+                  {section.group}
+                </div>
+                {section.items.map((item) => {
+                  const isActive = active === item.id;
+                  const count = counts[item.id];
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => onSelect(item.id)}
+                      className="no-drag mb-0.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-[5px] text-left text-[12px] transition"
+                      style={{
+                        background: isActive ? 'rgba(238, 29, 82, 0.16)' : 'transparent',
+                        color: isActive ? '#ff5b85' : NAVY_MUTED,
+                        fontWeight: isActive ? 700 : 500,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) { e.currentTarget.style.background = NAVY_HOVER; e.currentTarget.style.color = NAVY_TEXT; }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = NAVY_MUTED; }
+                      }}
+                    >
+                      <Icon size={13} className="w-4 flex-none" />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {count !== undefined && count > 0 && (
+                        <span
+                          className="inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
+                          style={{ background: 'rgba(120, 134, 178, 0.2)', color: NAVY_MUTED }}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Mission mini-card (web design) */}
+      <div className="no-drag mb-3 flex-none rounded-2xl p-3.5" style={{ background: 'rgba(238,29,82,0.10)', border: '1px solid rgba(238,29,82,0.25)' }}>
+        <img src="./assets/png/icon_heart_3d.png" alt="" className="mb-2 h-9 w-9" draggable={false} />
+        <div className="text-sm font-semibold leading-snug text-white">Never forget your people.</div>
+        <div className="mt-1 text-xs leading-snug" style={{ color: NAVY_MUTED }}>They support you, we help you remember.</div>
+      </div>
+
+      {/* Creator profile card (web design) */}
+      <div className="no-drag flex flex-none items-center gap-3 rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <span
+          className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
+          style={{ background: 'linear-gradient(135deg,#EE1D52,#69C9D0)' }}
         >
-          <img src="./assets/png/icon_heart_3d.png" alt="" className="h-9 w-9 flex-none object-contain" draggable={false} />
-          <div className="min-w-0 leading-snug">
-            <div className="text-[11px] font-bold" style={{ color: 'white' }}>Never forget your people.</div>
-            <div className="text-[10px]" style={{ color: NAVY_MUTED }}>They support you, we help you remember.</div>
-          </div>
-        </div>
+          C
+        </span>
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-sm font-semibold text-white">Creator</span>
+          <span className="block text-[11px]" style={{ color: NAVY_MUTED }}>LIVE Creator</span>
+        </span>
+        <ChevronRight size={15} className="flex-none" style={{ color: 'rgba(100,116,139,1)' }} />
       </div>
     </aside>
   );

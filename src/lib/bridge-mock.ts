@@ -127,7 +127,36 @@ export function installBridgeMock(): void {
     }
   };
 
-  const sessions: SessionRecord[] = [];
+  // Demo sessions so the Dashboard renders populated for dev/screenshots.
+  // Stay empty with ?demo=off (honest fresh-install state).
+  const demoOn = new URLSearchParams(window.location.search).get('demo') !== 'off';
+  const day = 86400000;
+  const mkSession = (offsetDays: number, durMin: number, diamonds: number, follows: number, peak: number, title: string): SessionRecord => ({
+    id: `demo-${offsetDays}`,
+    hostUniqueId: 'rella.live',
+    hostNickname: 'Rella',
+    roomTitle: title,
+    startedAt: Date.now() - offsetDays * day,
+    endedAt: Date.now() - offsetDays * day + durMin * 60000,
+    totals: { likes: 20000 + diamonds, diamonds, comments: 800, follows, shares: 40, subs: 3, gifts: Math.round(diamonds / 90), questions: 12, peakViewers: peak },
+    events: DEMO_USERS.slice(0, 5).map((u, i) => ({
+      ts: Date.now() - offsetDays * day + i * 60000,
+      type: 'gift',
+      user: { uniqueId: u.uniqueId, nickname: u.nickname },
+      giftName: DEMO_GIFTS[i % DEMO_GIFTS.length].giftName,
+      diamondCount: DEMO_GIFTS[i % DEMO_GIFTS.length].diamondCount,
+      repeatCount: 1,
+    })),
+  });
+  const sessions: SessionRecord[] = demoOn
+    ? [
+        mkSession(0, 96, 8420, 38, 1322, 'Friday night hangout 💖 come chat!'),
+        mkSession(2, 74, 5210, 21, 980, 'Cozy chat + Q&A'),
+        mkSession(4, 120, 9930, 44, 1561, 'Late night gaming 🎮'),
+        mkSession(7, 55, 2140, 12, 640, 'Morning coffee stream ☕'),
+        mkSession(9, 88, 4480, 18, 870, 'Sunday wind-down'),
+      ]
+    : [];
 
   const bridge: TikTokBridge = {
     connect: async () => {
