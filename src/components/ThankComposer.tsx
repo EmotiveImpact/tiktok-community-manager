@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import type { Fan, GiftRecord } from '../types';
 import { useAlerts } from '../state/alerts';
 import { useSettings } from '../state/settings';
+import { useUI } from '../state/ui';
 import { FieldLabel } from './crm';
 
 /** Clipboard write with execCommand fallback (browser demo / older webviews). */
@@ -39,6 +40,28 @@ export function renderThankTemplate(tpl: string, nickname: string, giftName: str
     .replaceAll('{giftName}', giftName ?? 'love and support');
 }
 
+/**
+ * Build the ready-to-paste thank-you message for a fan: settings template +
+ * ledger name + their latest gift. Shared by ThankComposer and the Messages
+ * page's follow-up list so the wording always matches.
+ */
+export async function buildThankMessage(
+  uniqueId: string,
+  fallbackName?: string,
+): Promise<{ fan: Fan | null; message: string }> {
+  const [f, gifts] = await Promise.all([
+    window.tiktok.fansGet(uniqueId).catch(() => null),
+    window.tiktok.giftsList({ fan: uniqueId, range: 'all', pageSize: 1 }).catch(() => null),
+    useSettings.getState().load(),
+  ]);
+  const name = f?.displayName || f?.nickname || fallbackName || uniqueId;
+  const lastGift: GiftRecord | undefined = gifts?.data?.[0];
+  return {
+    fan: f ?? null,
+    message: renderThankTemplate(useSettings.getState().thankTemplate, name, lastGift?.giftName ?? null),
+  };
+}
+
 export function ThankComposer({
   uniqueId,
   nickname,
@@ -60,16 +83,10 @@ export function ThankComposer({
 
   useEffect(() => {
     let alive = true;
-    Promise.all([
-      window.tiktok.fansGet(uniqueId).catch(() => null),
-      window.tiktok.giftsList({ fan: uniqueId, range: 'all', pageSize: 1 }).catch(() => null),
-      useSettings.getState().load(),
-    ]).then(([f, gifts]) => {
+    buildThankMessage(uniqueId, nickname).then(({ fan: f, message: msg }) => {
       if (!alive) return;
-      const name = f?.displayName || f?.nickname || nickname || uniqueId;
-      const lastGift: GiftRecord | undefined = gifts?.data?.[0];
-      setFan(f ?? null);
-      setMessage(renderThankTemplate(useSettings.getState().thankTemplate, name, lastGift?.giftName ?? null));
+      setFan(f);
+      setMessage(msg);
       setReady(true);
     });
     return () => { alive = false; };
@@ -87,6 +104,13 @@ export function ThankComposer({
     await copy();
     const res = await window.tiktok.openExternal(`https://www.tiktok.com/@${encodeURIComponent(uniqueId)}`);
     if (!res.ok) pushToast({ title: 'Could not open profile', body: res.error ?? 'Unknown error' });
+  };
+
+  /** Copy + jump to the in-app Messages tab with this fan selected (webview opens their profile). */
+  const copyAndOpenInMessages = async () => {
+    await copy();
+    useUI.getState().openMessagesFor(uniqueId);
+    onClose();
   };
 
   const markThanked = async () => {
@@ -131,6 +155,9 @@ export function ThankComposer({
         <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
           <button onClick={copy} disabled={!ready} className="panel-btn no-drag">Copy message</button>
           <button onClick={copyAndOpen} disabled={!ready} className="panel-btn no-drag">Copy &amp; open profile ↗</button>
+          <button onClick={copyAndOpenInMessages} disabled={!ready} className="panel-btn no-drag" title="Copy and open their profile in the in-app Messages tab">
+            Open in Messages tab
+          </button>
           <button onClick={markThanked} disabled={!ready || marking || !fan} className="panel-btn panel-btn-primary no-drag" title={fan ? undefined : 'Not in your ledger yet'}>
             Mark thanked ✓
           </button>

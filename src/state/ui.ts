@@ -7,7 +7,7 @@
  */
 import { create } from 'zustand';
 
-export type Page = 'dashboard' | 'live' | 'followers' | 'gifts' | 'reminders' | 'import' | 'settings';
+export type Page = 'dashboard' | 'live' | 'followers' | 'gifts' | 'reminders' | 'messages' | 'import' | 'settings';
 export type FeedTab = 'comments' | 'gifts' | 'questions' | 'top' | 'all';
 
 /** Which face the sidebar shows: main app nav, or the live toolset. */
@@ -34,7 +34,7 @@ export type StreamNote = {
   syncedTo?: string;
 };
 
-const PAGES: Page[] = ['dashboard', 'live', 'followers', 'gifts', 'reminders', 'import', 'settings'];
+const PAGES: Page[] = ['dashboard', 'live', 'followers', 'gifts', 'reminders', 'messages', 'import', 'settings'];
 
 function initialPage(): Page {
   try {
@@ -74,6 +74,12 @@ type UIState = {
   openFanProfile: (uniqueId: string) => void;
   clearFanFocus: () => void;
 
+  /** Fan selected in the Messages page's follow-up panel (persists across page switches). */
+  messagesFanFocus: string | null;
+  setMessagesFanFocus: (uniqueId: string | null) => void;
+  /** Navigate to the Messages page with a fan preselected in the follow-up panel. */
+  openMessagesFor: (uniqueId: string) => void;
+
   /** Live feed tab (lifted so e.g. the composer gift button can switch tabs). */
   tab: FeedTab;
   setTab: (tab: FeedTab) => void;
@@ -110,6 +116,10 @@ export const useUI = create<UIState>((set, get) => ({
 
   openFanProfile: (uniqueId) => set({ page: 'followers', fanFocus: uniqueId, sidebarMode: 'main' }),
   clearFanFocus: () => set({ fanFocus: null }),
+
+  messagesFanFocus: null,
+  setMessagesFanFocus: (uniqueId) => set({ messagesFanFocus: uniqueId }),
+  openMessagesFor: (uniqueId) => set({ page: 'messages', messagesFanFocus: uniqueId, sidebarMode: 'main' }),
 
   tab: 'comments',
   setTab: (tab) => set({ tab }),

@@ -61,6 +61,50 @@ function createWindow() {
   }
 }
 
+/**
+ * Navigation allowlist for embedded <webview> panes (Messages page TikTok
+ * session + StreamPlayer's mobile view). The webviews are plain user-driven
+ * browsers — we never inject scripts or read their content — but we do keep
+ * them fenced to TikTok (+ the login/captcha hosts TikTok web redirects to).
+ * Anything else opens in the system browser instead.
+ */
+const WEBVIEW_ALLOWED_SUFFIXES = [
+  'tiktok.com', 'tiktokv.com', 'tiktokcdn.com', 'tiktokw.us',
+  'byteoversea.com', 'bytedance.com', // TikTok captcha / infra hosts
+];
+const WEBVIEW_ALLOWED_EXACT = [
+  // OAuth login hosts offered on tiktok.com/login
+  'accounts.google.com', 'appleid.apple.com',
+  'www.facebook.com', 'm.facebook.com', 'web.facebook.com',
+];
+function webviewNavAllowed(rawUrl: string): boolean {
+  try {
+    const u = new URL(rawUrl);
+    if (u.protocol === 'about:') return true;
+    if (u.protocol !== 'https:') return false;
+    const host = u.hostname.toLowerCase();
+    if (WEBVIEW_ALLOWED_EXACT.includes(host)) return true;
+    return WEBVIEW_ALLOWED_SUFFIXES.some((d) => host === d || host.endsWith(`.${d}`));
+  } catch {
+    return false;
+  }
+}
+
+app.on('web-contents-created', (_event, contents) => {
+  if (contents.getType() !== 'webview') return;
+  contents.on('will-navigate', (event, url) => {
+    if (!webviewNavAllowed(url)) {
+      event.preventDefault();
+      if (/^https?:/i.test(url)) shell.openExternal(url);
+    }
+  });
+  contents.setWindowOpenHandler(({ url }) => {
+    if (webviewNavAllowed(url)) return { action: 'allow' };
+    if (/^https?:/i.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+});
+
 function broadcast(channel: string, payload: unknown) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(channel, payload);

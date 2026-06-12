@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Radio, Users, Gift, CalendarDays, Upload, Settings, ChevronRight, ChevronLeft,
+  LayoutDashboard, Radio, Users, Gift, CalendarDays, MessageSquare, Upload, Settings, ChevronRight, ChevronLeft,
   Star, StickyNote, Trophy, Eye, Bell, Shield, Mic, Clapperboard, Heart,
   BarChart3, TrendingUp, Scale, History, Grid2x2, Play,
   type LucideIcon,
@@ -17,6 +17,7 @@ const PRIMARY: { id: Page; label: string; icon: LucideIcon }[] = [
   { id: 'followers', label: 'Followers', icon: Users },
   { id: 'gifts', label: 'Gifts', icon: Gift },
   { id: 'reminders', label: 'Reminders', icon: CalendarDays },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'import', label: 'Import', icon: Upload },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];

@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Followers } from './pages/Followers';
 import { Gifts } from './pages/Gifts';
 import { Reminders } from './pages/Reminders';
+import { MessagesPage } from './pages/MessagesPage';
 import { ImportPage } from './pages/ImportPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { CommentFeed } from './components/CommentFeed';
@@ -310,6 +311,7 @@ export default function App() {
             {page === 'followers' && <Followers onGoImport={() => setPage('import')} onGoLive={() => setPage('live')} />}
             {page === 'gifts' && <Gifts onGoLive={() => setPage('live')} />}
             {page === 'reminders' && <Reminders />}
+            {page === 'messages' && <MessagesPage />}
             {page === 'import' && <ImportPage onGoFollowers={() => setPage('followers')} />}
             {page === 'settings' && <SettingsPage />}
           </main>
