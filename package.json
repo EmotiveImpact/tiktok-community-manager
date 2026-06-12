@@ -1,5 +1,5 @@
 {
-  "name": "liketappermac",
+  "name": "tiktok-community-manager",
   "version": "0.1.0",
   "description": "Read-only TikTok Live viewer dashboard for macOS",
   "main": "dist-electron/main.js",
@@ -39,8 +39,8 @@
     "vite-plugin-electron-renderer": "^0.14.6"
   },
   "build": {
-    "appId": "com.liketappermac.app",
-    "productName": "LikeTapperMac",
+    "appId": "com.tiktokcommunitymanager.app",
+    "productName": "TikTok Community Manager",
     "directories": {
       "output": "release"
     },
