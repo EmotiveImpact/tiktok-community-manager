@@ -33,13 +33,14 @@ import { RoomMembersPanel } from './components/RoomMembersPanel';
 import { TrackedUsersPanel } from './components/TrackedUsersPanel';
 import { StatsStrip } from './components/StatsStrip';
 import { EmptyState } from './components/EmptyState';
+import { FanMemoryPanel } from './components/FanMemoryPanel';
+import { NoteComposer } from './components/NoteComposer';
 import { useStore } from './state/store';
 import { useAlerts } from './state/alerts';
 import { useTracked } from './state/tracked';
+import { useUI, type FeedFilter } from './state/ui';
 
-type Tab = 'comments' | 'gifts' | 'questions' | 'top' | 'all';
-
-function ToolbarBtn({ active, onClick, children, title, badge }: { active?: boolean; onClick: () => void; children: React.ReactNode; title?: string; badge?: number }) {
+function ToolbarBtn({ active, onClick, children, title, badge, badgeAccent }: { active?: boolean; onClick: () => void; children: React.ReactNode; title?: string; badge?: number; badgeAccent?: boolean }) {
   return (
     <button
       onClick={onClick}
@@ -48,7 +49,7 @@ function ToolbarBtn({ active, onClick, children, title, badge }: { active?: bool
     >
       {children}
       {badge !== undefined && badge > 0 && (
-        <span className="panel-btn-badge">{badge}</span>
+        <span className="panel-btn-badge" style={badgeAccent ? { background: 'var(--brand-pink)', color: 'white' } : undefined}>{badge}</span>
       )}
     </button>
   );
@@ -91,6 +92,7 @@ function ConnectBarTools({
   showStream,
   setShowStream,
   trackedCount,
+  alertCount,
   onOpen,
   moreRef,
   showMore,
@@ -99,6 +101,7 @@ function ConnectBarTools({
   showStream: boolean;
   setShowStream: React.Dispatch<React.SetStateAction<boolean>>;
   trackedCount: number;
+  alertCount: number;
   onOpen: (panel: string) => void;
   moreRef: React.MutableRefObject<HTMLDivElement | null>;
   showMore: boolean;
@@ -112,7 +115,7 @@ function ConnectBarTools({
       <ToolbarBtn onClick={() => onOpen('tracked')} title="Tracked users" badge={trackedCount}>
         ★ Tracked
       </ToolbarBtn>
-      <ToolbarBtn onClick={() => onOpen('alerts')} title="Alerts">
+      <ToolbarBtn onClick={() => onOpen('alerts')} title="Alerts" badge={alertCount} badgeAccent>
         Alerts
       </ToolbarBtn>
       <div ref={moreRef} className="relative">
@@ -146,13 +149,12 @@ function ConnectBarTools({
 }
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('comments');
-  const [page, setPage] = useState<Page>(() => {
-    // ?page= override for dev/screenshots
-    const p = new URLSearchParams(window.location.search).get('page');
-    const pages: Page[] = ['dashboard', 'live', 'followers', 'gifts', 'reminders', 'import', 'settings'];
-    return pages.includes(p as Page) ? (p as Page) : 'dashboard';
-  });
+  // Page + feed tab live in the shared UI store (src/state/ui.ts) so the
+  // Fan Memory panel and pages can navigate (e.g. "Open full profile →").
+  const tab = useUI((s) => s.tab);
+  const setTab = useUI((s) => s.setTab);
+  const page = useUI((s) => s.page);
+  const setPage = useUI((s) => s.setPage);
   const [activePanel, setActivePanel] = useState<SidebarPanel>('live');
   const [showHistory, setShowHistory] = useState(false);
   const [showStream, setShowStream] = useState(false);
@@ -191,6 +193,7 @@ export default function App() {
   const pushToast = useAlerts((s) => s.pushToast);
   const loadTracked = useTracked((s) => s.load);
   const trackedCount = useTracked((s) => s.list.length);
+  const alertCount = useAlerts((s) => s.history.length);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -254,6 +257,7 @@ export default function App() {
             showStream={showStream}
             setShowStream={setShowStream}
             trackedCount={trackedCount}
+            alertCount={alertCount}
             onOpen={(panel) => {
               if (panel === 'tracked') setShowTracked(true);
               if (panel === 'notes') setShowFanNotes(true);
@@ -318,6 +322,10 @@ export default function App() {
                     <TabButton active={tab === 'questions'} onClick={() => setTab('questions')}>Q&amp;A</TabButton>
                     <TabButton active={tab === 'top'} onClick={() => setTab('top')}>Top</TabButton>
                     <TabButton active={tab === 'all'} onClick={() => setTab('all')}>All</TabButton>
+                    <div className="ml-auto flex items-center gap-1">
+                      <FeedFilterMenu />
+                      <FeedKebabMenu />
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     {tab === 'comments' && <CommentFeed />}
@@ -326,6 +334,7 @@ export default function App() {
                     {tab === 'top' && <TopContributors />}
                     {tab === 'all' && <AllFeed />}
                   </div>
+                  <NoteComposer />
                 </>
               ) : (
                 <EmptyState
@@ -334,6 +343,8 @@ export default function App() {
                 />
               )}
             </section>
+            {showStream && status === 'connected' && <StreamPlayer onClose={() => setShowStream(false)} />}
+            {status === 'connected' && <FanMemoryPanel />}
           </main>
         )}
         {page === 'dashboard' && (
@@ -351,7 +362,6 @@ export default function App() {
           </main>
         )}
 
-        {page === 'live' && showStream && status === 'connected' && <StreamPlayer onClose={() => setShowStream(false)} />}
       </div>
 
       <UserDetailDrawer />
@@ -400,6 +410,98 @@ export default function App() {
       )}
       {showHistory && <HistoryView onClose={() => { setShowHistory(false); setActivePanel('live'); }} />}
       <AlertToasts />
+    </div>
+  );
+}
+
+const FILTER_LABELS: Record<FeedFilter, string> = {
+  all: 'All viewers',
+  followers: 'Followers',
+  subs: 'Subscribers',
+  mods: 'Moderators',
+  gifters: 'Top gifters',
+};
+
+/** "Filter ▾" — narrows the Comments feed to a viewer segment. */
+function FeedFilterMenu() {
+  const feedFilter = useUI((s) => s.feedFilter);
+  const setFeedFilter = useUI((s) => s.setFeedFilter);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${feedFilter !== 'all' ? 'bg-like-500/15 text-like-400' : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'}`}
+      >
+        Filter {feedFilter !== 'all' ? `· ${FILTER_LABELS[feedFilter]}` : ''} ▾
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 z-40 w-40 rounded-xl border border-zinc-800/60 bg-zinc-950/95 py-1.5 shadow-2xl backdrop-blur">
+          {(Object.keys(FILTER_LABELS) as FeedFilter[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => { setFeedFilter(f); setOpen(false); }}
+              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-zinc-800/80 ${feedFilter === f ? 'font-bold text-like-400' : 'text-zinc-300'}`}
+            >
+              {FILTER_LABELS[f]}
+              {feedFilter === f && <span className="ml-auto">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** "⋮" feed menu — small utilities. */
+function FeedKebabMenu() {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+  const copyStats = async () => {
+    const s = useStore.getState();
+    const text = `LIVE @${s.roomInfo?.hostUniqueId ?? s.username}: ${s.totalLikes} likes · ${s.viewerCount} viewers · ${s.commentCount} comments · ${s.totalDiamonds} diamonds · ${s.giftCount} gifts`;
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ }
+  };
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="rounded-full px-2 py-1 text-sm leading-none text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
+        title="Feed menu"
+      >
+        ⋮
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 z-40 w-44 rounded-xl border border-zinc-800/60 bg-zinc-950/95 py-1.5 shadow-2xl backdrop-blur">
+          <button onClick={copyStats} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800/80">
+            📋 {copied ? 'Copied ✓' : 'Copy session stats'}
+          </button>
+          <button
+            onClick={() => { useUI.getState().clearStreamNotes(); setOpen(false); }}
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800/80"
+          >
+            🧹 Clear stream notes
+          </button>
+        </div>
+      )}
     </div>
   );
 }

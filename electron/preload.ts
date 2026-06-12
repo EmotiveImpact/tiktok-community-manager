@@ -159,6 +159,8 @@ const api = {
     ipcRenderer.invoke('reminders:list', withinDays) as Promise<any[]>,
   reminderAction: (payload: { id: string; action: 'done' | 'snooze'; days?: number }) =>
     ipcRenderer.invoke('reminders:action', payload) as Promise<{ ok: boolean; error?: string }>,
+  reminderAddThank: (uniqueId: string) =>
+    ipcRenderer.invoke('reminders:addThank', uniqueId) as Promise<{ ok: boolean; deduped?: boolean; error?: string }>,
   fansImportCsv: (csvText: string) => ipcRenderer.invoke('fans:importCsv', csvText) as Promise<any>,
   fansImportCsvFile: () => ipcRenderer.invoke('fans:importCsvFile') as Promise<any>,
   fansExportCsv: () =>

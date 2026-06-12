@@ -446,6 +446,7 @@ ipcMain.handle('reminders:list', (_e, withinDays?: number) => fans.listReminders
 ipcMain.handle('reminders:action', (_e, payload: { id: string; action: 'done' | 'snooze'; days?: number }) =>
   fans.reminderAction(payload?.id, payload?.action, payload?.days),
 );
+ipcMain.handle('reminders:addThank', (_e, uniqueId: string) => fans.addThankReminder(String(uniqueId ?? '')));
 ipcMain.handle('fans:importCsv', (_e, csvText: string) => fans.importCsv(String(csvText ?? '')));
 ipcMain.handle('fans:importCsvFile', async () => {
   const { dialog } = await import('electron');

@@ -51,6 +51,24 @@ function Divider() {
   return <div className="h-6 w-px flex-shrink-0 bg-zinc-800" />;
 }
 
+/** Session uptime timer shown next to the LIVE pill. */
+function SessionTimer() {
+  const connectedAt = useStore((s) => s.connectedAt);
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (!connectedAt) return;
+    const t = setInterval(() => force((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [connectedAt]);
+  if (!connectedAt) return null;
+  const s = Math.floor((Date.now() - connectedAt) / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const label = h ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
+  return <span className="no-drag text-[11px] font-semibold tabular-nums text-zinc-400">{label}</span>;
+}
+
 export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
   const { status, username, setUsername, errorMessage, reset } = useStore();
   const [input, setInput] = useState(username);
@@ -150,6 +168,7 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
       <div className="no-drag">
         <StatusPill status={status} />
       </div>
+      {isLive && <SessionTimer />}
 
       {errorMessage && (
         <div className="no-drag truncate text-xs text-rose-400" title={errorMessage}>

@@ -29,8 +29,8 @@ type TikTokBridge = Window['tiktok'];
 const ok = { ok: true as const };
 
 const DEMO_USERS: UserBrief[] = [
-  { uniqueId: 'kendraaax2', nickname: 'Kendra ✨', profilePictureUrl: null, isFollower: true, topGifterRank: 1 },
-  { uniqueId: 'autumnstar01', nickname: 'Autumn', profilePictureUrl: null, isSubscriber: true, isFollower: true, topGifterRank: 2 },
+  { uniqueId: 'kendraaax2', nickname: 'Kendra ✨', profilePictureUrl: null, isFollower: true, topGifterRank: 1, verified: true },
+  { uniqueId: 'autumnstar01', nickname: 'Autumn', profilePictureUrl: null, isSubscriber: true, isFollower: true, topGifterRank: 2, verified: true },
   { uniqueId: 'mochi.eats', nickname: 'Mochi', profilePictureUrl: null, isFollower: true, topGifterRank: 3 },
   { uniqueId: 'wandererSO', nickname: 'Wanderer', profilePictureUrl: null, isModerator: true },
   { uniqueId: 'gaminglittlelao', nickname: 'GamingLittleLao', profilePictureUrl: null, isFollower: true },
@@ -231,6 +231,7 @@ export function installBridgeMock(): void {
     giftLog.sort((a, b) => b.at - a.at);
   }
   const reminderHidden = new Set<string>();
+  const thankRequests: { uniqueId: string; date: string }[] = [];
   const fanWithTier = (f: RawFan): Fan => ({ ...f, tier: tierForDiamonds(f.totalDiamonds) });
   const normBday = (b?: string | null) => {
     if (!b) return undefined;
@@ -424,11 +425,28 @@ export function installBridgeMock(): void {
           if (daysSince > 14 && !reminderHidden.has(id)) out.push({ id, kind: 'quiet', fan: f, days: daysSince });
         }
       }
-      out.sort((a, b) => (a.kind === b.kind ? a.days - b.days : a.kind === 'birthday' ? -1 : 1));
+      for (const t of thankRequests) {
+        const raw = fanMap.get(t.uniqueId);
+        if (!raw) continue;
+        const id = `thank:${t.uniqueId}:${t.date}`;
+        if (!reminderHidden.has(id)) out.push({ id, kind: 'thank', fan: fanWithTier(raw), days: 0 });
+      }
+      out.sort((a, b) => (a.kind === b.kind ? a.days - b.days : a.kind === 'birthday' ? -1 : a.kind === 'thank' && b.kind === 'quiet' ? -1 : 1));
       return out;
     },
     reminderAction: async ({ id }) => {
       reminderHidden.add(id);
+      return ok;
+    },
+    reminderAddThank: async (uniqueId) => {
+      const uid = uniqueId.replace(/^@/, '').trim();
+      if (!uid) return { ok: false, error: 'Username is required' };
+      if (!fanMap.has(uid)) {
+        fanMap.set(uid, { uniqueId: uid, nickname: uid, avatarUrl: null, firstSeenAt: Date.now(), lastSeenAt: Date.now(), totalDiamonds: 0, giftCount: 0, tags: [], notes: '' });
+      }
+      const date = new Date().toISOString().slice(0, 10);
+      if (thankRequests.some((t) => t.uniqueId === uid && t.date === date)) return { ok: true, deduped: true };
+      thankRequests.push({ uniqueId: uid, date });
       return ok;
     },
     fansImportCsv: async (csvText) => {

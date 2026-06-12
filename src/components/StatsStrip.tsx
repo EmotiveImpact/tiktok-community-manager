@@ -1,29 +1,27 @@
+/**
+ * Host strip — appears under the top bar on the LIVE view.
+ * Host identity (avatar w/ pink ring, name, bio line) + inline session stats.
+ */
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
-import { formatNumber, formatUptime } from '../lib/format';
+import { formatNumber } from '../lib/format';
+import { VerifiedBadge } from './Username';
 
 export function StatsStrip() {
   const room = useStore((s) => s.roomInfo);
-  const connectedAt = useStore((s) => s.connectedAt);
   const totalLikes = useStore((s) => s.totalLikes);
   const totalDiamonds = useStore((s) => s.totalDiamonds);
   const viewerCount = useStore((s) => s.viewerCount);
   const giftCount = useStore((s) => s.giftCount);
   const followCount = useStore((s) => s.followCount);
-  const shareCount = useStore((s) => s.shareCount);
-  const subscribeCount = useStore((s) => s.subscribeCount);
   const commentCount = useStore((s) => s.commentCount);
   const tpsFn = useStore((s) => s.tps);
   const [tps, setTps] = useState(0);
-  const [, force] = useState(0);
   const lastLikes = useRef(totalLikes);
-  const heartRef = useRef<HTMLImageElement | null>(null);
+  const heartRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setTps(tpsFn());
-      force((n) => n + 1);
-    }, 500);
+    const t = setInterval(() => setTps(tpsFn()), 1000);
     return () => clearInterval(t);
   }, [tpsFn]);
 
@@ -37,77 +35,69 @@ export function StatsStrip() {
   }, [totalLikes]);
 
   if (!room) return null;
-  const uptime = connectedAt ? formatUptime(Date.now() - connectedAt) : null;
 
   return (
-    <div className="flex items-stretch gap-2 overflow-x-auto border-b border-zinc-800/60 bg-zinc-950/60 px-3 py-2">
-      {/* Host capsule */}
-      <div className="glass brand-top-border flex min-w-0 flex-none items-center gap-2.5 !rounded-xl px-3 py-1.5">
-        {room.hostAvatar ? (
-          <img src={room.hostAvatar} alt="" className="h-8 w-8 flex-none rounded-full bg-zinc-800 object-cover ring-2 ring-like-500/40" />
-        ) : (
-          <div className="avatar-gradient-pink flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-bold text-white ring-2 ring-like-500/40">
-            {room.hostNickname.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <div className="min-w-0">
-          <button
-            onClick={() => window.tiktok.openProfile(room.hostUniqueId)}
-            className="block truncate text-xs font-bold text-zinc-100 hover:text-like-400"
-          >
-            {room.hostNickname}
-          </button>
-          {uptime && (
-            <div className="flex items-center gap-1 text-[10px] text-zinc-500 tabular-nums">
-              <span className="rounded-full bg-like-500 px-1.5 py-px text-[8px] font-extrabold tracking-widest text-white">LIVE</span>
-              {uptime}
-            </div>
-          )}
+    <div className="flex flex-none items-center gap-3 overflow-x-auto border-b border-zinc-800/60 bg-zinc-950/60 px-4 py-2">
+      {/* Host identity */}
+      {room.hostAvatar ? (
+        <img src={room.hostAvatar} alt="" className="h-9 w-9 flex-none rounded-full bg-zinc-800 object-cover ring-2 ring-like-500" />
+      ) : (
+        <div className="avatar-gradient-pink flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-like-500">
+          {room.hostNickname.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div className="min-w-0 flex-none leading-tight">
+        <button
+          onClick={() => window.tiktok.openProfile(room.hostUniqueId)}
+          className="flex max-w-[220px] items-center gap-1 truncate text-[13px] font-bold text-zinc-100 hover:text-like-400"
+        >
+          <span className="truncate">{room.hostNickname}</span>
+          <VerifiedBadge />
+        </button>
+        <div className="max-w-[260px] truncate text-[11px] text-zinc-500">
+          {room.title || `@${room.hostUniqueId}`}
         </div>
       </div>
 
-      <StatCard icon="icon_heart_3d" value={formatNumber(totalLikes)} label={tps > 0 ? `+${tps.toFixed(1)}/s likes` : 'likes'} iconRef={heartRef} />
-      <StatCard icon="icon_group_3d" value={formatNumber(viewerCount)} label="viewers" />
-      <StatCard icon="icon_thank_you_envelope_3d" value={formatNumber(commentCount)} label="comments" />
-      <StatCard icon="icon_diamond_3d" value={formatNumber(totalDiamonds)} label="diamonds" />
-      <StatCard icon="icon_gift_box_3d" value={formatNumber(giftCount)} label="gifts" />
-      {followCount > 0 && <StatCard icon="icon_star_award_3d" value={formatNumber(followCount)} label="follows" />}
-      {subscribeCount > 0 && <StatCard icon="icon_crown_3d" value={formatNumber(subscribeCount)} label="subs" />}
-      {shareCount > 0 && <StatCard icon="icon_clock_3d" value={formatNumber(shareCount)} label="shares" />}
+      <div className="mx-1 h-6 w-px flex-none bg-zinc-800" />
+
+      {/* Inline stats */}
+      <div className="flex flex-none items-center gap-4 text-xs">
+        <Stat iconRef={heartRef} icon="❤️" tone="text-like-400" value={formatNumber(totalLikes)} label={tps > 0 ? `Likes · +${tps.toFixed(1)}/s` : 'Likes'} />
+        <Stat icon="👁" tone="text-cyan-400" value={formatNumber(viewerCount)} label="Viewers" />
+        <Stat icon="💬" tone="text-zinc-300" value={formatNumber(commentCount)} label="Comments" />
+        <Stat icon="💎" tone="text-purple-400" value={formatNumber(totalDiamonds)} label="Diamonds" />
+        <Stat icon="🎁" tone="text-amber-300" value={formatNumber(giftCount)} label="Gifts" />
+        {followCount > 0 && <Stat icon="⭐" tone="text-emerald-400" value={formatNumber(followCount)} label="Follows" />}
+      </div>
 
       {room.followerCount > 0 && (
-        <div className="ml-auto flex flex-none items-center self-center pl-1 text-[10px] text-zinc-500">
-          <span className="mr-1 text-sm font-bold text-zinc-300 tabular-nums">{formatNumber(room.followerCount)}</span> total followers
+        <div className="ml-auto flex flex-none items-center pl-2 text-[10px] text-zinc-500">
+          <span className="mr-1 text-sm font-bold tabular-nums text-zinc-300">{formatNumber(room.followerCount)}</span> total followers
         </div>
       )}
     </div>
   );
 }
 
-function StatCard({
+function Stat({
   icon,
+  tone,
   value,
   label,
   iconRef,
 }: {
   icon: string;
+  tone: string;
   value: string;
   label: string;
-  iconRef?: React.RefObject<HTMLImageElement | null>;
+  iconRef?: React.RefObject<HTMLSpanElement | null>;
 }) {
   return (
-    <div className="glass brand-top-border flex flex-none items-center gap-2 !rounded-xl px-3 py-1.5">
-      <img
-        ref={iconRef as React.RefObject<HTMLImageElement>}
-        src={`./assets/png/${icon}.png`}
-        alt=""
-        className="h-7 w-7 flex-none object-contain"
-        draggable={false}
-      />
-      <div className="leading-tight">
-        <div className="text-sm font-extrabold tabular-nums text-zinc-100">{value}</div>
-        <div className="text-[10px] font-medium text-zinc-500">{label}</div>
-      </div>
-    </div>
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span ref={iconRef as React.RefObject<HTMLSpanElement>} className={`text-sm ${tone}`}>{icon}</span>
+      <span className="font-bold tabular-nums text-zinc-100">{value}</span>
+      <span className="text-zinc-500">{label}</span>
+    </span>
   );
 }

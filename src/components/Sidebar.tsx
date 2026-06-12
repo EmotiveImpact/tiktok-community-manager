@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useTracked } from '../state/tracked';
 import { useStore } from '../state/store';
+import { useAlerts } from '../state/alerts';
 
 export type Page = 'dashboard' | 'live' | 'followers' | 'gifts' | 'reminders' | 'import' | 'settings';
 
@@ -100,12 +101,15 @@ function LogoMark() {
 export function Sidebar({ page, onNavigate, active, onSelect, showStream, onToggleStream }: Props) {
   const trackedCount = useTracked((s) => s.list.length);
   const roomCount = useStore((s) => s.roomMembers.size);
+  const alertCount = useAlerts((s) => s.history.length);
   const status = useStore((s) => s.status);
+  const room = useStore((s) => s.roomInfo);
   const connected = status === 'connected';
 
   const counts: Partial<Record<SidebarPanel, number>> = {
     tracked: trackedCount,
     room: roomCount,
+    alerts: alertCount,
   };
 
   return (
@@ -164,19 +168,17 @@ export function Sidebar({ page, onNavigate, active, onSelect, showStream, onTogg
                 type="button"
                 onClick={onToggleStream}
                 disabled={!connected}
-                className="no-drag flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+                className="no-drag flex w-full items-center justify-center gap-2 rounded-full px-2.5 py-1.5 text-left text-[12px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40"
                 style={{
-                  background: showStream ? 'rgba(238, 29, 82, 0.18)' : 'transparent',
-                  color: showStream ? '#ff5b85' : NAVY_TEXT,
-                  border: showStream ? '1px solid rgba(238, 29, 82, 0.35)' : '1px solid transparent',
+                  background: 'linear-gradient(90deg, #EE1D52, #ff4d76)',
+                  color: 'white',
+                  boxShadow: showStream ? '0 0 0 2px rgba(255,255,255,0.35), 0 6px 16px rgba(238,29,82,0.4)' : '0 6px 16px rgba(238,29,82,0.35)',
                 }}
-                onMouseEnter={(e) => { if (!showStream && connected) e.currentTarget.style.background = NAVY_HOVER; }}
-                onMouseLeave={(e) => { if (!showStream) e.currentTarget.style.background = 'transparent'; }}
               >
-                <Play size={13} className="flex-none" />
-                <span className="flex-1">Watch Stream</span>
+                <Play size={13} className="flex-none" fill="white" />
+                <span>Watch Stream</span>
                 {showStream && (
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: '#ee1d52', boxShadow: '0 0 6px #ee1d52' }} />
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" style={{ boxShadow: '0 0 6px rgba(255,255,255,0.9)' }} />
                 )}
               </button>
             </div>
@@ -212,7 +214,11 @@ export function Sidebar({ page, onNavigate, active, onSelect, showStream, onTogg
                       {count !== undefined && count > 0 && (
                         <span
                           className="inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
-                          style={{ background: 'rgba(120, 134, 178, 0.2)', color: NAVY_MUTED }}
+                          style={
+                            item.id === 'alerts'
+                              ? { background: '#EE1D52', color: 'white', boxShadow: '0 2px 6px rgba(238,29,82,0.45)' }
+                              : { background: 'rgba(120, 134, 178, 0.2)', color: NAVY_MUTED }
+                          }
                         >
                           {count}
                         </span>
@@ -235,15 +241,23 @@ export function Sidebar({ page, onNavigate, active, onSelect, showStream, onTogg
 
       {/* Creator profile card (web design) */}
       <div className="no-drag flex flex-none items-center gap-3 rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <span
-          className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
-          style={{ background: 'linear-gradient(135deg,#EE1D52,#69C9D0)' }}
-        >
-          C
-        </span>
+        {connected && room?.hostAvatar ? (
+          <img src={room.hostAvatar} alt="" className="h-9 w-9 flex-none rounded-full object-cover ring-2 ring-[#EE1D52]/60" />
+        ) : (
+          <span
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
+            style={{ background: 'linear-gradient(135deg,#EE1D52,#69C9D0)' }}
+          >
+            {connected && room ? room.hostNickname.charAt(0).toUpperCase() : 'C'}
+          </span>
+        )}
         <span className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate text-sm font-semibold text-white">Creator</span>
-          <span className="block text-[11px]" style={{ color: NAVY_MUTED }}>LIVE Creator</span>
+          <span className="block truncate text-sm font-semibold text-white">
+            {connected && room ? room.hostNickname : 'Creator'}
+          </span>
+          <span className="block truncate text-[11px]" style={{ color: connected ? '#ff5b85' : NAVY_MUTED }}>
+            {connected && room ? `● LIVE · @${room.hostUniqueId}` : 'LIVE Creator'}
+          </span>
         </span>
         <ChevronRight size={15} className="flex-none" style={{ color: 'rgba(100,116,139,1)' }} />
       </div>

@@ -6,6 +6,7 @@ export type UserBrief = {
   isSubscriber?: boolean;
   isFollower?: boolean;
   topGifterRank?: number | null;
+  verified?: boolean;
 };
 
 export type UserNote = {
@@ -181,7 +182,7 @@ export type ListGiftsResult = {
 
 export type Reminder = {
   id: string;
-  kind: 'birthday' | 'quiet';
+  kind: 'birthday' | 'quiet' | 'thank';
   fan: Fan;
   days: number;
   date?: string;
@@ -280,6 +281,7 @@ declare global {
       giftsList: (q?: ListGiftsQuery) => Promise<ListGiftsResult>;
       remindersList: (withinDays?: number) => Promise<Reminder[]>;
       reminderAction: (payload: { id: string; action: 'done' | 'snooze'; days?: number }) => Promise<{ ok: boolean; error?: string }>;
+      reminderAddThank: (uniqueId: string) => Promise<{ ok: boolean; deduped?: boolean; error?: string }>;
       fansImportCsv: (csvText: string) => Promise<ImportResult>;
       fansImportCsvFile: () => Promise<ImportResult>;
       fansExportCsv: () => Promise<{ ok: boolean; path?: string; error?: string }>;

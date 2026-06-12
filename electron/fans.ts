@@ -61,7 +61,7 @@ export type ReminderEvent = {
 
 export type Reminder = {
   id: string;
-  kind: 'birthday' | 'quiet';
+  kind: 'birthday' | 'quiet' | 'thank';
   fan: FanWithTier;
   /** birthday: days until; quiet: days since last seen */
   days: number;
@@ -79,6 +79,7 @@ export function fansDir(): string {
 const fansFile = () => path.join(fansDir(), 'fans.json');
 const giftsFile = () => path.join(fansDir(), 'gifts.jsonl');
 const reminderEventsFile = () => path.join(fansDir(), 'reminder-events.json');
+const thankRemindersFile = () => path.join(fansDir(), 'thank-reminders.json');
 
 // ---------------------------------------------------------------------------
 // in-memory state + batched persistence
@@ -482,6 +483,45 @@ export function listGifts(q: ListGiftsQuery = {}): ListGiftsResult {
 }
 
 // ---------------------------------------------------------------------------
+// thank-after-LIVE reminders (event-sourced like reminder-events)
+
+type ThankRequest = { uniqueId: string; date: string; at: number };
+let thankRequests: ThankRequest[] | null = null;
+
+function loadThankRequests(): ThankRequest[] {
+  if (thankRequests) return thankRequests;
+  try {
+    const raw = JSON.parse(fs.readFileSync(thankRemindersFile(), 'utf8'));
+    thankRequests = Array.isArray(raw) ? raw : [];
+  } catch {
+    thankRequests = [];
+  }
+  return thankRequests;
+}
+
+function saveThankRequests() {
+  try {
+    fs.writeFileSync(thankRemindersFile(), JSON.stringify(loadThankRequests()));
+  } catch (err) {
+    console.error('[fans] thank reminders save failed:', err);
+  }
+}
+
+/** Queue a "thank after LIVE" reminder due today. Dedup per fan per day. */
+export function addThankReminder(uniqueId: string): { ok: boolean; deduped?: boolean; error?: string } {
+  const uid = (uniqueId ?? '').replace(/^@/, '').trim();
+  if (!uid) return { ok: false, error: 'Username is required' };
+  // Ensure the fan exists in the ledger so the reminder can render.
+  if (!loadFans().get(uid)) upsertFan({ uniqueId: uid });
+  const date = new Date().toISOString().slice(0, 10);
+  const list = loadThankRequests();
+  if (list.some((t) => t.uniqueId === uid && t.date === date)) return { ok: true, deduped: true };
+  list.push({ uniqueId: uid, date, at: Date.now() });
+  saveThankRequests();
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
 // reminders
 
 const QUIET_DAYS = 14;
@@ -541,7 +581,15 @@ export function listReminders(withinDays = 30): Reminder[] {
       }
     }
   }
-  out.sort((a, b) => (a.kind === b.kind ? a.days - b.days : a.kind === 'birthday' ? -1 : 1));
+  for (const t of loadThankRequests()) {
+    const f = loadFans().get(t.uniqueId);
+    if (!f) continue;
+    const days = Math.max(0, Math.floor((now - new Date(t.date + 'T00:00:00').getTime()) / 86400000));
+    if (days > withinDays) continue;
+    const id = `thank:${t.uniqueId}:${t.date}`;
+    if (!isSuppressed(id, t.date)) out.push({ id, kind: 'thank', fan: withTier(f), days });
+  }
+  out.sort((a, b) => (a.kind === b.kind ? a.days - b.days : a.kind === 'birthday' ? -1 : a.kind === 'thank' && b.kind === 'quiet' ? -1 : 1));
   return out;
 }
 
@@ -668,11 +716,13 @@ export function exportCsvText(): string {
 export function clearAll(): { ok: boolean } {
   fans = new Map();
   reminderEvents = [];
+  thankRequests = [];
   giftBuffer = [];
   fansDirty = true;
   try {
     fs.rmSync(giftsFile(), { force: true });
     fs.rmSync(reminderEventsFile(), { force: true });
+    fs.rmSync(thankRemindersFile(), { force: true });
   } catch (err) {
     console.error('[fans] clear failed:', err);
   }
