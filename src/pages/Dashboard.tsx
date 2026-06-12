@@ -118,16 +118,16 @@ function StatCard({ label, value, sub, trend, trendColor, icon, tint }: {
   tint: string;
 }) {
   return (
-    <div className="glass brand-top-border relative p-4" style={{ borderRadius: 18 }}>
+    <div className="glass brand-top-border relative min-h-[156px] p-[18px]" style={{ borderRadius: 18 }}>
       <IconChip bg={tint}>
         <img src={icon} alt="" className="h-7 w-7 object-contain" draggable={false} />
       </IconChip>
-      <div className="mt-2.5 text-xs font-medium" style={{ color: 'var(--secondary-label)' }}>{label}</div>
-      <div className="mt-0.5 truncate text-[26px] font-extrabold leading-tight tracking-tight">
+      <div className="mt-2.5 text-[12px] font-bold" style={{ color: 'var(--secondary-label)' }}>{label}</div>
+      <div className="mt-0.5 truncate text-[29px] leading-tight tracking-tight" style={{ fontWeight: 880 }}>
         {value}
         {sub && <span className="ml-1.5 text-[13px] font-semibold" style={{ color: 'var(--secondary-label)' }}>{sub}</span>}
       </div>
-      <div className="mt-1 h-4 text-[11px] font-semibold" style={{ color: trendColor ?? 'var(--secondary-label)' }}>
+      <div className="mt-1 h-4 text-[12px]" style={{ color: trendColor ?? 'var(--secondary-label)', fontWeight: 780 }}>
         {trend ?? ''}
       </div>
     </div>
@@ -380,8 +380,8 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
         </div>
 
         {/* Hero: after tonight's LIVE */}
-        <div className="glass flex flex-wrap items-center gap-4 p-5" style={{ borderRadius: 22 }}>
-          <img src="./assets/png/hero_gift_checklist_3d.png" alt="" className="w-[110px] flex-none object-contain" draggable={false} />
+        <div className="glass grid grid-cols-[120px_minmax(0,1fr)] items-center gap-5 p-5 sm:grid-cols-[120px_minmax(0,1fr)_auto]" style={{ borderRadius: 20 }}>
+          <img src="./assets/png/hero_gift_checklist_3d.png" alt="" className="w-[112px] flex-none object-contain" draggable={false} />
           <div className="min-w-[220px] flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base font-extrabold">After tonight&apos;s LIVE</h2>
@@ -397,7 +397,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                 { label: 'Regulars returned', value: regularsReturned > 0 ? String(regularsReturned) : '—', icon: <Users size={13} />, bg: 'rgba(105,201,208,0.2)', color: '#3fb4bd' },
                 { label: 'Whale not seen', value: whaleQuietDays !== null ? `${whaleQuietDays}d` : '—', icon: <Clock size={13} />, bg: 'rgba(168,85,247,0.16)', color: '#a855f7' },
               ].map((m) => (
-                <div key={m.label} className="flex items-center gap-2.5 rounded-xl px-3 py-2" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--card-border)' }}>
+                <div key={m.label} className="flex h-[52px] items-center gap-2.5 rounded-xl px-3 py-[9px]" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--panel-border)' }}>
                   <IconChip bg={m.bg} color={m.color} size={26}>{m.icon}</IconChip>
                   <div className="min-w-0 leading-tight">
                     <dd className="text-base font-extrabold leading-tight">{m.value}</dd>
@@ -557,7 +557,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
       </div>
 
       {/* Top supporter panel (xl+) */}
-      <aside aria-label="Top supporter" className="hidden w-[290px] flex-none xl:block">
+      <aside aria-label="Top supporter" className="hidden w-[320px] flex-none xl:block">
         {!supporter ? (
           <div className="glass p-6 text-center" style={{ borderRadius: 20 }}>
             <img src="./assets/png/icon_heart_3d.png" alt="" className="mx-auto mb-3 h-14 w-14" draggable={false} />
