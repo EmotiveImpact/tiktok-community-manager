@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { ConnectBar } from './components/ConnectBar';
 import { Sidebar, type SidebarPanel, type Page } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
-import { PlaceholderPage } from './pages/Placeholder';
+import { Followers } from './pages/Followers';
+import { Gifts } from './pages/Gifts';
+import { Reminders } from './pages/Reminders';
+import { ImportPage } from './pages/ImportPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { CommentFeed } from './components/CommentFeed';
 import { GiftFeed } from './components/GiftFeed';
 import { AllFeed } from './components/AllFeed';
@@ -334,12 +338,16 @@ export default function App() {
         )}
         {page === 'dashboard' && (
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <Dashboard onOpenHistory={() => setShowHistory(true)} onGoLive={() => setPage('live')} />
+            <Dashboard onOpenHistory={() => setShowHistory(true)} onGoLive={() => setPage('live')} onGoReminders={() => setPage('reminders')} />
           </main>
         )}
         {page !== 'live' && page !== 'dashboard' && (
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <PlaceholderPage id={page} />
+            {page === 'followers' && <Followers onGoImport={() => setPage('import')} onGoLive={() => setPage('live')} />}
+            {page === 'gifts' && <Gifts onGoLive={() => setPage('live')} />}
+            {page === 'reminders' && <Reminders />}
+            {page === 'import' && <ImportPage onGoFollowers={() => setPage('followers')} />}
+            {page === 'settings' && <SettingsPage />}
           </main>
         )}
 

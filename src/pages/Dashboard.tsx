@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { SessionRecord, SessionSummary, UserNote } from '../types';
+import type { Reminder, SessionRecord, SessionSummary, UserNote } from '../types';
 import { formatNumber, formatUptime } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 
@@ -58,19 +58,39 @@ function dateLabel(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
-export function Dashboard({ onOpenHistory, onGoLive }: { onOpenHistory: () => void; onGoLive: () => void }) {
+export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: { onOpenHistory: () => void; onGoLive: () => void; onGoReminders: () => void }) {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [notes, setNotes] = useState<Record<string, UserNote>>({});
   const [trackedCount, setTrackedCount] = useState(0);
   const [latest, setLatest] = useState<SessionRecord | null>(null);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
 
   useEffect(() => {
     window.tiktok.sessionsList().then((list) => {
       setSessions(list);
       if (list[0]) window.tiktok.sessionsGet(list[0].id).then(setLatest);
     }).catch(() => {});
-    window.tiktok.sessionsLeaderboard(8).then((l) => setLeaders(l ?? [])).catch(() => {});
+    // Top gifters: prefer the permanent fan ledger; fall back to session leaderboard.
+    window.tiktok.fansList({ sort: 'diamonds', pageSize: 8 }).then((r) => {
+      const withGifts = r.data.filter((f) => f.totalDiamonds > 0);
+      if (withGifts.length > 0) {
+        setLeaders(withGifts.map((f) => ({
+          uniqueId: f.uniqueId,
+          nickname: f.displayName || f.nickname,
+          likes: 0,
+          diamonds: f.totalDiamonds,
+          comments: 0,
+          gifts: f.giftCount,
+          sessionsAppeared: 0,
+        })));
+      } else {
+        window.tiktok.sessionsLeaderboard(8).then((l) => setLeaders(l ?? [])).catch(() => {});
+      }
+    }).catch(() => {
+      window.tiktok.sessionsLeaderboard(8).then((l) => setLeaders(l ?? [])).catch(() => {});
+    });
+    window.tiktok.remindersList(30).then((r) => setReminders(r ?? [])).catch(() => {});
     window.tiktok.notesAll().then((n) => setNotes(n ?? {})).catch(() => {});
     window.tiktok.trackedList().then((t) => setTrackedCount(t.length)).catch(() => {});
   }, []);
@@ -142,13 +162,13 @@ export function Dashboard({ onOpenHistory, onGoLive }: { onOpenHistory: () => vo
             </dl>
           </div>
           {hasData ? (
-            <button onClick={onOpenHistory} className="panel-btn panel-btn-primary no-drag whitespace-nowrap !h-8 !px-4">Open last session →</button>
+            <button onClick={onGoReminders} className="panel-btn panel-btn-primary no-drag whitespace-nowrap !h-8 !px-4">View follow-up list →</button>
           ) : (
             <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag whitespace-nowrap !h-8 !px-4">Connect to your first LIVE →</button>
           )}
         </div>
 
-        {/* Top gifters + Recent sessions */}
+        {/* Top gifters + Upcoming birthdays (or Recent sessions when no reminders) */}
         <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-2">
           <div className="glass flex flex-col p-4" style={{ borderRadius: 18 }}>
             <h3 className="mb-2 text-sm font-bold">Top Gifters</h3>
@@ -185,7 +205,38 @@ export function Dashboard({ onOpenHistory, onGoLive }: { onOpenHistory: () => vo
             )}
           </div>
 
-          <div className="glass flex flex-col p-4" style={{ borderRadius: 18 }}>
+          {reminders.length > 0 && (
+            <div className="glass flex flex-col p-4" style={{ borderRadius: 18 }}>
+              <h3 className="mb-2 text-sm font-bold">Upcoming birthdays &amp; follow-ups</h3>
+              <ul className="text-[13px]">
+                {reminders.slice(0, 5).map((r, i) => (
+                  <li key={r.id} className={`flex items-center gap-3 py-2 ${i > 0 ? 'border-t' : ''}`} style={{ borderColor: 'var(--separator)' }}>
+                    <Avatar name={r.fan.displayName || r.fan.nickname || r.fan.uniqueId} />
+                    <span className="min-w-0 flex-1 leading-tight">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate font-semibold">{r.fan.displayName || r.fan.nickname}</span>
+                        <span className={tierForDiamonds(r.fan.totalDiamonds).cls}>{tierForDiamonds(r.fan.totalDiamonds).label}</span>
+                      </span>
+                      <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>
+                        {r.kind === 'birthday'
+                          ? r.days === 0 ? '🎂 Birthday today!' : `🎂 Birthday in ${r.days} day${r.days === 1 ? '' : 's'}`
+                          : `Quiet for ${r.days} days`}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={onGoReminders}
+                className="no-drag mt-auto self-start pt-2 text-[12px] font-semibold hover:underline"
+                style={{ color: 'var(--brand-pink)' }}
+              >
+                View all reminders →
+              </button>
+            </div>
+          )}
+
+          <div className={`glass flex flex-col p-4 ${reminders.length > 0 ? 'lg:col-span-2' : ''}`} style={{ borderRadius: 18 }}>
             <h3 className="mb-2 text-sm font-bold">Recent sessions</h3>
             {sessions.length === 0 ? (
               <div className="py-6 text-center text-[12px]" style={{ color: 'var(--secondary-label)' }}>

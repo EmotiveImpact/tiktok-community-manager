@@ -1,0 +1,231 @@
+/** Gifts — permanent gift ledger across all LIVEs + manual logging. */
+import { useCallback, useEffect, useState } from 'react';
+import type { ListGiftsResult } from '../types';
+import { formatNumber } from '../lib/format';
+import { useAlerts } from '../state/alerts';
+import { FanAvatar, Pager, PageShell, FieldLabel, inputCls } from '../components/crm';
+
+const RANGES = [
+  { id: '7d', label: '7 days' },
+  { id: '30d', label: '30 days' },
+  { id: '90d', label: '90 days' },
+  { id: 'all', label: 'All time' },
+] as const;
+
+type Range = (typeof RANGES)[number]['id'];
+
+export function Gifts({ onGoLive }: { onGoLive: () => void }) {
+  const pushToast = useAlerts((s) => s.pushToast);
+  const [range, setRange] = useState<Range>('30d');
+  const [fan, setFan] = useState('');
+  const [page, setPage] = useState(1);
+  const [resp, setResp] = useState<ListGiftsResult>({ data: [], total: 0, page: 1, pageSize: 25, diamondsWeek: 0, diamondsMonth: 0, diamondsAll: 0 });
+  const [showLog, setShowLog] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const refresh = useCallback(() => {
+    window.tiktok.giftsList({ range, fan: fan || undefined, page, pageSize: 25 })
+      .then((r) => { setResp(r); setLoaded(true); })
+      .catch(() => setLoaded(true));
+  }, [range, fan, page]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { setPage(1); }, [range, fan]);
+
+  const exportCsv = async () => {
+    const r = await window.tiktok.fansExportCsv();
+    if (r.ok) pushToast({ title: 'Exported', body: `Saved to ${r.path}` });
+    else if (r.error) pushToast({ title: 'Export failed', body: r.error });
+  };
+
+  const isEmpty = loaded && resp.diamondsAll === 0 && resp.total === 0 && !fan;
+
+  return (
+    <PageShell
+      title="Gifts"
+      subtitle="Every gift across your LIVEs — automatic from the stream, plus anything you log by hand."
+      actions={
+        <>
+          <button onClick={exportCsv} className="panel-btn no-drag">Export CSV</button>
+          <button onClick={() => setShowLog(true)} className="panel-btn panel-btn-primary no-drag">+ Log gift</button>
+        </>
+      }
+    >
+      {/* Totals header */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Diamonds this week', value: resp.diamondsWeek },
+          { label: 'Diamonds this month', value: resp.diamondsMonth },
+          { label: 'Diamonds all-time', value: resp.diamondsAll },
+        ].map((s) => (
+          <div key={s.label} className="glass brand-top-border p-4" style={{ borderRadius: 18 }}>
+            <div className="text-xs font-medium" style={{ color: 'var(--secondary-label)' }}>{s.label}</div>
+            <div className="mt-1 text-[22px] font-extrabold tracking-tight">{formatNumber(s.value)} 💎</div>
+          </div>
+        ))}
+      </div>
+
+      {isEmpty ? (
+        <div className="glass flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center" style={{ borderRadius: 22 }}>
+          <img src="./assets/png/icon_gift_box_3d.png" alt="" className="h-20 w-20 object-contain" draggable={false} />
+          <h2 className="text-base font-extrabold">No gifts in the ledger yet</h2>
+          <p className="max-w-sm text-[13px]" style={{ color: 'var(--secondary-label)' }}>
+            Gifts are captured automatically while you&apos;re connected to a LIVE. You can also log off-stream gifts by hand.
+          </p>
+          <div className="flex gap-2">
+            <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag">Connect to a LIVE</button>
+            <button onClick={() => setShowLog(true)} className="panel-btn no-drag">Log a gift</button>
+          </div>
+        </div>
+      ) : (
+        <div className="glass flex min-h-0 flex-col p-4" style={{ borderRadius: 18 }}>
+          <div className="flex flex-wrap items-center gap-2 pb-3">
+            <div className="flex items-center gap-1">
+              {RANGES.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setRange(r.id)}
+                  className={`panel-btn no-drag ${range === r.id ? 'panel-btn-active' : ''}`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <input value={fan} onChange={(e) => setFan(e.target.value)} placeholder="Filter by fan…" className={`${inputCls} !w-52 ml-auto`} />
+          </div>
+
+          {resp.data.length === 0 ? (
+            <div className="py-10 text-center text-[13px]" style={{ color: 'var(--secondary-label)' }}>
+              No gifts match these filters.
+            </div>
+          ) : (
+            <table className="w-full text-left text-[13px]">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--secondary-label)' }}>
+                  <th className="pb-2">Date</th>
+                  <th className="pb-2">Fan</th>
+                  <th className="pb-2">Gift</th>
+                  <th className="pb-2 text-right">Diamonds</th>
+                  <th className="pb-2 pl-4">Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resp.data.map((g) => (
+                  <tr key={g.id} className="border-t" style={{ borderColor: 'var(--separator)' }}>
+                    <td className="py-2 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+                      {new Date(g.at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="py-2">
+                      <span className="flex items-center gap-2">
+                        <FanAvatar name={g.fanNickname || g.fanUniqueId} size={26} />
+                        <span className="min-w-0 leading-tight">
+                          <span className="block truncate font-semibold">{g.fanNickname}</span>
+                          <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>@{g.fanUniqueId}</span>
+                        </span>
+                      </span>
+                    </td>
+                    <td className="py-2">{g.giftName}{g.repeatCount > 1 ? ` ×${g.repeatCount}` : ''}</td>
+                    <td className="py-2 text-right font-bold tabular-nums">{formatNumber(g.diamonds)} 💎</td>
+                    <td className="py-2 pl-4 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+                      {g.manual ? 'Manual' : g.sessionId ? `LIVE · ${g.sessionId.split('-').slice(1).join('-') || g.sessionId}` : 'LIVE'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <Pager page={resp.page} pageSize={resp.pageSize} total={resp.total} onPage={setPage} />
+        </div>
+      )}
+
+      {showLog && (
+        <LogGiftModal
+          onClose={() => setShowLog(false)}
+          onLogged={() => {
+            setShowLog(false);
+            pushToast({ title: 'Gift logged', body: 'Added to the ledger' });
+            refresh();
+          }}
+        />
+      )}
+    </PageShell>
+  );
+}
+
+function LogGiftModal({ onClose, onLogged }: { onClose: () => void; onLogged: () => void }) {
+  const pushToast = useAlerts((s) => s.pushToast);
+  const [username, setUsername] = useState('');
+  const [giftName, setGiftName] = useState('');
+  const [diamonds, setDiamonds] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [suggestions, setSuggestions] = useState<{ uniqueId: string; label: string }[]>([]);
+
+  useEffect(() => {
+    const u = username.replace(/^@/, '').trim();
+    if (u.length < 1) { setSuggestions([]); return; }
+    const t = setTimeout(() => {
+      window.tiktok.fansList({ search: u, pageSize: 6 }).then((r) =>
+        setSuggestions(r.data.map((f) => ({ uniqueId: f.uniqueId, label: `${f.displayName || f.nickname} (@${f.uniqueId})` }))),
+      ).catch(() => {});
+    }, 200);
+    return () => clearTimeout(t);
+  }, [username]);
+
+  const valid = username.replace(/^@/, '').trim() && giftName.trim() && Number(diamonds) > 0;
+
+  const submit = async () => {
+    if (!valid) return;
+    const at = date ? new Date(`${date}T12:00:00`).getTime() : undefined;
+    const res = await window.tiktok.fansLogGift({
+      uniqueId: username.replace(/^@/, '').trim(),
+      giftName: giftName.trim(),
+      diamonds: Number(diamonds),
+      at,
+    });
+    if (res.ok) onLogged();
+    else pushToast({ title: 'Could not log gift', body: res.error ?? 'Unknown error' });
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="glass fixed left-1/2 top-1/2 z-[70] w-[380px] -translate-x-1/2 -translate-y-1/2 p-5 shadow-2xl" style={{ borderRadius: 18 }}>
+        <h2 className="mb-3 text-base font-extrabold">Log gift</h2>
+        <div className="space-y-3">
+          <div>
+            <FieldLabel>Fan *</FieldLabel>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="@username"
+              autoFocus
+              className={inputCls}
+              list="log-gift-fans"
+            />
+            <datalist id="log-gift-fans">
+              {suggestions.map((s) => <option key={s.uniqueId} value={s.uniqueId}>{s.label}</option>)}
+            </datalist>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>Gift name *</FieldLabel>
+              <input value={giftName} onChange={(e) => setGiftName(e.target.value)} placeholder="Galaxy" className={inputCls} />
+            </div>
+            <div>
+              <FieldLabel>Diamonds *</FieldLabel>
+              <input value={diamonds} onChange={(e) => setDiamonds(e.target.value.replace(/[^\d]/g, ''))} placeholder="1000" inputMode="numeric" className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <FieldLabel>Date</FieldLabel>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} className="panel-btn no-drag">Cancel</button>
+          <button onClick={submit} disabled={!valid} className="panel-btn panel-btn-primary no-drag">Log gift</button>
+        </div>
+      </div>
+    </>
+  );
+}
