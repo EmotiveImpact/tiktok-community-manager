@@ -9,6 +9,21 @@ import { create } from 'zustand';
 
 export type Page = 'dashboard' | 'live' | 'followers' | 'gifts' | 'reminders' | 'import' | 'settings';
 export type FeedTab = 'comments' | 'gifts' | 'questions' | 'top' | 'all';
+
+/** Which face the sidebar shows: main app nav, or the live toolset. */
+export type SidebarMode = 'main' | 'live';
+/** The tool rendered in the live page's content area ('feed' = the live feed itself). */
+export type LiveTool =
+  | 'feed'
+  | 'tracked' | 'notes' | 'room' | 'leaderboard' | 'watchlist'
+  | 'alerts' | 'mod' | 'transcript' | 'highlights' | 'liker'
+  | 'insights' | 'analytics' | 'compare' | 'history' | 'multiroom';
+
+const LIVE_TOOLS: LiveTool[] = [
+  'feed', 'tracked', 'notes', 'room', 'leaderboard', 'watchlist',
+  'alerts', 'mod', 'transcript', 'highlights', 'liker',
+  'insights', 'analytics', 'compare', 'history', 'multiroom',
+];
 export type FeedFilter = 'all' | 'followers' | 'subs' | 'mods' | 'gifters';
 
 export type StreamNote = {
@@ -30,6 +45,15 @@ function initialPage(): Page {
   }
 }
 
+function initialTool(): LiveTool {
+  try {
+    const t = new URLSearchParams(window.location.search).get('tool');
+    return LIVE_TOOLS.includes(t as LiveTool) ? (t as LiveTool) : 'feed';
+  } catch {
+    return 'feed';
+  }
+}
+
 let noteCounter = 0;
 
 type UIState = {
@@ -37,6 +61,15 @@ type UIState = {
   /** Fan to preselect when navigating to the Followers page (read by pages). */
   fanFocus: string | null;
   setPage: (page: Page) => void;
+
+  /** Sidebar face: flips to the live toolset while on the live page. */
+  sidebarMode: SidebarMode;
+  /** Tool shown in the live page content area ('feed' = live feed). */
+  liveTool: LiveTool;
+  /** Navigate to the live page with a specific tool active. */
+  openLiveTool: (tool: LiveTool) => void;
+  /** "← Back" from the live sidebar: restore main nav and return to dashboard. */
+  backToMain: () => void;
   /** Navigate to the Followers page with a fan preselected. */
   openFanProfile: (uniqueId: string) => void;
   clearFanFocus: () => void;
@@ -61,8 +94,21 @@ type UIState = {
 export const useUI = create<UIState>((set, get) => ({
   page: initialPage(),
   fanFocus: null,
-  setPage: (page) => set({ page }),
-  openFanProfile: (uniqueId) => set({ page: 'followers', fanFocus: uniqueId }),
+  setPage: (page) =>
+    set((s) => ({
+      page,
+      // Entering Live flips the sidebar to the live toolset (starting on the
+      // feed); navigating to any main page restores the main sidebar.
+      sidebarMode: page === 'live' ? 'live' : 'main',
+      liveTool: page === 'live' && s.page !== 'live' ? 'feed' : s.liveTool,
+    })),
+
+  sidebarMode: initialPage() === 'live' ? 'live' : 'main',
+  liveTool: initialTool(),
+  openLiveTool: (tool) => set({ page: 'live', sidebarMode: 'live', liveTool: tool }),
+  backToMain: () => set({ sidebarMode: 'main', page: 'dashboard', liveTool: 'feed' }),
+
+  openFanProfile: (uniqueId) => set({ page: 'followers', fanFocus: uniqueId, sidebarMode: 'main' }),
   clearFanFocus: () => set({ fanFocus: null }),
 
   tab: 'comments',
