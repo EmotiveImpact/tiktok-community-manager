@@ -2,7 +2,7 @@
 /** Followers — the fan CRM table. Search, tag/tier filters, bulk tag, add fan, detail drawer. */
 import { useCallback, useEffect, useState } from 'react';
 import type { Fan, ListFansResult, Tier } from '../types';
-import { formatNumber, daysAgoLabel } from '../lib/format';
+import { formatNumber, formatDate, daysAgoLabel } from '../lib/format';
 import { TIERS } from '../lib/tier';
 import { useAlerts } from '../state/alerts';
 import { FanAvatar, TierChip, TagChip, Pager, PageShell, FieldLabel, inputCls, fanName, birthdayValid } from '../components/crm';
@@ -47,11 +47,25 @@ export function Followers({ onGoImport, onGoLive }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [bulkTag, setBulkTag] = useState('');
   const [loaded, setLoaded] = useState(false);
+  // Selected-fan preview drawer (spec item 12) — wide layouts only.
+  const [preview, setPreview] = useState<Fan | null>(null);
+  const [wide, setWide] = useState(() => window.matchMedia('(min-width: 1280px)').matches);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1280px)');
+    const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   const refresh = useCallback(() => {
     window.tiktok
       .fansList({ search: q, tag: tag || undefined, tier: (tier || undefined) as Tier | undefined, page, pageSize: 25 })
-      .then((r) => { setResp(r); setLoaded(true); })
+      .then((r) => {
+        setResp(r);
+        setLoaded(true);
+        setPreview((p) => (p ? r.data.find((f) => f.uniqueId === p.uniqueId) ?? p : p));
+      })
       .catch(() => setLoaded(true));
   }, [q, tag, tier, page]);
 
@@ -105,9 +119,10 @@ export function Followers({ onGoImport, onGoLive }: Props) {
           </div>
         </div>
       ) : (
-        <div className="glass flex min-h-0 flex-col p-4" style={{ borderRadius: 18 }}>
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2 pb-3">
+        <div className="flex min-h-0 flex-1 gap-4">
+        <div className="glass grid min-h-0 min-w-0 flex-1 grid-rows-[66px_44px_minmax(0,1fr)_52px]" style={{ borderRadius: 20 }}>
+          {/* Filters — 66px bar */}
+          <div className="flex flex-wrap items-center gap-2 border-b px-4" style={{ borderColor: 'var(--panel-border)' }}>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -127,27 +142,35 @@ export function Followers({ onGoImport, onGoLive }: Props) {
             </span>
           </div>
 
-          {/* Bulk bar */}
-          {selected.size > 0 && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--card-border)' }}>
-              <span className="text-[12px] font-semibold">{selected.size} selected</span>
-              <input value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} placeholder="tag name" className={`${inputCls} !w-40`} />
+          {/* Bulk bar — 44px working mode (spec item 11) */}
+          {selected.size > 0 ? (
+            <div
+              className="flex flex-wrap items-center gap-2 border-b bg-gradient-to-r from-[#EE1D52]/10 to-[#69C9D0]/[0.055] px-4"
+              style={{ borderColor: 'var(--panel-border)' }}
+            >
+              <span className="text-[12px] font-bold">{selected.size} selected</span>
+              <input value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} placeholder="tag name" className={`${inputCls} !h-7 !w-40 !py-0`} />
               <button onClick={() => applyBulkTag('add')} disabled={!bulkTag.trim()} className="panel-btn panel-btn-primary no-drag">Add tag</button>
               <button onClick={() => applyBulkTag('remove')} disabled={!bulkTag.trim()} className="panel-btn no-drag">Remove tag</button>
               <button onClick={() => setSelected(new Set())} className="panel-btn no-drag ml-auto">Clear</button>
             </div>
+          ) : (
+            <div className="flex items-center border-b px-4 text-[11px]" style={{ borderColor: 'var(--panel-border)', color: 'var(--tertiary-label)' }}>
+              Select fans to tag them in bulk.
+            </div>
           )}
 
-          {/* Table */}
+          {/* Table — 34px header, 49px rows */}
+          <div className="min-h-0 overflow-y-auto">
           {resp.data.length === 0 ? (
             <div className="py-10 text-center text-[13px]" style={{ color: 'var(--secondary-label)' }}>
               No fans match these filters.
             </div>
           ) : (
             <table className="w-full text-left text-[13px]">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--secondary-label)' }}>
-                  <th className="w-8 pb-2">
+              <thead className="sticky top-0 z-10" style={{ background: 'var(--panel-bg-strong)' }}>
+                <tr className="h-[34px] text-[11px] uppercase tracking-wider" style={{ color: 'var(--secondary-label)' }}>
+                  <th className="w-8 pl-3.5">
                     <input
                       type="checkbox"
                       checked={resp.data.length > 0 && resp.data.every((f) => selected.has(f.uniqueId))}
@@ -159,51 +182,113 @@ export function Followers({ onGoImport, onGoLive }: Props) {
                       className="accent-pink-600"
                     />
                   </th>
-                  <th className="pb-2">Fan</th>
-                  <th className="pb-2">Tier</th>
-                  <th className="pb-2 text-right">Diamonds</th>
-                  <th className="pb-2 pl-4">Tags</th>
-                  <th className="pb-2">Last seen</th>
-                  <th className="pb-2">Birthday</th>
+                  <th className="px-3.5 font-bold">Fan</th>
+                  <th className="px-3.5 font-bold">Tier</th>
+                  <th className="px-3.5 text-right font-bold">Diamonds</th>
+                  <th className="px-3.5 font-bold">Tags</th>
+                  <th className="px-3.5 font-bold">Last seen</th>
+                  <th className="px-3.5 font-bold">Birthday</th>
                 </tr>
               </thead>
               <tbody>
                 {resp.data.map((f: Fan) => (
                   <tr
                     key={f.uniqueId}
-                    onClick={() => setOpenFan(f.uniqueId)}
-                    className="cursor-pointer border-t transition hover:bg-white/[0.03]"
+                    onClick={() => (wide ? setPreview(f) : setOpenFan(f.uniqueId))}
+                    className={`h-[49px] cursor-pointer border-t transition ${preview?.uniqueId === f.uniqueId && wide ? 'bg-[#EE1D52]/[0.07]' : 'hover:bg-[var(--fill-quaternary)]'}`}
                     style={{ borderColor: 'var(--separator)' }}
                   >
-                    <td className="py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="pl-3.5" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" checked={selected.has(f.uniqueId)} onChange={() => toggle(f.uniqueId)} className="accent-pink-600" />
                     </td>
-                    <td className="py-2">
+                    <td className="px-3.5">
                       <span className="flex items-center gap-2.5">
                         <FanAvatar name={fanName(f)} url={f.avatarUrl} />
                         <span className="min-w-0 leading-tight">
-                          <span className="block truncate font-semibold">{fanName(f)}</span>
+                          <span className="block truncate text-[13px]" style={{ fontWeight: 750 }}>{fanName(f)}</span>
                           <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>@{f.uniqueId}</span>
                         </span>
                       </span>
                     </td>
-                    <td className="py-2"><TierChip tier={f.tier} /></td>
-                    <td className="py-2 text-right font-bold tabular-nums">{formatNumber(f.totalDiamonds)} 💎</td>
-                    <td className="max-w-[180px] py-2 pl-4">
+                    <td className="px-3.5"><TierChip tier={f.tier} /></td>
+                    <td className="px-3.5 text-right text-[13px] tabular-nums" style={{ fontWeight: 900 }}>{formatNumber(f.totalDiamonds)} 💎</td>
+                    <td className="max-w-[180px] px-3.5">
                       <span className="flex flex-wrap gap-1">
                         {f.tags.slice(0, 3).map((t) => <TagChip key={t} tag={t} />)}
                         {f.tags.length > 3 && <span className="text-[11px]" style={{ color: 'var(--secondary-label)' }}>+{f.tags.length - 3}</span>}
                       </span>
                     </td>
-                    <td className="py-2 text-[12px]" style={{ color: 'var(--secondary-label)' }}>{daysAgoLabel(f.lastSeenAt)}</td>
-                    <td className="py-2 text-[12px]" style={{ color: 'var(--secondary-label)' }}>{f.birthday ?? '—'}</td>
+                    <td className="px-3.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>{daysAgoLabel(f.lastSeenAt)}</td>
+                    <td className="px-3.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>{f.birthday ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
+          </div>
 
-          <Pager page={resp.page} pageSize={resp.pageSize} total={resp.total} onPage={setPage} />
+          {/* Footer — 52px */}
+          <div className="flex items-center border-t px-4" style={{ borderColor: 'var(--panel-border)' }}>
+            <div className="w-full">
+              <Pager page={resp.page} pageSize={resp.pageSize} total={resp.total} onPage={setPage} />
+            </div>
+          </div>
+        </div>
+
+        {/* Selected-fan preview drawer — ≥1280px only (spec item 12) */}
+        {wide && preview && (
+          <aside className="glass hidden w-[300px] flex-none self-stretch overflow-y-auto xl:block" style={{ borderRadius: 18 }}>
+            <div className="h-[54px]" style={{ background: 'linear-gradient(120deg, #EE1D52, #ff5e7e 45%, #69C9D0)' }} />
+            <div className="-mt-7 px-4 pb-4">
+              <div className="flex items-end justify-between">
+                <span className="inline-block rounded-full p-[3px]" style={{ background: 'var(--panel-bg-strong)' }}>
+                  <FanAvatar name={fanName(preview)} url={preview.avatarUrl} size={58} />
+                </span>
+                <button onClick={() => setPreview(null)} className="panel-btn panel-btn-icon no-drag" aria-label="Close preview">✕</button>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <span className="truncate text-[15px]" style={{ fontWeight: 800 }}>{fanName(preview)}</span>
+                <TierChip tier={preview.tier} />
+              </div>
+              <div className="text-[12px]" style={{ color: 'var(--secondary-label)' }}>@{preview.uniqueId}</div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                {[
+                  { label: 'Diamonds', value: formatNumber(preview.totalDiamonds) },
+                  { label: 'Gifts', value: formatNumber(preview.giftCount) },
+                  { label: 'Seen', value: daysAgoLabel(preview.lastSeenAt) },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-xl px-1.5 py-2" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--panel-border)' }}>
+                    <div className="truncate text-[13px] tabular-nums" style={{ fontWeight: 900 }}>{s.value}</div>
+                    <div className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--secondary-label)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {preview.notes && (
+                <div className="mt-3 rounded-2xl rounded-tl-sm px-3 py-2 text-[12px] leading-snug" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--panel-border)' }}>
+                  “{preview.notes.length > 140 ? `${preview.notes.slice(0, 140)}…` : preview.notes}”
+                </div>
+              )}
+
+              {preview.tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {preview.tags.map((t) => <TagChip key={t} tag={t} />)}
+                </div>
+              )}
+
+              <div className="mt-3 space-y-1 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+                <div>📅 First seen {formatDate(preview.firstSeenAt)}</div>
+                {preview.birthday && <div>🎂 Birthday {preview.birthday}</div>}
+                {preview.lastThankedAt && <div>💌 Last thanked {formatDate(preview.lastThankedAt)}</div>}
+              </div>
+
+              <button onClick={() => setOpenFan(preview.uniqueId)} className="panel-btn panel-btn-primary no-drag mt-4 !h-8 w-full justify-center">
+                Open profile
+              </button>
+            </div>
+          </aside>
+        )}
         </div>
       )}
 
