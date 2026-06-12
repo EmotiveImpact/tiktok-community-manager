@@ -7,7 +7,7 @@ const ruleTypes: { value: AlertRule['type']; label: string; placeholder: string;
   { value: 'keyword', label: 'Keyword Match', placeholder: 'Enter keyword...', pillClass: 'bg-like-500/15 text-like-400', pillLabel: 'Keyword', description: 'Triggers on keyword match in chat', accent: 'border-l-like-500' },
   { value: 'gift_diamonds', label: 'Gift Threshold', placeholder: 'minimum diamonds (e.g. 100)', pillClass: 'bg-amber-500/15 text-amber-300', pillLabel: 'Gift', description: 'Alerts on gifts above threshold', accent: 'border-l-amber-400' },
   { value: 'gift_name', label: 'Gift Name', placeholder: 'gift name', pillClass: 'bg-amber-500/15 text-amber-300', pillLabel: 'Gift', description: 'Alerts when specific gift is sent', accent: 'border-l-amber-400' },
-  { value: 'follower', label: 'New Follower', placeholder: '(no value needed)', pillClass: 'bg-blue-500/15 text-blue-300', pillLabel: 'Follow', description: 'Triggers on every new follower', accent: 'border-l-blue-400' },
+  { value: 'follower', label: 'New Follower', placeholder: '(no value needed)', pillClass: 'bg-cyan-500/15 text-cyan-400', pillLabel: 'Follow', description: 'Triggers on every new follower', accent: 'border-l-cyan-400' },
   { value: 'viewer_threshold', label: 'Viewer Threshold', placeholder: 'viewer count (e.g. 1000)', pillClass: 'bg-emerald-500/15 text-emerald-300', pillLabel: 'Viewers', description: 'Alerts when viewer count exceeds limit', accent: 'border-l-emerald-400' },
 ];
 

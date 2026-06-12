@@ -106,7 +106,7 @@ export function AllTimeLeaderboard({ onClose }: { onClose: () => void }) {
                   <td className="px-3 py-2.5 text-right tabular-nums text-emerald-300">
                     {formatNumber(t.gifts)}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-blue-300">
+                  <td className="px-3 py-2.5 text-right tabular-nums text-cyan-400">
                     {t.sessionsAppeared}
                   </td>
                 </tr>

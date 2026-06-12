@@ -16,7 +16,7 @@ type LikerStats = {
 };
 
 const MODE_INFO: Record<LikerMode, { label: string; desc: string; color: string }> = {
-  normal: { label: 'Normal', desc: 'Consistent interval tapping', color: 'text-blue-400' },
+  normal: { label: 'Normal', desc: 'Consistent interval tapping', color: 'text-cyan-400' },
   human: { label: 'Human-like', desc: 'Natural patterns with breaks', color: 'text-emerald-400' },
   extreme: { label: 'EXTREME', desc: 'Maximum speed — use with caution', color: 'text-rose-400' },
 };

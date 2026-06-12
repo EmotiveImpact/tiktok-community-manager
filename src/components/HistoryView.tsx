@@ -274,9 +274,9 @@ function SessionDetail({ record, onDelete }: { record: SessionRecord; onDelete: 
         <Tile label="Comments" value={record.totals.comments} accent="text-zinc-200" />
         <Tile label="Likes" value={record.totals.likes} accent="text-like-400" />
         <Tile label="Diamonds" value={record.totals.diamonds} accent="text-amber-300" />
-        <Tile label="Peak viewers" value={record.totals.peakViewers} accent="text-blue-300" />
+        <Tile label="Peak viewers" value={record.totals.peakViewers} accent="text-cyan-400" />
         <Tile label="Gifts" value={record.totals.gifts} accent="text-emerald-300" />
-        <Tile label="Follows" value={record.totals.follows} accent="text-sky-300" />
+        <Tile label="Follows" value={record.totals.follows} accent="text-cyan-400" />
         <Tile label="Subs" value={record.totals.subs} accent="text-purple-300" />
         <Tile label="Q&amp;A" value={record.totals.questions} accent="text-violet-300" />
       </div>

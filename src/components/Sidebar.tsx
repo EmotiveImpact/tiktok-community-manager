@@ -55,6 +55,32 @@ type Props = {
   onToggleStream: () => void;
 };
 
+/* Sidebar keeps its navy gradient in both themes (brand mockup). */
+const NAVY_TEXT = 'rgba(226, 232, 248, 0.9)';
+const NAVY_MUTED = 'rgba(148, 158, 190, 0.85)';
+const NAVY_FAINT = 'rgba(120, 130, 165, 0.55)';
+const NAVY_HOVER = 'rgba(120, 134, 178, 0.12)';
+
+function LogoMark() {
+  return (
+    <div className="flex items-center gap-2.5 px-3 pb-3 pt-4">
+      {/* TikTok-note glyph in a pink-gradient rounded square */}
+      <div
+        className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px]"
+        style={{ background: 'var(--gradient-pink)', boxShadow: '0 4px 12px rgba(238,29,82,0.4)' }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" aria-hidden>
+          <path d="M16.6 5.82a4.28 4.28 0 0 1-1.05-2.82H12.4v12.4a2.6 2.6 0 1 1-2.6-2.6c.27 0 .53.04.78.12V9.69a5.83 5.83 0 0 0-.78-.05 5.86 5.86 0 1 0 5.86 5.86V9.93a7.5 7.5 0 0 0 4.34 1.38V8.1a4.33 4.33 0 0 1-3.4-2.28z" />
+        </svg>
+      </div>
+      <div className="min-w-0 leading-tight">
+        <div className="text-[13px] font-bold" style={{ color: 'white' }}>TikTok</div>
+        <div className="text-[10px] font-semibold" style={{ color: NAVY_MUTED }}>Community Manager</div>
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props) {
   const trackedCount = useTracked((s) => s.list.length);
   const roomCount = useStore((s) => s.roomMembers.size);
@@ -68,28 +94,28 @@ export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props)
 
   return (
     <aside
-      className="flex h-full min-h-0 w-[200px] flex-none flex-col"
+      className="flex h-full min-h-0 w-[210px] flex-none flex-col"
       style={{
-        background: 'var(--bg-window)',
-        borderRight: '0.5px solid var(--separator)',
-        backdropFilter: 'blur(40px) saturate(140%)',
-        WebkitBackdropFilter: 'blur(40px) saturate(140%)',
+        background: 'var(--gradient-sidebar)',
+        borderRight: '1px solid rgba(120, 134, 178, 0.14)',
       }}
     >
+      <LogoMark />
+
       {/* Watch Stream button */}
-      <div className="flex-none px-2 pt-2.5 pb-1">
+      <div className="flex-none px-2 pb-1">
         <button
           type="button"
           onClick={onToggleStream}
           disabled={!connected}
-          className="no-drag flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+          className="no-drag flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
           style={{
-            background: showStream ? 'rgba(255, 69, 58, 0.16)' : 'transparent',
-            color: showStream ? 'var(--red)' : 'var(--label)',
-            border: showStream ? '0.5px solid rgba(255, 69, 58, 0.3)' : '0.5px solid transparent',
+            background: showStream ? 'rgba(238, 29, 82, 0.18)' : 'transparent',
+            color: showStream ? '#ff5b85' : NAVY_TEXT,
+            border: showStream ? '1px solid rgba(238, 29, 82, 0.35)' : '1px solid transparent',
           }}
           onMouseEnter={(e) => {
-            if (!showStream && connected) e.currentTarget.style.background = 'var(--fill-thin)';
+            if (!showStream && connected) e.currentTarget.style.background = NAVY_HOVER;
           }}
           onMouseLeave={(e) => {
             if (!showStream) e.currentTarget.style.background = 'transparent';
@@ -100,19 +126,19 @@ export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props)
           {showStream && (
             <span
               className="h-1.5 w-1.5 animate-pulse rounded-full"
-              style={{ background: 'var(--red)', boxShadow: '0 0 6px var(--red)' }}
+              style={{ background: '#ee1d52', boxShadow: '0 0 6px #ee1d52' }}
             />
           )}
         </button>
       </div>
 
       {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-2 pb-3">
+      <nav className="flex-1 overflow-y-auto px-2 pb-2">
         {SECTIONS.map((section) => (
           <div key={section.group} className="mt-2">
             <div
-              className="px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--tertiary-label)' }}
+              className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: NAVY_FAINT }}
             >
               {section.group}
             </div>
@@ -124,27 +150,34 @@ export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props)
                   key={item.id}
                   type="button"
                   onClick={() => onSelect(item.id)}
-                  className="no-drag flex w-full items-center gap-2 rounded-md px-2 py-[5px] text-left text-[12px] transition"
+                  className="no-drag mb-0.5 flex w-full items-center gap-2 rounded-full px-2.5 py-[5px] text-left text-[12px] transition"
                   style={{
-                    background: isActive ? 'rgba(10, 132, 255, 0.18)' : 'transparent',
-                    color: isActive ? 'var(--accent)' : 'var(--label)',
-                    fontWeight: isActive ? 600 : 500,
+                    background: isActive ? 'var(--gradient-pink)' : 'transparent',
+                    color: isActive ? 'white' : NAVY_MUTED,
+                    fontWeight: isActive ? 700 : 500,
+                    boxShadow: isActive ? '0 4px 12px rgba(238, 29, 82, 0.35)' : 'none',
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.background = 'var(--fill-thin)';
+                    if (!isActive) {
+                      e.currentTarget.style.background = NAVY_HOVER;
+                      e.currentTarget.style.color = NAVY_TEXT;
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.background = 'transparent';
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = NAVY_MUTED;
+                    }
                   }}
                 >
                   <span className="w-4 flex-none text-center text-[12px]">{item.icon}</span>
                   <span className="flex-1 truncate">{item.label}</span>
                   {count !== undefined && count > 0 && (
                     <span
-                      className="inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums"
+                      className="inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
                       style={{
-                        background: isActive ? 'var(--accent)' : 'var(--fill)',
-                        color: isActive ? 'white' : 'var(--secondary-label)',
+                        background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(120, 134, 178, 0.2)',
+                        color: isActive ? 'white' : NAVY_MUTED,
                       }}
                     >
                       {count}
@@ -156,6 +189,23 @@ export function Sidebar({ active, onSelect, showStream, onToggleStream }: Props)
           </div>
         ))}
       </nav>
+
+      {/* Mission mini-card */}
+      <div className="flex-none p-2.5">
+        <div
+          className="flex items-center gap-2.5 rounded-[14px] p-2.5"
+          style={{
+            background: 'rgba(120, 134, 178, 0.08)',
+            border: '1px solid rgba(120, 134, 178, 0.14)',
+          }}
+        >
+          <img src="./assets/png/icon_heart_3d.png" alt="" className="h-9 w-9 flex-none object-contain" draggable={false} />
+          <div className="min-w-0 leading-snug">
+            <div className="text-[11px] font-bold" style={{ color: 'white' }}>Never forget your people.</div>
+            <div className="text-[10px]" style={{ color: NAVY_MUTED }}>They support you, we help you remember.</div>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

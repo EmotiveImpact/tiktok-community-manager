@@ -1,7 +1,35 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useStore } from '../state/store';
 import { StatusPill } from './StatusPill';
+import { getTheme, setTheme, type Theme } from '../lib/theme';
 import type { WebhookConfig } from '../types';
+
+function ThemeToggle() {
+  const [theme, set] = useState<Theme>(() => getTheme());
+  const toggle = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    set(next);
+    setTheme(next);
+  };
+  return (
+    <button
+      onClick={toggle}
+      className="no-drag panel-btn panel-btn-icon"
+      title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+    >
+      {theme === 'dark' ? (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+        </svg>
+      ) : (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
 function ToolbarBtn({ active, onClick, children, title }: { active?: boolean; onClick: () => void; children: ReactNode; title?: string }) {
   return (
@@ -132,6 +160,7 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
       <div ref={settingsRef} className="ml-auto flex items-center gap-1.5">
         {rightExtras}
         <div className="panel-divider" />
+        <ThemeToggle />
         <button
           onClick={() => setShowSettings((v) => !v)}
           className="no-drag panel-btn panel-btn-icon"

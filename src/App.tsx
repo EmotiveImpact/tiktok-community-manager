@@ -386,8 +386,8 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-        active ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+        active ? 'bg-pink-gradient text-white shadow-[0_2px_8px_rgba(238,29,82,0.35)]' : 'text-zinc-500 hover:text-zinc-300'
       }`}
     >
       {children}

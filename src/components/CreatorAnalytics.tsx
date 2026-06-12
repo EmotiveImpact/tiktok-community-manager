@@ -67,7 +67,7 @@ export function CreatorAnalytics({ onClose }: { onClose: () => void }) {
         <StatCard label="Total Sessions" value={String(totals.sessions)} />
         <StatCard label="Total Time" value={`${Math.floor(totals.totalMinutes / 60)}h ${totals.totalMinutes % 60}m`} />
         <StatCard label="Total Diamonds" value={formatNumber(totals.diamonds)} accent="text-amber-300" />
-        <StatCard label="Peak Viewers" value={formatNumber(totals.peakViewers)} accent="text-blue-300" />
+        <StatCard label="Peak Viewers" value={formatNumber(totals.peakViewers)} accent="text-cyan-400" />
         <StatCard label="Total Comments" value={formatNumber(totals.comments)} />
         <StatCard label="Total Likes" value={formatNumber(totals.likes)} accent="text-like-400" />
         <StatCard label="Total Gifts" value={formatNumber(totals.gifts)} accent="text-emerald-300" />
@@ -83,7 +83,7 @@ export function CreatorAnalytics({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col gap-6">
             <ChartSection label="Comments per session" data={filtered} getValue={(s) => s.totals.comments} max={maxComments} color="bg-like-500" />
             <ChartSection label="Diamonds per session" data={filtered} getValue={(s) => s.totals.diamonds} max={maxDiamonds} color="bg-amber-400" />
-            <ChartSection label="Peak viewers per session" data={filtered} getValue={(s) => s.totals.peakViewers} max={maxViewers} color="bg-blue-400" />
+            <ChartSection label="Peak viewers per session" data={filtered} getValue={(s) => s.totals.peakViewers} max={maxViewers} color="bg-cyan-400" />
           </div>
         )}
       </div>

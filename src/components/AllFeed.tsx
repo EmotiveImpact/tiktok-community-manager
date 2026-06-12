@@ -68,7 +68,7 @@ const tones: Record<string, string> = {
   like: 'bg-like-500/15 text-like-400',
   chat: 'bg-zinc-700/40 text-zinc-300',
   gift: 'bg-amber-500/15 text-amber-300',
-  follow: 'bg-blue-500/15 text-blue-300',
+  follow: 'bg-cyan-500/15 text-cyan-400',
   share: 'bg-violet-500/15 text-violet-300',
   subscribe: 'bg-purple-500/15 text-purple-300',
   member: 'bg-emerald-500/10 text-emerald-300',

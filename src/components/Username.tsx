@@ -3,7 +3,7 @@ import { useStore } from '../state/store';
 
 const USERNAME_COLORS = [
   'text-like-400',
-  'text-blue-300',
+  'text-cyan-400',
   'text-purple-400',
   'text-emerald-300',
   'text-amber-300',

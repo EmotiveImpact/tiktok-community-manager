@@ -4,7 +4,7 @@ import { formatNumber } from '../lib/format';
 import { PanelHeader, PanelShell } from './PanelHeader';
 
 const USERNAME_COLORS = [
-  'text-like-400', 'text-blue-300', 'text-purple-400', 'text-emerald-300',
+  'text-like-400', 'text-cyan-400', 'text-purple-400', 'text-emerald-300',
   'text-amber-300', 'text-orange-400', 'text-cyan-300', 'text-rose-400',
 ];
 function colorFor(name: string): string {

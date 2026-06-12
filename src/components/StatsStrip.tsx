@@ -17,7 +17,7 @@ export function StatsStrip() {
   const [tps, setTps] = useState(0);
   const [, force] = useState(0);
   const lastLikes = useRef(totalLikes);
-  const heartRef = useRef<HTMLSpanElement | null>(null);
+  const heartRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -40,13 +40,13 @@ export function StatsStrip() {
   const uptime = connectedAt ? formatUptime(Date.now() - connectedAt) : null;
 
   return (
-    <div className="flex items-center gap-4 border-b border-zinc-800/60 bg-zinc-950/60 px-4 py-2">
+    <div className="flex items-stretch gap-2 overflow-x-auto border-b border-zinc-800/60 bg-zinc-950/60 px-3 py-2">
       {/* Host capsule */}
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="glass brand-top-border flex min-w-0 flex-none items-center gap-2.5 !rounded-xl px-3 py-1.5">
         {room.hostAvatar ? (
-          <img src={room.hostAvatar} alt="" className="h-7 w-7 flex-none rounded-full bg-zinc-800 object-cover ring-1 ring-like-500/30" />
+          <img src={room.hostAvatar} alt="" className="h-8 w-8 flex-none rounded-full bg-zinc-800 object-cover ring-2 ring-like-500/40" />
         ) : (
-          <div className="avatar-gradient-pink flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-bold text-white ring-1 ring-like-500/30">
+          <div className="avatar-gradient-pink flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-bold text-white ring-2 ring-like-500/40">
             {room.hostNickname.charAt(0).toUpperCase()}
           </div>
         )}
@@ -59,54 +59,55 @@ export function StatsStrip() {
           </button>
           {uptime && (
             <div className="flex items-center gap-1 text-[10px] text-zinc-500 tabular-nums">
-              <span className="h-1 w-1 animate-pulse rounded-full bg-like-500" />
+              <span className="rounded-full bg-like-500 px-1.5 py-px text-[8px] font-extrabold tracking-widest text-white">LIVE</span>
               {uptime}
             </div>
           )}
         </div>
       </div>
 
-      <div className="h-6 w-px bg-zinc-800" />
-
-      {/* Live stats */}
-      <Stat icon="♥" value={formatNumber(totalLikes)} sub={tps > 0 ? `+${tps.toFixed(1)}/s` : null} accent="text-like-400" iconRef={heartRef} />
-      <Stat icon="👁" value={formatNumber(viewerCount)} sub="viewers" accent="text-zinc-100" />
-      <Stat icon="💬" value={formatNumber(commentCount)} sub="comments" accent="text-zinc-100" />
-      <Stat icon="💎" value={formatNumber(totalDiamonds)} sub={`${giftCount} gifts`} accent="text-amber-300" />
-      {followCount > 0 && <Stat icon="+" value={formatNumber(followCount)} sub="follows" accent="text-blue-300" />}
-      {subscribeCount > 0 && <Stat icon="★" value={formatNumber(subscribeCount)} sub="subs" accent="text-fuchsia-300" />}
-      {shareCount > 0 && <Stat icon="↗" value={formatNumber(shareCount)} sub="shares" accent="text-emerald-300" />}
+      <StatCard icon="icon_heart_3d" value={formatNumber(totalLikes)} label={tps > 0 ? `+${tps.toFixed(1)}/s likes` : 'likes'} iconRef={heartRef} />
+      <StatCard icon="icon_group_3d" value={formatNumber(viewerCount)} label="viewers" />
+      <StatCard icon="icon_thank_you_envelope_3d" value={formatNumber(commentCount)} label="comments" />
+      <StatCard icon="icon_diamond_3d" value={formatNumber(totalDiamonds)} label="diamonds" />
+      <StatCard icon="icon_gift_box_3d" value={formatNumber(giftCount)} label="gifts" />
+      {followCount > 0 && <StatCard icon="icon_star_award_3d" value={formatNumber(followCount)} label="follows" />}
+      {subscribeCount > 0 && <StatCard icon="icon_crown_3d" value={formatNumber(subscribeCount)} label="subs" />}
+      {shareCount > 0 && <StatCard icon="icon_clock_3d" value={formatNumber(shareCount)} label="shares" />}
 
       {room.followerCount > 0 && (
-        <>
-          <div className="h-6 w-px bg-zinc-800" />
-          <div className="text-[10px] text-zinc-500">
-            <span className="text-sm font-bold text-zinc-300 tabular-nums">{formatNumber(room.followerCount)}</span> total followers
-          </div>
-        </>
+        <div className="ml-auto flex flex-none items-center self-center pl-1 text-[10px] text-zinc-500">
+          <span className="mr-1 text-sm font-bold text-zinc-300 tabular-nums">{formatNumber(room.followerCount)}</span> total followers
+        </div>
       )}
     </div>
   );
 }
 
-function Stat({
+function StatCard({
   icon,
   value,
-  sub,
-  accent,
+  label,
   iconRef,
 }: {
   icon: string;
   value: string;
-  sub?: string | null;
-  accent: string;
-  iconRef?: React.RefObject<HTMLSpanElement | null>;
+  label: string;
+  iconRef?: React.RefObject<HTMLImageElement | null>;
 }) {
   return (
-    <div className="flex items-baseline gap-1.5">
-      <span ref={iconRef as React.RefObject<HTMLSpanElement>} className={`text-sm ${accent}`}>{icon}</span>
-      <span className={`text-sm font-bold tabular-nums ${accent}`}>{value}</span>
-      {sub && <span className="text-[10px] text-zinc-500">{sub}</span>}
+    <div className="glass brand-top-border flex flex-none items-center gap-2 !rounded-xl px-3 py-1.5">
+      <img
+        ref={iconRef as React.RefObject<HTMLImageElement>}
+        src={`./assets/png/${icon}.png`}
+        alt=""
+        className="h-7 w-7 flex-none object-contain"
+        draggable={false}
+      />
+      <div className="leading-tight">
+        <div className="text-sm font-extrabold tabular-nums text-zinc-100">{value}</div>
+        <div className="text-[10px] font-medium text-zinc-500">{label}</div>
+      </div>
     </div>
   );
 }

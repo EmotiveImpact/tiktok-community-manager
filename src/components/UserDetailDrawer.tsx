@@ -120,7 +120,7 @@ export function UserDetailDrawer() {
                 <Stat label="Diamonds" value={formatNumber(historical.diamonds)} accent="text-amber-300" />
                 <Stat label="Comments" value={formatNumber(historical.comments)} accent="text-zinc-200" />
                 <Stat label="Gifts" value={formatNumber(historical.gifts)} accent="text-emerald-300" />
-                <Stat label="Sessions" value={String(historical.sessionsAppeared)} accent="text-blue-300" />
+                <Stat label="Sessions" value={String(historical.sessionsAppeared)} accent="text-cyan-400" />
               </div>
             </>
           )}

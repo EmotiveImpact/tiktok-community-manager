@@ -11,7 +11,7 @@ export function AlertToasts() {
     keyword: 'border-l-like-500',
     gift_diamonds: 'border-l-amber-400',
     gift_name: 'border-l-amber-400',
-    follower: 'border-l-blue-400',
+    follower: 'border-l-cyan-400',
     viewer_threshold: 'border-l-emerald-400',
   };
 

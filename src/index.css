@@ -2,58 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === Native macOS design tokens (Sequoia / Sonoma) === */
+/* === TikTok Community Manager design tokens ===
+   Dark-first brand language: navy surfaces, pink/cyan accents.
+   Var NAMES are kept from the previous macOS system so existing
+   components keep working; values are re-pointed at the brand. */
 :root {
-  /* System accent (matches macOS default) */
-  --accent: #0a84ff;            /* native blue */
-  --accent-hover: #1a8cff;
-  --accent-pink: #ff2d92;       /* tiktok-like pink for branding accents */
+  /* Brand */
+  --brand-pink: #ee1d52;
+  --brand-pink-soft: #ff5b85;
+  --brand-cyan: #69c9d0;
+  --brand-navy: #050816;
+  --brand-navy-2: #080b18;
+  --gradient-brand: linear-gradient(90deg, var(--brand-pink), var(--brand-cyan));
+  --gradient-pink: linear-gradient(135deg, #ee1d52, #ff5b85);
+  --gradient-sidebar: linear-gradient(180deg, #050816 0%, #080b18 100%);
 
-  /* System reds, greens, etc */
+  /* Accent system (was macOS blue) */
+  --accent: #ee1d52;
+  --accent-hover: #ff3868;
+  --accent-pink: #ee1d52;
+  --accent-cyan: #69c9d0;
+
+  /* Semantic colors */
   --red: #ff453a;
   --orange: #ff9f0a;
   --yellow: #ffd60a;
   --green: #30d158;
-  --pink: #ff2d92;
+  --pink: #ee1d52;
   --purple: #bf5af2;
 
-  /* Labels (text) — native rgba values */
-  --label: rgba(255, 255, 255, 0.92);
-  --secondary-label: rgba(235, 235, 245, 0.6);
-  --tertiary-label: rgba(235, 235, 245, 0.3);
-  --quaternary-label: rgba(235, 235, 245, 0.16);
+  /* Tailwind-mapped neutral scale (navy-tinted dark), RGB triplets */
+  --z-50: 245 247 252;
+  --z-100: 235 239 248;
+  --z-200: 210 216 232;
+  --z-300: 184 192 214;
+  --z-400: 148 158 186;
+  --z-500: 116 126 156;
+  --z-600: 88 97 126;
+  --z-700: 46 54 84;
+  --z-800: 30 37 62;
+  --z-900: 11 15 30;
+  --z-950: 5 8 22;
 
-  /* Fills — used for control backgrounds */
-  --fill-thick: rgba(118, 118, 128, 0.36);
-  --fill: rgba(118, 118, 128, 0.24);
-  --fill-thin: rgba(118, 118, 128, 0.18);
-  --fill-quaternary: rgba(118, 118, 128, 0.12);
+  /* Labels (text) */
+  --label: rgba(238, 242, 252, 0.94);
+  --secondary-label: rgba(214, 222, 240, 0.62);
+  --tertiary-label: rgba(214, 222, 240, 0.34);
+  --quaternary-label: rgba(214, 222, 240, 0.16);
 
-  /* Backgrounds — semi-transparent so vibrancy shows through */
-  --bg-window: rgba(28, 28, 30, 0.55);
-  --bg-content: rgba(36, 36, 38, 0.6);
-  --bg-grouped: rgba(28, 28, 30, 0.4);
+  /* Fills — control backgrounds (navy tinted) */
+  --fill-thick: rgba(120, 134, 178, 0.32);
+  --fill: rgba(120, 134, 178, 0.2);
+  --fill-thin: rgba(120, 134, 178, 0.14);
+  --fill-quaternary: rgba(120, 134, 178, 0.09);
 
-  /* Separators (0.5px feel via subpixel border) */
-  --separator: rgba(84, 84, 88, 0.65);
-  --separator-opaque: rgba(56, 56, 58, 1);
+  /* Backgrounds */
+  --app-bg: #050816;
+  --bg-window: rgba(8, 11, 24, 0.78);
+  --bg-content: rgba(13, 17, 34, 0.78);
+  --bg-grouped: rgba(8, 11, 24, 0.55);
+  --card: #0b0f1e;
+  --card-border: rgba(120, 134, 178, 0.16);
+
+  /* Separators */
+  --separator: rgba(96, 108, 148, 0.4);
+  --separator-opaque: rgba(40, 48, 76, 1);
+
+  --accent-tint: rgba(238, 29, 82, 0.16);
+  --accent-tint-hover: rgba(238, 29, 82, 0.24);
+  --focus-ring: rgba(238, 29, 82, 0.3);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* === Light theme — matches the brand mockup (sidebar stays navy) === */
+[data-theme='light'] {
+  --z-50: 2 6 23;
+  --z-100: 15 23 42;
+  --z-200: 30 41 59;
+  --z-300: 51 65 85;
+  --z-400: 71 85 105;
+  --z-500: 100 116 139;
+  --z-600: 148 163 184;
+  --z-700: 203 213 225;
+  --z-800: 229 231 235;
+  --z-900: 255 255 255;
+  --z-950: 248 250 252;
+
+  --label: #0f172a;
+  --secondary-label: #64748b;
+  --tertiary-label: #94a3b8;
+  --quaternary-label: #cbd5e1;
+
+  --fill-thick: rgba(100, 116, 139, 0.22);
+  --fill: rgba(100, 116, 139, 0.14);
+  --fill-thin: rgba(100, 116, 139, 0.09);
+  --fill-quaternary: rgba(100, 116, 139, 0.06);
+
+  --app-bg: #f8fafc;
+  --bg-window: rgba(248, 250, 252, 0.9);
+  --bg-content: rgba(255, 255, 255, 0.92);
+  --bg-grouped: rgba(241, 245, 249, 0.8);
+  --card: #ffffff;
+  --card-border: #e5e7eb;
+
+  --separator: #e5e7eb;
+  --separator-opaque: #e5e7eb;
+
+  --accent-tint: rgba(238, 29, 82, 0.1);
+  --accent-tint-hover: rgba(238, 29, 82, 0.16);
+  --focus-ring: rgba(238, 29, 82, 0.22);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 html, body, #root { height: 100%; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
-  font-size: 13px;             /* native body size */
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
   user-select: none;
   overflow: hidden;
   color: var(--label);
-  background: transparent;     /* vibrancy shows through */
+  background: var(--app-bg);
 }
 
-#root {
-  background: transparent;
-}
+#root { background: transparent; }
 
 /* Drag region helpers */
 .titlebar-drag { -webkit-app-region: drag; }
@@ -71,33 +144,52 @@ body {
   50% { opacity: 0.4; }
 }
 
-/* === Vibrancy-friendly surface === */
+/* === Card surface (was vibrancy glass) === */
 .glass {
-  background: var(--bg-content);
-  backdrop-filter: blur(40px) saturate(140%);
-  -webkit-backdrop-filter: blur(40px) saturate(140%);
-  border: 0.5px solid var(--separator);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
 }
 
-/* Native scrollbars */
+/* Brand-gradient top border for stat cards */
+.brand-top-border { position: relative; overflow: hidden; }
+.brand-top-border::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--gradient-brand);
+  border-radius: 3px 3px 0 0;
+}
+
+.brand-gradient-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(118, 118, 128, 0.3);
+  background: rgba(120, 134, 178, 0.32);
   border-radius: 4px;
   background-clip: padding-box;
   border: 2px solid transparent;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(118, 118, 128, 0.5); }
+::-webkit-scrollbar-thumb:hover { background: rgba(120, 134, 178, 0.5); }
+[data-theme='light'] ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); }
 
-/* === Native button system === */
+/* === Button system === */
 .panel-btn {
-  height: 22px;                /* native macOS control height */
-  padding: 0 10px;
-  border-radius: 5px;          /* native corner radius */
+  height: 24px;
+  padding: 0 11px;
+  border-radius: 9999px;
   font-size: 12px;
-  font-weight: 500;
-  border: 0.5px solid var(--separator);
+  font-weight: 600;
+  border: 1px solid var(--separator);
   background: var(--fill-thin);
   color: var(--label);
   display: inline-flex;
@@ -105,39 +197,39 @@ body {
   gap: 5px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 100ms;
+  transition: background 120ms, border-color 120ms, color 120ms;
   outline: none;
   -webkit-app-region: no-drag;
   letter-spacing: -0.005em;
 }
-.panel-btn:hover { background: var(--fill-thick); }
+.panel-btn:hover { background: var(--fill); }
 .panel-btn:disabled { opacity: 0.4; cursor: default; }
 .panel-btn:disabled:hover { background: var(--fill-thin); }
 
 .panel-btn-primary {
-  background: var(--accent);
+  background: var(--gradient-pink);
   color: white;
   border-color: transparent;
-  box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.2), inset 0 0.5px 0 rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 8px rgba(238, 29, 82, 0.35), inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
 }
-.panel-btn-primary:hover { background: var(--accent-hover); }
+.panel-btn-primary:hover { filter: brightness(1.08); background: var(--gradient-pink); }
 
 .panel-btn-secondary {
-  background: var(--fill);
+  background: var(--fill-thin);
   border-color: var(--separator);
   color: var(--label);
 }
-.panel-btn-secondary:hover { background: var(--fill-thick); }
+.panel-btn-secondary:hover { background: var(--fill); }
 
 .panel-btn-active {
-  background: rgba(10, 132, 255, 0.18);
+  background: var(--accent-tint);
   color: var(--accent);
   border-color: transparent;
 }
-.panel-btn-active:hover { background: rgba(10, 132, 255, 0.25); }
+.panel-btn-active:hover { background: var(--accent-tint-hover); }
 
 .panel-btn-icon {
-  width: 22px;
+  width: 24px;
   padding: 0;
   justify-content: center;
 }
@@ -146,11 +238,11 @@ body {
   height: 14px;
   min-width: 14px;
   padding: 0 4px;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--fill);
   color: var(--label);
   border-radius: 7px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -172,10 +264,10 @@ body {
   align-items: center;
   gap: 5px;
   height: 22px;
-  padding: 0 8px;
+  padding: 0 9px;
   border-radius: 9999px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.005em;
 }
 .panel-status .dot {
@@ -195,13 +287,15 @@ body {
   background: var(--orange);
   animation: pulse 1.4s ease-in-out infinite;
 }
+/* LIVE = solid brand-pink pill */
 .panel-status-live {
-  color: var(--red);
-  background: rgba(255, 69, 58, 0.14);
+  color: #ffffff;
+  background: var(--brand-pink);
+  box-shadow: 0 2px 8px rgba(238, 29, 82, 0.4);
 }
 .panel-status-live .dot {
-  background: var(--red);
-  box-shadow: 0 0 6px var(--red);
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
   animation: pulse 1.4s ease-in-out infinite;
 }
 .panel-status-error {
@@ -211,17 +305,17 @@ body {
 .panel-status-error .dot { background: var(--red); }
 
 .panel-divider {
-  width: 0.5px;
+  width: 1px;
   height: 16px;
   background: var(--separator);
   margin: 0 4px;
 }
 
-/* Native input */
+/* Input */
 .native-input {
-  height: 22px;
-  border-radius: 5px;
-  border: 0.5px solid var(--separator);
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid var(--separator);
   background: var(--fill-thin);
   color: var(--label);
   font-size: 12px;
@@ -233,16 +327,35 @@ body {
 .native-input::placeholder { color: var(--tertiary-label); }
 .native-input:focus {
   border-color: var(--accent);
-  background: var(--fill);
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+  background: var(--fill-quaternary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-/* Avatar gradients (kept) */
-.avatar-gradient-pink { background: linear-gradient(135deg, #ff2d92, #ff375f); }
-.avatar-gradient-blue { background: linear-gradient(135deg, #5ac8fa, #0a84ff); }
+/* Tier / level chips (pastel) */
+.tier-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 1px 7px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.tier-new { background: rgba(48, 209, 88, 0.16); color: #34c77b; }
+.tier-regular { background: rgba(105, 201, 208, 0.18); color: #3fb4bd; }
+.tier-vip { background: rgba(255, 184, 0, 0.18); color: #d99a00; }
+.tier-whale { background: rgba(168, 85, 247, 0.16); color: #a855f7; }
+[data-theme='light'] .tier-new { background: #e7f9ef; color: #15803d; }
+[data-theme='light'] .tier-regular { background: #e3f6f8; color: #0e7490; }
+[data-theme='light'] .tier-vip { background: #fdf3d7; color: #a16207; }
+[data-theme='light'] .tier-whale { background: #f3e8ff; color: #7e22ce; }
+
+/* Avatar gradients */
+.avatar-gradient-pink { background: linear-gradient(135deg, #ee1d52, #ff5b85); }
+.avatar-gradient-blue { background: linear-gradient(135deg, #69c9d0, #3a9fc4); }
 .avatar-gradient-purple { background: linear-gradient(135deg, #bf5af2, #af52de); }
 .avatar-gradient-emerald { background: linear-gradient(135deg, #30d158, #34c759); }
 .avatar-gradient-amber { background: linear-gradient(135deg, #ffd60a, #ff9f0a); }
 .avatar-gradient-orange { background: linear-gradient(135deg, #ff9500, #ff6200); }
-.avatar-gradient-cyan { background: linear-gradient(135deg, #64d2ff, #0a84ff); }
-.avatar-gradient-rose { background: linear-gradient(135deg, #ff375f, #ff453a); }
+.avatar-gradient-cyan { background: linear-gradient(135deg, #69c9d0, #4aa9d8); }
+.avatar-gradient-rose { background: linear-gradient(135deg, #ff375f, #ee1d52); }

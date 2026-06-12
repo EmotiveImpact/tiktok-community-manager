@@ -15,7 +15,7 @@ export function StatsCards() {
     { label: 'Comments', value: formatNumber(commentCount), accent: 'text-zinc-100' },
     { label: 'Diamonds', value: formatNumber(totalDiamonds), accent: 'text-amber-300' },
     { label: 'Gifts', value: formatNumber(giftCount), accent: 'text-purple-400' },
-    { label: 'Followers', value: formatNumber(followCount), accent: 'text-blue-300' },
+    { label: 'Followers', value: formatNumber(followCount), accent: 'text-cyan-400' },
     { label: 'Shares', value: formatNumber(shareCount), accent: 'text-emerald-300' },
     { label: 'Subs', value: formatNumber(subscribeCount), accent: 'text-fuchsia-300' },
   ];

@@ -13,11 +13,11 @@ const STOP_WORDS = new Set([
 ]);
 
 const COLORS = [
-  'text-like-400', 'text-amber-300', 'text-emerald-300', 'text-blue-300',
+  'text-like-400', 'text-amber-300', 'text-emerald-300', 'text-cyan-400',
   'text-purple-400', 'text-rose-400', 'text-cyan-300', 'text-orange-400',
 ];
 
-const BAR_COLORS = ['bg-like-500', 'bg-blue-400', 'bg-purple-400', 'bg-amber-300', 'bg-emerald-400'];
+const BAR_COLORS = ['bg-like-500', 'bg-cyan-400', 'bg-purple-400', 'bg-amber-300', 'bg-emerald-400'];
 
 type WordEntry = { word: string; count: number; size: string; weight: string; color: string };
 
