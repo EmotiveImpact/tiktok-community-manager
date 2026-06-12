@@ -143,7 +143,12 @@ function ConnectBarTools({
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('comments');
-  const [page, setPage] = useState<Page>('dashboard');
+  const [page, setPage] = useState<Page>(() => {
+    // ?page= override for dev/screenshots
+    const p = new URLSearchParams(window.location.search).get('page');
+    const pages: Page[] = ['dashboard', 'live', 'followers', 'gifts', 'reminders', 'import', 'settings'];
+    return pages.includes(p as Page) ? (p as Page) : 'dashboard';
+  });
   const [activePanel, setActivePanel] = useState<SidebarPanel>('live');
   const [showHistory, setShowHistory] = useState(false);
   const [showStream, setShowStream] = useState(false);

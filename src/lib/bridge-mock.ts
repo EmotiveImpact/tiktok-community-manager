@@ -80,10 +80,13 @@ export function installBridgeMock(): void {
   let viewerCount = 1180;
   let totalLikes = 38420;
   const notes: Record<string, UserNote> = {};
-  let tracked: Array<{ uniqueId: string; nickname: string; addedAt: number }> = [
-    { uniqueId: 'kendraaax2', nickname: 'Kendra ✨', addedAt: Date.now() - 86400000 },
-    { uniqueId: 'autumnstar01', nickname: 'Autumn', addedAt: Date.now() - 43200000 },
-  ];
+  const demoSeed = new URLSearchParams(window.location.search).get('demo') !== 'off';
+  let tracked: Array<{ uniqueId: string; nickname: string; addedAt: number }> = demoSeed
+    ? [
+        { uniqueId: 'kendraaax2', nickname: 'Kendra ✨', addedAt: Date.now() - 86400000 },
+        { uniqueId: 'autumnstar01', nickname: 'Autumn', addedAt: Date.now() - 43200000 },
+      ]
+    : [];
 
   const emit = (evt: LiveEvent) => eventListeners.forEach((cb) => cb(evt));
   const setStatus = (status: ConnectionStatus, error?: string) =>
@@ -204,7 +207,7 @@ export function installBridgeMock(): void {
     sessionsSearch: async () => [],
     sessionsExport: async () => ({ ok: false, error: 'Not available in browser mode' }),
     sessionsLeaderboard: async () =>
-      DEMO_USERS.slice(0, 5).map((u, i) => ({
+      (demoSeed ? DEMO_USERS.slice(0, 5) : []).map((u, i) => ({
         uniqueId: u.uniqueId,
         nickname: u.nickname,
         likes: 12000 - i * 1800,
