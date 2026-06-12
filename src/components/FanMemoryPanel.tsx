@@ -134,8 +134,8 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
   const bday = birthdayInfo(fan?.birthday);
 
   return (
-    <aside className="flex h-full w-[290px] flex-none flex-col gap-3 overflow-y-auto">
-      <section className="glass brand-top-border flex flex-col rounded-xl p-4">
+    <aside className="flex h-full w-[304px] flex-none flex-col gap-3 overflow-y-auto">
+      <section className="glass brand-top-border flex flex-col rounded-[18px] p-4">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
             <span className="text-amber-400">⭐</span> Fan Memory
@@ -307,7 +307,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
       </section>
 
       {/* After-LIVE follow-up mini card */}
-      <section className="glass flex flex-none items-start gap-3 rounded-xl p-3.5">
+      <section className="glass flex flex-none items-start gap-3 rounded-[18px] p-3.5">
         <img src="./assets/png/hero_gift_checklist_3d.png" alt="" className="h-12 w-12 flex-none object-contain" draggable={false} />
         <div className="min-w-0">
           <div className="text-xs font-bold text-zinc-100">After LIVE follow-up</div>
