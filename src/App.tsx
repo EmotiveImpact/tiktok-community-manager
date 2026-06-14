@@ -244,7 +244,7 @@ export default function App() {
   return (
     <div className="relative flex h-screen">
       {/* Full-height navy sidebar — nothing ever renders above it. */}
-      <Sidebar showStream={showStream} onToggleStream={() => setShowStream((v) => !v)} />
+      <Sidebar />
 
       {/* Right column: thin drag strip + the active page. */}
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -421,13 +421,18 @@ function FeedFilterMenu() {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey); };
   }, [open]);
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
+        aria-label="Filter feed by viewer segment"
+        aria-haspopup="menu"
+        aria-expanded={open}
         className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${feedFilter !== 'all' ? 'bg-like-500/15 text-like-400' : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'}`}
       >
         Filter {feedFilter !== 'all' ? `· ${FILTER_LABELS[feedFilter]}` : ''} ▾
@@ -460,13 +465,22 @@ function FeedKebabMenu() {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey); };
   }, [open]);
   const copyStats = async () => {
     const s = useStore.getState();
-    const text = `LIVE @${s.roomInfo?.hostUniqueId ?? s.username}: ${s.totalLikes} likes · ${s.viewerCount} viewers · ${s.commentCount} comments · ${s.totalDiamonds} diamonds · ${s.giftCount} gifts`;
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ }
+    const subs = s.subscribeCount > 0 ? ` · ${s.subscribeCount} subs` : '';
+    const text = `LIVE @${s.roomInfo?.hostUniqueId ?? s.username}: ${s.totalLikes} likes · ${s.viewerCount} viewers · ${s.commentCount} comments · ${s.totalDiamonds} diamonds · ${s.giftCount} gifts${subs}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      useAlerts.getState().pushToast({ title: 'Copy failed', body: 'Could not access the clipboard.' });
+    }
   };
   return (
     <div ref={ref} className="relative">
@@ -474,6 +488,9 @@ function FeedKebabMenu() {
         onClick={() => setOpen((v) => !v)}
         className="rounded-full px-2 py-1 text-sm leading-none text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
         title="Feed menu"
+        aria-label="Feed menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
         ⋮
       </button>

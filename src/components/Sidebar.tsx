@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Users, Gift, CalendarDays, MessageSquare, Upload, Settings, ChevronRight, ChevronLeft,
   Star, StickyNote, Trophy, Eye, Bell, Shield, Mic, Clapperboard, Heart,
-  BarChart3, TrendingUp, Scale, History, Grid2x2, Play, Sun, Moon,
+  BarChart3, TrendingUp, Scale, History, Grid2x2, Sun, Moon,
   type LucideIcon,
 } from 'lucide-react';
 import { useTracked } from '../state/tracked';
@@ -58,11 +58,6 @@ const LIVE_SECTIONS: { group: string; items: Item[] }[] = [
     ],
   },
 ];
-
-type Props = {
-  showStream: boolean;
-  onToggleStream: () => void;
-};
 
 /* Sidebar keeps its navy gradient in both themes (brand mockup). */
 const NAVY_TEXT = 'rgba(226, 232, 248, 0.9)';
@@ -154,7 +149,7 @@ function SidebarFooterControls() {
   );
 }
 
-export function Sidebar({ showStream, onToggleStream }: Props) {
+export function Sidebar() {
   const page = useUI((s) => s.page);
   const setPage = useUI((s) => s.setPage);
   const sidebarMode = useUI((s) => s.sidebarMode);
@@ -237,26 +232,6 @@ export function Sidebar({ showStream, onToggleStream }: Props) {
               <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#ff5b85' }}>Live</span>
             </button>
 
-            <div className="px-1 pb-1">
-              <button
-                type="button"
-                onClick={onToggleStream}
-                disabled={!connected}
-                className="no-drag flex w-full items-center justify-center gap-2 rounded-full px-2.5 py-1.5 text-left text-[12px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40"
-                style={{
-                  background: 'linear-gradient(90deg, #EE1D52, #ff4d76)',
-                  color: 'white',
-                  boxShadow: showStream ? '0 0 0 2px rgba(255,255,255,0.35), 0 6px 16px rgba(238,29,82,0.4)' : '0 6px 16px rgba(238,29,82,0.35)',
-                }}
-              >
-                <Play size={13} className="flex-none" fill="white" />
-                <span>Watch Stream</span>
-                {showStream && (
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" style={{ boxShadow: '0 0 6px rgba(255,255,255,0.9)' }} />
-                )}
-              </button>
-            </div>
-
             {/* The feed itself, then the tool groups */}
             <LiveItem
               item={{ id: 'feed', label: 'Live Feed', icon: Radio }}
@@ -285,13 +260,6 @@ export function Sidebar({ showStream, onToggleStream }: Props) {
             ))}
           </nav>
         )}
-      </div>
-
-      {/* Mission mini-card (web design) */}
-      <div className="no-drag mb-3 mt-2 flex-none rounded-2xl p-3.5" style={{ background: 'rgba(238,29,82,0.10)', border: '1px solid rgba(238,29,82,0.25)' }}>
-        <img src="./assets/png/icon_heart_3d.png" alt="" className="mb-2 h-9 w-9" draggable={false} />
-        <div className="text-sm font-semibold leading-snug text-white">Never forget your people.</div>
-        <div className="mt-1 text-xs leading-snug" style={{ color: NAVY_MUTED }}>They support you, we help you remember.</div>
       </div>
 
       {/* Creator profile card (web design) */}
