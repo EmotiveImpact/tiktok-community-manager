@@ -254,6 +254,31 @@ export type ConnectionStatus =
   | 'disconnected'
   | 'error';
 
+/** Rich connection phase — mirrors electron/tiktok.ts ConnectionPhase. */
+export type ConnectionPhase =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'live-ended'
+  | 'stalled'
+  | 'rate-limited'
+  | 'signing-failed'
+  | 'network-error'
+  | 'offline'
+  | 'reconnecting'
+  | 'disconnected';
+
+/** Full health snapshot pushed from main → renderer on every status change. */
+export type ConnectionDetail = {
+  phase: ConnectionPhase;
+  status: ConnectionStatus;
+  reason: string;
+  suggestion?: string;
+  reconnectAttempt: number;
+  nextRetryInMs: number | null;
+  lastEventAt: number | null;
+};
+
 declare global {
   interface Window {
     tiktok: {
@@ -284,6 +309,8 @@ declare global {
       setModeration: (cfg: ModerationSettings) => Promise<{ ok: boolean }>;
       openExternal: (url: string) => Promise<{ ok: boolean; error?: string }>;
       chatLogDir: () => Promise<string>;
+      revealLogs: () => Promise<{ ok: boolean; path: string; error?: string }>;
+      logsPath: () => Promise<string>;
       backupExport: () => Promise<{ ok: boolean; path?: string }>;
       backupImport: () => Promise<{ ok: boolean; error?: string }>;
       summarizeSession: (id: string) => Promise<{
@@ -312,6 +339,7 @@ declare global {
       onMultiStatus: (cb: (d: { username: string; status: ConnectionStatus; error?: string }) => void) => () => void;
       onMultiEvent: (cb: (d: { username: string; evt: LiveEvent }) => void) => () => void;
       onStatus: (cb: (s: { status: ConnectionStatus; error?: string }) => void) => () => void;
+      onHealth: (cb: (d: ConnectionDetail) => void) => () => void;
       onEvent: (cb: (evt: LiveEvent) => void) => () => void;
       fansList: (q?: ListFansQuery) => Promise<ListFansResult>;
       fansGet: (uniqueId: string) => Promise<Fan | null>;

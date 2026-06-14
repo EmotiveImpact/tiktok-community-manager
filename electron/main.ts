@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TikTokSession, type ConnectionStatus, type NormalizedEvent } from './tiktok';
+import { TikTokSession, type ConnectionStatus, type ConnectionDetail, type NormalizedEvent } from './tiktok';
+import { log, logsDir, revealLogs } from './logger';
 import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, type CommunitySettings, type EarningsSettings, type ModerationSettings, type WatchEntry } from './store';
 import * as sessions from './sessions';
 import { summarize, type SummaryInput } from './summarize';
@@ -149,9 +150,13 @@ function broadcast(channel: string, payload: unknown) {
 function makeSessionCallbacks(username: string): {
   onStatus: (status: ConnectionStatus, error?: string) => void;
   onEvent: (evt: NormalizedEvent) => void;
+  onHealth: (detail: ConnectionDetail) => void;
 } {
   return {
     onStatus: (status, error) => broadcast('tt:status', { status, error }),
+    // Rich connection-health detail → drives the ConnectionHealth pill. Kept on
+    // a separate channel so the legacy tt:status path is untouched.
+    onHealth: (detail) => broadcast('tt:health', detail),
     onEvent: (evt) => {
       try {
         if (evt.type === 'roomInfo') {
@@ -168,7 +173,8 @@ function makeSessionCallbacks(username: string): {
         dispatchWebhook(evt, username);
       } catch (err) {
         // Never let a handler error escape into the connector's emitter.
-        console.error('[main] session event pipeline failed:', err);
+        // TODO: Sentry.captureException(err)
+        log.error('[main] session event pipeline failed:', err);
       }
     },
   };
@@ -228,7 +234,8 @@ ipcMain.handle('multi:connect', async (_e, username: string) => {
       try {
         if (evt.type !== 'roomInfo') fans.ingestLiveEvent(evt, `multi:${handle}`);
       } catch (err) {
-        console.error('[multi] fan ingest failed:', err);
+        // TODO: Sentry.captureException(err)
+        log.error('[multi] fan ingest failed:', err);
       }
       broadcast('multi:event', { username: handle, evt });
     },
@@ -411,6 +418,11 @@ ipcMain.handle('watchlist:poke', () => {
 });
 
 ipcMain.handle('chatlog:dir', () => getLogDir());
+
+// Structured-logging access: lets a creator open the logs folder to attach
+// files to a support ticket when a stream broke.
+ipcMain.handle('logs:reveal', () => revealLogs());
+ipcMain.handle('logs:path', () => logsDir());
 
 ipcMain.handle('backup:export', async () => {
   if (!mainWindow || mainWindow.isDestroyed()) return { ok: false };
@@ -695,10 +707,12 @@ app.whenReady().then(async () => {
     const lastUser = settings.get('lastUsername', '');
     if (lastUser) {
       setTimeout(() => {
-        broadcast('tt:status', { status: 'connecting' });
+        log.info(`[main] auto-connecting to last user @${lastUser}`);
+        // connect() emits its own connecting/connected/error phases via the
+        // session callbacks (onStatus + onHealth), so no manual broadcast here.
         session = new TikTokSession(lastUser, makeSessionCallbacks(lastUser));
         session.connect().catch((err) => {
-          broadcast('tt:status', { status: 'error', error: err?.message });
+          log.warn('[main] auto-connect failed:', err?.message ?? err);
         });
       }, 1500);
     }

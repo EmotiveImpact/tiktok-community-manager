@@ -33,6 +33,9 @@ const api = {
   openExternal: (url: string) =>
     ipcRenderer.invoke('shell:openExternal', url) as Promise<{ ok: boolean; error?: string }>,
   chatLogDir: () => ipcRenderer.invoke('chatlog:dir') as Promise<string>,
+  revealLogs: () =>
+    ipcRenderer.invoke('logs:reveal') as Promise<{ ok: boolean; path: string; error?: string }>,
+  logsPath: () => ipcRenderer.invoke('logs:path') as Promise<string>,
   backupExport: () =>
     ipcRenderer.invoke('backup:export') as Promise<{ ok: boolean; path?: string }>,
   backupImport: () =>
@@ -113,6 +116,12 @@ const api = {
     const handler = (_e: unknown, s: { status: string; error?: string }) => cb(s);
     ipcRenderer.on('tt:status', handler);
     return () => ipcRenderer.removeListener('tt:status', handler);
+  },
+  // Rich connection-health detail (phase, reason, suggestion, reconnect state).
+  onHealth: (cb: (d: any) => void) => {
+    const handler = (_e: unknown, d: any) => cb(d);
+    ipcRenderer.on('tt:health', handler);
+    return () => ipcRenderer.removeListener('tt:health', handler);
   },
   onEvent: (cb: (evt: any) => void) => {
     const handler = (_e: unknown, evt: any) => cb(evt);

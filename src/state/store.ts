@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ConnectionStatus, LiveEvent, RoomInfo, UserBrief } from '../types';
+import type { ConnectionDetail, ConnectionStatus, LiveEvent, RoomInfo, UserBrief } from '../types';
 
 const FEED_MAX = 5000;
 const TPS_WINDOW_MS = 5000;
@@ -27,6 +27,8 @@ export type RoomMember = {
 
 type State = {
   status: ConnectionStatus;
+  /** Rich connection-health detail from the main process; null until first push. */
+  health: ConnectionDetail | null;
   errorMessage: string | null;
   username: string;
   /** The moment YOU connected to the room — drives the host-bar session timer.
@@ -60,6 +62,7 @@ type State = {
   pinnedMessages: FeedItem[];
 
   setStatus: (s: ConnectionStatus, error?: string) => void;
+  setHealth: (d: ConnectionDetail) => void;
   setUsername: (u: string) => void;
   selectUser: (uniqueId: string | null) => void;
   pinMessage: (item: FeedItem) => void;
@@ -139,6 +142,7 @@ function touchMember(members: Map<string, RoomMember>, user: UserBrief, ts: numb
 
 export const useStore = create<State>((set, get) => ({
   status: 'idle',
+  health: null,
   errorMessage: null,
   username: '',
   ...baseStats,
@@ -150,6 +154,8 @@ export const useStore = create<State>((set, get) => ({
       connectedAt:
         status === 'connected' && !s.connectedAt ? Date.now() : status === 'connected' ? s.connectedAt : null,
     })),
+
+  setHealth: (health) => set({ health }),
 
   setUsername: (username) => set({ username }),
 
@@ -167,7 +173,7 @@ export const useStore = create<State>((set, get) => ({
       pinnedMessages: s.pinnedMessages.filter((p) => p.id !== id),
     })),
 
-  reset: () => set({ ...baseStats, errorMessage: null }),
+  reset: () => set({ ...baseStats, errorMessage: null, health: null }),
 
   ingest: (evt) => {
     const item: FeedItem = { ...evt, id: nextId() };
