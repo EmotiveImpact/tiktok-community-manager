@@ -2,12 +2,19 @@
  * Fan ledger — permanent CRM store fed by live gift ingestion + manual edits.
  *
  * Persistence:
- *  - fans.json       : single JSON map of uniqueId -> Fan (debounced writes)
- *  - gifts.jsonl     : append-only gift records, one JSON object per line
+ *  - fans.json       : versioned envelope { version, fans: {uniqueId -> Fan} }
+ *                      (debounced atomic writes; legacy bare-map is migrated
+ *                       transparently on read)
+ *  - fans.backup-N.json : rolling backups (last 3) taken once on app start
+ *  - gifts.jsonl     : append-only gift records, one JSON object per line.
+ *                      Gifts are MONEY, so each record is flushed to disk
+ *                      synchronously the instant it's logged — the debounce
+ *                      only batches the fans.json map, never gift durability.
  *  - reminder-events.json : event-sourced snooze/done actions for reminders
  *
- * Live streams can fire many events per second, so all disk writes are
- * batched and flushed at most every FLUSH_MS (plus on app quit).
+ * Live streams can fire many events per second, so the fans.json map write is
+ * batched and flushed at most every FLUSH_MS (plus on app quit). Gift records
+ * bypass the batch and append immediately to minimise crash-loss of money data.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -107,6 +114,14 @@ const fansFile = () => path.join(fansDir(), 'fans.json');
 const giftsFile = () => path.join(fansDir(), 'gifts.jsonl');
 const reminderEventsFile = () => path.join(fansDir(), 'reminder-events.json');
 const thankRemindersFile = () => path.join(fansDir(), 'thank-reminders.json');
+const backupFile = (n: number) => path.join(fansDir(), `fans.backup-${n}.json`);
+
+/** Current on-disk schema version for fans.json. */
+const FANS_SCHEMA_VERSION = 1;
+/** How many rolling backups of fans.json to keep. */
+const BACKUP_KEEP = 3;
+
+type FansEnvelope = { version: number; fans: Record<string, Fan> };
 
 // ---------------------------------------------------------------------------
 // in-memory state + batched persistence
@@ -118,20 +133,75 @@ let fansDirty = false;
 let flushTimer: NodeJS.Timeout | null = null;
 const FLUSH_MS = 2000;
 
+/**
+ * Pull the uniqueId->Fan map out of either the versioned envelope
+ * `{ version, fans }` or the legacy bare-map format. Returns null on anything
+ * unrecognisable so callers can treat it as a fresh install.
+ */
+function extractFanMap(parsed: unknown): Record<string, Fan> | null {
+  if (!parsed || typeof parsed !== 'object') return null;
+  // Versioned envelope.
+  if (
+    'fans' in (parsed as any) &&
+    (parsed as any).fans &&
+    typeof (parsed as any).fans === 'object'
+  ) {
+    return (parsed as FansEnvelope).fans;
+  }
+  // Legacy bare map (uniqueId -> Fan). Guard against accidentally treating an
+  // envelope's own keys as fans by checking the values look like Fan records.
+  return parsed as Record<string, Fan>;
+}
+
 function loadFans(): Map<string, Fan> {
   if (fans) return fans;
   fans = new Map();
+  let loadedFromDisk = false;
   try {
-    const raw = JSON.parse(fs.readFileSync(fansFile(), 'utf8')) as Record<string, Fan>;
-    for (const [k, v] of Object.entries(raw)) {
-      if (v && typeof v === 'object' && v.uniqueId) {
-        fans.set(k, { tags: [], notes: '', totalDiamonds: 0, giftCount: 0, ...v });
+    const parsed = JSON.parse(fs.readFileSync(fansFile(), 'utf8'));
+    const raw = extractFanMap(parsed);
+    if (raw) {
+      for (const [k, v] of Object.entries(raw)) {
+        const rec = v as Partial<Fan> | null;
+        if (rec && typeof rec === 'object' && rec.uniqueId) {
+          // Backfill defaults for any fields a legacy/partial record may lack.
+          fans.set(k, { tags: [], notes: '', totalDiamonds: 0, giftCount: 0, ...rec } as Fan);
+        }
       }
+      loadedFromDisk = true;
     }
   } catch {
     /* fresh install */
   }
+  // Auto-backup on first successful load — cheap crash insurance. Only when
+  // there was real data on disk (no point backing up a fresh/empty install).
+  if (loadedFromDisk && fans.size > 0) rotateBackup();
   return fans;
+}
+
+/**
+ * Copy the current fans.json to a rolling backup slot, keeping the last
+ * BACKUP_KEEP. Best-effort: never throws, never blocks normal operation.
+ */
+let backedUpThisSession = false;
+function rotateBackup() {
+  if (backedUpThisSession) return;
+  backedUpThisSession = true;
+  try {
+    const src = fansFile();
+    if (!fs.existsSync(src)) return;
+    // Shift older backups down: backup-(N-1) -> backup-N, dropping the oldest.
+    for (let i = BACKUP_KEEP - 1; i >= 1; i--) {
+      const from = backupFile(i);
+      const to = backupFile(i + 1);
+      if (fs.existsSync(from)) {
+        try { fs.copyFileSync(from, to); } catch { /* keep going */ }
+      }
+    }
+    fs.copyFileSync(src, backupFile(1));
+  } catch (err) {
+    console.error('[fans] backup failed:', err);
+  }
 }
 
 function loadReminderEvents(): ReminderEvent[] {
@@ -153,6 +223,26 @@ function scheduleFlush() {
   }, FLUSH_MS);
 }
 
+/**
+ * Append a gift record to gifts.jsonl RIGHT NOW (synchronous). Gifts are money
+ * data — we never let them sit in the in-memory buffer waiting for the 2s
+ * debounce, so the crash-loss window for a gift is effectively zero.
+ * Falls back to buffering only if the immediate append fails.
+ */
+function appendGiftNow(line: string) {
+  try {
+    // Drain any previously-buffered gifts first to preserve order, then append.
+    if (giftBuffer.length > 0) {
+      fs.appendFileSync(giftsFile(), giftBuffer.join(''));
+      giftBuffer = [];
+    }
+    fs.appendFileSync(giftsFile(), line);
+  } catch (err) {
+    console.error('[fans] immediate gift append failed, buffering:', err);
+    giftBuffer.push(line); // retried on the next flush()
+  }
+}
+
 export function flush() {
   try {
     if (giftBuffer.length > 0) {
@@ -162,8 +252,9 @@ export function flush() {
     if (fansDirty && fans) {
       const obj: Record<string, Fan> = {};
       for (const [k, v] of fans) obj[k] = v;
+      const envelope: FansEnvelope = { version: FANS_SCHEMA_VERSION, fans: obj };
       const tmp = fansFile() + '.tmp';
-      fs.writeFileSync(tmp, JSON.stringify(obj));
+      fs.writeFileSync(tmp, JSON.stringify(envelope));
       fs.renameSync(tmp, fansFile());
       fansDirty = false;
     }
@@ -238,7 +329,10 @@ export function ingestLiveEvent(evt: any, sessionId?: string | null) {
           sessionId: sessionId ?? undefined,
           at: ts,
         };
-        giftBuffer.push(JSON.stringify(rec) + '\n');
+        // Gifts are money — persist the record to disk immediately rather than
+        // waiting for the debounced flush. The fans.json map (totals) still
+        // rides the debounce via markDirty().
+        appendGiftNow(JSON.stringify(rec) + '\n');
         markDirty();
         break;
       }
@@ -439,9 +533,9 @@ export function logGift(payload: {
     manual: true,
     at,
   };
-  giftBuffer.push(JSON.stringify(rec) + '\n');
+  appendGiftNow(JSON.stringify(rec) + '\n');
   markDirty();
-  flush(); // manual actions persist immediately
+  flush(); // manual actions persist the fans-map immediately too
   return { ok: true };
 }
 
