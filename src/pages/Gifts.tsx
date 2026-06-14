@@ -35,12 +35,24 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
   useEffect(() => { setPage(1); }, [range, fan]);
 
   const exportCsv = async () => {
-    const r = await window.tiktok.fansExportCsv();
-    if (r.ok) pushToast({ title: 'Exported', body: `Saved to ${r.path}` });
+    const r = await window.tiktok.giftsExportCsv({ range, fan: fan || undefined });
+    if (r.ok) pushToast({ title: 'Gifts exported', body: r.path ? `Saved to ${r.path}` : 'CSV downloaded' });
+    else if (r.canceled) return; // user closed the save dialog — not an error
     else if (r.error) pushToast({ title: 'Export failed', body: r.error });
   };
 
   const isEmpty = loaded && resp.diamondsAll === 0 && resp.total === 0 && !fan;
+
+  // The summary cards above show fixed periods (week/month/all-time). The range
+  // tabs below filter the table. Surface the total for the *selected* range so
+  // the headline and the filter agree. 90d has no precomputed total, so we sum
+  // the (full, un-paginated) page only when it fits — otherwise stay honest.
+  const rangeLabel = RANGES.find((r) => r.id === range)?.label ?? '';
+  const rangeTotal =
+    range === '7d' ? resp.diamondsWeek
+    : range === '30d' ? resp.diamondsMonth
+    : range === 'all' ? resp.diamondsAll
+    : null; // 90d: no precomputed total available
 
   return (
     <PageShell
@@ -103,6 +115,18 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
                 </button>
               ))}
             </div>
+            <span
+              className="flex h-7 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold"
+              style={{ background: 'var(--fill-thin)', border: '1px solid var(--card-border)', color: 'var(--secondary-label)' }}
+              title={`Total diamonds in the ${rangeLabel.toLowerCase()} view`}
+            >
+              {rangeLabel}:&nbsp;
+              {rangeTotal !== null ? (
+                <strong style={{ color: 'var(--label, inherit)' }}>{formatNumber(rangeTotal)} 💎</strong>
+              ) : (
+                <strong style={{ color: 'var(--label, inherit)' }}>{formatNumber(resp.total)} gifts</strong>
+              )}
+            </span>
             <input value={fan} onChange={(e) => setFan(e.target.value)} placeholder="Filter by fan…" className={`${inputCls} !w-52 ml-auto`} />
           </div>
 

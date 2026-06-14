@@ -177,6 +177,8 @@ const api = {
   fansImportCsvFile: () => ipcRenderer.invoke('fans:importCsvFile') as Promise<any>,
   fansExportCsv: () =>
     ipcRenderer.invoke('fans:exportCsv') as Promise<{ ok: boolean; path?: string; error?: string }>,
+  giftsExportCsv: (q?: any) =>
+    ipcRenderer.invoke('gifts:exportCsv', q) as Promise<{ ok: boolean; path?: string; error?: string; canceled?: boolean }>,
   fansClear: () => ipcRenderer.invoke('fans:clear') as Promise<{ ok: boolean }>,
   fansDataDir: () => ipcRenderer.invoke('fans:dataDir') as Promise<string>,
 

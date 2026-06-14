@@ -327,6 +327,7 @@ declare global {
       fansImportCsv: (csvText: string) => Promise<ImportResult>;
       fansImportCsvFile: () => Promise<ImportResult>;
       fansExportCsv: () => Promise<{ ok: boolean; path?: string; error?: string }>;
+      giftsExportCsv: (q?: ListGiftsQuery) => Promise<{ ok: boolean; path?: string; error?: string; canceled?: boolean }>;
       fansClear: () => Promise<{ ok: boolean }>;
       fansDataDir: () => Promise<string>;
       watchlistPoke: () => Promise<{ ok: boolean }>;

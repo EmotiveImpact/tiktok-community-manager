@@ -240,8 +240,34 @@ export function installBridgeMock(): void {
     }
     giftLog.sort((a, b) => b.at - a.at);
   }
+  // Older gifts (40–80 days back) so "all-time" is meaningfully larger than
+  // "this month" in the demo — otherwise both headline stats show the same
+  // number and the showcase reads like a bug.
+  if (demoSeed) {
+    let oi = 0;
+    for (const f of [...fanMap.values()].slice(0, 8)) {
+      const g = DEMO_GIFTS[oi % DEMO_GIFTS.length];
+      giftLog.push({
+        id: `demo-gift-old-${oi}`,
+        fanUniqueId: f.uniqueId,
+        fanNickname: f.nickname,
+        giftName: g.giftName,
+        diamonds: g.diamondCount * (2 + (oi % 4)),
+        repeatCount: 1,
+        sessionId: `demo-old-${oi}`,
+        at: Date.now() - Math.round((42 + oi * 4.5) * day),
+      });
+      oi++;
+    }
+    giftLog.sort((a, b) => b.at - a.at);
+  }
+
   const reminderHidden = new Set<string>();
-  const thankRequests: { uniqueId: string; date: string }[] = [];
+  // Seed one thank-after-LIVE reminder so the "thank your gifters" loop is
+  // visible in Reminders/Messages without having to run a LIVE first.
+  const thankRequests: { uniqueId: string; date: string }[] = demoSeed
+    ? [{ uniqueId: DEMO_USERS[0].uniqueId, date: new Date().toISOString().slice(0, 10) }]
+    : [];
 
   // Persisted (localStorage) settings so the browser demo behaves like the app.
   type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings; moderation: ModerationSettings; watchlist: WatchEntry[] };
@@ -585,6 +611,37 @@ export function installBridgeMock(): void {
     },
     fansImportCsvFile: async () => ({ ok: false, created: 0, updated: 0, skipped: 0, errors: ['File picker not available in browser mode — paste CSV text instead'], canceled: false }),
     fansExportCsv: async () => ({ ok: false, error: 'Not available in browser mode' }),
+    giftsExportCsv: async (q = {}) => {
+      // Browser demo: produce a real CSV download of the filtered gift log so the
+      // button does something useful even without Electron's native save dialog.
+      const now = Date.now();
+      const cutoff = q.range === '7d' ? now - 7 * day : q.range === '90d' ? now - 90 * day : q.range === 'all' ? 0 : q.range === '30d' ? now - 30 * day : 0;
+      const fanQ = (q.fan ?? '').toLowerCase().replace(/^@/, '').trim();
+      const rows = giftLog
+        .filter((g) => g.at >= cutoff && (!fanQ || g.fanUniqueId.toLowerCase().includes(fanQ) || g.fanNickname.toLowerCase().includes(fanQ)))
+        .sort((a, b) => b.at - a.at);
+      if (rows.length === 0) return { ok: false, error: 'No gifts to export for this range.' };
+      const esc = (v: string) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+      const lines = [['date', 'fanUsername', 'fanNickname', 'giftName', 'diamonds', 'repeatCount', 'source', 'sessionId'].join(',')];
+      for (const g of rows) {
+        const source = g.manual ? 'Manual' : g.sessionId?.startsWith('multi:') ? 'Multi-room' : g.sessionId ? 'LIVE' : '';
+        lines.push([new Date(g.at).toISOString(), esc(g.fanUniqueId), esc(g.fanNickname), esc(g.giftName), String(g.diamonds), String(g.repeatCount), source, esc(g.sessionId ?? '')].join(','));
+      }
+      try {
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gifts-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        return { ok: true, path: a.download };
+      } catch (err: any) {
+        return { ok: false, error: err?.message ?? 'Download failed' };
+      }
+    },
     fansClear: async () => {
       fanMap.clear();
       giftLog.length = 0;

@@ -667,6 +667,22 @@ ipcMain.handle('fans:exportCsv', async () => {
     return { ok: false, error: err?.message ?? String(err) };
   }
 });
+ipcMain.handle('gifts:exportCsv', async (_e, q: fans.ListGiftsQuery) => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false };
+  const { dialog } = await import('electron');
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: `gifts-${new Date().toISOString().slice(0, 10)}.csv`,
+    filters: [{ name: 'CSV Files', extensions: ['csv'] }],
+  });
+  if (result.canceled || !result.filePath) return { ok: false, canceled: true };
+  try {
+    const fsNode = await import('node:fs');
+    fsNode.writeFileSync(result.filePath, fans.exportGiftsCsvText(q ?? {}), 'utf8');
+    return { ok: true, path: result.filePath };
+  } catch (err: any) {
+    return { ok: false, error: err?.message ?? String(err) };
+  }
+});
 ipcMain.handle('fans:clear', () => fans.clearAll());
 ipcMain.handle('fans:dataDir', () => fans.fansDir());
 

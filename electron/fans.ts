@@ -765,6 +765,44 @@ export function exportCsvText(): string {
   return rows.join('\n');
 }
 
+/**
+ * Gifts ledger as CSV. Optionally filtered to the same range/fan the UI is
+ * showing so "Export CSV" exports exactly what's on screen, newest first.
+ */
+export function exportGiftsCsvText(q: ListGiftsQuery = {}): string {
+  const all = readAllGifts();
+  const now = Date.now();
+  const cutoff =
+    q.range === '7d' ? now - 7 * 86400000
+    : q.range === '90d' ? now - 90 * 86400000
+    : q.range === 'all' ? 0
+    : q.range === '30d' ? now - 30 * 86400000
+    : 0;
+  const fanQ = (q.fan ?? '').replace(/^@/, '').trim().toLowerCase();
+  const rows = all
+    .filter(
+      (g) =>
+        g.at >= cutoff &&
+        (!fanQ || g.fanUniqueId.toLowerCase().includes(fanQ) || g.fanNickname.toLowerCase().includes(fanQ)),
+    )
+    .sort((a, b) => b.at - a.at);
+  const out = [['date', 'fanUsername', 'fanNickname', 'giftName', 'diamonds', 'repeatCount', 'source', 'sessionId'].join(',')];
+  for (const g of rows) {
+    const source = g.manual ? 'Manual' : g.sessionId?.startsWith('multi:') ? 'Multi-room' : g.sessionId ? 'LIVE' : '';
+    out.push([
+      new Date(g.at).toISOString(),
+      escapeCsv(g.fanUniqueId),
+      escapeCsv(g.fanNickname),
+      escapeCsv(g.giftName),
+      String(g.diamonds),
+      String(g.repeatCount),
+      source,
+      escapeCsv(g.sessionId ?? ''),
+    ].join(','));
+  }
+  return out.join('\n');
+}
+
 export function clearAll(): { ok: boolean } {
   fans = new Map();
   reminderEvents = [];
