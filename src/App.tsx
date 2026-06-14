@@ -524,7 +524,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`flex h-[30px] items-center rounded-full px-3.5 text-xs font-bold transition ${
-        active ? 'bg-pink-gradient text-white shadow-[0_10px_26px_rgba(238,29,82,0.32)]' : 'text-zinc-500 hover:text-zinc-300'
+        active ? 'bg-pink-gradient text-white' : 'text-zinc-500 hover:text-zinc-300'
       }`}
     >
       {children}

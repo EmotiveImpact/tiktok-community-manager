@@ -105,7 +105,7 @@ export function NoteComposer() {
         disabled={!text.trim()}
         title="Save note (notes are private — the connector can't post to TikTok)"
         aria-label="Save stream note"
-        className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-white shadow-[0_2px_8px_rgba(238,29,82,0.35)] transition disabled:opacity-40"
+        className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-white transition disabled:opacity-40"
         style={{ background: 'var(--gradient-pink)' }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>

@@ -68,7 +68,6 @@ const NAVY_HOVER = 'rgba(255, 255, 255, 0.05)';
 /* Compact, confident selected pill (spec item 6) */
 const ACTIVE_PILL = {
   background: 'linear-gradient(135deg, #EE1D52, #ff467b)',
-  boxShadow: '0 12px 28px rgba(238,29,82,0.32)',
   color: 'white',
 } as const;
 
@@ -306,7 +305,6 @@ function LiveItem({ item, isActive, onClick, count, extra }: {
       className="no-drag mb-0.5 flex w-full items-center gap-2 rounded-xl px-3 py-[7px] text-left text-[12px] transition"
       style={{
         background: isActive ? 'linear-gradient(135deg, #EE1D52, #ff467b)' : 'transparent',
-        boxShadow: isActive ? '0 10px 22px rgba(238,29,82,0.28)' : undefined,
         color: isActive ? 'white' : NAVY_MUTED,
         fontWeight: isActive ? 700 : 500,
       }}
@@ -325,7 +323,7 @@ function LiveItem({ item, isActive, onClick, count, extra }: {
           className="inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
           style={
             item.id === 'alerts'
-              ? { background: '#EE1D52', color: 'white', boxShadow: '0 2px 6px rgba(238,29,82,0.45)' }
+              ? { background: '#EE1D52', color: 'white' }
               : { background: 'rgba(120, 134, 178, 0.2)', color: NAVY_MUTED }
           }
         >

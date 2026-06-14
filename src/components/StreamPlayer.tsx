@@ -141,7 +141,7 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
               📱 Mobile
             </button>
           </div>
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_2px_8px_rgba(238,29,82,0.4)]" style={{ background: 'var(--brand-pink)' }}>
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: 'var(--brand-pink)' }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
             LIVE
           </span>

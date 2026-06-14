@@ -281,7 +281,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                 {/* Actions */}
                 <button
                   onClick={() => setShowThank(true)}
-                  className="mt-3 w-full rounded-full px-3 py-2 text-xs font-bold text-white shadow-[0_2px_10px_rgba(238,29,82,0.35)] transition"
+                  className="mt-3 w-full rounded-full px-3 py-2 text-xs font-bold text-white transition"
                   style={{ background: 'var(--gradient-pink)' }}
                 >
                   💌 Send a thank-you
