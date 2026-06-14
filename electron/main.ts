@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TikTokSession } from './tiktok';
-import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, type CommunitySettings, type EarningsSettings } from './store';
+import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, type CommunitySettings, type EarningsSettings, type ModerationSettings } from './store';
 import * as sessions from './sessions';
 import { summarize, type SummaryInput } from './summarize';
 import { exportSession, type ExportType } from './export';
@@ -247,7 +247,27 @@ ipcMain.handle('settings:get', () => {
     thankTemplate: settings.get('thankTemplate', DEFAULT_THANK_TEMPLATE),
     earnings: settings.get('earnings', DEFAULT_EARNINGS),
     community: settings.get('community', DEFAULT_COMMUNITY),
+    moderation: settings.get('moderation', DEFAULT_MODERATION),
   };
+});
+
+ipcMain.handle('settings:setModeration', (_e, cfg: ModerationSettings) => {
+  const validTags: ReadonlySet<string> = new Set(['vip', 'regular', 'troll', 'blocked']);
+  const userTags: ModerationSettings['userTags'] = {};
+  for (const [uid, tag] of Object.entries(cfg?.userTags ?? {})) {
+    if (typeof uid === 'string' && uid && validTags.has(tag as string)) {
+      userTags[uid] = tag as ModerationSettings['userTags'][string];
+    }
+  }
+  const threshold = Math.floor(Number(cfg?.spamThreshold));
+  settings.set('moderation', {
+    blockedUsers: Array.isArray(cfg?.blockedUsers) ? cfg.blockedUsers.filter((u) => typeof u === 'string') : [],
+    blockedKeywords: Array.isArray(cfg?.blockedKeywords) ? cfg.blockedKeywords.filter((k) => typeof k === 'string') : [],
+    userTags,
+    spamFilterEnabled: !!cfg?.spamFilterEnabled,
+    spamThreshold: Number.isFinite(threshold) && threshold > 0 ? threshold : DEFAULT_MODERATION.spamThreshold,
+  });
+  return { ok: true };
 });
 
 ipcMain.handle('settings:setThankTemplate', (_e, tpl: string) => {

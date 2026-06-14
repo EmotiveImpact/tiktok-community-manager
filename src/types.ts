@@ -127,6 +127,16 @@ export type CommunitySettings = {
   tiers: { regular: number; vip: number; whale: number };
 };
 
+export type ModerationUserTag = 'vip' | 'regular' | 'troll' | 'blocked';
+
+export type ModerationSettings = {
+  blockedUsers: string[];
+  blockedKeywords: string[];
+  userTags: Record<string, ModerationUserTag>;
+  spamFilterEnabled: boolean;
+  spamThreshold: number;
+};
+
 // --- Fan CRM ---------------------------------------------------------------
 
 export type Tier = 'New' | 'Regular' | 'VIP' | 'Whale';
@@ -253,6 +263,7 @@ declare global {
         thankTemplate: string;
         earnings: EarningsSettings;
         community: CommunitySettings;
+        moderation: ModerationSettings;
       }>;
       setSignApiKey: (key: string) => Promise<{ ok: boolean }>;
       setAnthropicKey: (key: string) => Promise<{ ok: boolean }>;
@@ -263,6 +274,7 @@ declare global {
       setThankTemplate: (tpl: string) => Promise<{ ok: boolean }>;
       setEarnings: (cfg: EarningsSettings) => Promise<{ ok: boolean }>;
       setCommunity: (cfg: CommunitySettings) => Promise<{ ok: boolean; error?: string }>;
+      setModeration: (cfg: ModerationSettings) => Promise<{ ok: boolean }>;
       openExternal: (url: string) => Promise<{ ok: boolean; error?: string }>;
       chatLogDir: () => Promise<string>;
       backupExport: () => Promise<{ ok: boolean; path?: string }>;

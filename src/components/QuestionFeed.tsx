@@ -1,10 +1,12 @@
 import { useStore } from '../state/store';
+import { useModeration } from '../state/moderation';
 import { avatarGradient } from '../lib/avatars';
 import { Username } from './Username';
 import { timeAgo } from '../lib/format';
 
 export function QuestionFeed() {
   const questions = useStore((s) => s.questions);
+  const isFiltered = useModeration((s) => s.isFiltered);
 
   if (questions.length === 0) {
     return (
@@ -18,6 +20,7 @@ export function QuestionFeed() {
     <ul className="flex flex-col gap-2 p-3">
       {questions.map((q) => {
         if (q.type !== 'questionNew') return null;
+        if (isFiltered(q.user.uniqueId, q.question)) return null;
         return (
           <li
             key={q.id}

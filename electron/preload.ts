@@ -28,6 +28,8 @@ const api = {
     ipcRenderer.invoke('settings:setEarnings', cfg) as Promise<{ ok: boolean }>,
   setCommunity: (cfg: any) =>
     ipcRenderer.invoke('settings:setCommunity', cfg) as Promise<{ ok: boolean; error?: string }>,
+  setModeration: (cfg: any) =>
+    ipcRenderer.invoke('settings:setModeration', cfg) as Promise<{ ok: boolean }>,
   openExternal: (url: string) =>
     ipcRenderer.invoke('shell:openExternal', url) as Promise<{ ok: boolean; error?: string }>,
   chatLogDir: () => ipcRenderer.invoke('chatlog:dir') as Promise<string>,

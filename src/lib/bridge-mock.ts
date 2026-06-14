@@ -16,6 +16,7 @@ import type {
   GiftRecord,
   ImportResult,
   LiveEvent,
+  ModerationSettings,
   Reminder,
   RoomInfo,
   SessionRecord,
@@ -39,6 +40,9 @@ const DEMO_USERS: UserBrief[] = [
   { uniqueId: 'sarahbear', nickname: 'SarahBear 🐻', profilePictureUrl: null },
   { uniqueId: 'liamthekid', nickname: 'Liam', profilePictureUrl: null, isFollower: true },
   { uniqueId: 'pixie.dust', nickname: 'Pixie', profilePictureUrl: null, isSubscriber: true },
+  // Blocked-test fixture: a noisy account you can block in the Moderation panel
+  // to verify it disappears from every feed (Comments/Gifts/Q&A/All/Top).
+  { uniqueId: 'spambot99', nickname: 'SpamBot99', profilePictureUrl: null },
 ];
 
 const DEMO_COMMENTS = [
@@ -236,12 +240,13 @@ export function installBridgeMock(): void {
   const thankRequests: { uniqueId: string; date: string }[] = [];
 
   // Persisted (localStorage) settings so the browser demo behaves like the app.
-  type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings };
+  type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings; moderation: ModerationSettings };
   const SETTINGS_KEY = 'mock-settings-v1';
   const defaultSettings = (): MockSettings => ({
     thankTemplate: 'Hey {nickname}! Thank you so much for the {giftName} 💕 You made my stream!',
     earnings: { enabled: false, ratePer1000: 10, currency: '£' },
     community: { quietDays: 14, birthdayWindowDays: 30, tiers: { regular: 100, vip: 1000, whale: 10000 } },
+    moderation: { blockedUsers: [], blockedKeywords: [], userTags: {}, spamFilterEnabled: false, spamThreshold: 20 },
   });
   let mockSettings: MockSettings = defaultSettings();
   try {
@@ -281,6 +286,7 @@ export function installBridgeMock(): void {
       thankTemplate: mockSettings.thankTemplate,
       earnings: mockSettings.earnings,
       community: mockSettings.community,
+      moderation: mockSettings.moderation,
     }),
     setSignApiKey: async () => ok,
     setAnthropicKey: async () => ok,
@@ -304,6 +310,11 @@ export function installBridgeMock(): void {
         return { ok: false, error: 'Tier thresholds must be ascending (Regular < VIP < Whale)' };
       }
       mockSettings.community = cfg;
+      saveSettings();
+      return ok;
+    },
+    setModeration: async (cfg) => {
+      mockSettings.moderation = cfg;
       saveSettings();
       return ok;
     },

@@ -44,6 +44,8 @@ export function CommentFeed() {
         if (!matchesFilter(e.user, feedFilter)) continue;
         items.push(e);
       } else if ((e.type === 'member' || e.type === 'gift' || e.type === 'follow') && feedFilter === 'all') {
+        // A blocked user's gift/join/follow must not leak into the timeline.
+        if (isFiltered(e.user.uniqueId)) continue;
         items.push(e);
       }
     }

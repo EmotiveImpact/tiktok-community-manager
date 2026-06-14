@@ -28,6 +28,24 @@ export type TrackedUser = {
   addedAt: number;
 };
 
+export type ModerationUserTag = 'vip' | 'regular' | 'troll' | 'blocked';
+
+export type ModerationSettings = {
+  blockedUsers: string[];
+  blockedKeywords: string[];
+  userTags: Record<string, ModerationUserTag>;
+  spamFilterEnabled: boolean;
+  spamThreshold: number;
+};
+
+export const DEFAULT_MODERATION: ModerationSettings = {
+  blockedUsers: [],
+  blockedKeywords: [],
+  userTags: {},
+  spamFilterEnabled: false,
+  spamThreshold: 20,
+};
+
 export type EarningsSettings = {
   enabled: boolean;
   /** payout per 1,000 diamonds, in the selected currency */
@@ -66,6 +84,7 @@ type Schema = {
   thankTemplate: string;
   earnings: EarningsSettings;
   community: CommunitySettings;
+  moderation: ModerationSettings;
 };
 
 const DEFAULTS: Schema = {
@@ -86,6 +105,7 @@ const DEFAULTS: Schema = {
   thankTemplate: DEFAULT_THANK_TEMPLATE,
   earnings: DEFAULT_EARNINGS,
   community: DEFAULT_COMMUNITY,
+  moderation: DEFAULT_MODERATION,
 };
 
 let cache: Schema | null = null;

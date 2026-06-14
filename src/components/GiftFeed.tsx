@@ -1,10 +1,12 @@
 import { useStore } from '../state/store';
+import { useModeration } from '../state/moderation';
 import { timeAgo, formatNumber } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 import { Username } from './Username';
 
 export function GiftFeed() {
   const gifts = useStore((s) => s.gifts);
+  const isFiltered = useModeration((s) => s.isFiltered);
 
   if (gifts.length === 0) {
     return (
@@ -18,6 +20,7 @@ export function GiftFeed() {
     <ul className="flex flex-col gap-1.5 p-3">
       {gifts.map((g) => {
         if (g.type !== 'gift') return null;
+        if (isFiltered(g.user.uniqueId)) return null;
         const total = g.diamondCount * g.repeatCount;
         return (
           <li

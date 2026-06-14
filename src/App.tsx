@@ -39,6 +39,7 @@ import { NoteComposer } from './components/NoteComposer';
 import { useStore } from './state/store';
 import { useAlerts } from './state/alerts';
 import { useTracked } from './state/tracked';
+import { useModeration } from './state/moderation';
 import { useUI, type FeedFilter, type LiveTool } from './state/ui';
 
 function ToolbarBtn({ active, onClick, children, title, badge, badgeAccent }: { active?: boolean; onClick: () => void; children: React.ReactNode; title?: string; badge?: number; badgeAccent?: boolean }) {
@@ -179,6 +180,7 @@ export default function App() {
   const checkAlert = useAlerts((s) => s.checkEvent);
   const pushToast = useAlerts((s) => s.pushToast);
   const loadTracked = useTracked((s) => s.load);
+  const loadModeration = useModeration((s) => s.load);
   const trackedCount = useTracked((s) => s.list.length);
   const alertCount = useAlerts((s) => s.history.length);
 
@@ -187,7 +189,8 @@ export default function App() {
       Notification.requestPermission().catch(() => {});
     }
     loadTracked();
-  }, [loadTracked]);
+    loadModeration();
+  }, [loadTracked, loadModeration]);
 
   useEffect(() => {
     const offStatus = window.tiktok.onStatus(({ status, error }) => {
