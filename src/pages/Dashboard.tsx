@@ -188,6 +188,9 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
   const [supporterGifts, setSupporterGifts] = useState<GiftRecord[] | null>(null);
   const [gifterRange, setGifterRange] = useState<'month' | 'all'>('month');
   const [showThank, setShowThank] = useState(false);
+  const [coachDismissed, setCoachDismissed] = useState(() => {
+    try { return localStorage.getItem('dash-coach-dismissed') === '1'; } catch { return false; }
+  });
   const { earnings } = useSettingsLoad();
 
   useEffect(() => {
@@ -350,8 +353,35 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
           <button onClick={() => navTo('followers')} className="panel-btn no-drag !h-8 !px-4 whitespace-nowrap">Fan profile</button>
         </div>
 
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {/* First-run coachmark — points at step 1 when nothing's connected yet. */}
+        {!hasData && !coachDismissed && (
+          <div
+            className="flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3"
+            style={{ background: 'var(--accent-tint, rgba(238,29,82,0.10))', border: '1px solid var(--card-border)' }}
+          >
+            <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-white" style={{ background: 'var(--brand-pink, #EE1D52)' }}>
+              <Radio size={16} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-bold leading-tight">Start here: connect to your first LIVE</div>
+              <p className="text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+                Your supporters, gifts and follow-ups all fill in automatically once you connect. The stats below are empty until then.
+              </p>
+            </div>
+            <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag whitespace-nowrap !h-8 !px-4">Connect to your first LIVE →</button>
+            <button
+              onClick={() => { setCoachDismissed(true); try { localStorage.setItem('dash-coach-dismissed', '1'); } catch { /* ignore */ } }}
+              className="panel-btn panel-btn-icon no-drag"
+              aria-label="Dismiss hint"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Stat cards (de-emphasized until there's real data) */}
+        <div className={`grid grid-cols-2 gap-3 xl:grid-cols-4 ${!hasData ? 'opacity-60' : ''}`}>
           <StatCard
             label="Supporters remembered"
             value={formatNumber(fansTotal)}

@@ -61,9 +61,16 @@ export function Reminders() {
           </>
         ) : (
           <>
-            <button onClick={() => setThankFan({ uniqueId: r.fan.uniqueId, nickname: fanName(r.fan) })} className="panel-btn no-drag">💌 Thank</button>
+            <button onClick={() => setThankFan({ uniqueId: r.fan.uniqueId, nickname: fanName(r.fan) })} className="panel-btn panel-btn-primary no-drag">💌 Thank</button>
             <button onClick={() => setSnoozeFor(r.id)} className="panel-btn no-drag">Snooze</button>
-            <button onClick={() => act(r.id, 'done')} className="panel-btn panel-btn-primary no-drag">Done</button>
+            <button
+              onClick={() => act(r.id, 'done')}
+              className="panel-btn no-drag"
+              style={{ background: 'transparent', borderColor: 'transparent', color: 'var(--secondary-label)' }}
+              title="Dismiss this reminder"
+            >
+              Done
+            </button>
           </>
         )}
       </div>
@@ -81,7 +88,7 @@ export function Reminders() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-stretch gap-3 lg:grid-cols-2">
           <div className="glass p-4" style={{ borderRadius: 18 }}>
             <h3 className="mb-1 flex items-center gap-2 text-sm font-bold">
               <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full" style={{ background: 'rgba(238, 29, 82, 0.14)' }}>
