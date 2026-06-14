@@ -4,6 +4,7 @@ import type { ConnectionStatus, LiveEvent, RoomInfo, UserBrief } from '../types'
 const FEED_MAX = 5000;
 const TPS_WINDOW_MS = 5000;
 const TALLIES_MAX = 2000;
+const MEMBERS_MAX = 2000;
 
 type FeedItem = LiveEvent & { id: string };
 
@@ -119,12 +120,20 @@ function bumpTally(
 function touchMember(members: Map<string, RoomMember>, user: UserBrief, ts: number): Map<string, RoomMember> {
   const next = new Map(members);
   const existing = next.get(user.uniqueId);
+  // Re-insert at the end so Map iteration order tracks recency (mirrors
+  // bumpTally): the FIFO eviction below then drops the least-recently-seen.
+  if (existing) next.delete(user.uniqueId);
   next.set(user.uniqueId, {
     user,
     joinedAt: existing?.joinedAt ?? ts,
     lastSeenAt: ts,
     inRoom: true,
   });
+  if (next.size > MEMBERS_MAX) {
+    const overflow = next.size - MEMBERS_MAX;
+    const keys = next.keys();
+    for (let i = 0; i < overflow; i++) next.delete(keys.next().value as string);
+  }
   return next;
 }
 

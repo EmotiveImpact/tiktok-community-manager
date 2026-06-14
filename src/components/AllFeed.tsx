@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { useStore } from '../state/store';
 import { useModeration } from '../state/moderation';
 import { timeAgo } from '../lib/format';
@@ -5,9 +6,27 @@ import { Username } from './Username';
 
 type AllEvent = ReturnType<typeof useStore.getState>['all'][number];
 
+/** Cap how many rows we ever render — the store keeps up to FEED_MAX (5000) but
+ *  the DOM never needs more than a screenful of scrollback to stay smooth. */
+const RENDER_MAX = 200;
+
 export function AllFeed() {
   const all = useStore((s) => s.all);
   const isFiltered = useModeration((s) => s.isFiltered);
+
+  // Filter + cap once per relevant change instead of re-running isFiltered per
+  // row on every single event. Mirrors CommentFeed's capped, memoized slice.
+  const rows = useMemo(() => {
+    const items: AllEvent[] = [];
+    for (const e of all) {
+      if (items.length >= RENDER_MAX) break;
+      if ('user' in e && isFiltered(e.user.uniqueId, e.type === 'chat' ? e.comment : undefined)) {
+        continue;
+      }
+      items.push(e);
+    }
+    return items;
+  }, [all, isFiltered]);
 
   if (all.length === 0) {
     return (
@@ -18,30 +37,36 @@ export function AllFeed() {
   }
 
   return (
-    <ul className="flex flex-col gap-0.5 p-3 text-sm">
-      {all.map((e) => {
-        // Drop events from blocked/filtered users (where the event carries a user).
-        if ('user' in e && isFiltered(e.user.uniqueId, e.type === 'chat' ? e.comment : undefined)) {
-          return null;
-        }
-        return (
-          <li key={e.id} className="flex items-baseline gap-2 rounded-lg px-2 py-1 transition hover:bg-zinc-900/60">
-            <span className="w-12 flex-none text-[10px] tabular-nums text-zinc-600">
-              {timeAgo(e.ts)}
-            </span>
-            <span className="w-16 flex-none text-xs">
-              <Badge type={e.type} />
-            </span>
-            <span className="flex min-w-0 flex-1 items-baseline gap-1 truncate text-zinc-300">
-              {'user' in e && <Username user={e.user} className="text-[13px] font-semibold" />}
-              <span className="min-w-0 truncate">{describe(e)}</span>
-            </span>
-          </li>
-        );
-      })}
+    <ul
+      className="flex flex-col gap-0.5 p-3 text-sm"
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      aria-label="Live event feed"
+    >
+      {rows.map((e) => (
+        <AllRow key={e.id} event={e} />
+      ))}
     </ul>
   );
 }
+
+const AllRow = memo(function AllRow({ event }: { event: AllEvent }) {
+  return (
+    <li className="flex items-baseline gap-2 rounded-lg px-2 py-1 transition hover:bg-zinc-900/60">
+      <span className="w-12 flex-none text-[10px] tabular-nums text-zinc-600">
+        {timeAgo(event.ts)}
+      </span>
+      <span className="w-16 flex-none text-xs">
+        <Badge type={event.type} />
+      </span>
+      <span className="flex min-w-0 flex-1 items-baseline gap-1 truncate text-zinc-300">
+        {'user' in event && <Username user={event.user} className="text-[13px] font-semibold" />}
+        <span className="min-w-0 truncate">{describe(event)}</span>
+      </span>
+    </li>
+  );
+});
 
 /** Event description, *excluding* the username (rendered separately as a clickable <Username>). */
 function describe(e: AllEvent): string {
