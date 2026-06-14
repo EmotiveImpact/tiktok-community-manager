@@ -21,6 +21,8 @@ export function SettingsPage() {
   const [aiKey, setAiKey] = useState('');
   const [autoConnect, setAutoConnect] = useState(false);
   const [chatLog, setChatLog] = useState(false);
+  const [aiConsent, setAiConsent] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [webhooks, setWebhooks] = useState<WebhookConfig>({ discordUrl: '', slackUrl: '', customUrl: '', events: { gifts: true, follows: true, keywords: false, milestones: true } });
   const [dataDir, setDataDir] = useState('');
   const [fanCount, setFanCount] = useState<number | null>(null);
@@ -32,6 +34,7 @@ export function SettingsPage() {
       setAiKey(s.anthropicApiKey ?? '');
       setAutoConnect(s.autoConnect ?? false);
       setChatLog(s.chatLogEnabled ?? false);
+      setAiConsent(s.aiSummaryConsented ?? false);
       if (s.webhooks) setWebhooks(s.webhooks);
     }).catch(() => {});
     window.tiktok.fansDataDir().then(setDataDir).catch(() => {});
@@ -84,6 +87,25 @@ export function SettingsPage() {
               <p className="mt-1.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
                 Your key stays on this device and is sent only to api.anthropic.com.
               </p>
+              <div className="mt-2 rounded-lg p-3" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--card-border)' }}>
+                <p className="text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+                  Session summaries send up to ~600 lines of chat text plus gifter usernames and
+                  audience questions to Anthropic's API to generate the summary. Your key, your data —
+                  it leaves your device only for this, and only when you run a summary.
+                </p>
+                <label className="mt-2 flex items-start gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={aiConsent}
+                    onChange={(e) => {
+                      setAiConsent(e.target.checked);
+                      save(() => window.tiktok.setAiSummaryConsent(e.target.checked), 'AI summary consent');
+                    }}
+                    className="mt-0.5 accent-pink-600"
+                  />
+                  <span>I understand and allow AI session summaries to send chat text + usernames to Anthropic.</span>
+                </label>
+              </div>
             </div>
             <div className="mt-4 flex flex-col gap-2 text-[13px]">
               <label className="flex items-center gap-2">
@@ -101,16 +123,35 @@ export function SettingsPage() {
                 Hit a crash or a connection that broke for no clear reason? Open the logs folder and attach
                 <code> main.log</code> to a support ticket.
               </p>
-              <button
-                onClick={async () => {
-                  const r = await window.tiktok.revealLogs();
-                  if (r.ok) pushToast({ title: 'Logs folder opened', body: r.path });
-                  else pushToast({ title: 'Could not open logs', body: r.error ?? r.path });
-                }}
-                className="panel-btn no-drag"
-              >
-                Reveal logs
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={async () => {
+                    const r = await window.tiktok.revealLogs();
+                    if (r.ok) pushToast({ title: 'Logs folder opened', body: r.path });
+                    else pushToast({ title: 'Could not open logs', body: r.error ?? r.path });
+                  }}
+                  className="panel-btn no-drag"
+                >
+                  Reveal logs
+                </button>
+                <button
+                  onClick={async () => {
+                    setCheckingUpdate(true);
+                    try {
+                      const r = await window.tiktok.checkForUpdates();
+                      pushToast({ title: r.ok ? 'Update check' : 'Updates unavailable', body: r.message });
+                    } catch {
+                      pushToast({ title: 'Updates unavailable', body: 'Could not check for updates.' });
+                    } finally {
+                      setCheckingUpdate(false);
+                    }
+                  }}
+                  disabled={checkingUpdate}
+                  className="panel-btn no-drag"
+                >
+                  {checkingUpdate ? 'Checking…' : 'Check for updates'}
+                </button>
+              </div>
             </div>
           </Card>
 

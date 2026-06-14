@@ -84,6 +84,10 @@ type Schema = {
   anthropicApiKey: string;
   autoConnect: boolean;
   chatLogEnabled: boolean;
+  /** One-time consent: chat text + usernames may be sent to Anthropic for AI summaries. */
+  aiSummaryConsented: boolean;
+  /** One-time risk acknowledgement before the auto-liker can run. */
+  likerRiskAck: boolean;
   notes: Record<string, UserNote>;
   webhooks: WebhookConfig;
   watchlist: WatchEntry[];
@@ -100,6 +104,8 @@ const DEFAULTS: Schema = {
   anthropicApiKey: '',
   autoConnect: false,
   chatLogEnabled: false,
+  aiSummaryConsented: false,
+  likerRiskAck: false,
   notes: {},
   webhooks: {
     discordUrl: '',
