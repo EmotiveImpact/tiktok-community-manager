@@ -104,6 +104,7 @@ export function NoteComposer() {
         onClick={send}
         disabled={!text.trim()}
         title="Save note (notes are private — the connector can't post to TikTok)"
+        aria-label="Save stream note"
         className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-white shadow-[0_2px_8px_rgba(238,29,82,0.35)] transition disabled:opacity-40"
         style={{ background: 'var(--gradient-pink)' }}
       >
@@ -119,6 +120,7 @@ function IconBtn({ title, onClick, children }: { title: string; onClick: () => v
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
     >
       {children}

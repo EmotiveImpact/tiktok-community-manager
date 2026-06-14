@@ -149,6 +149,7 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="rounded-md px-2 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800"
             title="Close player"
+            aria-label="Close player"
           >
             ✕
           </button>
@@ -249,6 +250,7 @@ function Ctrl({ title, onClick, children }: { title: string; onClick: () => void
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       className="flex h-7 w-7 items-center justify-center rounded-md text-sm text-zinc-300 transition hover:bg-zinc-800"
     >
       {children}
