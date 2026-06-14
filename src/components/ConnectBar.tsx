@@ -38,7 +38,29 @@ function SessionTimer() {
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
   const label = h ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
-  return <span className="no-drag text-[11px] font-semibold tabular-nums text-zinc-400">{label}</span>;
+  return <span className="no-drag session-timer" title="Session length">{label}</span>;
+}
+
+/** Connected-state host identity chip (avatar + @username) on the header left. */
+function HostIdentity() {
+  const room = useStore((s) => s.roomInfo);
+  if (!room) return null;
+  return (
+    <button
+      onClick={() => window.tiktok.openProfile(room.hostUniqueId)}
+      className="no-drag host-id transition hover:brightness-110"
+      title={`Open @${room.hostUniqueId} on TikTok`}
+    >
+      {room.hostAvatar ? (
+        <img src={room.hostAvatar} alt="" className="host-id__avatar ring-2 ring-like-500/70" />
+      ) : (
+        <span className="avatar-gradient-pink host-id__avatar flex items-center justify-center text-xs font-bold text-white ring-2 ring-like-500/70">
+          {room.hostNickname.charAt(0).toUpperCase()}
+        </span>
+      )}
+      <span className="host-id__name">@{room.hostUniqueId}</span>
+    </button>
+  );
 }
 
 export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
@@ -108,39 +130,46 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
   };
 
   return (
-    <div className="relative z-30 flex h-12 flex-none items-center gap-2 border-b border-zinc-800/60 px-3 py-2">
+    <div className="relative z-30 live-header">
       {!isLive ? (
-        <div className="no-drag flex items-center gap-1.5">
+        <div className="no-drag flex items-center gap-2">
           <div className="relative flex items-center">
-            <span className="pointer-events-none absolute left-2.5 text-xs text-zinc-500">@</span>
+            <span className="pointer-events-none absolute left-2.5 text-[13px] font-semibold text-zinc-500">@</span>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleConnect(); }}
-              placeholder="username"
-              className="h-7 w-44 rounded-md border border-zinc-700 bg-zinc-900 pl-6 pr-2.5 text-xs text-zinc-100 outline-none transition focus:border-like-500/60"
+              placeholder="tiktok username"
+              className="host-input"
             />
           </div>
           <button
             onClick={handleConnect}
             disabled={!input.trim() || status === 'connecting'}
-            className="panel-btn panel-btn-primary"
+            className="panel-btn panel-btn-primary !h-8 !px-4"
           >
             {status === 'connecting' ? 'Connecting…' : 'Connect'}
           </button>
+          <div className="no-drag">
+            <StatusPill status={status} />
+          </div>
         </div>
       ) : (
-        <div className="no-drag flex items-center gap-1.5">
-          <button onClick={handleDisconnect} className="panel-btn panel-btn-secondary">
+        <div className="no-drag flex min-w-0 items-center gap-2.5">
+          <div className="no-drag">
+            <StatusPill status={status} />
+          </div>
+          <HostIdentity />
+          <SessionTimer />
+          <button
+            onClick={handleDisconnect}
+            className="panel-btn panel-btn-secondary"
+            title="Leave this LIVE room"
+          >
             Disconnect
           </button>
         </div>
       )}
-
-      <div className="no-drag">
-        <StatusPill status={status} />
-      </div>
-      {isLive && <SessionTimer />}
 
       {errorMessage && (
         <div className="no-drag truncate text-xs text-rose-400" title={errorMessage}>
@@ -162,7 +191,7 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
           </svg>
         </button>
       {showSettings && (
-        <div className="no-drag absolute right-0 top-12 z-50 w-80 max-h-[80vh] overflow-y-auto rounded-xl border border-zinc-800/60 bg-zinc-950/95 p-4 shadow-2xl backdrop-blur">
+        <div className="no-drag absolute right-0 top-14 z-50 w-80 max-h-[80vh] overflow-y-auto rounded-xl border border-zinc-800/60 bg-zinc-950/95 p-4 shadow-2xl backdrop-blur">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Sign API key
           </div>

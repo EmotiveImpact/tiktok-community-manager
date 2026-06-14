@@ -406,3 +406,160 @@ body {
 .avatar-gradient-orange { background: linear-gradient(135deg, #ff9500, #ff6200); }
 .avatar-gradient-cyan { background: linear-gradient(135deg, #69c9d0, #4aa9d8); }
 .avatar-gradient-rose { background: linear-gradient(135deg, #ff375f, #ee1d52); }
+
+/* ============================================================
+   LIVE VIEW — relocated pieces (additive; do not edit above)
+   ConnectBar in-live header + right-rail stat/memory column.
+   ============================================================ */
+
+/* --- In-live host header (ConnectBar) ------------------------------ */
+/* Clean header strip at the top of the live content area. Height is
+   tuned to sit ~level with the feed's tab row beneath it. */
+.live-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  flex: none;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--separator);
+}
+
+/* Connect input — sized to read as a proper brand control, not a chip. */
+.host-input {
+  height: 32px;
+  width: 200px;
+  border-radius: 9px;
+  border: 1px solid var(--separator);
+  background: var(--fill-thin);
+  color: var(--label);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 10px 0 24px;
+  outline: none;
+  -webkit-app-region: no-drag;
+  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+}
+.host-input::placeholder { color: var(--tertiary-label); }
+.host-input:focus {
+  border-color: var(--accent);
+  background: var(--fill-quaternary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Connected-state host identity chip on the left of the header. */
+.host-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 240px;
+  padding: 3px 10px 3px 3px;
+  border-radius: 9999px;
+  background: var(--fill-thin);
+  border: 1px solid var(--separator);
+}
+.host-id__avatar {
+  height: 26px;
+  width: 26px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--fill);
+}
+.host-id__name {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--label);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Session uptime timer — legible, monospaced. */
+.session-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--secondary-label);
+}
+.session-timer::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--separator-opaque);
+}
+
+/* --- Right rail (one cohesive column) ------------------------------ */
+.live-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 304px;
+  flex: none;
+  overflow-y: auto;
+}
+
+/* Compact stat grid cell shared by StatsStrip. */
+.stat-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--fill-quaternary);
+  border: 1px solid var(--separator);
+}
+.stat-cell__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1;
+}
+.stat-cell__value {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stat-cell__label {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--secondary-label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Soft tinted icon chips — one per metric. */
+.tint-like   { background: rgba(238, 29, 82, 0.14);  color: #ff4f7d; }
+.tint-cyan   { background: rgba(105, 201, 208, 0.16); color: #4fc3cc; }
+.tint-comment{ background: rgba(148, 163, 196, 0.16); color: var(--label); }
+.tint-amber  { background: rgba(255, 184, 0, 0.16);   color: #f5b400; }
+.tint-purple { background: rgba(191, 90, 242, 0.16);  color: #c074f5; }
+.tint-emerald{ background: rgba(48, 209, 88, 0.16);   color: #34d36b; }
+[data-theme='light'] .tint-like   { background: rgba(238, 29, 82, 0.1);  color: #e01150; }
+[data-theme='light'] .tint-cyan   { background: rgba(14, 116, 144, 0.1); color: #0e7490; }
+[data-theme='light'] .tint-comment{ background: rgba(100, 116, 139, 0.12); color: #475569; }
+[data-theme='light'] .tint-amber  { background: rgba(161, 98, 7, 0.1);   color: #a16207; }
+[data-theme='light'] .tint-purple { background: rgba(126, 34, 206, 0.1); color: #7e22ce; }
+[data-theme='light'] .tint-emerald{ background: rgba(21, 128, 61, 0.1);  color: #15803d; }
