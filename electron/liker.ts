@@ -1,6 +1,10 @@
 import { BrowserWindow, ipcMain } from 'electron';
 
-export type LikerMode = 'normal' | 'human' | 'extreme';
+// The legacy 'extreme' (50ms rapid-fire) mode was removed as a compliance/risk
+// measure — it is the most detectable automation pattern. The main-process
+// content script no longer honours it (any stale 'extreme' value falls back to
+// the human-paced default), and the minimum interval floor is enforced.
+export type LikerMode = 'normal' | 'human';
 
 export type LikerStats = {
   isActive: boolean;
@@ -164,7 +168,8 @@ const CONTENT_SCRIPT = `
 
     sendLikeKeyPress() {
       const now = Date.now();
-      const effectiveMin = this.behaviorMode === 'extreme' ? 40 : this.minInterval;
+      // Hard floor on tap spacing (no sub-minInterval "extreme" path anymore).
+      const effectiveMin = this.minInterval;
       if (now - this.lastKeyPress < effectiveMin) return;
 
       try {
@@ -251,23 +256,16 @@ const CONTENT_SCRIPT = `
 
     startSelectedMode() {
       switch (this.behaviorMode) {
-        case 'human': this.startHumanLikeMode(); break;
-        case 'extreme': this.startExtremeMode(); break;
-        default: this.startNormalMode(); break;
+        case 'normal': this.startNormalMode(); break;
+        // 'human' (and any unknown/legacy value like the removed 'extreme')
+        // fall through to the safer human-paced default.
+        default: this.startHumanLikeMode(); break;
       }
     }
 
     startNormalMode() {
       this.stateLabel = 'Normal — Active';
       this.intervalId = setInterval(() => this.sendLikeKeyPress(), this.interval);
-    }
-
-    startExtremeMode() {
-      this.stateLabel = 'EXTREME — Rapid Fire';
-      this.intervalId = setInterval(() => {
-        if (!this.isActive) { clearInterval(this.intervalId); this.intervalId = null; return; }
-        this.sendLikeKeyPress();
-      }, 50);
     }
 
     startHumanLikeMode() {

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useStore } from '../state/store';
 import { PanelHeader, PanelShell } from './PanelHeader';
 
-type LikerMode = 'normal' | 'human' | 'extreme';
+type LikerMode = 'normal' | 'human';
 
 type LikerStats = {
   isActive: boolean;
@@ -15,10 +15,12 @@ type LikerStats = {
   isLivePage: boolean;
 };
 
+// The legacy "extreme" 50ms rapid-fire preset was removed: it is the most
+// obvious automation signature and the biggest account-action risk. Only the
+// two human-paced modes remain. (Human-like is the recommended default.)
 const MODE_INFO: Record<LikerMode, { label: string; desc: string; color: string }> = {
+  human: { label: 'Human-like', desc: 'Natural patterns with breaks (recommended)', color: 'text-emerald-400' },
   normal: { label: 'Normal', desc: 'Consistent interval tapping', color: 'text-cyan-400' },
-  human: { label: 'Human-like', desc: 'Natural patterns with breaks', color: 'text-emerald-400' },
-  extreme: { label: 'EXTREME', desc: 'Maximum speed — use with caution', color: 'text-rose-400' },
 };
 
 function formatDuration(ms: number): string {
@@ -34,16 +36,24 @@ export function LikerPanel({ onClose }: { onClose: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [stats, setStats] = useState<LikerStats | null>(null);
   const [mode, setMode] = useState<LikerMode>('human');
-  const [interval, setInterval_] = useState(1000);
+  // Safest default pacing: 1500ms (slower than the old 1000ms default).
+  const [interval, setInterval_] = useState(1500);
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One-time risk acknowledgement, persisted in the settings store. Until the
+  // user accepts, the auto-liker cannot be started.
+  const [riskAck, setRiskAck] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const connectedUser = useStore((s) => s.roomInfo?.hostUniqueId ?? '');
 
   useEffect(() => {
     if (connectedUser) setUsername(connectedUser);
   }, [connectedUser]);
+
+  useEffect(() => {
+    window.tiktok.getSettings().then((s) => setRiskAck(s.likerRiskAck ?? false)).catch(() => {});
+  }, []);
 
   const pollStats = useCallback(async () => {
     const open = await window.tiktok.likerIsOpen();
@@ -79,6 +89,7 @@ export function LikerPanel({ onClose }: { onClose: () => void }) {
   };
 
   const handleStart = async () => {
+    if (!riskAck) return;
     await window.tiktok.likerStart(mode, interval);
   };
 
@@ -195,11 +206,6 @@ export function LikerPanel({ onClose }: { onClose: () => void }) {
                     <div className={`text-sm font-medium ${info.color}`}>{info.label}</div>
                     <div className="text-[11px] text-zinc-500">{info.desc}</div>
                   </div>
-                  {m === 'extreme' && (
-                    <span className="ml-auto rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-400">
-                      HIGH RISK
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -231,6 +237,32 @@ export function LikerPanel({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
+        {/* Risk acknowledgement — required before the liker can start */}
+        {!stats?.isActive && (
+          <div className="glass mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-400">
+              Before you start
+            </div>
+            <p className="text-[12px] leading-relaxed text-amber-200/90">
+              Automating likes may violate TikTok's Terms of Service and can get
+              <span className="font-semibold"> your account warned, restricted, or banned</span>. There is no
+              way to make this fully safe — use it sparingly, at your own risk.
+            </p>
+            <label className="mt-3 flex items-start gap-2 text-[13px] text-zinc-200">
+              <input
+                type="checkbox"
+                checked={riskAck}
+                onChange={(e) => {
+                  setRiskAck(e.target.checked);
+                  window.tiktok.setLikerRiskAck(e.target.checked).catch(() => {});
+                }}
+                className="mt-0.5 accent-amber-500"
+              />
+              <span>I understand the risk to my account and accept it.</span>
+            </label>
+          </div>
+        )}
+
         {/* Controls */}
         <div className="mb-6 flex gap-3">
           {stats?.isActive ? (
@@ -243,7 +275,8 @@ export function LikerPanel({ onClose }: { onClose: () => void }) {
           ) : (
             <button
               onClick={handleStart}
-              disabled={!isOpen}
+              disabled={!isOpen || !riskAck}
+              title={!riskAck ? 'Acknowledge the risk above to enable' : undefined}
               className="flex-1 rounded-xl bg-gradient-to-r from-like-500 to-like-600 py-3 text-sm font-semibold text-white shadow-lg shadow-like-500/20 transition hover:shadow-like-500/40 disabled:opacity-40"
             >
               Start Auto-Liking

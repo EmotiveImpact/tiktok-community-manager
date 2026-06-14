@@ -359,6 +359,8 @@ export function installBridgeMock(): void {
       anthropicApiKey: '',
       autoConnect: false,
       chatLogEnabled: false,
+      aiSummaryConsented: false,
+      likerRiskAck: false,
       webhooks: { discordUrl: '', slackUrl: '', customUrl: '', events: { gifts: true, follows: true, keywords: false, milestones: true } } as WebhookConfig,
       watchlist: mockSettings.watchlist,
       thankTemplate: mockSettings.thankTemplate,
@@ -370,6 +372,8 @@ export function installBridgeMock(): void {
     setAnthropicKey: async () => ok,
     setAutoConnect: async () => ok,
     setChatLog: async () => ok,
+    setAiSummaryConsent: async () => ok,
+    setLikerRiskAck: async () => ok,
     setWebhooks: async () => ok,
     setWatchlist: async (list) => {
       mockSettings.watchlist = normalizeWatchlist(list);
@@ -413,6 +417,7 @@ export function installBridgeMock(): void {
     chatLogDir: async () => '~/Library/Application Support/LikeTapperMac/chatlogs',
     revealLogs: async () => ({ ok: false, path: '~/Library/Logs/LikeTapperMac', error: 'Not available in browser mode' }),
     logsPath: async () => '~/Library/Logs/LikeTapperMac',
+    checkForUpdates: async () => ({ ok: false, status: 'skipped' as const, message: 'Updates only run in the packaged app.' }),
     backupExport: async () => ({ ok: false }),
     backupImport: async () => ({ ok: false, error: 'Not available in browser mode' }),
     summarizeSession: async () => ({ ok: false, error: 'Not available in browser mode' }),
