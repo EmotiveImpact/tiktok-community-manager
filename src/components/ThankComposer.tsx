@@ -11,6 +11,7 @@ import { useAlerts } from '../state/alerts';
 import { useSettings } from '../state/settings';
 import { useUI } from '../state/ui';
 import { FieldLabel } from './crm';
+import { useDialog } from './useDialog';
 
 /** Clipboard write with execCommand fallback (browser demo / older webviews). */
 export async function copyText(text: string): Promise<boolean> {
@@ -76,6 +77,7 @@ export function ThankComposer({
   onThanked?: (fan?: Fan) => void;
 }) {
   const pushToast = useAlerts((s) => s.pushToast);
+  const { ref: dialogRef, dialogProps } = useDialog<HTMLDivElement>(onClose);
   const [message, setMessage] = useState('');
   const [fan, setFan] = useState<Fan | null>(null);
   const [ready, setReady] = useState(false);
@@ -131,7 +133,7 @@ export function ThankComposer({
   return (
     <>
       <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="glass fixed left-1/2 top-1/2 z-[90] w-[420px] -translate-x-1/2 -translate-y-1/2 p-5 shadow-2xl" style={{ borderRadius: 18 }} role="dialog" aria-label={`Thank ${displayName}`}>
+      <div ref={dialogRef} {...dialogProps} className="glass fixed left-1/2 top-1/2 z-[90] w-[420px] -translate-x-1/2 -translate-y-1/2 p-5 shadow-2xl" style={{ borderRadius: 18 }} role="dialog" aria-modal="true" aria-label={`Thank ${displayName}`}>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-extrabold">Thank {displayName} 💌</h2>
           <button onClick={onClose} className="panel-btn panel-btn-icon no-drag" aria-label="Close">✕</button>

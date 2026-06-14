@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
+import { useDialog } from './useDialog';
 
 export type Command = {
   id: string;
@@ -17,6 +18,7 @@ export function CommandPalette({ commands, onClose }: { commands: Command[]; onC
   const listRef = useRef<HTMLDivElement | null>(null);
   const tallies = useStore((s) => s.tallies);
   const selectUser = useStore((s) => s.selectUser);
+  const { ref: dialogRef, dialogProps } = useDialog<HTMLDivElement>(onClose);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -97,6 +99,11 @@ export function CommandPalette({ commands, onClose }: { commands: Command[]; onC
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm" onClick={onClose}>
       <div
+        ref={dialogRef}
+        {...dialogProps}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
         className="w-[600px] max-w-[90vw] overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-950/95 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
