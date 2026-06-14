@@ -134,7 +134,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
   const bday = birthdayInfo(fan?.birthday);
 
   return (
-    <aside className="flex h-full w-[304px] flex-none flex-col gap-3 overflow-y-auto">
+    <aside className="flex w-full flex-none flex-col gap-3">
       <section className="glass brand-top-border flex flex-col rounded-[18px] p-4">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">

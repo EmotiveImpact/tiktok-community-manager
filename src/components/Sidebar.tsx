@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Users, Gift, CalendarDays, MessageSquare, Upload, Settings, ChevronRight, ChevronLeft,
   Star, StickyNote, Trophy, Eye, Bell, Shield, Mic, Clapperboard, Heart,
-  BarChart3, TrendingUp, Scale, History, Grid2x2, Play,
+  BarChart3, TrendingUp, Scale, History, Grid2x2, Play, Sun, Moon,
   type LucideIcon,
 } from 'lucide-react';
 import { useTracked } from '../state/tracked';
 import { useStore } from '../state/store';
 import { useAlerts } from '../state/alerts';
 import { useUI, type Page, type LiveTool } from '../state/ui';
+import { getTheme, setTheme, type Theme } from '../lib/theme';
 
 export type { Page };
 
@@ -77,7 +79,7 @@ const ACTIVE_PILL = {
 
 function LogoMark() {
   return (
-    <div className="mb-4 flex items-center gap-3 px-1 pt-4">
+    <div className="mb-4 flex items-center gap-3 px-1 pt-1">
       <span
         className="flex h-10 w-10 flex-none items-center justify-center rounded-2xl"
         style={{ background: '#10142a' }}
@@ -106,6 +108,50 @@ function hoverable(isActive: boolean) {
       if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = NAVY_MUTED; }
     },
   };
+}
+
+/** Navy-styled window controls that used to live in the ConnectBar:
+ *  theme toggle + a shortcut to the Settings page. Always reachable. */
+function SidebarFooterControls() {
+  const setPage = useUI((s) => s.setPage);
+  const page = useUI((s) => s.page);
+  const [theme, set] = useState<Theme>(() => getTheme());
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    set(next);
+    setTheme(next);
+  };
+  const btn = 'no-drag flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl text-[12px] font-semibold transition';
+  const base = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: NAVY_TEXT } as const;
+  return (
+    <div className="no-drag mt-2 flex flex-none gap-2">
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className={btn}
+        style={base}
+        title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+        onMouseEnter={(e) => { e.currentTarget.style.background = NAVY_HOVER; e.currentTarget.style.color = 'white'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = NAVY_TEXT; }}
+      >
+        {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+        <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setPage('settings')}
+        aria-current={page === 'settings' ? 'page' : undefined}
+        className={btn}
+        style={page === 'settings' ? { ...base, background: 'rgba(238,29,82,0.16)', color: 'white' } : base}
+        title="Settings"
+        onMouseEnter={(e) => { if (page !== 'settings') { e.currentTarget.style.background = NAVY_HOVER; e.currentTarget.style.color = 'white'; } }}
+        onMouseLeave={(e) => { if (page !== 'settings') { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = NAVY_TEXT; } }}
+      >
+        <Settings size={14} />
+        <span>Settings</span>
+      </button>
+    </div>
+  );
 }
 
 export function Sidebar({ showStream, onToggleStream }: Props) {
@@ -137,6 +183,10 @@ export function Sidebar({ showStream, onToggleStream }: Props) {
         borderRight: '1px solid rgba(120, 134, 178, 0.14)',
       }}
     >
+      {/* Empty navy strip so the inset macOS traffic lights have room to sit on
+          the sidebar (looks intentional) — also a window-drag region. */}
+      <div className="titlebar-drag h-9 flex-none" />
+
       <LogoMark />
 
       {/* The sidebar "flips" between the main app nav and the live toolset. */}
@@ -266,6 +316,8 @@ export function Sidebar({ showStream, onToggleStream }: Props) {
         </span>
         <ChevronRight size={15} className="flex-none" style={{ color: 'rgba(100,116,139,1)' }} />
       </div>
+
+      <SidebarFooterControls />
     </aside>
   );
 }

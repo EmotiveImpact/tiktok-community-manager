@@ -239,75 +239,88 @@ export default function App() {
   }, []);
 
   return (
-    <div className="relative flex h-screen flex-col">
-      <ConnectBar
-        rightExtras={
-          <ConnectBarTools
-            showStream={showStream}
-            setShowStream={setShowStream}
-            trackedCount={trackedCount}
-            alertCount={alertCount}
-            onOpen={openLiveTool}
-            moreRef={moreRef}
-            showMore={showMore}
-            setShowMore={setShowMore}
-          />
-        }
-      />
+    <div className="relative flex h-screen">
+      {/* Full-height navy sidebar — nothing ever renders above it. */}
+      <Sidebar showStream={showStream} onToggleStream={() => setShowStream((v) => !v)} />
 
-      {page === 'live' && <StatsStrip />}
+      {/* Right column: thin drag strip + the active page. */}
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* Window-drag affordance (traffic lights live over the sidebar, so this
+            strip is purely for moving the window from the right side). */}
+        <div className="titlebar-drag h-8 flex-none" />
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar showStream={showStream} onToggleStream={() => setShowStream((v) => !v)} />
         {page === 'live' && (
-          <main className="flex flex-1 gap-3 overflow-hidden p-3">
-            {liveTool !== 'feed' ? (
-              <LiveToolView tool={liveTool} onClose={() => openLiveTool('feed')} />
-            ) : (
-            <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
-              {status === 'connected' ? (
-                <>
-                  <div className="flex h-[54px] flex-none items-center gap-2 border-b border-zinc-800/50 px-3">
-                    <TabButton active={tab === 'comments'} onClick={() => setTab('comments')}>Comments</TabButton>
-                    <TabButton active={tab === 'gifts'} onClick={() => setTab('gifts')}>Gifts</TabButton>
-                    <TabButton active={tab === 'questions'} onClick={() => setTab('questions')}>Q&amp;A</TabButton>
-                    <TabButton active={tab === 'top'} onClick={() => setTab('top')}>Top</TabButton>
-                    <TabButton active={tab === 'all'} onClick={() => setTab('all')}>All</TabButton>
-                    <div className="ml-auto flex items-center gap-1">
-                      <FeedFilterMenu />
-                      <FeedKebabMenu />
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-y-auto">
-                    {tab === 'comments' && <CommentFeed />}
-                    {tab === 'gifts' && <GiftFeed />}
-                    {tab === 'questions' && <QuestionFeed />}
-                    {tab === 'top' && <TopContributors />}
-                    {tab === 'all' && <AllFeed />}
-                  </div>
-                  <NoteComposer />
-                </>
-              ) : (
-                <EmptyState
-                  onOpenHistory={() => openLiveTool('history')}
-                  onOpenTracked={() => openLiveTool('tracked')}
+          <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {/* In-LIVE host/connect bar — only on the live page, never global. */}
+            <ConnectBar
+              rightExtras={
+                <ConnectBarTools
+                  showStream={showStream}
+                  setShowStream={setShowStream}
+                  trackedCount={trackedCount}
+                  alertCount={alertCount}
+                  onOpen={openLiveTool}
+                  moreRef={moreRef}
+                  showMore={showMore}
+                  setShowMore={setShowMore}
                 />
+              }
+            />
+            <div className="flex min-h-0 flex-1 gap-3 overflow-hidden p-3">
+              {liveTool !== 'feed' ? (
+                <LiveToolView tool={liveTool} onClose={() => openLiveTool('feed')} />
+              ) : (
+              <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
+                {status === 'connected' ? (
+                  <>
+                    <div className="flex h-[54px] flex-none items-center gap-2 border-b border-zinc-800/50 px-3">
+                      <TabButton active={tab === 'comments'} onClick={() => setTab('comments')}>Comments</TabButton>
+                      <TabButton active={tab === 'gifts'} onClick={() => setTab('gifts')}>Gifts</TabButton>
+                      <TabButton active={tab === 'questions'} onClick={() => setTab('questions')}>Q&amp;A</TabButton>
+                      <TabButton active={tab === 'top'} onClick={() => setTab('top')}>Top</TabButton>
+                      <TabButton active={tab === 'all'} onClick={() => setTab('all')}>All</TabButton>
+                      <div className="ml-auto flex items-center gap-1">
+                        <FeedFilterMenu />
+                        <FeedKebabMenu />
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      {tab === 'comments' && <CommentFeed />}
+                      {tab === 'gifts' && <GiftFeed />}
+                      {tab === 'questions' && <QuestionFeed />}
+                      {tab === 'top' && <TopContributors />}
+                      {tab === 'all' && <AllFeed />}
+                    </div>
+                    <NoteComposer />
+                  </>
+                ) : (
+                  <EmptyState
+                    onOpenHistory={() => openLiveTool('history')}
+                    onOpenTracked={() => openLiveTool('tracked')}
+                  />
+                )}
+              </section>
               )}
-            </section>
-            )}
-            {showStream && status === 'connected' && !WIDE_TOOLS.has(liveTool) && (
-              <StreamPlayer onClose={() => setShowStream(false)} />
-            )}
-            {status === 'connected' && <FanMemoryPanel />}
+              {showStream && status === 'connected' && !WIDE_TOOLS.has(liveTool) && (
+                <StreamPlayer onClose={() => setShowStream(false)} />
+              )}
+              {/* Right rail: stat counters (top) then Fan Memory. */}
+              {status === 'connected' && (
+                <div className="flex w-[304px] flex-none flex-col gap-3 overflow-y-auto">
+                  <StatsStrip />
+                  <FanMemoryPanel />
+                </div>
+              )}
+            </div>
           </main>
         )}
         {page === 'dashboard' && (
-          <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <Dashboard onOpenHistory={() => openLiveTool('history')} onGoLive={() => setPage('live')} onGoReminders={() => setPage('reminders')} />
           </main>
         )}
         {page !== 'live' && page !== 'dashboard' && (
-          <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             {page === 'followers' && <Followers onGoImport={() => setPage('import')} onGoLive={() => setPage('live')} />}
             {page === 'gifts' && <Gifts onGoLive={() => setPage('live')} />}
             {page === 'reminders' && <Reminders />}
@@ -316,7 +329,6 @@ export default function App() {
             {page === 'settings' && <SettingsPage />}
           </main>
         )}
-
       </div>
 
       <UserDetailDrawer />
