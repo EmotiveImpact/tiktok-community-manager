@@ -28,6 +28,13 @@ export type TrackedUser = {
   addedAt: number;
 };
 
+export type WatchEntry = {
+  username: string;
+  notify: boolean;
+  /** epoch ms of the last time this user was detected live, or null if never */
+  lastSeen: number | null;
+};
+
 export type ModerationUserTag = 'vip' | 'regular' | 'troll' | 'blocked';
 
 export type ModerationSettings = {
@@ -79,7 +86,7 @@ type Schema = {
   chatLogEnabled: boolean;
   notes: Record<string, UserNote>;
   webhooks: WebhookConfig;
-  watchlist: string[];
+  watchlist: WatchEntry[];
   trackedUsers: TrackedUser[];
   thankTemplate: string;
   earnings: EarningsSettings;
@@ -137,7 +144,35 @@ function load(): Schema {
   } catch {
     cache = { ...DEFAULTS };
   }
+  cache!.watchlist = normalizeWatchlist(cache!.watchlist);
   return cache!;
+}
+
+/**
+ * Backward-compatible watchlist loader. Older builds persisted `string[]`;
+ * current builds persist `WatchEntry[]`. Map any legacy string entries to
+ * `{ username, notify: true, lastSeen: null }` and fill in missing fields on
+ * partial objects so the rest of the app can rely on the shape.
+ */
+function normalizeWatchlist(raw: unknown): WatchEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const out: WatchEntry[] = [];
+  for (const item of raw) {
+    if (typeof item === 'string') {
+      const username = item.trim();
+      if (username) out.push({ username, notify: true, lastSeen: null });
+    } else if (item && typeof item === 'object' && typeof (item as any).username === 'string') {
+      const e = item as Partial<WatchEntry>;
+      const username = String(e.username).trim();
+      if (!username) continue;
+      out.push({
+        username,
+        notify: e.notify !== false,
+        lastSeen: typeof e.lastSeen === 'number' ? e.lastSeen : null,
+      });
+    }
+  }
+  return out;
 }
 
 function save(data: Schema) {
@@ -157,6 +192,24 @@ export const settings = {
     save(data);
   },
 };
+
+/**
+ * Record that a watchlist user was seen live at `at`. Persists `lastSeen` on
+ * the matching watchlist entry. No-op if the user isn't on the watchlist.
+ * Returns the updated entry (or null when not found) so callers can broadcast.
+ */
+export function recordWatchlistSeen(username: string, at: number): WatchEntry | null {
+  const data = load();
+  const list = normalizeWatchlist(data.watchlist);
+  const idx = list.findIndex((e) => e.username === username);
+  if (idx === -1) return null;
+  const updated = { ...list[idx], lastSeen: at };
+  list[idx] = updated;
+  data.watchlist = list;
+  cache = data;
+  save(data);
+  return updated;
+}
 
 export const notesStore = {
   all(): Record<string, UserNote> {

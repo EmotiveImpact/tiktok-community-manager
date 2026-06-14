@@ -1,5 +1,5 @@
 import { WebcastPushConnection } from 'tiktok-live-connector';
-import { settings } from './store';
+import { settings, recordWatchlistSeen, type WatchEntry } from './store';
 
 export type LiveDetectedEvent = {
   username: string;
@@ -43,17 +43,23 @@ export class WatchlistPoller {
     if (this.isRunning) return;
     this.isRunning = true;
     try {
-      const watchlist = (settings.get('watchlist', []) as string[]) ?? [];
+      const watchlist = (settings.get('watchlist', []) as WatchEntry[]) ?? [];
       if (watchlist.length === 0) return;
       const signApiKey = (settings.get('signApiKey', '') as string) || undefined;
 
-      for (const username of watchlist) {
+      for (const entry of watchlist) {
+        const username = entry.username;
         const isLive = await this.checkLive(username, signApiKey);
         const now = Date.now();
         const wasLive = this.lastSeenLive.has(username);
         if (isLive && !wasLive) {
           this.lastSeenLive.set(username, now);
-          this.cbs.onLiveDetected({ username, detectedAt: now });
+          // Persist lastSeen for every tracked user so the panel can show it,
+          // but only raise a notification when notify is on for this entry.
+          recordWatchlistSeen(username, now);
+          if (entry.notify !== false) {
+            this.cbs.onLiveDetected({ username, detectedAt: now });
+          }
         } else if (!isLive && wasLive) {
           this.lastSeenLive.delete(username);
         } else if (isLive) {

@@ -1,32 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { avatarGradient } from '../lib/avatars';
+import { relativeTime } from '../lib/format';
+import type { WatchEntry } from '../types';
 import { PanelHeader, PanelShell } from './PanelHeader';
 
-type WatchedUser = {
-  username: string;
-  lastSeen: number | null;
-  notify: boolean;
-};
-
 export function FollowerWatchlist({ onClose }: { onClose: () => void }) {
-  const [watchlist, setWatchlist] = useState<WatchedUser[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchEntry[]>([]);
   const [input, setInput] = useState('');
+  // Mirror the latest list in a ref so the live-event listener can patch it
+  // without re-subscribing on every render.
+  const listRef = useRef<WatchEntry[]>([]);
+  listRef.current = watchlist;
 
   useEffect(() => {
     window.tiktok.getSettings().then((s) => {
-      setWatchlist((s.watchlist ?? []).map((u: string) => ({ username: u, lastSeen: null, notify: true })));
+      setWatchlist(s.watchlist ?? []);
     });
   }, []);
 
-  const save = (list: WatchedUser[]) => {
+  // When the poller detects a watched user live, stamp lastSeen so the panel
+  // shows a real "Last seen" time. The store has already persisted it main-side.
+  useEffect(() => {
+    const off = window.tiktok.onWatchlistLive(({ username, detectedAt }) => {
+      const next = listRef.current.map((w) =>
+        w.username === username ? { ...w, lastSeen: detectedAt } : w,
+      );
+      setWatchlist(next);
+    });
+    return off;
+  }, []);
+
+  const save = (list: WatchEntry[]) => {
     setWatchlist(list);
-    window.tiktok.setWatchlist(list.map((w) => w.username));
+    window.tiktok.setWatchlist(list);
   };
 
   const addUser = () => {
     const handle = input.trim().replace(/^@/, '');
     if (!handle || watchlist.some((w) => w.username === handle)) return;
-    save([...watchlist, { username: handle, lastSeen: null, notify: true }]);
+    save([...watchlist, { username: handle, notify: true, lastSeen: null }]);
     setInput('');
   };
 
@@ -79,12 +91,13 @@ export function FollowerWatchlist({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-zinc-200">@{w.username}</div>
-                  <div className="text-[10px] text-zinc-600">
-                    {w.lastSeen ? `Last seen ${new Date(w.lastSeen).toLocaleDateString()}` : 'Not seen yet'}
+                  <div className="text-[10px] text-zinc-600" title={w.lastSeen ? new Date(w.lastSeen).toLocaleString() : undefined}>
+                    {w.lastSeen ? `Last seen live ${relativeTime(w.lastSeen)}` : 'Not seen live yet'}
                   </div>
                 </div>
                 <button
                   onClick={() => toggleNotify(w.username)}
+                  title={w.notify ? 'Alerts on — you\'ll be notified when this user goes live' : 'Alerts off — no go-live notification for this user'}
                   className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
                     w.notify ? 'bg-like-500/15 text-like-400' : 'bg-zinc-800 text-zinc-500'
                   }`}

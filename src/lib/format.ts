@@ -51,3 +51,20 @@ export function timeAgo(ts: number, now = Date.now()): string {
   if (s < 3600) return `${Math.floor(s / 60)}m`;
   return `${Math.floor(s / 3600)}h`;
 }
+
+/** Human relative time spanning seconds → years, e.g. "just now", "5m ago", "3d ago". */
+export function relativeTime(ts: number, now = Date.now()): string {
+  const s = Math.floor((now - ts) / 1000);
+  if (s < 0) return 'just now';
+  if (s < 45) return 'just now';
+  if (s < 90) return '1m ago';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo}mo ago`;
+  return `${Math.floor(mo / 12)}y ago`;
+}

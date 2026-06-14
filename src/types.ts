@@ -115,6 +115,13 @@ export type RoomInfo = {
 
 // --- Settings --------------------------------------------------------------
 
+export type WatchEntry = {
+  username: string;
+  notify: boolean;
+  /** epoch ms of the last time this user was detected live, or null if never */
+  lastSeen: number | null;
+};
+
 export type EarningsSettings = {
   enabled: boolean;
   ratePer1000: number;
@@ -259,7 +266,7 @@ declare global {
         autoConnect: boolean;
         chatLogEnabled: boolean;
         webhooks: WebhookConfig;
-        watchlist: string[];
+        watchlist: WatchEntry[];
         thankTemplate: string;
         earnings: EarningsSettings;
         community: CommunitySettings;
@@ -270,7 +277,7 @@ declare global {
       setAutoConnect: (val: boolean) => Promise<{ ok: boolean }>;
       setChatLog: (val: boolean) => Promise<{ ok: boolean }>;
       setWebhooks: (cfg: WebhookConfig) => Promise<{ ok: boolean }>;
-      setWatchlist: (list: string[]) => Promise<{ ok: boolean }>;
+      setWatchlist: (list: WatchEntry[]) => Promise<{ ok: boolean }>;
       setThankTemplate: (tpl: string) => Promise<{ ok: boolean }>;
       setEarnings: (cfg: EarningsSettings) => Promise<{ ok: boolean }>;
       setCommunity: (cfg: CommunitySettings) => Promise<{ ok: boolean; error?: string }>;

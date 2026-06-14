@@ -23,6 +23,7 @@ import type {
   SessionSummary,
   UserBrief,
   UserNote,
+  WatchEntry,
   WebhookConfig,
 } from '../types';
 import { tierForDiamonds } from './tier';
@@ -87,6 +88,7 @@ function pick<T>(arr: T[]): T {
 export function installBridgeMock(): void {
   const statusListeners = new Set<(s: { status: ConnectionStatus; error?: string }) => void>();
   const eventListeners = new Set<(evt: LiveEvent) => void>();
+  const watchlistLiveListeners = new Set<(d: { username: string; detectedAt: number }) => void>();
   let timer: ReturnType<typeof setInterval> | null = null;
   let viewerCount = 1180;
   let totalLikes = 38420;
@@ -240,19 +242,37 @@ export function installBridgeMock(): void {
   const thankRequests: { uniqueId: string; date: string }[] = [];
 
   // Persisted (localStorage) settings so the browser demo behaves like the app.
-  type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings; moderation: ModerationSettings };
+  type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings; moderation: ModerationSettings; watchlist: WatchEntry[] };
   const SETTINGS_KEY = 'mock-settings-v1';
   const defaultSettings = (): MockSettings => ({
     thankTemplate: 'Hey {nickname}! Thank you so much for the {giftName} 💕 You made my stream!',
     earnings: { enabled: false, ratePer1000: 10, currency: '£' },
     community: { quietDays: 14, birthdayWindowDays: 30, tiers: { regular: 100, vip: 1000, whale: 10000 } },
     moderation: { blockedUsers: [], blockedKeywords: [], userTags: {}, spamFilterEnabled: false, spamThreshold: 20 },
+    watchlist: [],
   });
+  // Mirror the desktop store migration: legacy string[] -> WatchEntry[].
+  const normalizeWatchlist = (raw: unknown): WatchEntry[] => {
+    if (!Array.isArray(raw)) return [];
+    const out: WatchEntry[] = [];
+    for (const item of raw) {
+      if (typeof item === 'string') {
+        const username = item.trim();
+        if (username) out.push({ username, notify: true, lastSeen: null });
+      } else if (item && typeof item === 'object' && typeof (item as any).username === 'string') {
+        const e = item as Partial<WatchEntry>;
+        const username = String(e.username).trim();
+        if (username) out.push({ username, notify: e.notify !== false, lastSeen: typeof e.lastSeen === 'number' ? e.lastSeen : null });
+      }
+    }
+    return out;
+  };
   let mockSettings: MockSettings = defaultSettings();
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) mockSettings = { ...defaultSettings(), ...JSON.parse(raw) };
   } catch { /* fresh */ }
+  mockSettings.watchlist = normalizeWatchlist(mockSettings.watchlist);
   const saveSettings = () => {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(mockSettings)); } catch { /* ignore */ }
   };
@@ -282,7 +302,7 @@ export function installBridgeMock(): void {
       autoConnect: false,
       chatLogEnabled: false,
       webhooks: { discordUrl: '', slackUrl: '', customUrl: '', events: { gifts: true, follows: true, keywords: false, milestones: true } } as WebhookConfig,
-      watchlist: [],
+      watchlist: mockSettings.watchlist,
       thankTemplate: mockSettings.thankTemplate,
       earnings: mockSettings.earnings,
       community: mockSettings.community,
@@ -293,7 +313,11 @@ export function installBridgeMock(): void {
     setAutoConnect: async () => ok,
     setChatLog: async () => ok,
     setWebhooks: async () => ok,
-    setWatchlist: async () => ok,
+    setWatchlist: async (list) => {
+      mockSettings.watchlist = normalizeWatchlist(list);
+      saveSettings();
+      return ok;
+    },
     setThankTemplate: async (tpl) => {
       mockSettings.thankTemplate = tpl;
       saveSettings();
@@ -565,8 +589,22 @@ export function installBridgeMock(): void {
       return ok;
     },
     fansDataDir: async () => '~/Documents/LikeTapperMac/fans',
-    watchlistPoke: async () => ok,
-    onWatchlistLive: () => () => {},
+    watchlistPoke: async () => {
+      // Browser demo: simulate detecting the first notify-enabled watchlist user
+      // as "live" so the panel's lastSeen + alert wiring can be exercised.
+      const target = mockSettings.watchlist.find((w) => w.notify !== false);
+      if (target) {
+        const detectedAt = Date.now();
+        target.lastSeen = detectedAt;
+        saveSettings();
+        watchlistLiveListeners.forEach((cb) => cb({ username: target.username, detectedAt }));
+      }
+      return ok;
+    },
+    onWatchlistLive: (cb) => {
+      watchlistLiveListeners.add(cb);
+      return () => watchlistLiveListeners.delete(cb);
+    },
     trackedList: async () => tracked,
     trackedAdd: async ({ uniqueId, nickname }) => {
       if (tracked.some((t) => t.uniqueId === uniqueId)) return { ok: true, alreadyTracked: true };

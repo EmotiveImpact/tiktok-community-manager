@@ -20,7 +20,7 @@ const api = {
     ipcRenderer.invoke('settings:setChatLog', val) as Promise<{ ok: boolean }>,
   setWebhooks: (cfg: any) =>
     ipcRenderer.invoke('settings:setWebhooks', cfg) as Promise<{ ok: boolean }>,
-  setWatchlist: (list: string[]) =>
+  setWatchlist: (list: Array<{ username: string; notify: boolean; lastSeen: number | null }>) =>
     ipcRenderer.invoke('settings:setWatchlist', list) as Promise<{ ok: boolean }>,
   setThankTemplate: (tpl: string) =>
     ipcRenderer.invoke('settings:setThankTemplate', tpl) as Promise<{ ok: boolean }>,

@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "3355"],
       "port": 3355
+    },
+    {
+      "name": "vite3414",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "3414"],
+      "port": 3414
     }
   ]
 }

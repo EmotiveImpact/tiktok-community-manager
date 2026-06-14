@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TikTokSession } from './tiktok';
-import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, type CommunitySettings, type EarningsSettings, type ModerationSettings } from './store';
+import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, type CommunitySettings, type EarningsSettings, type ModerationSettings, type WatchEntry } from './store';
 import * as sessions from './sessions';
 import { summarize, type SummaryInput } from './summarize';
 import { exportSession, type ExportType } from './export';
@@ -340,8 +340,20 @@ ipcMain.handle('settings:setWebhooks', (_e, cfg: any) => {
   return { ok: true };
 });
 
-ipcMain.handle('settings:setWatchlist', (_e, list: string[]) => {
-  settings.set('watchlist', list);
+ipcMain.handle('settings:setWatchlist', (_e, list: WatchEntry[]) => {
+  // Normalize defensively: accept legacy string[] from older renderers too.
+  const normalized: WatchEntry[] = (Array.isArray(list) ? list : [])
+    .map((item: any) =>
+      typeof item === 'string'
+        ? { username: item.trim(), notify: true, lastSeen: null }
+        : {
+            username: String(item?.username ?? '').trim(),
+            notify: item?.notify !== false,
+            lastSeen: typeof item?.lastSeen === 'number' ? item.lastSeen : null,
+          },
+    )
+    .filter((e: WatchEntry) => e.username);
+  settings.set('watchlist', normalized);
   watchlistPoller.pokeNow();
   return { ok: true };
 });

@@ -18,6 +18,10 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
   const [reloadKey, setReloadKey] = useState(0);
   const hasHls = !!room?.hlsUrl;
   const [mode, setMode] = useState<ViewMode>(hasHls ? 'hls' : 'mobile');
+  // Real quality control, driven by the HLS manifest. `levels` lists the
+  // selectable renditions (height in px); `currentLevel` is -1 for Auto.
+  const [levels, setLevels] = useState<{ index: number; height: number }[]>([]);
+  const [currentLevel, setCurrentLevel] = useState(-1);
 
   useEffect(() => {
     if (mode !== 'hls') return;
@@ -35,12 +39,27 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
       }
     };
     cleanup();
+    setLevels([]);
+    setCurrentLevel(-1);
 
     if (Hls.isSupported()) {
       const hls = new Hls({ lowLatencyMode: true });
       hlsRef.current = hls;
       hls.loadSource(url);
       hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
+        // De-dup by height, descending (720p, 480p, …) for a tidy menu.
+        const seen = new Set<number>();
+        const ls = data.levels
+          .map((lvl, index) => ({ index, height: lvl.height || 0 }))
+          .filter((l) => l.height > 0 && !seen.has(l.height) && seen.add(l.height))
+          .sort((a, b) => b.height - a.height);
+        setLevels(ls);
+        setCurrentLevel(hls.currentLevel);
+      });
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => {
+        setCurrentLevel(hls.autoLevelEnabled ? -1 : data.level);
+      });
       hls.on(Hls.Events.ERROR, (_e, data) => {
         if (data.fatal) {
           setError(
@@ -86,6 +105,19 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
       setMuted(v.muted);
     }
   };
+
+  const selectLevel = (index: number) => {
+    const hls = hlsRef.current;
+    if (!hls) return;
+    // -1 restores ABR auto selection; any other index pins that rendition.
+    hls.currentLevel = index;
+    setCurrentLevel(index);
+  };
+
+  const currentLevelLabel =
+    currentLevel === -1
+      ? 'Auto'
+      : `${levels.find((l) => l.index === currentLevel)?.height ?? ''}p`;
 
   return (
     <aside className="flex h-full w-[390px] flex-none flex-col p-0">
@@ -176,7 +208,26 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
                 {paused ? '▶' : '⏸'}
               </Ctrl>
               <Ctrl title="Reload stream" onClick={() => setReloadKey((k) => k + 1)}>⟳</Ctrl>
-              <span className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400">AUTO</span>
+              {levels.length >= 2 ? (
+                <select
+                  value={currentLevel}
+                  onChange={(e) => selectLevel(Number(e.target.value))}
+                  title="Stream quality"
+                  className="cursor-pointer rounded-md border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-300 outline-none transition hover:border-zinc-600"
+                >
+                  <option value={-1}>Auto</option>
+                  {levels.map((l) => (
+                    <option key={l.index} value={l.index}>{l.height}p</option>
+                  ))}
+                </select>
+              ) : (
+                <span
+                  title="Live stream quality is set by the broadcaster"
+                  className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400"
+                >
+                  {currentLevelLabel === 'Auto' ? 'LIVE' : currentLevelLabel}
+                </span>
+              )}
               <span className="ml-auto" />
               <Ctrl title="Picture in picture" onClick={togglePip}>⧉</Ctrl>
               <Ctrl title={muted ? 'Unmute' : 'Mute'} onClick={toggleMute}>{muted ? '🔇' : '🔊'}</Ctrl>
