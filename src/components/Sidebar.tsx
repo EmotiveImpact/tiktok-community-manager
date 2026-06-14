@@ -1,15 +1,13 @@
-import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Users, Gift, CalendarDays, MessageSquare, Upload, Settings, ChevronLeft,
   Star, StickyNote, Trophy, Eye, Bell, Shield, Mic, Clapperboard, Heart,
-  BarChart3, TrendingUp, Scale, History, Grid2x2, Sun, Moon,
+  BarChart3, TrendingUp, Scale, History, Grid2x2,
   type LucideIcon,
 } from 'lucide-react';
 import { useTracked } from '../state/tracked';
 import { useStore } from '../state/store';
 import { useAlerts } from '../state/alerts';
 import { useUI, type Page, type LiveTool } from '../state/ui';
-import { getTheme, setTheme, type Theme } from '../lib/theme';
 
 export type { Page };
 
@@ -102,50 +100,6 @@ function hoverable(isActive: boolean) {
       if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = NAVY_MUTED; }
     },
   };
-}
-
-/** Navy-styled window controls that used to live in the ConnectBar:
- *  theme toggle + a shortcut to the Settings page. Always reachable. */
-function SidebarFooterControls() {
-  const setPage = useUI((s) => s.setPage);
-  const page = useUI((s) => s.page);
-  const [theme, set] = useState<Theme>(() => getTheme());
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    set(next);
-    setTheme(next);
-  };
-  const btn = 'no-drag flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl text-[12px] font-semibold transition';
-  const base = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: NAVY_TEXT } as const;
-  return (
-    <div className="no-drag mt-2 flex flex-none gap-2">
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className={btn}
-        style={base}
-        title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-        onMouseEnter={(e) => { e.currentTarget.style.background = NAVY_HOVER; e.currentTarget.style.color = 'white'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = NAVY_TEXT; }}
-      >
-        {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-        <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setPage('settings')}
-        aria-current={page === 'settings' ? 'page' : undefined}
-        className={btn}
-        style={page === 'settings' ? { ...base, background: 'rgba(238,29,82,0.16)', color: 'white' } : base}
-        title="Settings"
-        onMouseEnter={(e) => { if (page !== 'settings') { e.currentTarget.style.background = NAVY_HOVER; e.currentTarget.style.color = 'white'; } }}
-        onMouseLeave={(e) => { if (page !== 'settings') { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = NAVY_TEXT; } }}
-      >
-        <Settings size={14} />
-        <span>Settings</span>
-      </button>
-    </div>
-  );
 }
 
 export function Sidebar() {
@@ -259,8 +213,6 @@ export function Sidebar() {
           </nav>
         )}
       </div>
-
-      <SidebarFooterControls />
     </aside>
   );
 }

@@ -6,6 +6,7 @@ import type { Fan, GiftRecord, Reminder, SessionRecord, SessionSummary, UserNote
 import { estimateMoney, formatDiamonds, formatNumber } from '../lib/format';
 import { useSettingsLoad } from '../state/settings';
 import { ThankComposer } from '../components/ThankComposer';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { FanAvatar, TierChip, fanName } from '../components/crm';
 
 // ---------------------------------------------------------------------------
@@ -349,6 +350,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
           >
             <Calendar size={13} /> {weekRangeLabel()}
           </span>
+          <ThemeToggle />
           <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag !h-8 !px-4 whitespace-nowrap"><Radio size={13} className="mr-1.5" /> Go LIVE</button>
           <button onClick={() => navTo('followers')} className="panel-btn no-drag !h-8 !px-4 whitespace-nowrap">Fan profile</button>
         </div>
