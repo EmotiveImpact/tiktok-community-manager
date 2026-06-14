@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  LayoutDashboard, Radio, Users, Gift, CalendarDays, MessageSquare, Upload, Settings, ChevronRight, ChevronLeft,
+  LayoutDashboard, Radio, Users, Gift, CalendarDays, MessageSquare, Upload, Settings, ChevronLeft,
   Star, StickyNote, Trophy, Eye, Bell, Shield, Mic, Clapperboard, Heart,
   BarChart3, TrendingUp, Scale, History, Grid2x2, Sun, Moon,
   type LucideIcon,
@@ -160,7 +160,6 @@ export function Sidebar() {
   const roomCount = useStore((s) => s.roomMembers.size);
   const alertCount = useAlerts((s) => s.history.length);
   const status = useStore((s) => s.status);
-  const room = useStore((s) => s.roomInfo);
   const connected = status === 'connected';
 
   const counts: Partial<Record<LiveTool, number>> = {
@@ -259,29 +258,6 @@ export function Sidebar() {
             ))}
           </nav>
         )}
-      </div>
-
-      {/* Creator profile card (web design) */}
-      <div className="no-drag flex flex-none items-center gap-3 rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        {connected && room?.hostAvatar ? (
-          <img src={room.hostAvatar} alt="" className="h-9 w-9 flex-none rounded-full object-cover ring-2 ring-[#EE1D52]/60" />
-        ) : (
-          <span
-            className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#EE1D52,#69C9D0)' }}
-          >
-            {connected && room ? room.hostNickname.charAt(0).toUpperCase() : 'C'}
-          </span>
-        )}
-        <span className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate text-sm font-semibold text-white">
-            {connected && room ? room.hostNickname : 'Creator'}
-          </span>
-          <span className="block truncate text-[11px]" style={{ color: connected ? '#ff5b85' : NAVY_MUTED }}>
-            {connected && room ? `● LIVE · @${room.hostUniqueId}` : 'LIVE Creator'}
-          </span>
-        </span>
-        <ChevronRight size={15} className="flex-none" style={{ color: 'rgba(100,116,139,1)' }} />
       </div>
 
       <SidebarFooterControls />
