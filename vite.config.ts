@@ -24,21 +24,18 @@ export default defineConfig({
       renderer: {},
     }),
   ],
+  // Relative base so assets resolve under the packaged app's file:// origin.
+  base: './',
   build: {
     outDir: 'dist',
     rollupOptions: {
       output: {
-        // Split the single ~940KB bundle so the renderer ships a small vendor
-        // core up front and lazy-loads heavy libs only where they're used.
-        manualChunks: {
-          // React core — stable, cached across deploys, loaded everywhere.
-          'vendor-react': ['react', 'react-dom'],
-          // hls.js is only pulled in by StreamPlayer; keep it out of the
-          // initial bundle so opening the live view doesn't pay for it.
-          'vendor-hls': ['hls.js'],
-          // Icon set used by a handful of views.
-          'vendor-icons': ['lucide-react'],
-        },
+        // IMPORTANT: keep the renderer as a SINGLE self-contained bundle.
+        // The packaged app loads index.html from file://, and cross-file ES
+        // module imports between split chunks are blocked by Chromium's CORS
+        // policy on file:// (origin "null") — which renders a blank window.
+        // A single chunk has no inter-chunk imports, so it loads correctly.
+        inlineDynamicImports: true,
       },
     },
   },
