@@ -45,7 +45,7 @@ export class WatchlistPoller {
     try {
       const watchlist = (settings.get('watchlist', []) as WatchEntry[]) ?? [];
       if (watchlist.length === 0) return;
-      const signApiKey = (settings.get('signApiKey', '') as string) || undefined;
+      const signApiKey = (settings.get('signApiKey', '') as string).trim() || null;
 
       for (const entry of watchlist) {
         const username = entry.username;
@@ -72,20 +72,21 @@ export class WatchlistPoller {
     }
   }
 
-  private async checkLive(username: string, signApiKey: string | undefined): Promise<boolean> {
-    let conn: WebcastPushConnection | null = null;
+  private async checkLive(username: string, signApiKey: string | null): Promise<boolean> {
+    // v2: use the dedicated fetchIsLive() probe instead of opening a full
+    // websocket connection. In v1 the poller called connect() and inspected
+    // `state.roomInfo`, but v2 returns `roomInfo: null` from connect() unless
+    // `fetchRoomInfoOnConnect` is set — so the old truthiness check would never
+    // detect a live user. fetchIsLive() hits room-info (HTML → API → Euler
+    // fallbacks) and is far lighter (no WS upgrade / no event subscription).
     try {
-      conn = new WebcastPushConnection(username, {
+      const conn = new WebcastPushConnection(username, {
         processInitialData: false,
         enableExtendedGiftInfo: false,
         signApiKey,
       });
-      const state: any = await conn.connect();
-      const live = state?.isConnected === true && state?.roomInfo;
-      conn.disconnect();
-      return !!live;
+      return await conn.fetchIsLive();
     } catch {
-      try { conn?.disconnect(); } catch { /* ignore */ }
       return false;
     }
   }

@@ -91,10 +91,24 @@ export class TikTokSession {
   constructor(username: string, cbs: Callbacks) {
     this.username = username.replace(/^@/, '').trim();
     this.cbs = cbs;
-    const signApiKey = settings.get('signApiKey', '') || undefined;
+    // v2 signing: the constructor accepts `signApiKey` (Euler / eulerstream API
+    // key) directly on the options object — it is forwarded to the bundled
+    // EulerSigner. v1 also accepted this key but the *default* (no-key) path
+    // still works because Euler offers a free anonymous tier. Pass `null` (not
+    // an empty string) when unset so the lib uses its default signer.
+    const signApiKey = (settings.get('signApiKey', '') as string).trim() || null;
     this.conn = new WebcastPushConnection(this.username, {
+      // Replays the last ~minute of events on connect.
       processInitialData: true,
-      enableExtendedGiftInfo: false,
+      // v2: room info (host, viewers, stream URLs, title, start time) is NOT
+      // fetched on connect unless this is enabled — connect()'s returned state
+      // has `roomInfo: null` without it. Required for fix #1.
+      fetchRoomInfoOnConnect: true,
+      // v2: populates `availableGifts` so the legacy converter can attach
+      // `extendedGiftInfo` (which carries the gift name + diamond_count) to each
+      // gift event. Without this, streamed gifts that lack inline giftDetails
+      // surface as `gift_<id>`. Required for fix #2.
+      enableExtendedGiftInfo: true,
       signApiKey,
     });
     this.wireEvents();
@@ -123,16 +137,26 @@ export class TikTokSession {
     });
 
     c.on('gift', (d: any) => {
-      const isStreakable = d?.giftType === 1;
-      if (isStreakable && !d?.repeatEnd) return;
+      // v2 gift shape: the legacy data-converter flattens `giftDetails` (type
+      // `Gift`) onto the top-level object, so `d.giftName` / `d.diamondCount` /
+      // `d.giftType` come from there. For streamed repeat gifts that arrive
+      // without inline giftDetails, `enableExtendedGiftInfo` attaches the raw
+      // gift-list entry as `d.extendedGiftInfo` (snake_case: `name`,
+      // `diamond_count`). Read both so a name is always resolved.
+      const isStreakable = d?.giftType === 1 || d?.gift?.gift_type === 1;
+      const repeatEnded = d?.repeatEnd === true || d?.repeatEnd === 1 || d?.gift?.repeat_end === 1;
+      if (isStreakable && !repeatEnded) return;
+      const giftId = d?.giftId ?? d?.id ?? d?.gift?.gift_id ?? 0;
       this.cbs.onEvent({
         type: 'gift',
         ts: Date.now(),
         user: brief(d),
-        giftId: d?.giftId ?? 0,
-        giftName: d?.giftName ?? d?.extendedGiftInfo?.name ?? `gift_${d?.giftId}`,
-        diamondCount: d?.diamondCount ?? d?.extendedGiftInfo?.diamond_count ?? 0,
-        repeatCount: d?.repeatCount ?? 1,
+        giftId,
+        giftName:
+          d?.giftName ?? d?.extendedGiftInfo?.name ?? d?.describe ?? `gift_${giftId}`,
+        diamondCount:
+          d?.diamondCount ?? d?.extendedGiftInfo?.diamond_count ?? 0,
+        repeatCount: d?.repeatCount ?? d?.gift?.repeat_count ?? 1,
       });
     });
 
@@ -145,9 +169,15 @@ export class TikTokSession {
     c.on('share', (d: any) => {
       this.cbs.onEvent({ type: 'share', ts: Date.now(), user: brief(d) });
     });
-    c.on('subscribe', (d: any) => {
-      this.cbs.onEvent({ type: 'subscribe', ts: Date.now(), user: brief(d) });
-    });
+    // NOTE: tiktok-live-connector v2 has NO 'subscribe' event. The v1 'subscribe'
+    // listener here never fired (the WebcastEvent enum has no SUBSCRIBE member —
+    // the closest is SUPER_FAN='superFan', a distinct concept). Listening for it
+    // was dead code, so it is removed. The renderer's subscribe counters degrade
+    // to 0 honestly on real connections (the browser demo still synthesises
+    // subscribe events via bridge-mock). If TikTok subscription events are ever
+    // needed, they would have to be derived from member badges, not a top-level
+    // event. The 'subscribe' NormalizedEvent type is retained so the mock and any
+    // historical session records remain valid.
 
     c.on('roomUser', (d: any) => {
       this.cbs.onEvent({
@@ -194,6 +224,10 @@ export class TikTokSession {
       });
     });
 
+    // v2: 'captionMessage' is a real event (WebcastEvent.CAPTION_MESSAGE).
+    // WebcastCaptionMessage shape: { content: {lang, content}[], sentenceId,
+    // sequenceId, definite, timestampMs, durationMs } — durationMs/timestampMs
+    // are protobuf strings, hence the Number() coercion below.
     c.on('captionMessage', (d: any) => {
       const contents = (d?.content ?? []) as Array<{ lang?: string; content?: string }>;
       if (contents.length === 0) return;
@@ -229,11 +263,21 @@ export class TikTokSession {
       const state: any = await this.conn.connect();
       this.reconnectAttempt = 0;
       this.cbs.onStatus('connected');
-      const ri = state?.roomInfo ?? {};
+      // v2 room info nesting (fix #1):
+      //   connect() returns TikTokLiveConnectionState whose `roomInfo` is the
+      //   raw `room/info/` API response: { data: {...}, extra, status_code }.
+      //   In v1 the same fields (owner, stream_url, title, create_time,
+      //   like_count, user_count) were read off `roomInfo` directly — one level
+      //   too high in v2, which is why host/viewers/HLS all came back empty.
+      //   The field names *inside* `.data` are unchanged from v1 (snake_case
+      //   owner.display_id, stream_url.hls_pull_url_map, owner.follow_info.
+      //   follower_count, owner.avatar_thumb.url_list, etc.). We fall back to the
+      //   top level so a future shape that flattens again still works.
+      const ri = state?.roomInfo?.data ?? state?.roomInfo ?? {};
       const owner = ri?.owner ?? {};
       const su = ri?.stream_url ?? ri?.streamUrl ?? {};
       if (!su || Object.keys(su).length === 0) {
-        console.log('[tiktok] No stream_url in roomInfo. Keys:', Object.keys(ri).join(', '));
+        console.log('[tiktok] No stream_url in roomInfo.data. Keys:', Object.keys(ri).join(', '));
       }
       const flvCandidates = su?.flv_pull_url ?? {};
       const hlsCandidates = su?.hls_pull_url_map ?? {};
@@ -246,7 +290,7 @@ export class TikTokSession {
       };
       const createTime = ri?.create_time ?? ri?.createTime ?? null;
       const startedAt = createTime ? createTime * 1000 : null;
-      console.log('[tiktok] roomInfo keys:', Object.keys(ri).join(', '));
+      console.log('[tiktok] roomInfo.data keys:', Object.keys(ri).join(', '));
       console.log('[tiktok] create_time:', createTime, 'like_count:', ri?.like_count, 'user_count:', ri?.user_count);
       this.cbs.onEvent({
         type: 'roomInfo',
