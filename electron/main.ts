@@ -13,6 +13,7 @@ import { startLog, appendLog, stopLog, getLogDir } from './chatlog';
 import { WatchlistPoller } from './watchlist-poller';
 import { startRollingBuffer, stopRollingBuffer, captureClip, isFfmpegAvailable, getClipsDir, listClips } from './highlights';
 import { setupLikerIpc, closeLikerWindow } from './liker';
+import { checkForUpdatesOnStartup, checkForUpdatesManual } from './updater';
 import * as fans from './fans';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -48,17 +49,42 @@ if (!gotSingleInstanceLock) {
 }
 
 function createWindow() {
+  const isMac = process.platform === 'darwin';
+
+  // macOS-only chrome: hiddenInset titlebar + native vibrancy. These options are
+  // a no-op-to-broken combination on Windows/Linux:
+  //   - titleBarStyle:'hiddenInset' hides the OS title bar but leaves a dead,
+  //     undraggable inset where the traffic-light buttons would be (Win/Linux
+  //     have no such buttons), so the user is left with an empty unusable strip.
+  //   - vibrancy/visualEffectState are macOS-only (ignored elsewhere) and require
+  //     a transparent backgroundColor ('#00000000'); on Windows that transparent
+  //     backing makes the window render with no opaque surface during load.
+  // So on macOS we keep the exact same look as before; on Windows/Linux we use a
+  // standard framed window with a solid dark background that matches the app's
+  // dark theme (the renderer's `-webkit-app-region: drag` titlebar strip still
+  // works as a drag handle on the standard frame).
+  const platformWindowOptions: Electron.BrowserWindowConstructorOptions = isMac
+    ? {
+        titleBarStyle: 'hiddenInset',
+        // Native macOS vibrancy — translucent app surfaces show desktop blur through.
+        vibrancy: 'under-window',
+        visualEffectState: 'active',
+        backgroundColor: '#00000000',
+        transparent: false,
+      }
+    : {
+        // Standard opaque window on Windows/Linux. Solid dark hex so there is no
+        // flash-of-transparent and no dead inset region.
+        backgroundColor: '#0b0f1e',
+        transparent: false,
+      };
+
   mainWindow = new BrowserWindow({
     width: 1240,
     height: 820,
     minWidth: 900,
     minHeight: 600,
-    titleBarStyle: 'hiddenInset',
-    // Native macOS vibrancy — translucent app surfaces will show desktop blur through
-    vibrancy: 'under-window',
-    visualEffectState: 'active',
-    backgroundColor: '#00000000',
-    transparent: false,
+    ...platformWindowOptions,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -296,6 +322,8 @@ ipcMain.handle('settings:get', () => {
     anthropicApiKey: settings.get('anthropicApiKey', ''),
     autoConnect: settings.get('autoConnect', false),
     chatLogEnabled: settings.get('chatLogEnabled', false),
+    aiSummaryConsented: settings.get('aiSummaryConsented', false),
+    likerRiskAck: settings.get('likerRiskAck', false),
     webhooks: settings.get('webhooks', { discordUrl: '', slackUrl: '', customUrl: '', events: { gifts: true, follows: true, keywords: false, milestones: true } }),
     watchlist: settings.get('watchlist', []),
     thankTemplate: settings.get('thankTemplate', DEFAULT_THANK_TEMPLATE),
@@ -389,6 +417,16 @@ ipcMain.handle('settings:setChatLog', (_e, val: boolean) => {
   return { ok: true };
 });
 
+ipcMain.handle('settings:setAiSummaryConsent', (_e, val: boolean) => {
+  settings.set('aiSummaryConsented', !!val);
+  return { ok: true };
+});
+
+ipcMain.handle('settings:setLikerRiskAck', (_e, val: boolean) => {
+  settings.set('likerRiskAck', !!val);
+  return { ok: true };
+});
+
 ipcMain.handle('settings:setWebhooks', (_e, cfg: any) => {
   settings.set('webhooks', cfg);
   return { ok: true };
@@ -418,6 +456,10 @@ ipcMain.handle('watchlist:poke', () => {
 });
 
 ipcMain.handle('chatlog:dir', () => getLogDir());
+
+// Manual "Check for updates" from Settings → Diagnostics. Safe + inert until a
+// real GitHub feed is configured (see electron/updater.ts).
+ipcMain.handle('updates:check', () => checkForUpdatesManual());
 
 // Structured-logging access: lets a creator open the logs folder to attach
 // files to a support ticket when a stream broke.
@@ -480,6 +522,16 @@ ipcMain.handle('backup:import', async () => {
 });
 
 ipcMain.handle('summarize:session', async (_e, sessionId: string) => {
+  // Compliance gate: AI summaries POST chat text + gifter usernames + questions
+  // to Anthropic's API. Require a one-time, in-product consent before the first
+  // summary ever runs. The user grants it in Settings (near the Anthropic key).
+  if (!settings.get('aiSummaryConsented', false)) {
+    return {
+      ok: false,
+      needsConsent: true,
+      error: 'Enable AI summaries in Settings first. Generating a summary sends this session\'s chat text and usernames to Anthropic\'s API.',
+    };
+  }
   const rec = sessions.get(sessionId);
   if (!rec) return { ok: false, error: 'Session not found' };
   const durationMs = (rec.endedAt ?? Date.now()) - rec.startedAt;
@@ -703,6 +755,9 @@ app.whenReady().then(async () => {
   await startOverlayServer();
   setupLikerIpc(broadcast);
   watchlistPoller.start();
+  // Background auto-update check (production builds only; fails safe — see
+  // electron/updater.ts). Fire-and-forget so it never blocks startup.
+  void checkForUpdatesOnStartup();
   if (settings.get('autoConnect', false)) {
     const lastUser = settings.get('lastUsername', '');
     if (lastUser) {
