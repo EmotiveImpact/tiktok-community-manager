@@ -35,6 +35,18 @@ export type WatchEntry = {
   lastSeen: number | null;
 };
 
+/**
+ * The creator's own TikTok account. `username` is stored normalized (leading
+ * '@' stripped, lowercased + trimmed). nickname/avatarUrl are captured
+ * opportunistically from roomInfo when the creator connects to their own LIVE,
+ * so the dashboard can show a real name/avatar even when offline.
+ */
+export type MyAccount = {
+  username: string;
+  nickname?: string;
+  avatarUrl?: string;
+};
+
 export type ModerationUserTag = 'vip' | 'regular' | 'troll' | 'blocked';
 
 export type ModerationSettings = {
@@ -96,7 +108,17 @@ type Schema = {
   earnings: EarningsSettings;
   community: CommunitySettings;
   moderation: ModerationSettings;
+  myAccount: MyAccount;
+  /** Fire a native OS notification when a watched creator goes live. */
+  notifyOnGoLive: boolean;
 };
+
+export const DEFAULT_MY_ACCOUNT: MyAccount = { username: '' };
+
+/** Normalize a raw TikTok handle: strip a leading '@', lowercase + trim. */
+export function normalizeUsername(raw: unknown): string {
+  return String(raw ?? '').trim().replace(/^@+/, '').trim().toLowerCase();
+}
 
 const DEFAULTS: Schema = {
   lastUsername: '',
@@ -119,6 +141,8 @@ const DEFAULTS: Schema = {
   earnings: DEFAULT_EARNINGS,
   community: DEFAULT_COMMUNITY,
   moderation: DEFAULT_MODERATION,
+  myAccount: DEFAULT_MY_ACCOUNT,
+  notifyOnGoLive: true,
 };
 
 let cache: Schema | null = null;
@@ -215,6 +239,26 @@ export function recordWatchlistSeen(username: string, at: number): WatchEntry | 
   cache = data;
   save(data);
   return updated;
+}
+
+/**
+ * Persist the creator's own-account identity. `username` is always stored
+ * normalized. nickname/avatarUrl are optional — only overwritten when a
+ * non-empty value is supplied, so a later live-capture can fill them in
+ * without clobbering a hand-set username. Fail-safe: never throws.
+ */
+export function setMyAccount(patch: Partial<MyAccount>): MyAccount {
+  const data = load();
+  const cur = data.myAccount ?? DEFAULT_MY_ACCOUNT;
+  const next: MyAccount = {
+    username: patch.username !== undefined ? normalizeUsername(patch.username) : cur.username,
+    nickname: patch.nickname !== undefined ? (patch.nickname || undefined) : cur.nickname,
+    avatarUrl: patch.avatarUrl !== undefined ? (patch.avatarUrl || undefined) : cur.avatarUrl,
+  };
+  data.myAccount = next;
+  cache = data;
+  save(data);
+  return next;
 }
 
 export const notesStore = {

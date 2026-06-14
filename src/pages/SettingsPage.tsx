@@ -60,6 +60,8 @@ export function SettingsPage() {
     <PageShell title="Settings" subtitle="Connection, integrations and your fan-ledger data.">
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
         <div className="space-y-4">
+          <MyAccountCard />
+
           <Card title="Connection">
             <FieldLabel>EulerStream API key (optional)</FieldLabel>
             <div className="flex gap-2">
@@ -181,6 +183,8 @@ export function SettingsPage() {
               <input value={webhooks.customUrl} onChange={(e) => setWebhooks({ ...webhooks, customUrl: e.target.value })} onBlur={() => save(() => window.tiktok.setWebhooks(webhooks), 'Webhooks')} placeholder="Custom HTTP endpoint" className={inputCls} />
             </div>
           </Card>
+
+          <GoLiveAlertsCard />
         </div>
 
         <div className="space-y-4">
@@ -248,6 +252,108 @@ export function SettingsPage() {
         </div>
       </div>
     </PageShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// My TikTok account
+
+function MyAccountCard() {
+  const pushToast = useAlerts((s) => s.pushToast);
+  const { myAccount, loaded } = useSettingsLoad();
+  const [handle, setHandle] = useState('');
+  useEffect(() => { if (loaded) setHandle(myAccount.username); }, [loaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveHandle = async () => {
+    const next = await useSettings.getState().setMyAccount({
+      username: handle,
+      nickname: myAccount.nickname,
+      avatarUrl: myAccount.avatarUrl,
+    });
+    setHandle(next.username);
+    pushToast({ title: 'Saved', body: next.username ? `Your account: @${next.username}` : 'Cleared your account' });
+  };
+
+  return (
+    <Card title="My TikTok account">
+      <FieldLabel>Your @username</FieldLabel>
+      <div className="flex gap-2">
+        <div className="relative flex flex-1 items-center">
+          <span className="pointer-events-none absolute left-3 text-[13px] font-semibold" style={{ color: 'var(--secondary-label)' }}>@</span>
+          <input
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') saveHandle(); }}
+            placeholder="yourusername"
+            className={`${inputCls} !pl-7`}
+          />
+        </div>
+        <button onClick={saveHandle} className="panel-btn panel-btn-primary no-drag">Save</button>
+      </div>
+      <p className="mt-1.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+        Set your own TikTok handle so the app knows which streams are yours — powers your dashboard identity
+        and a one-tap Connect to your LIVE.
+      </p>
+      {myAccount.username && (
+        <div className="mt-3 flex items-center gap-3 rounded-lg p-3" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--card-border)' }}>
+          {myAccount.avatarUrl ? (
+            <img src={myAccount.avatarUrl} alt="" className="h-9 w-9 flex-none rounded-full object-cover" draggable={false} />
+          ) : (
+            <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--brand-pink, #EE1D52)' }}>
+              {myAccount.username.charAt(0).toUpperCase()}
+            </span>
+          )}
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-[13px] font-semibold">{myAccount.nickname || `@${myAccount.username}`}</div>
+            <div className="truncate text-[12px]" style={{ color: 'var(--secondary-label)' }}>@{myAccount.username}</div>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Go-live desktop alerts
+
+function GoLiveAlertsCard() {
+  const pushToast = useAlerts((s) => s.pushToast);
+  const [notify, setNotify] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    window.tiktok.getSettings().then((s) => {
+      setNotify(s.notifyOnGoLive ?? true);
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+  }, []);
+
+  const toggle = async (val: boolean) => {
+    setNotify(val);
+    try {
+      await window.tiktok.setNotifyOnGoLive(val);
+      pushToast({ title: 'Saved', body: 'Go-live alerts' });
+    } catch {
+      pushToast({ title: 'Save failed', body: 'Go-live alerts' });
+    }
+  };
+
+  return (
+    <Card title="Go-live alerts">
+      <label className="flex items-start gap-2 text-[13px]">
+        <input
+          type="checkbox"
+          checked={notify}
+          disabled={!loaded}
+          onChange={(e) => toggle(e.target.checked)}
+          className="mt-0.5 accent-pink-600"
+        />
+        <span>Desktop notification when a watched creator goes live.</span>
+      </label>
+      <p className="mt-1.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+        Fires a native OS notification — even when the app is in the background — for creators on your
+        Go-Live Watchlist that have alerts switched on. Click the notification to jump straight to their LIVE.
+      </p>
+    </Card>
   );
 }
 

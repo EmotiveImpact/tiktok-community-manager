@@ -152,6 +152,12 @@ export type CommunitySettings = {
   tiers: { regular: number; vip: number; whale: number };
 };
 
+export type MyAccount = {
+  username: string;
+  nickname?: string;
+  avatarUrl?: string;
+};
+
 export type ModerationUserTag = 'vip' | 'regular' | 'troll' | 'blocked';
 
 export type ModerationSettings = {
@@ -318,6 +324,8 @@ declare global {
         earnings: EarningsSettings;
         community: CommunitySettings;
         moderation: ModerationSettings;
+        myAccount: MyAccount;
+        notifyOnGoLive: boolean;
       }>;
       setSignApiKey: (key: string) => Promise<{ ok: boolean }>;
       setAnthropicKey: (key: string) => Promise<{ ok: boolean }>;
@@ -331,6 +339,8 @@ declare global {
       setEarnings: (cfg: EarningsSettings) => Promise<{ ok: boolean }>;
       setCommunity: (cfg: CommunitySettings) => Promise<{ ok: boolean; error?: string }>;
       setModeration: (cfg: ModerationSettings) => Promise<{ ok: boolean }>;
+      setMyAccount: (account: MyAccount) => Promise<{ ok: boolean; myAccount: MyAccount }>;
+      setNotifyOnGoLive: (val: boolean) => Promise<{ ok: boolean }>;
       openExternal: (url: string) => Promise<{ ok: boolean; error?: string }>;
       chatLogDir: () => Promise<string>;
       revealLogs: () => Promise<{ ok: boolean; path: string; error?: string }>;
@@ -391,6 +401,7 @@ declare global {
       fansDataDir: () => Promise<string>;
       watchlistPoke: () => Promise<{ ok: boolean }>;
       onWatchlistLive: (cb: (d: { username: string; detectedAt: number }) => void) => () => void;
+      onNavigateConnect: (cb: (d: { username: string }) => void) => () => void;
       trackedList: () => Promise<Array<{ uniqueId: string; nickname: string; addedAt: number }>>;
       trackedAdd: (payload: { uniqueId: string; nickname: string }) => Promise<{ ok: boolean; alreadyTracked?: boolean }>;
       trackedRemove: (uniqueId: string) => Promise<{ ok: boolean }>;

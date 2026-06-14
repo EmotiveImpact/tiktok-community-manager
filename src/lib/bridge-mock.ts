@@ -19,6 +19,7 @@ import type {
   ImportResult,
   LiveEvent,
   ModerationSettings,
+  MyAccount,
   Reminder,
   RoomInfo,
   SessionRecord,
@@ -318,7 +319,7 @@ export function installBridgeMock(): void {
     : [];
 
   // Persisted (localStorage) settings so the browser demo behaves like the app.
-  type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings; moderation: ModerationSettings; watchlist: WatchEntry[] };
+  type MockSettings = { thankTemplate: string; earnings: EarningsSettings; community: CommunitySettings; moderation: ModerationSettings; watchlist: WatchEntry[]; myAccount: MyAccount; notifyOnGoLive: boolean };
   const SETTINGS_KEY = 'mock-settings-v1';
   const defaultSettings = (): MockSettings => ({
     thankTemplate: 'Hey {nickname}! Thank you so much for the {giftName} 💕 You made my stream!',
@@ -326,7 +327,11 @@ export function installBridgeMock(): void {
     community: { quietDays: 14, birthdayWindowDays: 30, tiers: { regular: 100, vip: 1000, whale: 10000 } },
     moderation: { blockedUsers: [], blockedKeywords: [], userTags: {}, spamFilterEnabled: false, spamThreshold: 20 },
     watchlist: [],
+    myAccount: { username: '' },
+    notifyOnGoLive: true,
   });
+  const normalizeUsername = (raw: unknown): string =>
+    String(raw ?? '').trim().replace(/^@+/, '').trim().toLowerCase();
   // Mirror the desktop store migration: legacy string[] -> WatchEntry[].
   const normalizeWatchlist = (raw: unknown): WatchEntry[] => {
     if (!Array.isArray(raw)) return [];
@@ -349,6 +354,15 @@ export function installBridgeMock(): void {
     if (raw) mockSettings = { ...defaultSettings(), ...JSON.parse(raw) };
   } catch { /* fresh */ }
   mockSettings.watchlist = normalizeWatchlist(mockSettings.watchlist);
+  if (!mockSettings.myAccount || typeof mockSettings.myAccount.username !== 'string') {
+    mockSettings.myAccount = { username: '' };
+  }
+  // Seed a demo own-account so the dashboard identity + connect-to-my-LIVE
+  // shortcut are visible in browser screenshots (skipped with ?demo=off).
+  if (demoSeed && !mockSettings.myAccount.username) {
+    mockSettings.myAccount = { username: 'rella.live', nickname: 'Rella', avatarUrl: undefined };
+  }
+  if (typeof mockSettings.notifyOnGoLive !== 'boolean') mockSettings.notifyOnGoLive = true;
   const saveSettings = () => {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(mockSettings)); } catch { /* ignore */ }
   };
@@ -403,6 +417,8 @@ export function installBridgeMock(): void {
       earnings: mockSettings.earnings,
       community: mockSettings.community,
       moderation: mockSettings.moderation,
+      myAccount: mockSettings.myAccount,
+      notifyOnGoLive: mockSettings.notifyOnGoLive,
     }),
     setSignApiKey: async () => ok,
     setAnthropicKey: async () => ok,
@@ -437,6 +453,22 @@ export function installBridgeMock(): void {
     },
     setModeration: async (cfg) => {
       mockSettings.moderation = cfg;
+      saveSettings();
+      return ok;
+    },
+    setMyAccount: async (account) => {
+      const cur = mockSettings.myAccount;
+      const next: MyAccount = {
+        username: account?.username !== undefined ? normalizeUsername(account.username) : cur.username,
+        nickname: account?.nickname !== undefined ? (account.nickname || undefined) : cur.nickname,
+        avatarUrl: account?.avatarUrl !== undefined ? (account.avatarUrl || undefined) : cur.avatarUrl,
+      };
+      mockSettings.myAccount = next;
+      saveSettings();
+      return { ok: true, myAccount: next };
+    },
+    setNotifyOnGoLive: async (val) => {
+      mockSettings.notifyOnGoLive = !!val;
       saveSettings();
       return ok;
     },
@@ -741,6 +773,7 @@ export function installBridgeMock(): void {
       watchlistLiveListeners.add(cb);
       return () => watchlistLiveListeners.delete(cb);
     },
+    onNavigateConnect: () => () => {},
     trackedList: async () => tracked,
     trackedAdd: async ({ uniqueId, nickname }) => {
       if (tracked.some((t) => t.uniqueId === uniqueId)) return { ok: true, alreadyTracked: true };

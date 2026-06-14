@@ -36,6 +36,13 @@ const api = {
     ipcRenderer.invoke('settings:setCommunity', cfg) as Promise<{ ok: boolean; error?: string }>,
   setModeration: (cfg: any) =>
     ipcRenderer.invoke('settings:setModeration', cfg) as Promise<{ ok: boolean }>,
+  setMyAccount: (account: { username: string; nickname?: string; avatarUrl?: string }) =>
+    ipcRenderer.invoke('settings:setMyAccount', account) as Promise<{
+      ok: boolean;
+      myAccount: { username: string; nickname?: string; avatarUrl?: string };
+    }>,
+  setNotifyOnGoLive: (val: boolean) =>
+    ipcRenderer.invoke('settings:setNotifyOnGoLive', val) as Promise<{ ok: boolean }>,
   openExternal: (url: string) =>
     ipcRenderer.invoke('shell:openExternal', url) as Promise<{ ok: boolean; error?: string }>,
   chatLogDir: () => ipcRenderer.invoke('chatlog:dir') as Promise<string>,
@@ -209,6 +216,13 @@ const api = {
     const handler = (_e: unknown, d: any) => cb(d);
     ipcRenderer.on('watchlist:live', handler);
     return () => ipcRenderer.removeListener('watchlist:live', handler);
+  },
+  // Fired when the user clicks a native go-live notification: jump to the live
+  // page and connect to that creator's room.
+  onNavigateConnect: (cb: (d: { username: string }) => void) => {
+    const handler = (_e: unknown, d: any) => cb(d);
+    ipcRenderer.on('navigate:connect', handler);
+    return () => ipcRenderer.removeListener('navigate:connect', handler);
   },
 };
 

@@ -7,7 +7,7 @@
  */
 import { useEffect } from 'react';
 import { create } from 'zustand';
-import type { CommunitySettings, EarningsSettings } from '../types';
+import type { CommunitySettings, EarningsSettings, MyAccount } from '../types';
 
 export const DEFAULT_EARNINGS: EarningsSettings = { enabled: false, ratePer1000: 10, currency: '£' };
 export const DEFAULT_COMMUNITY: CommunitySettings = {
@@ -17,16 +17,19 @@ export const DEFAULT_COMMUNITY: CommunitySettings = {
 };
 export const DEFAULT_THANK_TEMPLATE =
   'Hey {nickname}! Thank you so much for the {giftName} 💕 You made my stream!';
+export const DEFAULT_MY_ACCOUNT: MyAccount = { username: '' };
 
 type SettingsState = {
   loaded: boolean;
   earnings: EarningsSettings;
   community: CommunitySettings;
   thankTemplate: string;
+  myAccount: MyAccount;
   load: () => Promise<void>;
   setEarnings: (e: EarningsSettings) => Promise<void>;
   setCommunity: (c: CommunitySettings) => Promise<{ ok: boolean; error?: string }>;
   setThankTemplate: (tpl: string) => Promise<void>;
+  setMyAccount: (a: MyAccount) => Promise<MyAccount>;
 };
 
 let loadPromise: Promise<void> | null = null;
@@ -36,6 +39,7 @@ export const useSettings = create<SettingsState>((set) => ({
   earnings: DEFAULT_EARNINGS,
   community: DEFAULT_COMMUNITY,
   thankTemplate: DEFAULT_THANK_TEMPLATE,
+  myAccount: DEFAULT_MY_ACCOUNT,
 
   load: () => {
     if (!loadPromise) {
@@ -47,6 +51,7 @@ export const useSettings = create<SettingsState>((set) => ({
             earnings: s.earnings ?? DEFAULT_EARNINGS,
             community: s.community ?? DEFAULT_COMMUNITY,
             thankTemplate: s.thankTemplate || DEFAULT_THANK_TEMPLATE,
+            myAccount: s.myAccount ?? DEFAULT_MY_ACCOUNT,
           });
         })
         .catch(() => set({ loaded: true }));
@@ -66,6 +71,14 @@ export const useSettings = create<SettingsState>((set) => ({
   setThankTemplate: async (thankTemplate) => {
     set({ thankTemplate });
     await window.tiktok.setThankTemplate(thankTemplate).catch(() => {});
+  },
+  setMyAccount: async (myAccount) => {
+    // Persist; trust the normalized result back from main so the username we
+    // store locally matches what main saved (strips '@', lowercases).
+    const res = await window.tiktok.setMyAccount(myAccount).catch(() => ({ ok: false as const, myAccount }));
+    const next = (res && 'myAccount' in res && res.myAccount) ? res.myAccount : myAccount;
+    set({ myAccount: next });
+    return next;
   },
 }));
 

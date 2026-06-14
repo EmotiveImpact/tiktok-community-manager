@@ -114,6 +114,7 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
   const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
   const [autoConnect, setAutoConnect] = useState(false);
   const [chatLog, setChatLog] = useState(false);
+  const [myUsername, setMyUsername] = useState('');
   const [webhooks, setWebhooks] = useState<WebhookConfig>({ discordUrl: '', slackUrl: '', customUrl: '', events: { gifts: true, follows: true, keywords: false, milestones: true } });
   const [backupMsg, setBackupMsg] = useState<string | null>(null);
 
@@ -136,6 +137,7 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
       setAiKey(s.anthropicApiKey ?? '');
       setAutoConnect(s.autoConnect ?? false);
       setChatLog(s.chatLogEnabled ?? false);
+      setMyUsername(s.myAccount?.username ?? '');
       if (s.webhooks) setWebhooks(s.webhooks);
     });
     window.tiktok.overlayUrl().then(setOverlayUrl);
@@ -154,19 +156,22 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
 
   const isLive = status === 'connected' || status === 'reconnecting';
 
-  const handleConnect = async () => {
-    const u = input.trim().replace(/^@/, '');
+  const connectTo = async (raw: string) => {
+    const u = raw.trim().replace(/^@/, '');
     if (!u) {
       useStore.getState().setStatus('error', 'Enter a TikTok @username to connect.');
       return;
     }
     reset();
     setUsername(u);
+    setInput(u);
     const res = await window.tiktok.connect(u);
     if (!res.ok) {
       useStore.getState().setStatus('error', res.error ?? `Couldn't connect to @${u}. They may not be live right now.`);
     }
   };
+
+  const handleConnect = () => connectTo(input);
 
   const handleDisconnect = async () => {
     await window.tiktok.disconnect();
@@ -193,6 +198,17 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
           >
             {status === 'connecting' ? 'Connecting…' : 'Connect'}
           </button>
+          {myUsername && (
+            <button
+              onClick={() => connectTo(myUsername)}
+              disabled={status === 'connecting'}
+              className="panel-btn !h-8 !px-3 !text-white"
+              style={{ background: 'var(--brand-pink, #EE1D52)', border: '1px solid var(--brand-pink, #EE1D52)' }}
+              title={`Connect to your own LIVE (@${myUsername})`}
+            >
+              Connect to my LIVE
+            </button>
+          )}
           <div className="no-drag flex items-center gap-1.5">
             <StatusPill status={status} />
             <ConnectionHealthPill />

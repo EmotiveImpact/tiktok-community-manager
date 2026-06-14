@@ -192,7 +192,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
   const [coachDismissed, setCoachDismissed] = useState(() => {
     try { return localStorage.getItem('dash-coach-dismissed') === '1'; } catch { return false; }
   });
-  const { earnings } = useSettingsLoad();
+  const { earnings, myAccount } = useSettingsLoad();
 
   useEffect(() => {
     window.tiktok.sessionsList().then((list) => {
@@ -219,7 +219,10 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
       .catch(() => setSupporterGifts([]));
   }, [supporter?.uniqueId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const creatorName = sessions[0]?.hostNickname || 'Creator';
+  // Prefer the creator's own-account identity (set in Settings → "My TikTok
+  // account") over whatever the most recent session host happened to be.
+  const creatorName = myAccount.nickname || myAccount.username || sessions[0]?.hostNickname || 'Creator';
+  const myUsername = myAccount.username; // already normalized (lowercase, no '@')
   const now = Date.now();
 
   // --- Stat card computations ----------------------------------------------
@@ -339,9 +342,20 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
       <div className="min-w-0 flex-1 space-y-4">
         {/* Header */}
         <div className="flex flex-wrap items-center gap-3">
+          {myAccount.avatarUrl && (
+            <img
+              src={myAccount.avatarUrl}
+              alt=""
+              className="h-10 w-10 flex-none rounded-full object-cover"
+              style={{ border: '2px solid var(--brand-pink, #EE1D52)' }}
+              draggable={false}
+            />
+          )}
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-xl font-extrabold tracking-tight">{greeting()}, {creatorName} <span aria-hidden>💋</span></h1>
-            <p className="text-[13px]" style={{ color: 'var(--secondary-label)' }}>Here&apos;s your community at a glance</p>
+            <p className="text-[13px]" style={{ color: 'var(--secondary-label)' }}>
+              {myUsername ? <>@{myUsername} · here&apos;s your community at a glance</> : <>Here&apos;s your community at a glance</>}
+            </p>
           </div>
           <span
             className="flex h-8 flex-none items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold"
@@ -583,11 +597,24 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
             </div>
           ) : (
             <ul className="text-[13px]">
-              {sessions.slice(0, 4).map((s, i) => (
+              {sessions.slice(0, 4).map((s, i) => {
+                const isMine = !!myUsername && (s.hostUniqueId || '').trim().toLowerCase() === myUsername;
+                return (
                 <li key={s.id} className={`flex items-center gap-3 py-2 ${i > 0 ? 'border-t' : ''}`} style={{ borderColor: 'var(--separator)' }}>
                   <FanAvatar name={s.hostNickname || s.hostUniqueId} />
                   <span className="min-w-0 flex-1 leading-tight">
-                    <span className="block truncate font-semibold">{s.roomTitle || `@${s.hostUniqueId}`}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate font-semibold">{s.roomTitle || `@${s.hostUniqueId}`}</span>
+                      {isMine && (
+                        <span
+                          className="flex-none rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
+                          style={{ background: 'var(--brand-pink, #EE1D52)' }}
+                          title="This was your own stream"
+                        >
+                          You
+                        </span>
+                      )}
+                    </span>
                     <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>
                       {new Date(s.startedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                       {s.endedAt === null
@@ -599,7 +626,8 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                   </span>
                   <span className="text-[12px] font-bold tabular-nums">{formatDiamonds(s.totals?.diamonds ?? 0)}</span>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
           {sessions.length > 0 && (

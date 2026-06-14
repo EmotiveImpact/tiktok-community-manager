@@ -1,9 +1,9 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Notification } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TikTokSession, type ConnectionStatus, type ConnectionDetail, type NormalizedEvent } from './tiktok';
 import { log, logsDir, revealLogs } from './logger';
-import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, type CommunitySettings, type EarningsSettings, type ModerationSettings, type WatchEntry } from './store';
+import { settings, notesStore, setMyAccount, normalizeUsername, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, DEFAULT_MY_ACCOUNT, type CommunitySettings, type EarningsSettings, type ModerationSettings, type WatchEntry, type MyAccount } from './store';
 import * as sessions from './sessions';
 import { summarize, type SummaryInput } from './summarize';
 import { exportSession, type ExportType } from './export';
@@ -28,8 +28,54 @@ let session: TikTokSession | null = null;
 let currentSessionId: string | null = null;
 const multiSessions = new Map<string, TikTokSession>();
 const watchlistPoller = new WatchlistPoller({
-  onLiveDetected: (evt) => broadcast('watchlist:live', evt),
+  onLiveDetected: (evt) => {
+    // Keep the in-app panel/toast wiring exactly as before.
+    broadcast('watchlist:live', evt);
+    // …and additionally fire a NATIVE OS notification so the creator is alerted
+    // even when the app is backgrounded. Fully fail-safe: any error here must
+    // never break the poller or the live pipeline.
+    try {
+      maybeNotifyGoLive(evt.username);
+    } catch (err) {
+      log.warn('[main] go-live notification failed:', (err as any)?.message ?? err);
+    }
+  },
 });
+
+/**
+ * Fire a native go-live notification for a watched creator, gated by:
+ *  - the global `notifyOnGoLive` setting (default true)
+ *  - the per-entry `notify` flag (already enforced by the poller before this
+ *    callback runs — it only calls onLiveDetected when entry.notify !== false)
+ *  - skip the creator's OWN account (no point pinging yourself going live)
+ *  - Notification.isSupported() (older/headless platforms)
+ * Clicking the notification raises the window and navigates the renderer to the
+ * live page, pre-filled with this username.
+ */
+function maybeNotifyGoLive(username: string) {
+  if (!settings.get('notifyOnGoLive', true)) return;
+  const myAccount = settings.get('myAccount', DEFAULT_MY_ACCOUNT) as MyAccount;
+  if (myAccount.username && normalizeUsername(username) === myAccount.username) return;
+  if (!Notification.isSupported()) return;
+  const notif = new Notification({
+    title: `🔴 @${username} is live`,
+    body: 'Tap to watch / track their gifts',
+    silent: false,
+  });
+  notif.on('click', () => {
+    try {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+      broadcast('navigate:connect', { username });
+    } catch (err) {
+      log.warn('[main] go-live notification click handler failed:', (err as any)?.message ?? err);
+    }
+  });
+  notif.show();
+}
 
 // Single-instance lock: two app instances would race on the shared
 // fans/*.json + sessions/*.json ledgers (the audit reproduced a tmp+rename
@@ -189,6 +235,21 @@ function makeSessionCallbacks(username: string): {
           currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
           startLog(evt.info.hostUniqueId);
           if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
+          // If the connected host IS the creator's own account, capture their
+          // real nickname + avatar so the dashboard identity stays accurate even
+          // when offline. Fail-safe — wrapped in the outer try/catch already.
+          try {
+            const my = settings.get('myAccount', DEFAULT_MY_ACCOUNT) as MyAccount;
+            const hostHandle = normalizeUsername(evt.info.hostUniqueId);
+            if (my.username && hostHandle === my.username) {
+              setMyAccount({
+                nickname: evt.info.hostNickname || my.nickname,
+                avatarUrl: evt.info.hostAvatar || my.avatarUrl,
+              });
+            }
+          } catch (e) {
+            log.warn('[main] myAccount identity capture failed:', (e as any)?.message ?? e);
+          }
         } else if (evt.type === 'streamMeta') {
           // Enriched live-session metadata (EulerStream/connector). This is NOT
           // a persisted live event — it carries short-lived signed pull URLs and
@@ -353,7 +414,25 @@ ipcMain.handle('settings:get', () => {
     earnings: settings.get('earnings', DEFAULT_EARNINGS),
     community: settings.get('community', DEFAULT_COMMUNITY),
     moderation: settings.get('moderation', DEFAULT_MODERATION),
+    myAccount: settings.get('myAccount', DEFAULT_MY_ACCOUNT),
+    notifyOnGoLive: settings.get('notifyOnGoLive', true),
   };
+});
+
+ipcMain.handle('settings:setMyAccount', (_e, account: Partial<MyAccount>) => {
+  // Persist via the store helper, which normalizes the username and only
+  // overwrites optional fields when supplied.
+  const next = setMyAccount({
+    username: account?.username ?? '',
+    nickname: account?.nickname,
+    avatarUrl: account?.avatarUrl,
+  });
+  return { ok: true, myAccount: next };
+});
+
+ipcMain.handle('settings:setNotifyOnGoLive', (_e, val: boolean) => {
+  settings.set('notifyOnGoLive', !!val);
+  return { ok: true };
 });
 
 ipcMain.handle('settings:setModeration', (_e, cfg: ModerationSettings) => {
