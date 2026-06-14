@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../state/store';
+import { useUI } from '../state/ui';
 import { useTracked } from '../state/tracked';
 import { avatarGradient } from '../lib/avatars';
 import { timeAgo } from '../lib/format';
@@ -12,7 +13,7 @@ type Filter = 'all' | 'active' | 'inactive' | 'tracked';
 
 export function RoomMembersPanel({ onClose }: { onClose: () => void }) {
   const roomMembers = useStore((s) => s.roomMembers);
-  const selectUser = useStore((s) => s.selectUser);
+  const focusFanMemory = useUI((s) => s.focusFanMemory);
   const tallies = useStore((s) => s.tallies);
   const trackedList = useTracked((s) => s.list);
   const isTracked = useTracked((s) => s.isTracked);
@@ -116,7 +117,7 @@ export function RoomMembersPanel({ onClose }: { onClose: () => void }) {
 
                   <div
                     className="min-w-0 flex-1 cursor-pointer"
-                    onClick={() => selectUser(m.user.uniqueId)}
+                    onClick={() => focusFanMemory(m.user.uniqueId)}
                   >
                     <div className="flex items-baseline gap-1.5">
                       <Username user={m.user} className="text-sm font-medium" />

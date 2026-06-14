@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTracked } from '../state/tracked';
 import { useStore } from '../state/store';
+import { useUI } from '../state/ui';
 import { avatarGradient } from '../lib/avatars';
 import { timeAgo } from '../lib/format';
 import { PanelHeader, PanelShell } from './PanelHeader';
@@ -11,7 +12,7 @@ export function TrackedUsersPanel({ onClose }: { onClose: () => void }) {
   const add = useTracked((s) => s.add);
   const roomMembers = useStore((s) => s.roomMembers);
   const tallies = useStore((s) => s.tallies);
-  const selectUser = useStore((s) => s.selectUser);
+  const focusFanMemory = useUI((s) => s.focusFanMemory);
   const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [newId, setNewId] = useState('');
@@ -111,7 +112,7 @@ export function TrackedUsersPanel({ onClose }: { onClose: () => void }) {
                   <div className={`flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white ${avatarGradient(u.nickname)}`}>
                     {u.nickname.charAt(0).toUpperCase()}
                   </div>
-                  <div className="min-w-0 flex-1 cursor-pointer" onClick={() => selectUser(u.uniqueId)}>
+                  <div className="min-w-0 flex-1 cursor-pointer" onClick={() => focusFanMemory(u.uniqueId)}>
                     <div className="flex items-baseline gap-2">
                       <span className="text-sm font-semibold text-zinc-100">{u.nickname}</span>
                       <span className="text-[11px] text-zinc-500">@{u.uniqueId}</span>

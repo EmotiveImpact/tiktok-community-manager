@@ -47,6 +47,7 @@ export type UserBrief = {
   isSubscriber?: boolean;
   isFollower?: boolean;
   topGifterRank?: number | null;
+  verified?: boolean;
 };
 
 type Callbacks = {
@@ -69,6 +70,13 @@ function brief(d: any): UserBrief {
         : typeof d?.gifterLevel === 'number'
           ? d.gifterLevel
           : null,
+    verified: !!(
+      d?.userDetails?.verified ??
+      d?.isVerified ??
+      d?.user?.verified ??
+      (Array.isArray(d?.userBadges) &&
+        d.userBadges.some((b: any) => b?.type === 'verify' || b?.name === 'verified'))
+    ),
   };
 }
 
