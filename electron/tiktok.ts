@@ -6,6 +6,7 @@ import {
 } from 'tiktok-live-connector';
 import { settings } from './store';
 import { log } from './logger';
+import { getRoomInfo } from './eulerstream';
 
 export type ConnectionStatus =
   | 'idle'
@@ -76,7 +77,28 @@ export type NormalizedEvent =
   | { type: 'linkMicBattle'; ts: number; armies: { hostUserId: string; points: number }[] }
   | { type: 'emote'; ts: number; user: UserBrief; emoteId: string; emoteUrl: string | null }
   | { type: 'caption'; ts: number; text: string; lang: string; sentenceId: string; definite: boolean; durationMs: number }
+  | { type: 'streamMeta'; ts: number; meta: StreamMeta }
   | { type: 'streamEnd'; ts: number };
+
+/**
+ * Enriched live-session metadata. Sourced either from the connector's own
+ * roomInfo ('connector') or — as a fallback when the connector lacks a usable
+ * stream_url — from EulerStream's room_info REST endpoint ('eulerstream').
+ *
+ * The HLS/FLV pull URLs (when present) are SHORT-LIVED + signed; the renderer
+ * loads them into the player on arrival and must not persist them.
+ */
+export type StreamMeta = {
+  source: 'connector' | 'eulerstream';
+  hlsUrl?: string | null;
+  flvUrl?: string | null;
+  title?: string;
+  currentViewers?: number;
+  totalViewers?: number;
+  startTime?: number | null;
+  /** True when room_info needs a paid (Business/Premium) EulerStream plan. */
+  unauthorized?: boolean;
+};
 
 export type RoomInfo = {
   title: string;
@@ -506,6 +528,56 @@ export class TikTokSession {
     this.cbs.onEvent(evt);
   }
 
+  /**
+   * Emit a streamMeta event WITHOUT bumping the staleness clock. Important:
+   * EulerStream metadata arriving asynchronously isn't a live "event", so it
+   * must not reset the stall watchdog (otherwise a silent stream would look
+   * healthy purely because a fallback fetch resolved).
+   */
+  private emitStreamMeta(meta: StreamMeta) {
+    this.cbs.onEvent({ type: 'streamMeta', ts: Date.now(), meta });
+  }
+
+  /**
+   * Fetch the EulerStream room_info as a fallback for the live video URL +
+   * session metadata. Never throws — getRoomInfo returns a typed result. On an
+   * insufficient (free) tier it emits a streamMeta carrying `unauthorized:true`
+   * so the renderer can show an honest "needs a paid plan" message instead of a
+   * dead player.
+   */
+  private async fetchEulerStreamMeta(): Promise<void> {
+    if (this.destroyed) return;
+    const apiKey = (settings.get('signApiKey', '') as string).trim();
+    try {
+      const r = await getRoomInfo(this.username, apiKey);
+      if (this.destroyed) return;
+      if (r.ok && r.isLive) {
+        this.emitStreamMeta({
+          source: 'eulerstream',
+          hlsUrl: r.hlsUrl ?? null,
+          flvUrl: r.flvUrl ?? null,
+          title: r.title,
+          currentViewers: r.currentViewers,
+          totalViewers: r.totalViewers,
+          startTime: r.startTime ?? null,
+        });
+      } else if (r.reason === 'unauthorized') {
+        // Paid-tier gate: tell the UI honestly so it can point at Settings.
+        this.emitStreamMeta({ source: 'eulerstream', unauthorized: true });
+      }
+      // 'no-key' / 'not-live' / 'network' / 'error' → stay silent; the player
+      // keeps its existing mobile-webview fallback. Logged inside getRoomInfo.
+    } catch (err) {
+      // Defensive: getRoomInfo shouldn't throw, but never let this escape.
+      log.warn('[tiktok] eulerstream room_info fallback failed:', err);
+    }
+  }
+
+  /** Manual refresh of the EulerStream stream meta (re-fetch on URL expiry). */
+  async refreshStreamMeta(): Promise<void> {
+    await this.fetchEulerStreamMeta();
+  }
+
   async connect() {
     this.setPhase('connecting');
     try {
@@ -529,7 +601,8 @@ export class TikTokSession {
       const ri = state?.roomInfo?.data ?? state?.roomInfo ?? {};
       const owner = ri?.owner ?? {};
       const su = ri?.stream_url ?? ri?.streamUrl ?? {};
-      if (!su || Object.keys(su).length === 0) {
+      const hasConnectorStreamUrl = !!su && Object.keys(su).length > 0;
+      if (!hasConnectorStreamUrl) {
         log.info('[tiktok] No stream_url in roomInfo.data. Keys:', Object.keys(ri).join(', '));
       }
       const flvCandidates = su?.flv_pull_url ?? {};
@@ -545,6 +618,8 @@ export class TikTokSession {
       const startedAt = createTime ? createTime * 1000 : null;
       log.debug('[tiktok] roomInfo.data keys:', Object.keys(ri).join(', '));
       log.debug('[tiktok] create_time:', createTime, 'like_count:', ri?.like_count, 'user_count:', ri?.user_count);
+      const connectorHls = pickFirst(hlsCandidates) ?? su?.hls_pull_url ?? null;
+      const connectorFlv = pickFirst(flvCandidates) ?? su?.rtmp_pull_url ?? null;
       this.emitEvent({
         type: 'roomInfo',
         ts: Date.now(),
@@ -556,11 +631,32 @@ export class TikTokSession {
           followerCount: owner?.follow_info?.follower_count ?? 0,
           totalUserCount: ri?.user_count ?? 0,
           likeCount: ri?.like_count ?? 0,
-          hlsUrl: pickFirst(hlsCandidates) ?? su?.hls_pull_url ?? null,
-          flvUrl: pickFirst(flvCandidates) ?? su?.rtmp_pull_url ?? null,
+          hlsUrl: connectorHls,
+          flvUrl: connectorFlv,
           startedAt,
         },
       });
+
+      // EulerStream room_info FALLBACK (fix #1 — reliable live video URL).
+      // When the connector's own roomInfo lacks a usable stream_url, ask the
+      // EulerStream REST API for the short-lived signed HLS pull URL + richer
+      // session metadata. Fire-and-forget + fully fail-safe so it can never
+      // block or break the live event pipeline. When the connector DID give us
+      // a working HLS URL we keep it (don't override) and skip the REST call.
+      if (hasConnectorStreamUrl && connectorHls) {
+        // Surface the connector's own metadata as streamMeta too, so the UI has
+        // a single source for live video + session header regardless of origin.
+        this.emitStreamMeta({
+          source: 'connector',
+          hlsUrl: connectorHls,
+          flvUrl: connectorFlv,
+          title: ri?.title ?? undefined,
+          totalViewers: ri?.user_count ?? undefined,
+          startTime: startedAt,
+        });
+      } else {
+        void this.fetchEulerStreamMeta();
+      }
     } catch (err: any) {
       const { phase, message } = this.classifyError(err);
       // Remember the classified phase so the reconnect backoff can react to a

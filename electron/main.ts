@@ -189,13 +189,21 @@ function makeSessionCallbacks(username: string): {
           currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
           startLog(evt.info.hostUniqueId);
           if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
+        } else if (evt.type === 'streamMeta') {
+          // Enriched live-session metadata (EulerStream/connector). This is NOT
+          // a persisted live event — it carries short-lived signed pull URLs and
+          // session header data for the renderer only. Don't write it to the
+          // session ledger / chat log / fan CRM. If it yielded a fresh HLS URL,
+          // (re)start the rolling clip buffer off it so highlight capture works
+          // even when the connector lacked a stream_url.
+          if (evt.meta.hlsUrl) startRollingBuffer(evt.meta.hlsUrl);
         } else {
           sessions.append(evt);
           appendLog(evt);
           fans.ingestLiveEvent(evt, currentSessionId);
         }
         broadcast('tt:event', evt);
-        pushOverlayEvent(evt);
+        if (evt.type !== 'streamMeta') pushOverlayEvent(evt);
         dispatchWebhook(evt, username);
       } catch (err) {
         // Never let a handler error escape into the connector's emitter.
@@ -217,6 +225,18 @@ ipcMain.handle('tt:connect', async (_e, username: string) => {
   session = new TikTokSession(username, makeSessionCallbacks(username));
   try {
     await session.connect();
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message ?? String(err) };
+  }
+});
+
+// Manual refresh of the EulerStream stream metadata (e.g. when the short-lived
+// signed HLS URL has expired and the player needs a fresh one). Fail-safe.
+ipcMain.handle('tt:refreshStreamMeta', async () => {
+  if (!session) return { ok: false, error: 'Not connected' };
+  try {
+    await session.refreshStreamMeta();
     return { ok: true };
   } catch (err: any) {
     return { ok: false, error: err?.message ?? String(err) };
@@ -258,7 +278,10 @@ ipcMain.handle('multi:connect', async (_e, username: string) => {
       // ingestLiveEvent is internally fail-safe + write-batched, but stay defensive
       // so the multi-room pipeline can never break.
       try {
-        if (evt.type !== 'roomInfo') fans.ingestLiveEvent(evt, `multi:${handle}`);
+        // roomInfo + streamMeta are metadata, not ledger-worthy live events.
+        if (evt.type !== 'roomInfo' && evt.type !== 'streamMeta') {
+          fans.ingestLiveEvent(evt, `multi:${handle}`);
+        }
       } catch (err) {
         // TODO: Sentry.captureException(err)
         log.error('[multi] fan ingest failed:', err);

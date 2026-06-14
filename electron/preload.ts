@@ -4,6 +4,8 @@ const api = {
   connect: (username: string) =>
     ipcRenderer.invoke('tt:connect', username) as Promise<{ ok: boolean; error?: string }>,
   disconnect: () => ipcRenderer.invoke('tt:disconnect') as Promise<{ ok: boolean }>,
+  refreshStreamMeta: () =>
+    ipcRenderer.invoke('tt:refreshStreamMeta') as Promise<{ ok: boolean; error?: string }>,
   getSettings: () =>
     ipcRenderer.invoke('settings:get') as Promise<{
       lastUsername: string;
