@@ -23,9 +23,26 @@ function Divider() {
   return <div className="h-6 w-px flex-shrink-0 bg-zinc-800" />;
 }
 
-/** Session uptime timer shown next to the LIVE pill. */
+function clock(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return h
+    ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+    : `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+/**
+ * Two honest timers next to the LIVE pill:
+ *  - "Connected" = how long YOU have been in the room (store.connectedAt, never
+ *    overwritten by the stream's own start time).
+ *  - "Live" (optional) = the stream's total uptime, only when known and clearly
+ *    longer than your connection, so the two are never confused.
+ */
 function SessionTimer() {
   const connectedAt = useStore((s) => s.connectedAt);
+  const streamStartedAt = useStore((s) => s.streamStartedAt);
   const [, force] = useState(0);
   useEffect(() => {
     if (!connectedAt) return;
@@ -33,12 +50,26 @@ function SessionTimer() {
     return () => clearInterval(t);
   }, [connectedAt]);
   if (!connectedAt) return null;
-  const s = Math.floor((Date.now() - connectedAt) / 1000);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const label = h ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
-  return <span className="no-drag session-timer" title="Session length">{label}</span>;
+  const now = Date.now();
+  const yourLabel = clock(now - connectedAt);
+  // Only show the stream-uptime chip when it meaningfully predates your connect
+  // (>60s earlier), so "Connected" and "Live" can't read as the same number.
+  const showStream = streamStartedAt != null && connectedAt - streamStartedAt > 60_000;
+  return (
+    <span className="no-drag flex items-center gap-1.5">
+      <span className="session-timer" title="How long you've been connected to this room">
+        ⏱ {yourLabel}
+      </span>
+      {showStream && (
+        <span
+          className="session-timer opacity-70"
+          title="The stream's total uptime (it was already live before you connected)"
+        >
+          · live {clock(now - (streamStartedAt as number))}
+        </span>
+      )}
+    </span>
+  );
 }
 
 /** Connected-state host identity chip (avatar + @username) on the header left. */
@@ -50,6 +81,7 @@ function HostIdentity() {
       onClick={() => window.tiktok.openProfile(room.hostUniqueId)}
       className="no-drag host-id transition hover:brightness-110"
       title={`Open @${room.hostUniqueId} on TikTok`}
+      aria-label={`Open @${room.hostUniqueId} on TikTok`}
     >
       {room.hostAvatar ? (
         <img src={room.hostAvatar} alt="" className="host-id__avatar ring-2 ring-like-500/70" />
@@ -116,12 +148,15 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
 
   const handleConnect = async () => {
     const u = input.trim().replace(/^@/, '');
-    if (!u) return;
+    if (!u) {
+      useStore.getState().setStatus('error', 'Enter a TikTok @username to connect.');
+      return;
+    }
     reset();
     setUsername(u);
     const res = await window.tiktok.connect(u);
     if (!res.ok) {
-      useStore.getState().setStatus('error', res.error);
+      useStore.getState().setStatus('error', res.error ?? `Couldn't connect to @${u}. They may not be live right now.`);
     }
   };
 
@@ -172,7 +207,7 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
       )}
 
       {errorMessage && (
-        <div className="no-drag truncate text-xs text-rose-400" title={errorMessage}>
+        <div className="no-drag truncate text-xs text-rose-400" title={errorMessage} role="alert" aria-live="assertive">
           {errorMessage}
         </div>
       )}
@@ -184,6 +219,9 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
           onClick={() => setShowSettings((v) => !v)}
           className="no-drag panel-btn panel-btn-icon"
           title="Settings"
+          aria-label="Settings"
+          aria-haspopup="dialog"
+          aria-expanded={showSettings}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3" />

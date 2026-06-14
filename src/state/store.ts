@@ -28,7 +28,12 @@ type State = {
   status: ConnectionStatus;
   errorMessage: string | null;
   username: string;
+  /** The moment YOU connected to the room — drives the host-bar session timer.
+   *  Never overwritten by the stream's own start time (see streamStartedAt). */
   connectedAt: number | null;
+  /** When the LIVE itself went live (from roomInfo.startedAt), if known.
+   *  Kept separate so the session timer stays honest about YOUR uptime. */
+  streamStartedAt: number | null;
   roomInfo: RoomInfo | null;
 
   totalLikes: number;
@@ -80,6 +85,7 @@ const baseStats = {
   all: [] as FeedItem[],
   captions: [] as FeedItem[],
   connectedAt: null as number | null,
+  streamStartedAt: null as number | null,
   roomInfo: null as RoomInfo | null,
   tallies: new Map<string, Tally>(),
   roomMembers: new Map<string, RoomMember>(),
@@ -222,7 +228,9 @@ export const useStore = create<State>((set, get) => ({
             roomInfo: evt.info,
             totalLikes: Math.max(s.totalLikes, evt.info.likeCount || 0),
             viewerCount: Math.max(s.viewerCount, evt.info.totalUserCount || 0),
-            connectedAt: evt.info.startedAt ?? s.connectedAt,
+            // Stream's own start time goes to streamStartedAt — connectedAt must
+            // stay YOUR connect moment so the host-bar timer reads your uptime.
+            streamStartedAt: evt.info.startedAt ?? s.streamStartedAt,
           };
         case 'streamEnd':
           return { all };
