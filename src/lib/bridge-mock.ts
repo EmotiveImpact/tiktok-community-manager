@@ -140,6 +140,24 @@ export function installBridgeMock(): void {
     setStatus('connected');
     emit({ type: 'roomInfo', ts: Date.now(), info: DEMO_ROOM });
     emit({ type: 'roomUser', ts: Date.now(), viewerCount });
+    // Demo streamMeta: a populated session header (title / viewer counts /
+    // uptime) but no real video — flagged `unauthorized` so the player shows the
+    // honest "needs a paid EulerStream plan" state instead of a fake player.
+    // This mirrors the real free-tier experience the browser demo should convey.
+    emit({
+      type: 'streamMeta',
+      ts: Date.now(),
+      meta: {
+        source: 'eulerstream',
+        unauthorized: true,
+        title: DEMO_ROOM.title,
+        currentViewers: viewerCount,
+        totalViewers: 4820,
+        startTime: DEMO_ROOM.startedAt,
+        hlsUrl: null,
+        flvUrl: null,
+      },
+    });
     // Seed a few events immediately so the UI is populated for screenshots.
     for (let i = 0; i < 8; i++) tick(true);
     timer = setInterval(() => tick(false), 1800);
@@ -351,6 +369,24 @@ export function installBridgeMock(): void {
     disconnect: async () => {
       if (timer) { clearInterval(timer); timer = null; }
       setStatus('disconnected');
+      return ok;
+    },
+    refreshStreamMeta: async () => {
+      // Re-emit the demo streamMeta so a manual refresh visibly does something.
+      emit({
+        type: 'streamMeta',
+        ts: Date.now(),
+        meta: {
+          source: 'eulerstream',
+          unauthorized: true,
+          title: DEMO_ROOM.title,
+          currentViewers: viewerCount,
+          totalViewers: 4820,
+          startTime: DEMO_ROOM.startedAt,
+          hlsUrl: null,
+          flvUrl: null,
+        },
+      });
       return ok;
     },
     getSettings: async () => ({

@@ -98,7 +98,25 @@ export type LiveEvent =
   | { type: 'linkMicBattle'; ts: number; armies: { hostUserId: string; points: number }[] }
   | { type: 'emote'; ts: number; user: UserBrief; emoteId: string; emoteUrl: string | null }
   | { type: 'caption'; ts: number; text: string; lang: string; sentenceId: string; definite: boolean; durationMs: number }
+  | { type: 'streamMeta'; ts: number; meta: StreamMeta }
   | { type: 'streamEnd'; ts: number };
+
+/**
+ * Enriched live-session metadata — mirrors electron/tiktok.ts StreamMeta.
+ * Sourced from the connector or, as a fallback, EulerStream's room_info REST
+ * endpoint. HLS/FLV URLs are short-lived + signed; never persist them.
+ */
+export type StreamMeta = {
+  source: 'connector' | 'eulerstream';
+  hlsUrl?: string | null;
+  flvUrl?: string | null;
+  title?: string;
+  currentViewers?: number;
+  totalViewers?: number;
+  startTime?: number | null;
+  /** True when EulerStream room_info needs a paid (Business/Premium) plan. */
+  unauthorized?: boolean;
+};
 
 export type RoomInfo = {
   title: string;
@@ -284,6 +302,8 @@ declare global {
     tiktok: {
       connect: (username: string) => Promise<{ ok: boolean; error?: string }>;
       disconnect: () => Promise<{ ok: boolean }>;
+      /** Manually re-fetch EulerStream stream meta (e.g. on HLS URL expiry). */
+      refreshStreamMeta: () => Promise<{ ok: boolean; error?: string }>;
       getSettings: () => Promise<{
         lastUsername: string;
         signApiKey: string;

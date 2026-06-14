@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ConnectionDetail, ConnectionStatus, LiveEvent, RoomInfo, UserBrief } from '../types';
+import type { ConnectionDetail, ConnectionStatus, LiveEvent, RoomInfo, StreamMeta, UserBrief } from '../types';
 
 const FEED_MAX = 5000;
 const TPS_WINDOW_MS = 5000;
@@ -38,6 +38,8 @@ type State = {
    *  Kept separate so the session timer stays honest about YOUR uptime. */
   streamStartedAt: number | null;
   roomInfo: RoomInfo | null;
+  /** Enriched live-session metadata (connector or EulerStream fallback). */
+  streamMeta: StreamMeta | null;
 
   totalLikes: number;
   totalDiamonds: number;
@@ -91,6 +93,7 @@ const baseStats = {
   connectedAt: null as number | null,
   streamStartedAt: null as number | null,
   roomInfo: null as RoomInfo | null,
+  streamMeta: null as StreamMeta | null,
   tallies: new Map<string, Tally>(),
   roomMembers: new Map<string, RoomMember>(),
   selectedUserId: null as string | null,
@@ -247,6 +250,42 @@ export const useStore = create<State>((set, get) => ({
             // stay YOUR connect moment so the host-bar timer reads your uptime.
             streamStartedAt: evt.info.startedAt ?? s.streamStartedAt,
           };
+        case 'streamMeta': {
+          const m = evt.meta;
+          const prev = s.streamMeta;
+          // Merge so a later 'unauthorized' ping (no URLs) can't wipe a working
+          // HLS URL we already received, and so partial updates accumulate.
+          const merged: StreamMeta = {
+            source: m.source,
+            hlsUrl: m.hlsUrl ?? prev?.hlsUrl ?? null,
+            flvUrl: m.flvUrl ?? prev?.flvUrl ?? null,
+            title: m.title ?? prev?.title,
+            currentViewers: m.currentViewers ?? prev?.currentViewers,
+            totalViewers: m.totalViewers ?? prev?.totalViewers,
+            startTime: m.startTime ?? prev?.startTime ?? null,
+            unauthorized: m.unauthorized ?? prev?.unauthorized,
+          };
+          // EulerStream's current_viewers is more accurate than event-derived
+          // roomUser counts — prefer it when present.
+          const nextViewer =
+            typeof m.currentViewers === 'number' && m.currentViewers > 0
+              ? m.currentViewers
+              : s.viewerCount;
+          // Fold the EulerStream HLS URL into roomInfo.hlsUrl so the existing
+          // player (which reads room.hlsUrl) picks it up without extra wiring,
+          // but never clobber a non-null URL with null.
+          const nextRoom =
+            s.roomInfo && merged.hlsUrl && s.roomInfo.hlsUrl !== merged.hlsUrl
+              ? { ...s.roomInfo, hlsUrl: merged.hlsUrl }
+              : s.roomInfo;
+          return {
+            all: s.all,
+            streamMeta: merged,
+            roomInfo: nextRoom,
+            viewerCount: nextViewer,
+            streamStartedAt: merged.startTime ?? s.streamStartedAt,
+          };
+        }
         case 'streamEnd':
           return { all };
         default:

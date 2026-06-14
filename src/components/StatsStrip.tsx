@@ -8,8 +8,20 @@ import { useStore } from '../state/store';
 import { formatNumber } from '../lib/format';
 import { VerifiedBadge } from './Username';
 
+function uptimeLabel(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return h
+    ? `${h}h ${String(m).padStart(2, '0')}m`
+    : `${m}m ${String(sec).padStart(2, '0')}s`;
+}
+
 export function StatsStrip() {
   const room = useStore((s) => s.roomInfo);
+  const streamMeta = useStore((s) => s.streamMeta);
+  const streamStartedAt = useStore((s) => s.streamStartedAt);
   const totalLikes = useStore((s) => s.totalLikes);
   const totalDiamonds = useStore((s) => s.totalDiamonds);
   const viewerCount = useStore((s) => s.viewerCount);
@@ -19,6 +31,7 @@ export function StatsStrip() {
   const commentCount = useStore((s) => s.commentCount);
   const tpsFn = useStore((s) => s.tps);
   const [tps, setTps] = useState(0);
+  const [, forceTick] = useState(0);
   const lastLikes = useRef(totalLikes);
   const heartRef = useRef<HTMLSpanElement | null>(null);
 
@@ -26,6 +39,13 @@ export function StatsStrip() {
     const t = setInterval(() => setTps(tpsFn()), 1000);
     return () => clearInterval(t);
   }, [tpsFn]);
+
+  // Tick once a second so the live-uptime label stays current.
+  useEffect(() => {
+    if (streamStartedAt == null) return;
+    const t = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [streamStartedAt]);
 
   useEffect(() => {
     if (totalLikes !== lastLikes.current && heartRef.current) {
@@ -37,6 +57,12 @@ export function StatsStrip() {
   }, [totalLikes]);
 
   if (!room) return null;
+
+  // Live session header bits. Prefer EulerStream room_info when present (more
+  // accurate), else fall back to the connector's roomInfo, else honest blanks.
+  const sessionTitle = (streamMeta?.title ?? room.title ?? '').trim();
+  const totalViewers = streamMeta?.totalViewers;
+  const uptime = streamStartedAt != null ? uptimeLabel(Date.now() - streamStartedAt) : null;
 
   return (
     <section className="glass brand-top-border flex w-full flex-none flex-col rounded-[var(--radius-card)] p-4">
@@ -62,6 +88,33 @@ export function StatsStrip() {
           </div>
         </div>
       </div>
+
+      {/* Live session header — title + uptime + total-viewers when known. */}
+      {(sessionTitle || uptime || (totalViewers ?? 0) > 0) && (
+        <div className="mt-3 border-t border-[var(--separator)] pt-2.5">
+          {sessionTitle && (
+            <div className="truncate text-[12px] font-semibold text-zinc-200" title={sessionTitle}>
+              {sessionTitle}
+            </div>
+          )}
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-zinc-500">
+            <span className="inline-flex items-center gap-1">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: 'var(--brand-pink)' }} />
+              LIVE
+            </span>
+            {uptime && (
+              <span className="tabular-nums" title="How long this stream has been live">
+                ⏱ {uptime} uptime
+              </span>
+            )}
+            {(totalViewers ?? 0) > 0 && (
+              <span className="tabular-nums" title="Total viewers this session (EulerStream)">
+                {formatNumber(totalViewers!)} total viewers
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {room.followerCount > 0 && (
         <div className="mt-3 flex items-baseline gap-1.5 border-t border-[var(--separator)] pt-2.5 text-[10px] uppercase tracking-wide text-zinc-500">

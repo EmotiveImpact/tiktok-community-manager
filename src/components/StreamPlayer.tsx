@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { useStore } from '../state/store';
+import { useUI } from '../state/ui';
 import { formatNumber } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 
-type ViewMode = 'hls' | 'mobile';
+type ViewMode = 'hls' | 'mobile' | 'locked';
 
 export function StreamPlayer({ onClose }: { onClose: () => void }) {
   const room = useStore((s) => s.roomInfo);
+  const streamMeta = useStore((s) => s.streamMeta);
   const viewerCount = useStore((s) => s.viewerCount);
   const totalLikes = useStore((s) => s.totalLikes);
+  const setPage = useUI((s) => s.setPage);
+  // room_info needs a paid plan, and the connector also gave us no HLS URL.
+  const needsPaidPlan = !!streamMeta?.unauthorized && !room?.hlsUrl;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +22,17 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
   const [paused, setPaused] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const hasHls = !!room?.hlsUrl;
-  const [mode, setMode] = useState<ViewMode>(hasHls ? 'hls' : 'mobile');
+  const [mode, setMode] = useState<ViewMode>(
+    hasHls ? 'hls' : needsPaidPlan ? 'locked' : 'mobile',
+  );
+  // The 'unauthorized' streamMeta usually arrives a beat after mount. When it
+  // does (and no HLS turned up), surface the honest locked state — unless the
+  // user has already chosen the Mobile view.
+  useEffect(() => {
+    if (needsPaidPlan && mode !== 'mobile' && mode !== 'locked') setMode('locked');
+    // If an HLS URL arrives later, prefer the real player over the locked state.
+    if (hasHls && mode === 'locked') setMode('hls');
+  }, [needsPaidPlan, hasHls, mode]);
   // Real quality control, driven by the HLS manifest. `levels` lists the
   // selectable renditions (height in px); `currentLevel` is -1 for Auto.
   const [levels, setLevels] = useState<{ index: number; height: number }[]>([]);
@@ -174,7 +189,34 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
 
         {/* Video area — playback logic unchanged */}
         <div className="relative flex-1 overflow-hidden bg-black">
-          {mode === 'hls' && hasHls ? (
+          {mode === 'locked' ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 p-5 text-center">
+              <div className="text-3xl">🔒</div>
+              <div className="text-[13px] font-semibold text-zinc-200">
+                Live video needs an EulerStream Business plan
+              </div>
+              <p className="text-[11px] leading-relaxed text-zinc-500">
+                Your EulerStream key signs the connection (free tier), but the in-app video player
+                pulls the live stream URL from EulerStream's <span className="text-zinc-400">room_info</span> endpoint,
+                which requires a paid plan. Add a Business/Premium key in Settings, or use the
+                Mobile view below.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage('settings')}
+                  className="rounded-lg bg-gradient-to-r from-like-500 to-like-600 px-3 py-1.5 text-[11px] font-semibold text-white"
+                >
+                  Open Settings
+                </button>
+                <button
+                  onClick={() => setMode('mobile')}
+                  className="rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800"
+                >
+                  📱 Mobile view
+                </button>
+              </div>
+            </div>
+          ) : mode === 'hls' && hasHls ? (
             error ? (
               <div className="flex h-full items-center justify-center p-4 text-center text-xs text-zinc-500">
                 {error}
@@ -232,6 +274,17 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
               <span className="ml-auto" />
               <Ctrl title="Picture in picture" onClick={togglePip}>⧉</Ctrl>
               <Ctrl title={muted ? 'Unmute' : 'Mute'} onClick={toggleMute}>{muted ? '🔇' : '🔊'}</Ctrl>
+            </>
+          ) : mode === 'locked' ? (
+            <>
+              <span className="text-[10px] text-zinc-600">EulerStream room_info — Business plan required</span>
+              <span className="ml-auto" />
+              <button
+                onClick={() => setPage('settings')}
+                className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-300 hover:bg-zinc-800"
+              >
+                Settings
+              </button>
             </>
           ) : (
             <>

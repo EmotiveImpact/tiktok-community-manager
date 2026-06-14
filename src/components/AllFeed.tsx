@@ -101,6 +101,10 @@ function describe(e: AllEvent): string {
       return `link-mic battle started (${e.armies.length} streamers)`;
     case 'caption':
       return `🎙️ ${e.text}`;
+    case 'streamMeta':
+      // streamMeta is session metadata, not a feed row — never rendered here,
+      // but the case keeps the switch exhaustive over the LiveEvent union.
+      return `stream metadata updated`;
   }
 }
 

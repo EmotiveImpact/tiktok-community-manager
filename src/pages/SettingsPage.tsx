@@ -78,6 +78,22 @@ export function SettingsPage() {
             >
               Get a free key at eulerstream.com ↗
             </a>
+            <div className="mt-3 rounded-lg p-3" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--card-border)' }}>
+              <p className="text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+                <span className="font-semibold" style={{ color: 'var(--label)' }}>In-app live video + viewer stats</span> use
+                EulerStream's <span style={{ color: 'var(--label)' }}>room_info</span> endpoint, which needs a paid
+                Business/Premium plan. The free key above still signs your connection — comments, gifts, likes and the
+                fan ledger all work without it. Without a paid key the player falls back to the Mobile (TikTok web) view.
+              </p>
+              <a
+                href="https://www.eulerstream.com/pricing"
+                target="_blank"
+                rel="noreferrer"
+                className="panel-btn no-drag mt-2 inline-flex"
+              >
+                See EulerStream pricing ↗
+              </a>
+            </div>
             <div className="mt-4">
               <FieldLabel>Anthropic API key (AI summaries)</FieldLabel>
               <div className="flex gap-2">
