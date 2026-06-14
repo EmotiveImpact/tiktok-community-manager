@@ -4,6 +4,7 @@ import App from './App';
 import './index.css';
 import { initTheme } from './lib/theme';
 import { installBridgeMock } from './lib/bridge-mock';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Browser dev mode: the Electron preload bridge is absent, install a demo mock.
 if (typeof window.tiktok === 'undefined') {
@@ -14,6 +15,8 @@ initTheme();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
 );

@@ -10,6 +10,8 @@
  */
 import type {
   CommunitySettings,
+  ConnectionDetail,
+  ConnectionPhase,
   ConnectionStatus,
   EarningsSettings,
   Fan,
@@ -87,6 +89,7 @@ function pick<T>(arr: T[]): T {
 
 export function installBridgeMock(): void {
   const statusListeners = new Set<(s: { status: ConnectionStatus; error?: string }) => void>();
+  const healthListeners = new Set<(d: ConnectionDetail) => void>();
   const eventListeners = new Set<(evt: LiveEvent) => void>();
   const watchlistLiveListeners = new Set<(d: { username: string; detectedAt: number }) => void>();
   let timer: ReturnType<typeof setInterval> | null = null;
@@ -102,8 +105,35 @@ export function installBridgeMock(): void {
     : [];
 
   const emit = (evt: LiveEvent) => eventListeners.forEach((cb) => cb(evt));
-  const setStatus = (status: ConnectionStatus, error?: string) =>
+  // Map the coarse demo status onto a sane default rich-health detail so the
+  // ConnectionHealth pill renders meaningfully in the browser demo.
+  const phaseForStatus = (status: ConnectionStatus): ConnectionPhase =>
+    status === 'connected' ? 'connected'
+    : status === 'connecting' ? 'connecting'
+    : status === 'reconnecting' ? 'reconnecting'
+    : status === 'error' ? 'network-error'
+    : status === 'disconnected' ? 'disconnected'
+    : 'idle';
+  const reasonForPhase = (phase: ConnectionPhase): string =>
+    phase === 'connected' ? "Live in @rella.live's room."
+    : phase === 'connecting' ? 'Connecting to @rella.live…'
+    : phase === 'reconnecting' ? 'Connection dropped — retrying with backoff.'
+    : phase === 'disconnected' ? 'Disconnected.'
+    : phase === 'network-error' ? 'A network error interrupted the connection.'
+    : 'Not connected.';
+  const setStatus = (status: ConnectionStatus, error?: string) => {
     statusListeners.forEach((cb) => cb({ status, error }));
+    const phase = phaseForStatus(status);
+    const detail: ConnectionDetail = {
+      phase,
+      status,
+      reason: error ?? reasonForPhase(phase),
+      reconnectAttempt: 0,
+      nextRetryInMs: null,
+      lastEventAt: phase === 'connected' ? Date.now() : null,
+    };
+    healthListeners.forEach((cb) => cb(detail));
+  };
 
   const startDemoStream = () => {
     if (timer) return;
@@ -381,6 +411,8 @@ export function installBridgeMock(): void {
       return { ok: false, error: 'Only tiktok.com links can be opened' };
     },
     chatLogDir: async () => '~/Library/Application Support/LikeTapperMac/chatlogs',
+    revealLogs: async () => ({ ok: false, path: '~/Library/Logs/LikeTapperMac', error: 'Not available in browser mode' }),
+    logsPath: async () => '~/Library/Logs/LikeTapperMac',
     backupExport: async () => ({ ok: false }),
     backupImport: async () => ({ ok: false, error: 'Not available in browser mode' }),
     summarizeSession: async () => ({ ok: false, error: 'Not available in browser mode' }),
@@ -424,6 +456,10 @@ export function installBridgeMock(): void {
     onStatus: (cb) => {
       statusListeners.add(cb);
       return () => statusListeners.delete(cb);
+    },
+    onHealth: (cb) => {
+      healthListeners.add(cb);
+      return () => healthListeners.delete(cb);
     },
     onEvent: (cb) => {
       eventListeners.add(cb);

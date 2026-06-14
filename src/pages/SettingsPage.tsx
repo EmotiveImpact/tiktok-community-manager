@@ -58,11 +58,23 @@ export function SettingsPage() {
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
         <div className="space-y-4">
           <Card title="Connection">
-            <FieldLabel>Sign API key (EulerStream)</FieldLabel>
+            <FieldLabel>EulerStream API key (optional)</FieldLabel>
             <div className="flex gap-2">
-              <input value={signKey} onChange={(e) => setSignKey(e.target.value)} placeholder="Optional — paste if you hit rate limits" className={inputCls} />
-              <button onClick={() => save(() => window.tiktok.setSignApiKey(signKey), 'Sign API key')} className="panel-btn panel-btn-primary no-drag">Save</button>
+              <input value={signKey} onChange={(e) => setSignKey(e.target.value)} placeholder="Paste your EulerStream key" className={inputCls} />
+              <button onClick={() => save(() => window.tiktok.setSignApiKey(signKey), 'EulerStream API key')} className="panel-btn panel-btn-primary no-drag">Save</button>
             </div>
+            <p className="mt-1.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+              TikTok's signing service rate-limits anonymous connections. A free key at eulerstream.com gives
+              1,000 requests/day and steadier connections — fewer mid-stream drops.
+            </p>
+            <a
+              href="https://www.eulerstream.com"
+              target="_blank"
+              rel="noreferrer"
+              className="panel-btn no-drag mt-2 inline-flex"
+            >
+              Get a free key at eulerstream.com ↗
+            </a>
             <div className="mt-4">
               <FieldLabel>Anthropic API key (AI summaries)</FieldLabel>
               <div className="flex gap-2">
@@ -82,6 +94,23 @@ export function SettingsPage() {
                 <input type="checkbox" checked={chatLog} onChange={(e) => { setChatLog(e.target.checked); save(() => window.tiktok.setChatLog(e.target.checked), 'Chat log'); }} className="accent-pink-600" />
                 Save chat log to disk
               </label>
+            </div>
+            <div className="mt-4">
+              <FieldLabel>Diagnostics</FieldLabel>
+              <p className="mb-2 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
+                Hit a crash or a connection that broke for no clear reason? Open the logs folder and attach
+                <code> main.log</code> to a support ticket.
+              </p>
+              <button
+                onClick={async () => {
+                  const r = await window.tiktok.revealLogs();
+                  if (r.ok) pushToast({ title: 'Logs folder opened', body: r.path });
+                  else pushToast({ title: 'Could not open logs', body: r.error ?? r.path });
+                }}
+                className="panel-btn no-drag"
+              >
+                Reveal logs
+              </button>
             </div>
           </Card>
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useStore } from '../state/store';
 import { StatusPill } from './StatusPill';
+import { ConnectionHealthPill } from './ConnectionHealth';
 import type { WebhookConfig } from '../types';
 
 function ToolbarBtn({ active, onClick, children, title }: { active?: boolean; onClick: () => void; children: ReactNode; title?: string }) {
@@ -192,14 +193,16 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
           >
             {status === 'connecting' ? 'Connecting…' : 'Connect'}
           </button>
-          <div className="no-drag">
+          <div className="no-drag flex items-center gap-1.5">
             <StatusPill status={status} />
+            <ConnectionHealthPill />
           </div>
         </div>
       ) : (
         <div className="no-drag flex min-w-0 items-center gap-2.5">
-          <div className="no-drag">
+          <div className="no-drag flex items-center gap-1.5">
             <StatusPill status={status} />
+            <ConnectionHealthPill />
           </div>
           <HostIdentity />
           <SessionTimer />
