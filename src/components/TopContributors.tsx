@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../state/store';
+import { useModeration } from '../state/moderation';
+import { useUI } from '../state/ui';
 import { formatNumber } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 
@@ -19,13 +21,15 @@ const RANK_STYLES = [
 
 export function TopContributors() {
   const tallies = useStore((s) => s.tallies);
+  const isFiltered = useModeration((s) => s.isFiltered);
+  const focusFanMemory = useUI((s) => s.focusFanMemory);
   const [mode, setMode] = useState<Mode>('likes');
 
   const top = useMemo(() => {
     const arr = Array.from(tallies.values());
     arr.sort((a, b) => b[mode] - a[mode]);
-    return arr.filter((t) => t[mode] > 0).slice(0, 8);
-  }, [tallies, mode]);
+    return arr.filter((t) => t[mode] > 0 && !isFiltered(t.user.uniqueId)).slice(0, 8);
+  }, [tallies, mode, isFiltered]);
 
   return (
     <div className="glass flex h-full flex-col rounded-xl">
@@ -79,9 +83,9 @@ export function TopContributors() {
                   </div>
                 )}
                 <button
-                  onClick={() => useStore.getState().selectUser(t.user.uniqueId)}
+                  onClick={() => focusFanMemory(t.user.uniqueId)}
                   className="min-w-0 flex-1 truncate text-left text-[13px] font-semibold text-zinc-100 hover:text-like-400"
-                  title={`Details for @${t.user.uniqueId}`}
+                  title={`Fan memory for @${t.user.uniqueId}`}
                 >
                   {t.user.nickname}
                 </button>

@@ -1,8 +1,13 @@
 import { useStore } from '../state/store';
+import { useModeration } from '../state/moderation';
 import { timeAgo } from '../lib/format';
+import { Username } from './Username';
+
+type AllEvent = ReturnType<typeof useStore.getState>['all'][number];
 
 export function AllFeed() {
   const all = useStore((s) => s.all);
+  const isFiltered = useModeration((s) => s.isFiltered);
 
   if (all.length === 0) {
     return (
@@ -14,37 +19,47 @@ export function AllFeed() {
 
   return (
     <ul className="flex flex-col gap-0.5 p-3 text-sm">
-      {all.map((e) => (
-        <li key={e.id} className="flex items-baseline gap-2 rounded-lg px-2 py-1 transition hover:bg-zinc-900/60">
-          <span className="w-12 flex-none text-[10px] tabular-nums text-zinc-600">
-            {timeAgo(e.ts)}
-          </span>
-          <span className="w-16 flex-none text-xs">
-            <Badge type={e.type} />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-zinc-300">{describe(e)}</span>
-        </li>
-      ))}
+      {all.map((e) => {
+        // Drop events from blocked/filtered users (where the event carries a user).
+        if ('user' in e && isFiltered(e.user.uniqueId, e.type === 'chat' ? e.comment : undefined)) {
+          return null;
+        }
+        return (
+          <li key={e.id} className="flex items-baseline gap-2 rounded-lg px-2 py-1 transition hover:bg-zinc-900/60">
+            <span className="w-12 flex-none text-[10px] tabular-nums text-zinc-600">
+              {timeAgo(e.ts)}
+            </span>
+            <span className="w-16 flex-none text-xs">
+              <Badge type={e.type} />
+            </span>
+            <span className="flex min-w-0 flex-1 items-baseline gap-1 truncate text-zinc-300">
+              {'user' in e && <Username user={e.user} className="text-[13px] font-semibold" />}
+              <span className="min-w-0 truncate">{describe(e)}</span>
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
-function describe(e: ReturnType<typeof useStore.getState>['all'][number]): string {
+/** Event description, *excluding* the username (rendered separately as a clickable <Username>). */
+function describe(e: AllEvent): string {
   switch (e.type) {
     case 'like':
-      return `${e.user.nickname} sent ${e.likeCount} like${e.likeCount > 1 ? 's' : ''}`;
+      return `sent ${e.likeCount} like${e.likeCount > 1 ? 's' : ''}`;
     case 'chat':
-      return `${e.user.nickname}: ${e.comment}`;
+      return `: ${e.comment}`;
     case 'gift':
-      return `${e.user.nickname} sent ${e.giftName}${e.repeatCount > 1 ? ` ×${e.repeatCount}` : ''}`;
+      return `sent ${e.giftName}${e.repeatCount > 1 ? ` ×${e.repeatCount}` : ''}`;
     case 'follow':
-      return `${e.user.nickname} followed`;
+      return `followed`;
     case 'share':
-      return `${e.user.nickname} shared`;
+      return `shared`;
     case 'subscribe':
-      return `${e.user.nickname} subscribed`;
+      return `subscribed`;
     case 'member':
-      return `${e.user.nickname} joined`;
+      return `joined`;
     case 'roomUser':
       return `viewers: ${e.viewerCount}`;
     case 'streamEnd':
@@ -52,11 +67,11 @@ function describe(e: ReturnType<typeof useStore.getState>['all'][number]): strin
     case 'roomInfo':
       return `room: ${e.info.title || e.info.hostNickname}`;
     case 'questionNew':
-      return `${e.user.nickname} asked: ${e.question}`;
+      return `asked: ${e.question}`;
     case 'envelope':
-      return `${e.user.nickname} sent an envelope (${e.coins} coins)`;
+      return `sent an envelope (${e.coins} coins)`;
     case 'emote':
-      return `${e.user.nickname} sent an emote`;
+      return `sent an emote`;
     case 'linkMicBattle':
       return `link-mic battle started (${e.armies.length} streamers)`;
     case 'caption':
