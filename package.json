@@ -16,11 +16,12 @@
   },
   "dependencies": {
     "bufferutil": "^4.1.0",
+    "electron-log": "^5.4.4",
     "hls.js": "^1.6.16",
     "lucide-react": "^1.17.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tiktok-live-connector": "^2.0.6",
+    "tiktok-live-connector": "^2.1.0",
     "utf-8-validate": "^6.0.6",
     "zustand": "^4.5.5"
   },
