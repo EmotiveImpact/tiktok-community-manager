@@ -290,6 +290,8 @@ declare global {
         anthropicApiKey: string;
         autoConnect: boolean;
         chatLogEnabled: boolean;
+        aiSummaryConsented: boolean;
+        likerRiskAck: boolean;
         webhooks: WebhookConfig;
         watchlist: WatchEntry[];
         thankTemplate: string;
@@ -301,6 +303,8 @@ declare global {
       setAnthropicKey: (key: string) => Promise<{ ok: boolean }>;
       setAutoConnect: (val: boolean) => Promise<{ ok: boolean }>;
       setChatLog: (val: boolean) => Promise<{ ok: boolean }>;
+      setAiSummaryConsent: (val: boolean) => Promise<{ ok: boolean }>;
+      setLikerRiskAck: (val: boolean) => Promise<{ ok: boolean }>;
       setWebhooks: (cfg: WebhookConfig) => Promise<{ ok: boolean }>;
       setWatchlist: (list: WatchEntry[]) => Promise<{ ok: boolean }>;
       setThankTemplate: (tpl: string) => Promise<{ ok: boolean }>;
@@ -311,12 +315,19 @@ declare global {
       chatLogDir: () => Promise<string>;
       revealLogs: () => Promise<{ ok: boolean; path: string; error?: string }>;
       logsPath: () => Promise<string>;
+      checkForUpdates: () => Promise<{
+        ok: boolean;
+        status: 'checking' | 'available' | 'not-available' | 'downloading' | 'skipped' | 'error';
+        message: string;
+        version?: string;
+      }>;
       backupExport: () => Promise<{ ok: boolean; path?: string }>;
       backupImport: () => Promise<{ ok: boolean; error?: string }>;
       summarizeSession: (id: string) => Promise<{
         ok: boolean;
         summary?: string;
         error?: string;
+        needsConsent?: boolean;
       }>;
       openProfile: (uniqueId: string) => Promise<{ ok: boolean }>;
       openProfileInternal: (uniqueId: string) => Promise<{ ok: boolean }>;

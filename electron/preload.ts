@@ -18,6 +18,10 @@ const api = {
     ipcRenderer.invoke('settings:setAutoConnect', val) as Promise<{ ok: boolean }>,
   setChatLog: (val: boolean) =>
     ipcRenderer.invoke('settings:setChatLog', val) as Promise<{ ok: boolean }>,
+  setAiSummaryConsent: (val: boolean) =>
+    ipcRenderer.invoke('settings:setAiSummaryConsent', val) as Promise<{ ok: boolean }>,
+  setLikerRiskAck: (val: boolean) =>
+    ipcRenderer.invoke('settings:setLikerRiskAck', val) as Promise<{ ok: boolean }>,
   setWebhooks: (cfg: any) =>
     ipcRenderer.invoke('settings:setWebhooks', cfg) as Promise<{ ok: boolean }>,
   setWatchlist: (list: Array<{ username: string; notify: boolean; lastSeen: number | null }>) =>
@@ -36,6 +40,13 @@ const api = {
   revealLogs: () =>
     ipcRenderer.invoke('logs:reveal') as Promise<{ ok: boolean; path: string; error?: string }>,
   logsPath: () => ipcRenderer.invoke('logs:path') as Promise<string>,
+  checkForUpdates: () =>
+    ipcRenderer.invoke('updates:check') as Promise<{
+      ok: boolean;
+      status: 'checking' | 'available' | 'not-available' | 'downloading' | 'skipped' | 'error';
+      message: string;
+      version?: string;
+    }>,
   backupExport: () =>
     ipcRenderer.invoke('backup:export') as Promise<{ ok: boolean; path?: string }>,
   backupImport: () =>
