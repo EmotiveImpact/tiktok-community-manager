@@ -3,6 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Content-Security-Policy for the renderer (the main React UI). This closes
+      the default "no CSP" hole while staying permissive enough for the app:
+        - script-src allows 'unsafe-inline'/'unsafe-eval' because Vite's dev
+          server + React Refresh inject inline scripts and use eval in dev; the
+          production bundle is served from 'self'. localhost is allowed for the
+          dev server.
+        - connect-src: 'self' + localhost (overlay HTTP server + Vite HMR ws) +
+          https/wss for hls.js fetching TikTok HLS segments.
+        - img-src: https + data/blob for TikTok avatar CDNs and inline images.
+        - media-src: blob/https for HLS playback in <video>.
+        - style-src 'unsafe-inline' for Tailwind + inline styles.
+      Embedded <webview> panes have their own context and are fenced separately
+      by the navigation allowlist in main.ts.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data: blob: https:;
+               media-src 'self' blob: https:;
+               font-src 'self' data:;
+               connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https: wss:;
+               frame-src 'self' https:;
+               worker-src 'self' blob:;"
+    />
     <title>LikeTapperMac</title>
   </head>
   <body class="bg-zinc-950 text-zinc-100">

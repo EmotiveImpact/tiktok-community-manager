@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TikTokSession } from './tiktok';
+import { TikTokSession, type ConnectionStatus, type NormalizedEvent } from './tiktok';
 import { settings, notesStore, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, type CommunitySettings, type EarningsSettings, type ModerationSettings, type WatchEntry } from './store';
 import * as sessions from './sessions';
 import { summarize, type SummaryInput } from './summarize';
@@ -29,6 +29,23 @@ const watchlistPoller = new WatchlistPoller({
   onLiveDetected: (evt) => broadcast('watchlist:live', evt),
 });
 
+// Single-instance lock: two app instances would race on the shared
+// fans/*.json + sessions/*.json ledgers (the audit reproduced a tmp+rename
+// race that corrupts fans.json). Acquire the lock; if another instance already
+// holds it, quit immediately and let the running instance focus its window.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1240,
@@ -46,6 +63,14 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       webviewTag: true,
+      // sandbox is intentionally LEFT OFF (defaults to false here): vite-plugin-
+      // electron emits the preload as an ES module (preload.mjs), and Electron's
+      // sandbox only supports CommonJS preloads — a sandboxed renderer cannot
+      // load an .mjs preload, which would null out window.tiktok (contextBridge)
+      // and break the entire app. Security is still maintained via
+      // contextIsolation + nodeIntegration:false + the webview nav allowlist +
+      // openExternal restriction + the CSP meta in index.html. Enabling sandbox
+      // would require converting the preload bundle to CJS first.
     },
   });
 
@@ -111,6 +136,44 @@ function broadcast(channel: string, payload: unknown) {
   }
 }
 
+/**
+ * Single source of truth for the primary live-session pipeline.
+ *
+ * The connector emits events from inside its own EventEmitter; if any handler
+ * throws, the exception escapes into the emitter and can tear down the
+ * connection (or the process). Every step here is therefore wrapped in one
+ * try/catch so no single failure (a bad session write, webhook, overlay push,
+ * etc.) can break the stream. Both the IPC connect handler and the auto-connect
+ * path use this factory — it also removes the previous copy/paste duplication.
+ */
+function makeSessionCallbacks(username: string): {
+  onStatus: (status: ConnectionStatus, error?: string) => void;
+  onEvent: (evt: NormalizedEvent) => void;
+} {
+  return {
+    onStatus: (status, error) => broadcast('tt:status', { status, error }),
+    onEvent: (evt) => {
+      try {
+        if (evt.type === 'roomInfo') {
+          currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
+          startLog(evt.info.hostUniqueId);
+          if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
+        } else {
+          sessions.append(evt);
+          appendLog(evt);
+          fans.ingestLiveEvent(evt, currentSessionId);
+        }
+        broadcast('tt:event', evt);
+        pushOverlayEvent(evt);
+        dispatchWebhook(evt, username);
+      } catch (err) {
+        // Never let a handler error escape into the connector's emitter.
+        console.error('[main] session event pipeline failed:', err);
+      }
+    },
+  };
+}
+
 ipcMain.handle('tt:connect', async (_e, username: string) => {
   if (session) {
     await session.disconnect();
@@ -119,23 +182,7 @@ ipcMain.handle('tt:connect', async (_e, username: string) => {
   }
   settings.set('lastUsername', username);
   watchlistPoller.notifyConnected(username);
-  session = new TikTokSession(username, {
-    onStatus: (status, error) => broadcast('tt:status', { status, error }),
-    onEvent: (evt) => {
-      if (evt.type === 'roomInfo') {
-        currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
-        startLog(evt.info.hostUniqueId);
-        if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
-      } else {
-        sessions.append(evt);
-        appendLog(evt);
-        fans.ingestLiveEvent(evt, currentSessionId);
-      }
-      broadcast('tt:event', evt);
-      pushOverlayEvent(evt);
-      dispatchWebhook(evt, username);
-    },
-  });
+  session = new TikTokSession(username, makeSessionCallbacks(username));
   try {
     await session.connect();
     return { ok: true };
@@ -366,8 +413,9 @@ ipcMain.handle('watchlist:poke', () => {
 ipcMain.handle('chatlog:dir', () => getLogDir());
 
 ipcMain.handle('backup:export', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false };
   const { dialog } = await import('electron');
-  const result = await dialog.showSaveDialog(mainWindow!, {
+  const result = await dialog.showSaveDialog(mainWindow, {
     defaultPath: `liketapper-backup-${new Date().toISOString().slice(0, 10)}.json`,
     filters: [{ name: 'JSON', extensions: ['json'] }],
   });
@@ -391,8 +439,9 @@ ipcMain.handle('backup:export', async () => {
 });
 
 ipcMain.handle('backup:import', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false };
   const { dialog } = await import('electron');
-  const result = await dialog.showOpenDialog(mainWindow!, {
+  const result = await dialog.showOpenDialog(mainWindow, {
     filters: [{ name: 'JSON', extensions: ['json'] }],
     properties: ['openFile'],
   });
@@ -587,8 +636,9 @@ ipcMain.handle('reminders:addThank', (_e, uniqueId: string) => fans.addThankRemi
 ipcMain.handle('fans:markThanked', (_e, uniqueId: string) => fans.markThanked(String(uniqueId ?? '')));
 ipcMain.handle('fans:importCsv', (_e, csvText: string) => fans.importCsv(String(csvText ?? '')));
 ipcMain.handle('fans:importCsvFile', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false, created: 0, updated: 0, skipped: 0, errors: [], canceled: true };
   const { dialog } = await import('electron');
-  const result = await dialog.showOpenDialog(mainWindow!, {
+  const result = await dialog.showOpenDialog(mainWindow, {
     filters: [{ name: 'CSV Files', extensions: ['csv', 'txt'] }],
     properties: ['openFile'],
   });
@@ -602,8 +652,9 @@ ipcMain.handle('fans:importCsvFile', async () => {
   }
 });
 ipcMain.handle('fans:exportCsv', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false };
   const { dialog } = await import('electron');
-  const result = await dialog.showSaveDialog(mainWindow!, {
+  const result = await dialog.showSaveDialog(mainWindow, {
     defaultPath: `fans-${new Date().toISOString().slice(0, 10)}.csv`,
     filters: [{ name: 'CSV Files', extensions: ['csv'] }],
   });
@@ -629,23 +680,7 @@ app.whenReady().then(async () => {
     if (lastUser) {
       setTimeout(() => {
         broadcast('tt:status', { status: 'connecting' });
-        session = new TikTokSession(lastUser, {
-          onStatus: (status, error) => broadcast('tt:status', { status, error }),
-          onEvent: (evt) => {
-            if (evt.type === 'roomInfo') {
-              currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
-              startLog(evt.info.hostUniqueId);
-              if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
-            } else {
-              sessions.append(evt);
-              appendLog(evt);
-              fans.ingestLiveEvent(evt, currentSessionId);
-            }
-            broadcast('tt:event', evt);
-            pushOverlayEvent(evt);
-            dispatchWebhook(evt, lastUser);
-          },
-        });
+        session = new TikTokSession(lastUser, makeSessionCallbacks(lastUser));
         session.connect().catch((err) => {
           broadcast('tt:status', { status: 'error', error: err?.message });
         });
