@@ -85,7 +85,13 @@ export function CommentFeed() {
         </div>
       )}
 
-      <ul className="flex-1 space-y-0.5 overflow-y-auto p-3">
+      <ul
+        className="flex-1 space-y-0.5 overflow-y-auto p-3"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label="Comment feed"
+      >
         {rows.map((r) =>
           'text' in r ? (
             <NoteRow key={r.id} note={r} />

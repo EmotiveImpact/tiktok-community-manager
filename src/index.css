@@ -179,6 +179,19 @@ body {
   50% { opacity: 0.4; }
 }
 
+/* Respect prefers-reduced-motion: neutralise all animations/transitions
+   (notably the infinite pulse on the LIVE dot) for motion-sensitive users. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* === App panel — the one true card surface (spec item 2).
    `.glass` is kept as an alias so existing call sites pick it up. === */
 .glass,
