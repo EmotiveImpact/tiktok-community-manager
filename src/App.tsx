@@ -207,10 +207,30 @@ export default function App() {
         body: `@${username} just started a TikTok Live`,
       });
     });
+    // Native go-live notification clicked → jump to the live page and connect to
+    // that creator's room. Fail-safe: a bad payload must never throw here.
+    const offNavConnect = window.tiktok.onNavigateConnect(({ username }) => {
+      try {
+        const u = String(username ?? '').trim().replace(/^@/, '');
+        if (!u) return;
+        useUI.getState().setPage('live');
+        const st = useStore.getState();
+        st.reset();
+        st.setUsername(u);
+        window.tiktok.connect(u).then((res) => {
+          if (!res.ok) {
+            useStore.getState().setStatus('error', res.error ?? `Couldn't connect to @${u}.`);
+          }
+        }).catch(() => {});
+      } catch {
+        /* never break the listener */
+      }
+    });
     return () => {
       offStatus();
       offEvent();
       offWatchlist();
+      offNavConnect();
     };
   }, [setStatus, ingest, checkAlert, pushToast]);
 
