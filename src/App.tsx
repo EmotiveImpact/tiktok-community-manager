@@ -35,6 +35,7 @@ import { TrackedUsersPanel } from './components/TrackedUsersPanel';
 import { StatsStrip } from './components/StatsStrip';
 import { EmptyState } from './components/EmptyState';
 import { FanMemoryPanel } from './components/FanMemoryPanel';
+import { ResurfacedRegularAlert } from './components/ResurfacedRegularAlert';
 import { NoteComposer } from './components/NoteComposer';
 import { useStore } from './state/store';
 import { useAlerts } from './state/alerts';
@@ -315,6 +316,7 @@ export default function App() {
                 </div>
               )}
             </div>
+            <ResurfacedRegularAlert />
           </main>
         )}
         {page === 'dashboard' && (
