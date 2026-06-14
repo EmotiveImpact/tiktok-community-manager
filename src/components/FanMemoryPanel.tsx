@@ -139,6 +139,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
             <span className="text-amber-400">⭐</span> Fan Memory
+            <span className="font-semibold normal-case tracking-normal text-zinc-600">· quick profile</span>
           </div>
           {fanMemoryId && (
             <button
@@ -294,9 +295,11 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                 </button>
                 <button
                   onClick={() => openFanProfile(fan.uniqueId)}
-                  className="mt-1.5 w-full rounded-full border border-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60"
+                  title="See this fan's full record on the Followers page"
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-like-500/60 bg-like-500/10 px-3 py-2 text-xs font-bold text-like-300 shadow-[0_1px_8px_rgba(105,201,208,0.18)] transition hover:bg-like-500/20 hover:text-like-200"
                 >
-                  Open full profile →
+                  <span aria-hidden>👤</span> Open full profile
+                  <span aria-hidden className="text-like-400">→</span>
                 </button>
               </>
             ) : (

@@ -7,32 +7,28 @@ import { TIERS } from '../lib/tier';
 import { useAlerts } from '../state/alerts';
 import { FanAvatar, TierChip, TagChip, Pager, PageShell, FieldLabel, inputCls, fanName, birthdayValid } from '../components/crm';
 import { FanDrawer } from '../components/FanDrawer';
+import { useUI } from '../state/ui';
 
 type Props = { onGoImport: () => void; onGoLive: () => void };
 
-// Optional ui store from a parallel workstream — loaded defensively so the
-// build never breaks if src/state/ui.ts doesn't exist.
-const uiModules = import.meta.glob('../state/ui.ts', { eager: true }) as Record<string, unknown>;
-const uiMod = Object.values(uiModules)[0] as
-  | { useUi?: { getState?: () => Record<string, unknown> }; useUiStore?: { getState?: () => Record<string, unknown> } }
-  | undefined;
-
-/** Fan to preselect: ?fan= query param, else ui-store fanFocus (consumed once). */
+/**
+ * Fan to preselect on mount: the ?fan= query param wins, otherwise the
+ * ui-store `fanFocus` set by "Open full profile →" on the Fan Memory card.
+ *
+ * NOTE: this is intentionally side-effect-free (no clearFanFocus here). It's
+ * read from a useState initializer, which React StrictMode double-invokes in
+ * dev — clearing the focus inside it would consume the value on the first
+ * invocation and return null on the second. The focus is consumed/cleared
+ * exactly once in the mount effect below.
+ */
 function initialFanFocus(): string | null {
   try {
     const q = new URLSearchParams(window.location.search).get('fan');
     if (q) return q;
-    const store = uiMod?.useUi ?? uiMod?.useUiStore;
-    const st = store?.getState?.();
-    if (st && typeof st.fanFocus === 'string' && st.fanFocus) {
-      const focus = st.fanFocus;
-      if (typeof st.setFanFocus === 'function') (st.setFanFocus as (f: string | null) => void)(null);
-      return focus;
-    }
+    return useUI.getState().fanFocus;
   } catch {
-    /* ignore */
+    return null;
   }
-  return null;
 }
 
 export function Followers({ onGoImport, onGoLive }: Props) {
@@ -56,6 +52,22 @@ export function Followers({ onGoImport, onGoLive }: Props) {
     const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // Single owner of fanFocus consumption. initialFanFocus() read the value for
+  // the first render (without clearing — StrictMode-safe); here we clear it so
+  // navigating away and back doesn't re-open the same drawer, and we also catch
+  // any fanFocus set while Followers is already mounted (e.g. "Open full
+  // profile →" fired without this page unmounting).
+  useEffect(() => {
+    const consume = (focus: string | null) => {
+      if (focus) {
+        setOpenFan(focus);
+        useUI.getState().clearFanFocus();
+      }
+    };
+    consume(useUI.getState().fanFocus);
+    return useUI.subscribe((s) => consume(s.fanFocus));
   }, []);
 
   const refresh = useCallback(() => {
