@@ -44,7 +44,45 @@ function fileFor(id: string): string {
   return path.join(dir(), `${id}.json`);
 }
 
+// ---------------------------------------------------------------------------
+// In-memory active session + debounced atomic persistence.
+//
+// Live streams fire many events/sec. The previous implementation did
+// read-full-JSON + write-full-file on EVERY event (O(n²) over a session and a
+// non-atomic write that corrupts the file if the process dies mid-write).
+//
+// We now keep the active SessionRecord in RAM, mutate totals/events there, and
+// flush to disk debounced (atomic .tmp + rename) — mirroring fans.ts. Inactive
+// sessions are still read straight from disk on demand (list/get/search/etc.).
 let currentId: string | null = null;
+let activeRecord: SessionRecord | null = null;
+let dirty = false;
+let flushTimer: NodeJS.Timeout | null = null;
+const FLUSH_MS = 2000;
+
+function scheduleFlush() {
+  if (flushTimer) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    flushActive();
+  }, FLUSH_MS);
+}
+
+function markDirty() {
+  dirty = true;
+  scheduleFlush();
+}
+
+/** Atomically persist the active record if it has unsaved changes. */
+export function flushActive() {
+  if (!dirty || !activeRecord) return;
+  try {
+    write(activeRecord);
+    dirty = false;
+  } catch (err) {
+    console.error('[sessions] flush failed:', err);
+  }
+}
 
 function emptyTotals(): SessionRecord['totals'] {
   return {
@@ -77,8 +115,10 @@ export function start(hostUniqueId: string, hostNickname: string, roomTitle: str
       rec.endedAt = null;
       rec.roomTitle = roomTitle || rec.roomTitle;
       rec.hostNickname = hostNickname || rec.hostNickname;
-      write(rec);
       currentId = rec.id;
+      activeRecord = rec;
+      markDirty();
+      flushActive(); // persist the resume immediately
       return rec.id;
     }
   }
@@ -94,12 +134,17 @@ export function start(hostUniqueId: string, hostNickname: string, roomTitle: str
     totals: emptyTotals(),
     events: [],
   };
-  fs.writeFileSync(fileFor(id), JSON.stringify(rec, null, 2));
   currentId = id;
+  activeRecord = rec;
+  write(rec); // create the file up front so list()/get() see it
+  dirty = false;
   return id;
 }
 
 function read(id: string): SessionRecord | null {
+  // The active session lives in RAM and may have unflushed mutations — always
+  // serve it from memory so callers never see a stale on-disk copy.
+  if (activeRecord && activeRecord.id === id) return activeRecord;
   try {
     return JSON.parse(fs.readFileSync(fileFor(id), 'utf8')) as SessionRecord;
   } catch {
@@ -107,14 +152,17 @@ function read(id: string): SessionRecord | null {
   }
 }
 
+/** Atomic write: tmp + rename so a crash mid-write can't corrupt the file. */
 function write(rec: SessionRecord) {
-  fs.writeFileSync(fileFor(rec.id), JSON.stringify(rec, null, 2));
+  const dest = fileFor(rec.id);
+  const tmp = dest + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(rec, null, 2));
+  fs.renameSync(tmp, dest);
 }
 
 export function append(evt: any) {
-  if (!currentId) return;
-  const rec = read(currentId);
-  if (!rec) return;
+  if (!currentId || !activeRecord) return;
+  const rec = activeRecord;
   const stored: StoredEvent = {
     ts: evt.ts ?? Date.now(),
     type: evt.type,
@@ -157,29 +205,41 @@ export function append(evt: any) {
     case 'roomUser':
       if (evt.viewerCount > rec.totals.peakViewers) {
         rec.totals.peakViewers = evt.viewerCount;
+        markDirty();
       }
       return;
     default:
       return;
   }
-  write(rec);
+  markDirty();
 }
 
 export function end() {
-  if (!currentId) return;
-  const rec = read(currentId);
-  if (!rec) return;
-  rec.endedAt = Date.now();
-  write(rec);
+  if (!currentId || !activeRecord) return;
+  activeRecord.endedAt = Date.now();
+  dirty = true;
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  flushActive(); // persist final state synchronously
   currentId = null;
+  activeRecord = null;
 }
 
 export function list(): SessionSummary[] {
+  // tmp files are named "<id>.json.tmp" so the .json suffix check excludes them.
   const files = fs.readdirSync(dir()).filter((f) => f.endsWith('.json'));
   const out: SessionSummary[] = [];
   for (const f of files) {
     try {
-      const rec = JSON.parse(fs.readFileSync(path.join(dir(), f), 'utf8')) as SessionRecord;
+      // Serve the active session from RAM so its totals/eventCount aren't stale
+      // (the on-disk copy lags by up to FLUSH_MS).
+      const id = f.replace(/\.json$/, '');
+      const rec =
+        activeRecord && activeRecord.id === id
+          ? activeRecord
+          : (JSON.parse(fs.readFileSync(path.join(dir(), f), 'utf8')) as SessionRecord);
       const { events, ...rest } = rec;
       out.push({ ...rest, eventCount: events.length });
     } catch {
@@ -195,6 +255,17 @@ export function get(id: string): SessionRecord | null {
 }
 
 export function remove(id: string) {
+  if (currentId === id) {
+    // Removing the live session: drop the in-memory copy and cancel any pending
+    // flush so it can't be re-written after deletion.
+    currentId = null;
+    activeRecord = null;
+    dirty = false;
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+  }
   try {
     fs.unlinkSync(fileFor(id));
   } catch {
