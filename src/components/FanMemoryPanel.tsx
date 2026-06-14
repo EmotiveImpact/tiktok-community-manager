@@ -135,10 +135,10 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
 
   return (
     <aside className="flex w-full flex-none flex-col gap-3">
-      <section className="glass brand-top-border flex flex-col rounded-[18px] p-4">
+      <section className="glass brand-top-border flex flex-col rounded-[var(--radius-card)] p-4">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
-            <span className="text-amber-400">⭐</span> Fan Memory
+            <span className="text-[var(--amber)]">⭐</span> Fan Memory
             <span className="font-semibold normal-case tracking-normal text-zinc-600">· quick profile</span>
           </div>
           {fanMemoryId && (
@@ -173,7 +173,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   </div>
                 )}
                 {online && (
-                  <span className="absolute bottom-0.5 right-0.5 block h-3.5 w-3.5 rounded-full border-2 border-[var(--card)] bg-emerald-400" title="In the room now" />
+                  <span className="absolute bottom-0.5 right-0.5 block h-3.5 w-3.5 rounded-full border-2 border-[var(--card)] bg-[var(--green)]" title="In the room now" />
                 )}
               </div>
               <div className="mt-2 flex items-center gap-1.5">
@@ -182,8 +182,8 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
               </div>
               <div className="text-[11px] text-zinc-500">@{fanMemoryId}</div>
               {online && (
-                <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Online now
+                <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--green)]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--green)]" /> Online now
                 </div>
               )}
             </div>
@@ -218,7 +218,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                 <div className="mt-2 space-y-1 text-[11px] text-zinc-400">
                   {lastGift && (
                     <div>
-                      Last gifted: <span className="font-semibold text-amber-300">{lastGift.giftName}{lastGift.repeatCount > 1 ? ` ×${lastGift.repeatCount}` : ''}</span>
+                      Last gifted: <span className="font-semibold text-[var(--amber)]">{lastGift.giftName}{lastGift.repeatCount > 1 ? ` ×${lastGift.repeatCount}` : ''}</span>
                       <span className="text-zinc-600"> · {formatDate(lastGift.at)}</span>
                     </div>
                   )}
@@ -230,7 +230,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   )}
                   {fan.lastThankedAt && (
                     <div>
-                      Last thanked: <span className="font-semibold text-emerald-400">{formatDate(fan.lastThankedAt)}</span> 💌
+                      Last thanked: <span className="font-semibold text-[var(--green)]">{formatDate(fan.lastThankedAt)}</span> 💌
                     </div>
                   )}
                 </div>
@@ -251,7 +251,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                       key={t}
                       onClick={() => removeTag(t)}
                       title="Remove tag"
-                      className="group inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-400 hover:bg-rose-500/15 hover:text-rose-400"
+                      className="group inline-flex items-center gap-1 rounded-full bg-[color:var(--cyan)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--cyan)] hover:bg-[color:var(--red)]/15 hover:text-[var(--red)]"
                     >
                       {t}
                       <span className="hidden group-hover:inline">✕</span>
@@ -278,21 +278,26 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   )}
                 </div>
 
-                {/* Actions */}
-                <button
-                  onClick={() => setShowThank(true)}
-                  className="mt-3 w-full rounded-full px-3 py-2 text-xs font-bold text-white transition"
-                  style={{ background: 'var(--gradient-pink)' }}
-                >
-                  💌 Send a thank-you
-                </button>
-                <button
-                  onClick={thank}
-                  disabled={thanked}
-                  className="mt-1.5 w-full rounded-full border border-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 disabled:opacity-70"
-                >
-                  {thanked ? 'Reminder set ✓' : 'Remind me after LIVE'}
-                </button>
+                {/* Actions — one primary thank-you; "remind" demoted to a
+                    compact secondary so the two don't compete for the eye. */}
+                <div className="mt-3 flex items-stretch gap-1.5">
+                  <button
+                    onClick={() => setShowThank(true)}
+                    className="flex-1 rounded-full px-3 py-2 text-xs font-bold text-white transition"
+                    style={{ background: 'var(--gradient-pink)' }}
+                  >
+                    💌 Send a thank-you
+                  </button>
+                  <button
+                    onClick={thank}
+                    disabled={thanked}
+                    title={thanked ? 'Reminder set for after LIVE' : 'Remind me to thank them after LIVE'}
+                    aria-label={thanked ? 'Reminder set for after LIVE' : 'Remind me to thank them after LIVE'}
+                    className="flex-none rounded-full border border-zinc-800 px-3 text-xs font-semibold text-zinc-400 transition hover:bg-zinc-800/60 hover:text-zinc-200 disabled:opacity-70"
+                  >
+                    {thanked ? '⏰ Set ✓' : '⏰ Later'}
+                  </button>
+                </div>
                 <button
                   onClick={() => openFanProfile(fan.uniqueId)}
                   title="See this fan's full record on the Followers page"
@@ -310,7 +315,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
       </section>
 
       {/* After-LIVE follow-up mini card */}
-      <section className="glass flex flex-none items-start gap-3 rounded-[18px] p-3.5">
+      <section className="glass flex flex-none items-start gap-3 rounded-[var(--radius-card)] p-3.5">
         <img src="./assets/png/hero_gift_checklist_3d.png" alt="" className="h-12 w-12 flex-none object-contain" draggable={false} />
         <div className="min-w-0">
           <div className="text-xs font-bold text-zinc-100">After LIVE follow-up</div>

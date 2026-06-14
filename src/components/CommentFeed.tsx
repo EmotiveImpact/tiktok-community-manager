@@ -79,7 +79,7 @@ export function CommentFeed() {
             <div key={p.id} className="flex items-baseline gap-2 py-0.5 text-sm">
               <span className="font-medium text-zinc-300">{(p as any).user?.nickname}</span>
               <span className="flex-1 truncate text-zinc-400">{(p as any).comment}</span>
-              <button onClick={() => unpinMessage(p.id)} className="text-[10px] text-zinc-500 hover:text-rose-400">unpin</button>
+              <button onClick={() => unpinMessage(p.id)} className="text-[10px] text-zinc-500 hover:text-[var(--red)]">unpin</button>
             </div>
           ))}
         </div>
@@ -107,8 +107,8 @@ export function CommentFeed() {
 }
 
 const TAG_BORDER: Record<string, string> = {
-  vip: 'border-l-2 border-l-amber-400',
-  troll: 'border-l-2 border-l-rose-400',
+  vip: 'border-l-2 border-l-[var(--amber)]',
+  troll: 'border-l-2 border-l-[var(--red)]',
 };
 
 const ChatRow = memo(function ChatRow({
@@ -128,7 +128,7 @@ const ChatRow = memo(function ChatRow({
     <li
       className={`group flex min-h-[48px] items-start gap-2.5 rounded-xl border px-2.5 py-2 transition-colors ${
         pinned || tracked
-          ? 'border-[#EE1D52]/25 bg-gradient-to-r from-[#EE1D52]/15 to-[#EE1D52]/[0.045]'
+          ? 'comment-accent'
           : 'border-transparent hover:bg-[var(--fill-quaternary)]'
       } ${tag ? TAG_BORDER[tag] ?? '' : ''}`}
     >
@@ -137,7 +137,7 @@ const ChatRow = memo(function ChatRow({
         <div className="flex items-center gap-1.5">
           <Username user={item.user} className="text-xs font-semibold" />
           <UserBadges user={item.user} />
-          {tracked && <span className="text-[10px] text-amber-400" title="Tracked">★</span>}
+          {tracked && <span className="text-[10px] text-[var(--amber)]" title="Tracked">★</span>}
           <button
             onClick={() => (pinned ? unpinMessage(item.id) : pinMessage(item))}
             className="ml-auto hidden text-[10px] text-zinc-600 hover:text-like-400 group-hover:inline"
@@ -161,7 +161,7 @@ const EventRow = memo(function EventRow({ item }: { item: FeedItem }) {
     <li>
       <button
         onClick={() => focusFanMemory(user.uniqueId)}
-        className="flex h-[30px] w-full items-center gap-2 rounded-[9px] border border-[#EE1D52]/25 bg-[#EE1D52]/[0.12] px-3 text-left transition hover:bg-[#EE1D52]/[0.18]"
+        className="event-pill flex h-[30px] w-full items-center gap-2 rounded-[9px] border px-3 text-left transition"
       >
         <span className="min-w-0 flex-1 truncate text-xs text-zinc-300">
           <span className="font-semibold text-like-400">{user.nickname}</span>
@@ -170,7 +170,7 @@ const EventRow = memo(function EventRow({ item }: { item: FeedItem }) {
           {item.type === 'gift' && (
             <>
               {' sent '}
-              <span className="font-semibold text-amber-300">
+              <span className="font-semibold text-[var(--amber)]">
                 {item.giftName} {GIFT_EMOJI[item.giftName] ?? '🎁'}{item.repeatCount > 1 ? ` x${item.repeatCount}` : ''}
               </span>
             </>
@@ -188,10 +188,10 @@ const EventRow = memo(function EventRow({ item }: { item: FeedItem }) {
 /** Personal stream note — "Note to self" (never posted to TikTok). */
 const NoteRow = memo(function NoteRow({ note }: { note: StreamNote }) {
   return (
-    <li className="rounded-lg border border-dashed border-cyan-500/30 bg-cyan-500/[0.06] px-3 py-1.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-400">
+    <li className="rounded-lg border border-dashed border-[color:var(--cyan)]/30 bg-[color:var(--cyan)]/[0.06] px-3 py-1.5">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--cyan)]">
         📝 Note to self
-        {note.syncedTo && <span className="normal-case tracking-normal text-cyan-500/70">· saved to @{note.syncedTo}</span>}
+        {note.syncedTo && <span className="normal-case tracking-normal text-[color:var(--cyan)]/70">· saved to @{note.syncedTo}</span>}
         <span className="ml-auto font-normal normal-case tracking-normal text-zinc-600">{timeAgo(note.ts)}</span>
       </div>
       <div className="mt-0.5 break-words text-[13px] text-zinc-200">{note.text}</div>

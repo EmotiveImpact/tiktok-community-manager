@@ -39,7 +39,7 @@ export function StatsStrip() {
   if (!room) return null;
 
   return (
-    <section className="glass brand-top-border flex w-full flex-none flex-col rounded-[18px] p-4">
+    <section className="glass brand-top-border flex w-full flex-none flex-col rounded-[var(--radius-card)] p-4">
       {/* Host identity */}
       <div className="flex items-center gap-3">
         {room.hostAvatar ? (

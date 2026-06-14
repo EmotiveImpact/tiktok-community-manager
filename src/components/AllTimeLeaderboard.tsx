@@ -97,16 +97,16 @@ export function AllTimeLeaderboard({ onClose }: { onClose: () => void }) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-amber-300">
+                  <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-[var(--amber)]">
                     {formatNumber(t.diamonds)}
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums text-zinc-300">
                     {formatNumber(t.comments)}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-emerald-300">
+                  <td className="px-3 py-2.5 text-right tabular-nums text-[var(--green)]">
                     {formatNumber(t.gifts)}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-cyan-400">
+                  <td className="px-3 py-2.5 text-right tabular-nums text-[var(--cyan)]">
                     {t.sessionsAppeared}
                   </td>
                 </tr>

@@ -331,10 +331,10 @@ export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
             Data
           </div>
           <div className="flex gap-2">
-            <button onClick={async () => { const r = await window.tiktok.backupExport(); setBackupMsg(r.ok ? 'Backup saved' : 'Cancelled'); setTimeout(() => setBackupMsg(null), 2000); }} className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800">Export backup</button>
-            <button onClick={async () => { const r = await window.tiktok.backupImport(); setBackupMsg(r.ok ? 'Restored!' : r.error ?? 'Cancelled'); setTimeout(() => setBackupMsg(null), 2000); }} className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800">Import backup</button>
+            <button onClick={async () => { const r = await window.tiktok.backupExport(); setBackupMsg(r.ok ? 'Backup saved' : 'Cancelled'); setTimeout(() => setBackupMsg(null), 2000); }} className="panel-btn panel-btn-secondary flex-1 justify-center">Export backup</button>
+            <button onClick={async () => { const r = await window.tiktok.backupImport(); setBackupMsg(r.ok ? 'Restored!' : r.error ?? 'Cancelled'); setTimeout(() => setBackupMsg(null), 2000); }} className="panel-btn panel-btn-secondary flex-1 justify-center">Import backup</button>
           </div>
-          {backupMsg && <div className="mt-1 text-xs text-emerald-400">{backupMsg}</div>}
+          {backupMsg && <div className="mt-1 text-xs" style={{ color: 'var(--green)' }}>{backupMsg}</div>}
         </div>
       )}
       </div>

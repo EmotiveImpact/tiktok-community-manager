@@ -116,7 +116,7 @@ export function UserDetailDrawer() {
           <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">This session</div>
           <div className="grid grid-cols-3 gap-2">
             <Stat label="Likes" value={formatNumber(tally?.likes ?? 0)} accent="text-like-400" />
-            <Stat label="Diamonds" value={formatNumber(tally?.diamonds ?? 0)} accent="text-amber-300" />
+            <Stat label="Diamonds" value={formatNumber(tally?.diamonds ?? 0)} accent="text-[var(--amber)]" />
             <Stat label="Comments" value={formatNumber(tally?.comments ?? 0)} accent="text-zinc-200" />
           </div>
           {historical && historical.sessionsAppeared > 0 && (
@@ -125,10 +125,10 @@ export function UserDetailDrawer() {
                 All time ({historical.sessionsAppeared} session{historical.sessionsAppeared > 1 ? 's' : ''})
               </div>
               <div className="grid grid-cols-4 gap-2">
-                <Stat label="Diamonds" value={formatNumber(historical.diamonds)} accent="text-amber-300" />
+                <Stat label="Diamonds" value={formatNumber(historical.diamonds)} accent="text-[var(--amber)]" />
                 <Stat label="Comments" value={formatNumber(historical.comments)} accent="text-zinc-200" />
-                <Stat label="Gifts" value={formatNumber(historical.gifts)} accent="text-emerald-300" />
-                <Stat label="Sessions" value={String(historical.sessionsAppeared)} accent="text-cyan-400" />
+                <Stat label="Gifts" value={formatNumber(historical.gifts)} accent="text-[var(--green)]" />
+                <Stat label="Sessions" value={String(historical.sessionsAppeared)} accent="text-[var(--cyan)]" />
               </div>
             </>
           )}
@@ -137,7 +137,7 @@ export function UserDetailDrawer() {
         <section className="px-4">
           <div className="mb-1 flex items-baseline justify-between">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Notes</label>
-            <span className={`text-[10px] ${savingFlash ? 'text-emerald-400' : 'text-zinc-600'}`}>
+            <span className={`text-[10px] ${savingFlash ? 'text-[var(--green)]' : 'text-zinc-600'}`}>
               {savingFlash
                 ? 'Saved'
                 : savedAt
@@ -211,7 +211,7 @@ export function UserDetailDrawer() {
               setNote('');
               setSavedAt(null);
             }}
-            className="ml-auto rounded-lg px-2 py-2 text-xs text-zinc-500 hover:text-rose-400"
+            className="ml-auto rounded-lg px-2 py-2 text-xs text-zinc-500 hover:text-[var(--red)]"
             title="Delete notes"
             aria-label="Delete notes"
           >
