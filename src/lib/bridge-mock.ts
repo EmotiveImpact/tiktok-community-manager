@@ -132,7 +132,9 @@ export function installBridgeMock(): void {
       emit({ type: 'like', ts, user, likeCount, totalLikeCount: totalLikes });
     } else if (roll < 0.9) {
       emit({ type: 'follow', ts, user });
-    } else if (roll < 0.96) {
+    } else if (roll < 0.94) {
+      emit({ type: 'subscribe', ts, user });
+    } else if (roll < 0.97) {
       emit({ type: 'questionNew', ts, user, question: 'What time are you live tomorrow?' });
     } else {
       emit({ type: 'member', ts, user });

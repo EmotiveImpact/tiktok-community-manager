@@ -15,6 +15,7 @@ export function StatsStrip() {
   const viewerCount = useStore((s) => s.viewerCount);
   const giftCount = useStore((s) => s.giftCount);
   const followCount = useStore((s) => s.followCount);
+  const subscribeCount = useStore((s) => s.subscribeCount);
   const commentCount = useStore((s) => s.commentCount);
   const tpsFn = useStore((s) => s.tps);
   const [tps, setTps] = useState(0);
@@ -77,6 +78,7 @@ export function StatsStrip() {
         <Stat icon="🎁" tint="tint-amber" value={formatNumber(giftCount)} label="Gifts" />
         <Stat icon="💎" tint="tint-cyan" value={formatNumber(totalDiamonds)} label="Diamonds" />
         {followCount > 0 && <Stat icon="⭐" tint="tint-emerald" value={formatNumber(followCount)} label="Follows" />}
+        {subscribeCount > 0 && <Stat icon="👑" tint="tint-amber" value={formatNumber(subscribeCount)} label="Subs" />}
       </div>
     </section>
   );
