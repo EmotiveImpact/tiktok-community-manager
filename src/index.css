@@ -23,13 +23,20 @@
   --accent-pink: #ee1d52;
   --accent-cyan: #69c9d0;
 
-  /* Semantic colors */
-  --red: #ff453a;
+  /* Semantic colors — dark values. Light overrides live in [data-theme='light'].
+     Use via var() (e.g. color: var(--green)) so accents re-theme and stay
+     contrast-safe in light mode instead of hard-coding text-emerald-400 etc. */
+  --red: #ff5b6a;
   --orange: #ff9f0a;
   --yellow: #ffd60a;
-  --green: #30d158;
+  --green: #34d36b;
+  --cyan: #4fc3cc;
+  --amber: #f5b400;
   --pink: #ee1d52;
-  --purple: #bf5af2;
+  --purple: #c074f5;
+
+  /* Card corner radius — single source of truth (matches .glass/.app-panel). */
+  --radius-card: 18px;
 
   /* Tailwind-mapped neutral scale (navy-tinted dark), RGB triplets */
   --z-50: 245 247 252;
@@ -130,6 +137,16 @@
 
   --separator: #e5e7eb;
   --separator-opaque: #e5e7eb;
+
+  /* Semantic colors — darker, contrast-safe on white surfaces. */
+  --red: #dc2626;
+  --orange: #c2410c;
+  --yellow: #a16207;
+  --green: #15803d;
+  --cyan: #0e7490;
+  --amber: #a16207;
+  --pink: #e01150;
+  --purple: #7e22ce;
 
   --accent-tint: rgba(238, 29, 82, 0.1);
   --accent-tint-hover: rgba(238, 29, 82, 0.16);
@@ -575,3 +592,31 @@ body {
 [data-theme='light'] .tint-amber  { background: rgba(161, 98, 7, 0.1);   color: #a16207; }
 [data-theme='light'] .tint-purple { background: rgba(126, 34, 206, 0.1); color: #7e22ce; }
 [data-theme='light'] .tint-emerald{ background: rgba(21, 128, 61, 0.1);  color: #15803d; }
+
+/* ============================================================
+   Comment-row accent (VIP / tracked / pinned).
+   Visually DISTINCT from the saturated pink event pill (.event-pill):
+   a subtle left-edge wash, not a full pink fill. In light mode the tint
+   is dialed down further so an accented comment never reads as an event.
+   ============================================================ */
+.comment-accent {
+  border-color: rgba(238, 29, 82, 0.22);
+  background: linear-gradient(90deg, rgba(238, 29, 82, 0.12), rgba(238, 29, 82, 0.03));
+}
+[data-theme='light'] .comment-accent {
+  border-color: rgba(238, 29, 82, 0.16);
+  background: linear-gradient(90deg, rgba(238, 29, 82, 0.05), rgba(238, 29, 82, 0.012));
+}
+
+/* Saturated pink event pill — joins / gifts / follows. Stays vivid in both
+   themes so it is clearly an EVENT, not an accented comment. */
+.event-pill {
+  border-color: rgba(238, 29, 82, 0.25);
+  background: rgba(238, 29, 82, 0.12);
+}
+.event-pill:hover { background: rgba(238, 29, 82, 0.18); }
+[data-theme='light'] .event-pill {
+  border-color: rgba(238, 29, 82, 0.3);
+  background: rgba(238, 29, 82, 0.14);
+}
+[data-theme='light'] .event-pill:hover { background: rgba(238, 29, 82, 0.2); }
