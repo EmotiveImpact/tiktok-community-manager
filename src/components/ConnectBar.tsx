@@ -96,7 +96,14 @@ function HostIdentity() {
 }
 
 export function ConnectBar({ rightExtras }: { rightExtras?: ReactNode } = {}) {
-  const { status, username, setUsername, errorMessage, reset } = useStore();
+  // Narrow per-field selectors so this always-mounted heavy component doesn't
+  // re-render on every ingested event (a selector-less useStore() subscribes to
+  // the WHOLE store). setUsername/reset are stable action references.
+  const status = useStore((s) => s.status);
+  const username = useStore((s) => s.username);
+  const setUsername = useStore((s) => s.setUsername);
+  const errorMessage = useStore((s) => s.errorMessage);
+  const reset = useStore((s) => s.reset);
   const [input, setInput] = useState(username);
   const [signKey, setSignKey] = useState('');
   const [aiKey, setAiKey] = useState('');
