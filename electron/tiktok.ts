@@ -1,5 +1,11 @@
-import { WebcastPushConnection } from 'tiktok-live-connector';
+import {
+  WebcastPushConnection,
+  SignatureRateLimitError,
+  SignAPIError,
+  PremiumFeatureError,
+} from 'tiktok-live-connector';
 import { settings } from './store';
+import { log } from './logger';
 
 export type ConnectionStatus =
   | 'idle'
@@ -8,6 +14,52 @@ export type ConnectionStatus =
   | 'reconnecting'
   | 'disconnected'
   | 'error';
+
+/**
+ * Rich, human-legible classification of *why* the connection is in its current
+ * state. The coarse `ConnectionStatus` above still drives the legacy StatusPill
+ * and multi-room dots unchanged; this `ConnectionPhase` is the new layer the
+ * ConnectionHealth pill reads so a creator can see — and act on — the reason a
+ * stream broke.
+ */
+export type ConnectionPhase =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'live-ended'       // the streamer's LIVE genuinely ended (streamEnd)
+  | 'stalled'          // connected but no events for a while during a live stream
+  | 'rate-limited'     // EulerStream sign service returned HTTP 429
+  | 'signing-failed'   // sign service errored (non-429) — bad/missing key, premium feature
+  | 'network-error'    // transport/connect failure
+  | 'offline'          // the streamer isn't live right now
+  | 'reconnecting'     // backing off + retrying
+  | 'disconnected';    // user-initiated leave
+
+/**
+ * The full health snapshot pushed to the renderer on every status change. The
+ * existing `{ status, error }` IPC shape is preserved (the renderer's store
+ * still reads `status`), with `detail` carrying the rich classification.
+ */
+export type ConnectionDetail = {
+  phase: ConnectionPhase;
+  /** Coarse enum kept in lock-step so legacy consumers stay correct. */
+  status: ConnectionStatus;
+  /** One-line human-readable reason (shown in the pill tooltip). */
+  reason: string;
+  /** Optional suggested action the creator can take. */
+  suggestion?: string;
+  /** Current reconnect attempt count (0 when not reconnecting). */
+  reconnectAttempt: number;
+  /** ms until the next reconnect fires, when reconnecting; else null. */
+  nextRetryInMs: number | null;
+  /** epoch ms of the last received live event (staleness signal); null if none. */
+  lastEventAt: number | null;
+};
+
+/** How long (ms) without any event before a live connection is "stalled". */
+const STALL_THRESHOLD_MS = 45_000;
+/** How often the watchdog checks for staleness. */
+const STALL_CHECK_INTERVAL_MS = 5_000;
 
 export type NormalizedEvent =
   | { type: 'like'; ts: number; user: UserBrief; likeCount: number; totalLikeCount: number }
@@ -53,6 +105,11 @@ export type UserBrief = {
 type Callbacks = {
   onStatus: (status: ConnectionStatus, error?: string) => void;
   onEvent: (evt: NormalizedEvent) => void;
+  /**
+   * Rich health update. Optional so existing call sites that only wire
+   * `onStatus` keep compiling; the primary live pipeline wires both.
+   */
+  onHealth?: (detail: ConnectionDetail) => void;
 };
 
 function brief(d: any): UserBrief {
@@ -88,6 +145,20 @@ export class TikTokSession {
   private reconnectTimer: NodeJS.Timeout | null = null;
   private destroyed = false;
 
+  // --- Health tracking -------------------------------------------------------
+  /** epoch ms of the last received live event; null until the first event. */
+  private lastEventAt: number | null = null;
+  /** Current rich phase, so the watchdog/transitions can reason about it. */
+  private phase: ConnectionPhase = 'idle';
+  /** Staleness watchdog interval handle. */
+  private stallTimer: NodeJS.Timeout | null = null;
+  /** Whether we've already emitted a 'stalled' phase (avoid spamming). */
+  private stalledNotified = false;
+  /** epoch ms the next scheduled reconnect will fire (for the renderer). */
+  private nextRetryAt: number | null = null;
+  /** Phase of the most recent connect() failure — drives smarter backoff. */
+  private lastErrorPhase: ConnectionPhase | null = null;
+
   constructor(username: string, cbs: Callbacks) {
     this.username = username.replace(/^@/, '').trim();
     this.cbs = cbs;
@@ -114,11 +185,176 @@ export class TikTokSession {
     this.wireEvents();
   }
 
+  // --- Health classification + emission --------------------------------------
+
+  /** Map a rich phase onto the coarse legacy `ConnectionStatus` enum. */
+  private static coarse(phase: ConnectionPhase): ConnectionStatus {
+    switch (phase) {
+      case 'idle':
+        return 'idle';
+      case 'connecting':
+        return 'connecting';
+      case 'connected':
+      case 'stalled': // still connected; the pill colour carries the nuance
+        return 'connected';
+      case 'reconnecting':
+        return 'reconnecting';
+      case 'live-ended':
+      case 'offline':
+      case 'disconnected':
+        return 'disconnected';
+      case 'rate-limited':
+      case 'signing-failed':
+      case 'network-error':
+        return 'error';
+    }
+  }
+
+  /** Human-readable reason + suggested action for each phase. */
+  private static describe(
+    phase: ConnectionPhase,
+    username: string,
+    rawError?: string,
+  ): { reason: string; suggestion?: string } {
+    switch (phase) {
+      case 'idle':
+        return { reason: 'Not connected.' };
+      case 'connecting':
+        return { reason: `Connecting to @${username}…` };
+      case 'connected':
+        return { reason: `Live in @${username}'s room.` };
+      case 'stalled':
+        return {
+          reason: 'Connected, but no events have arrived in a while.',
+          suggestion:
+            'The stream may be paused, very quiet, or the connection is degraded. Disconnect and reconnect if it stays silent.',
+        };
+      case 'rate-limited':
+        return {
+          reason: "TikTok's signing service is rate-limiting this connection (HTTP 429).",
+          suggestion:
+            'Add a free EulerStream API key in Settings → Connection (1,000 requests/day) for steadier connections, or wait a few minutes and retry.',
+        };
+      case 'signing-failed':
+        return {
+          reason: rawError
+            ? `Signing service error: ${rawError}`
+            : 'The connection-signing service rejected this request.',
+          suggestion:
+            'Check your EulerStream API key in Settings → Connection. The free anonymous tier can be unreliable under load.',
+        };
+      case 'network-error':
+        return {
+          reason: rawError ? `Network error: ${rawError}` : 'A network error interrupted the connection.',
+          suggestion: 'Check your internet connection. The app will keep retrying automatically.',
+        };
+      case 'offline':
+        return {
+          reason: `@${username} doesn't appear to be live right now.`,
+          suggestion: 'Connect again once they start their LIVE.',
+        };
+      case 'reconnecting':
+        return {
+          reason: 'Connection dropped — retrying with backoff.',
+          suggestion: 'This is usually transient. The app reconnects automatically.',
+        };
+      case 'live-ended':
+        return { reason: 'The streamer ended their LIVE.' };
+      case 'disconnected':
+        return { reason: 'Disconnected.' };
+    }
+  }
+
+  /**
+   * Set the current phase and broadcast BOTH the legacy `onStatus` (coarse
+   * enum + error string) and the rich `onHealth` detail. Single choke point so
+   * the two can never drift.
+   */
+  private setPhase(phase: ConnectionPhase, rawError?: string) {
+    this.phase = phase;
+    const status = TikTokSession.coarse(phase);
+    const { reason, suggestion } = TikTokSession.describe(phase, this.username, rawError);
+    const nextRetryInMs =
+      phase === 'reconnecting' && this.nextRetryAt ? Math.max(0, this.nextRetryAt - Date.now()) : null;
+    const detail: ConnectionDetail = {
+      phase,
+      status,
+      reason,
+      suggestion,
+      reconnectAttempt: phase === 'reconnecting' ? this.reconnectAttempt : 0,
+      nextRetryInMs,
+      lastEventAt: this.lastEventAt,
+    };
+    // Legacy enum path (StatusPill / multi-room dots) — pass the human reason as
+    // the error string for error-class phases so existing UI still surfaces it.
+    const legacyError = status === 'error' ? reason : rawError;
+    this.cbs.onStatus(status, legacyError);
+    this.cbs.onHealth?.(detail);
+  }
+
+  /**
+   * Classify a thrown connect() error into a rich phase. Distinguishes
+   * EulerStream 429 rate-limits, other sign failures, "user offline", and
+   * generic network errors.
+   */
+  private classifyError(err: any): { phase: ConnectionPhase; message: string } {
+    const message = err?.message ?? String(err);
+    if (err instanceof SignatureRateLimitError) {
+      return { phase: 'rate-limited', message };
+    }
+    if (err instanceof PremiumFeatureError || err instanceof SignAPIError) {
+      return { phase: 'signing-failed', message };
+    }
+    // Some builds surface a 429 without the typed class — sniff the message.
+    if (/\b429\b|rate.?limit|too many/i.test(message)) {
+      return { phase: 'rate-limited', message };
+    }
+    if (/offline|not.?live|isn'?t live|user.?offline|LIVE has ended|no longer/i.test(message)) {
+      return { phase: 'offline', message };
+    }
+    if (/sign|euler/i.test(message)) {
+      return { phase: 'signing-failed', message };
+    }
+    return { phase: 'network-error', message };
+  }
+
+  // --- Staleness watchdog ----------------------------------------------------
+
+  private startStallWatchdog() {
+    this.stopStallWatchdog();
+    this.stalledNotified = false;
+    this.stallTimer = setInterval(() => {
+      if (this.destroyed) return;
+      // Only meaningful while we believe we're connected.
+      if (this.phase !== 'connected' && this.phase !== 'stalled') return;
+      const last = this.lastEventAt;
+      if (last == null) return; // no baseline yet
+      const idle = Date.now() - last;
+      if (idle >= STALL_THRESHOLD_MS && !this.stalledNotified) {
+        this.stalledNotified = true;
+        log.warn(`[tiktok] connection stalled — no events for ${Math.round(idle / 1000)}s @${this.username}`);
+        this.setPhase('stalled');
+      } else if (idle < STALL_THRESHOLD_MS && this.stalledNotified) {
+        // Events resumed — recover to healthy.
+        this.stalledNotified = false;
+        log.info(`[tiktok] connection recovered from stall @${this.username}`);
+        this.setPhase('connected');
+      }
+    }, STALL_CHECK_INTERVAL_MS);
+  }
+
+  private stopStallWatchdog() {
+    if (this.stallTimer) {
+      clearInterval(this.stallTimer);
+      this.stallTimer = null;
+    }
+  }
+
   private wireEvents() {
     const c = this.conn;
 
     c.on('like', (d: any) => {
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'like',
         ts: Date.now(),
         user: brief(d),
@@ -128,7 +364,7 @@ export class TikTokSession {
     });
 
     c.on('chat', (d: any) => {
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'chat',
         ts: Date.now(),
         user: brief(d),
@@ -147,7 +383,7 @@ export class TikTokSession {
       const repeatEnded = d?.repeatEnd === true || d?.repeatEnd === 1 || d?.gift?.repeat_end === 1;
       if (isStreakable && !repeatEnded) return;
       const giftId = d?.giftId ?? d?.id ?? d?.gift?.gift_id ?? 0;
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'gift',
         ts: Date.now(),
         user: brief(d),
@@ -161,13 +397,13 @@ export class TikTokSession {
     });
 
     c.on('member', (d: any) => {
-      this.cbs.onEvent({ type: 'member', ts: Date.now(), user: brief(d) });
+      this.emitEvent({ type: 'member', ts: Date.now(), user: brief(d) });
     });
     c.on('follow', (d: any) => {
-      this.cbs.onEvent({ type: 'follow', ts: Date.now(), user: brief(d) });
+      this.emitEvent({ type: 'follow', ts: Date.now(), user: brief(d) });
     });
     c.on('share', (d: any) => {
-      this.cbs.onEvent({ type: 'share', ts: Date.now(), user: brief(d) });
+      this.emitEvent({ type: 'share', ts: Date.now(), user: brief(d) });
     });
     // NOTE: tiktok-live-connector v2 has NO 'subscribe' event. The v1 'subscribe'
     // listener here never fired (the WebcastEvent enum has no SUBSCRIBE member —
@@ -180,7 +416,7 @@ export class TikTokSession {
     // historical session records remain valid.
 
     c.on('roomUser', (d: any) => {
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'roomUser',
         ts: Date.now(),
         viewerCount: d?.viewerCount ?? 0,
@@ -188,7 +424,7 @@ export class TikTokSession {
     });
 
     c.on('questionNew', (d: any) => {
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'questionNew',
         ts: Date.now(),
         user: brief(d?.questionDetails?.user ?? d?.user ?? d),
@@ -197,7 +433,7 @@ export class TikTokSession {
     });
 
     c.on('envelope', (d: any) => {
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'envelope',
         ts: Date.now(),
         user: brief(d?.user ?? d),
@@ -211,11 +447,11 @@ export class TikTokSession {
         hostUserId: String(u?.userId ?? u?.battleGroup?.user?.userId ?? ''),
         points: 0,
       }));
-      this.cbs.onEvent({ type: 'linkMicBattle', ts: Date.now(), armies });
+      this.emitEvent({ type: 'linkMicBattle', ts: Date.now(), armies });
     });
 
     c.on('emote', (d: any) => {
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'emote',
         ts: Date.now(),
         user: brief(d?.user ?? d),
@@ -234,7 +470,7 @@ export class TikTokSession {
       const pick = contents.find((x) => (x.lang ?? '').startsWith('en')) ?? contents[0];
       const text = pick?.content ?? '';
       if (!text.trim()) return;
-      this.cbs.onEvent({
+      this.emitEvent({
         type: 'caption',
         ts: Date.now(),
         text,
@@ -246,23 +482,40 @@ export class TikTokSession {
     });
 
     c.on('streamEnd', () => {
-      this.cbs.onEvent({ type: 'streamEnd', ts: Date.now() });
-      this.cbs.onStatus('disconnected', 'Stream ended');
+      // The streamer genuinely ended their LIVE — this is NOT an error and must
+      // not trigger a reconnect storm. Mark destroyed so the 'disconnected'
+      // handler below treats it as terminal.
+      this.destroyed = true;
+      this.stopStallWatchdog();
+      log.info(`[tiktok] LIVE ended by streamer @${this.username}`);
+      this.emitEvent({ type: 'streamEnd', ts: Date.now() });
+      this.setPhase('live-ended');
     });
 
     c.on('disconnected', () => {
       if (this.destroyed) return;
-      this.cbs.onStatus('reconnecting');
+      log.warn(`[tiktok] transport disconnected @${this.username} — scheduling reconnect`);
+      this.stopStallWatchdog();
       this.scheduleReconnect();
     });
   }
 
+  /** Bump the staleness clock and forward the event to the pipeline. */
+  private emitEvent(evt: NormalizedEvent) {
+    this.lastEventAt = Date.now();
+    this.cbs.onEvent(evt);
+  }
+
   async connect() {
-    this.cbs.onStatus('connecting');
+    this.setPhase('connecting');
     try {
       const state: any = await this.conn.connect();
       this.reconnectAttempt = 0;
-      this.cbs.onStatus('connected');
+      this.nextRetryAt = null;
+      this.lastEventAt = Date.now(); // baseline so the watchdog has a reference
+      this.setPhase('connected');
+      this.startStallWatchdog();
+      log.info(`[tiktok] connected @${this.username}`);
       // v2 room info nesting (fix #1):
       //   connect() returns TikTokLiveConnectionState whose `roomInfo` is the
       //   raw `room/info/` API response: { data: {...}, extra, status_code }.
@@ -277,7 +530,7 @@ export class TikTokSession {
       const owner = ri?.owner ?? {};
       const su = ri?.stream_url ?? ri?.streamUrl ?? {};
       if (!su || Object.keys(su).length === 0) {
-        console.log('[tiktok] No stream_url in roomInfo.data. Keys:', Object.keys(ri).join(', '));
+        log.info('[tiktok] No stream_url in roomInfo.data. Keys:', Object.keys(ri).join(', '));
       }
       const flvCandidates = su?.flv_pull_url ?? {};
       const hlsCandidates = su?.hls_pull_url_map ?? {};
@@ -290,9 +543,9 @@ export class TikTokSession {
       };
       const createTime = ri?.create_time ?? ri?.createTime ?? null;
       const startedAt = createTime ? createTime * 1000 : null;
-      console.log('[tiktok] roomInfo.data keys:', Object.keys(ri).join(', '));
-      console.log('[tiktok] create_time:', createTime, 'like_count:', ri?.like_count, 'user_count:', ri?.user_count);
-      this.cbs.onEvent({
+      log.debug('[tiktok] roomInfo.data keys:', Object.keys(ri).join(', '));
+      log.debug('[tiktok] create_time:', createTime, 'like_count:', ri?.like_count, 'user_count:', ri?.user_count);
+      this.emitEvent({
         type: 'roomInfo',
         ts: Date.now(),
         info: {
@@ -309,7 +562,20 @@ export class TikTokSession {
         },
       });
     } catch (err: any) {
-      this.cbs.onStatus('error', err?.message ?? String(err));
+      const { phase, message } = this.classifyError(err);
+      // Remember the classified phase so the reconnect backoff can react to a
+      // 429 (back off MORE) vs a transient network blip.
+      this.lastErrorPhase = phase;
+      if (phase === 'rate-limited') {
+        log.error(`[tiktok] sign service rate-limited (429) @${this.username}: ${message}`);
+      } else if (phase === 'signing-failed') {
+        log.error(`[tiktok] signing failed @${this.username}: ${message}`);
+      } else if (phase === 'offline') {
+        log.info(`[tiktok] @${this.username} is offline: ${message}`);
+      } else {
+        log.error(`[tiktok] connect failed @${this.username}: ${message}`);
+      }
+      this.setPhase(phase, message);
       throw err;
     }
   }
@@ -317,8 +583,21 @@ export class TikTokSession {
   private scheduleReconnect() {
     if (this.destroyed) return;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-    const delay = Math.min(30_000, 1000 * 2 ** this.reconnectAttempt);
+    // Base exponential backoff capped at 30s. On a 429 rate-limit, back off
+    // MORE aggressively (longer floor + cap) so we don't keep hammering the
+    // sign service and dig the rate-limit hole deeper.
+    const rateLimited = this.lastErrorPhase === 'rate-limited';
+    const base = rateLimited ? 15_000 : 1000;
+    const cap = rateLimited ? 120_000 : 30_000;
+    const delay = Math.min(cap, base * 2 ** this.reconnectAttempt);
     this.reconnectAttempt++;
+    this.nextRetryAt = Date.now() + delay;
+    log.info(
+      `[tiktok] reconnect attempt ${this.reconnectAttempt} in ${Math.round(delay / 1000)}s @${this.username}` +
+        (rateLimited ? ' (extended backoff — rate-limited)' : ''),
+    );
+    // Surface the backoff state to the renderer so it isn't hidden.
+    this.setPhase('reconnecting');
     this.reconnectTimer = setTimeout(async () => {
       if (this.destroyed) return;
       try {
@@ -331,15 +610,18 @@ export class TikTokSession {
 
   async disconnect() {
     this.destroyed = true;
+    this.stopStallWatchdog();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    this.nextRetryAt = null;
     try {
       this.conn.disconnect();
     } catch {
       /* ignore */
     }
-    this.cbs.onStatus('disconnected');
+    log.info(`[tiktok] disconnected (user) @${this.username}`);
+    this.setPhase('disconnected');
   }
 }
