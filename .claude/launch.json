@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "3414"],
       "port": 3414
+    },
+    {
+      "name": "reliability",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "3470"],
+      "port": 3470
     }
   ]
 }
