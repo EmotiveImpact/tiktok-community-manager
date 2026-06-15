@@ -7,6 +7,7 @@ import { TIERS } from '../lib/tier';
 import { useAlerts } from '../state/alerts';
 import { FanAvatar, TierChip, TagChip, Pager, PageShell, FieldLabel, inputCls, fanName, birthdayValid, StrengthBar, TemperatureDot } from '../components/crm';
 import { useUI } from '../state/ui';
+import { Tabs, TabList, Tab, Select } from '../components/ui';
 
 type Segment = 'all' | 'whales' | 'cold' | 'new' | 'birthdays';
 const SEGMENTS: { id: Segment; label: string }[] = [
@@ -17,6 +18,8 @@ const SEGMENTS: { id: Segment; label: string }[] = [
   { id: 'birthdays', label: 'Birthdays soon' },
 ];
 const DAY = 86400000;
+/** Sentinel for the "all" option — Radix Select forbids an empty-string item value. */
+const ALL = '__all__';
 const COLD_TEMPS: Temperature[] = ['cooling', 'cold'];
 
 /** Days until a fan's next MM-DD birthday, or null. */
@@ -115,20 +118,13 @@ export function Followers({ onGoImport, onGoLive }: Props) {
       }
     >
       {!isEmpty && (
-        <div className="flex flex-wrap gap-2">
-          {SEGMENTS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSegment(s.id)}
-              className={`h-8 rounded-full px-3 text-[12px] font-extrabold transition ${segment === s.id ? 'text-white' : ''}`}
-              style={segment === s.id
-                ? { background: 'linear-gradient(135deg, rgba(238,29,82,.32), rgba(105,201,208,.18))', border: '1px solid rgba(238,29,82,.35)' }
-                : { color: 'var(--secondary-label)', background: 'var(--fill-thin)', border: '1px solid var(--separator)' }}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <Tabs value={segment} onValueChange={(v) => setSegment(v as Segment)} variant="segment">
+          <TabList ariaLabel="Fan segments" className="flex-wrap">
+            {SEGMENTS.map((s) => (
+              <Tab key={s.id} value={s.id} label={s.label} />
+            ))}
+          </TabList>
+        </Tabs>
       )}
       {isEmpty ? (
         <div className="glass flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center" style={{ borderRadius: 22 }}>
@@ -152,14 +148,20 @@ export function Followers({ onGoImport, onGoLive }: Props) {
               placeholder="Search name, @username or notes…"
               className={`${inputCls} !w-64`}
             />
-            <select value={tier} onChange={(e) => setTier(e.target.value as Tier | '')} className={`${inputCls} !w-32`}>
-              <option value="">All tiers</option>
-              {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <select value={tag} onChange={(e) => setTag(e.target.value)} className={`${inputCls} !w-36`}>
-              <option value="">All tags</option>
-              {resp.allTags.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <Select
+              value={tier || ALL}
+              onValueChange={(v) => setTier((v === ALL ? '' : v) as Tier | '')}
+              ariaLabel="Filter by tier"
+              className="!w-32"
+              options={[{ value: ALL, label: 'All tiers' }, ...TIERS.map((t) => ({ value: t, label: t }))]}
+            />
+            <Select
+              value={tag || ALL}
+              onValueChange={(v) => setTag(v === ALL ? '' : v)}
+              ariaLabel="Filter by tag"
+              className="!w-36"
+              options={[{ value: ALL, label: 'All tags' }, ...resp.allTags.map((t) => ({ value: t, label: t }))]}
+            />
             <span className="ml-auto text-[12px]" style={{ color: 'var(--secondary-label)' }}>
               {segment === 'all' ? `${resp.total} fan${resp.total === 1 ? '' : 's'}` : `${rows.length} of ${resp.data.length} shown`}
             </span>
