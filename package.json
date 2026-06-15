@@ -83,7 +83,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "YOUR_GITHUB_USER",
+      "owner": "EmotiveImpact",
       "repo": "tiktok-community-manager"
     }
   }
