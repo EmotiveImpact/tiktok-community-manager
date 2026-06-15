@@ -7,6 +7,7 @@ import { timeAgo } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 import { Username } from './Username';
 import { UserBadges } from './UserBadges';
+import { Tooltip } from './ui';
 import type { LiveEvent, UserBrief } from '../types';
 
 type FeedItem = LiveEvent & { id: string };
@@ -137,7 +138,7 @@ const ChatRow = memo(function ChatRow({
         <div className="flex items-center gap-1.5">
           <Username user={item.user} className="text-xs font-semibold" />
           <UserBadges user={item.user} />
-          {tracked && <span className="text-[10px] text-[var(--amber)]" title="Tracked">★</span>}
+          {tracked && <Tooltip content="Tracked"><span className="text-[10px] text-[var(--amber)]">★</span></Tooltip>}
           <button
             onClick={() => (pinned ? unpinMessage(item.id) : pinMessage(item))}
             className="ml-auto hidden text-[10px] text-zinc-600 hover:text-like-400 group-hover:inline"

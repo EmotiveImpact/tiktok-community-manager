@@ -26,6 +26,7 @@ import { tierClass } from '../lib/tier';
 import { avatarGradient } from '../lib/avatars';
 import { formatNumber } from '../lib/format';
 import { ThankComposer } from './ThankComposer';
+import { Tooltip } from './ui';
 import type { Fan } from '../types';
 
 /** How many cards can be on screen at once. */
@@ -238,14 +239,15 @@ export function ResurfacedRegularAlert() {
                   </div>
                   <div className="truncate text-[11px] text-zinc-400">{memoryLine(fan)}</div>
                 </div>
-                <button
-                  onClick={() => dismiss(card.key)}
-                  className="flex-none rounded-md px-1 text-xs text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300"
-                  title="Dismiss"
-                  aria-label="Dismiss alert"
-                >
-                  ✕
-                </button>
+                <Tooltip content="Dismiss">
+                  <button
+                    onClick={() => dismiss(card.key)}
+                    className="flex-none rounded-md px-1 text-xs text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300"
+                    aria-label="Dismiss alert"
+                  >
+                    ✕
+                  </button>
+                </Tooltip>
               </div>
               <div className="mt-2.5 flex items-stretch gap-1.5">
                 <button
@@ -255,13 +257,14 @@ export function ResurfacedRegularAlert() {
                 >
                   👤 View
                 </button>
-                <button
-                  onClick={() => { setThankFor(fan); dismissFan(fan.uniqueId); }}
-                  className="flex-none rounded-full border border-zinc-800 px-3 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 hover:text-zinc-100"
-                  title="Send a thank-you"
-                >
-                  💌 Thank
-                </button>
+                <Tooltip content="Send a thank-you">
+                  <button
+                    onClick={() => { setThankFor(fan); dismissFan(fan.uniqueId); }}
+                    className="flex-none rounded-full border border-zinc-800 px-3 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 hover:text-zinc-100"
+                  >
+                    💌 Thank
+                  </button>
+                </Tooltip>
               </div>
             </div>
           );

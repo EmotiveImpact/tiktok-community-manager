@@ -7,6 +7,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useUI } from '../state/ui';
+import { Tooltip } from './ui';
 
 const EMOJIS = ['💖', '🔥', '😂', '🎉', '🙏', '⭐', '💎', '🎁'];
 
@@ -89,8 +90,8 @@ export function NoteComposer() {
       {highlightsOk && (
         <IconBtn title="Capture last 60s as highlight clip" onClick={capture}>⭐</IconBtn>
       )}
+      <Tooltip content="View gifts feed (this opens the gifts tab — it does not send a gift)">
       <button
-        title="View gifts feed (this opens the gifts tab — it does not send a gift)"
         onClick={() => setTab('gifts')}
         className="flex h-8 flex-none items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
       >
@@ -100,16 +101,18 @@ export function NoteComposer() {
         </svg>
         Gifts
       </button>
+      </Tooltip>
+      <Tooltip content="Save note (notes are private — the connector can't post to TikTok)">
       <button
         onClick={send}
         disabled={!text.trim()}
-        title="Save note (notes are private — the connector can't post to TikTok)"
         aria-label="Save stream note"
         className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-white transition disabled:opacity-40"
         style={{ background: 'var(--gradient-pink)' }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
       </button>
+      </Tooltip>
       {flash && <span className="text-[10px] text-emerald-400">{flash}</span>}
     </div>
   );
@@ -117,13 +120,14 @@ export function NoteComposer() {
 
 function IconBtn({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
-    >
-      {children}
-    </button>
+    <Tooltip content={title}>
+      <button
+        onClick={onClick}
+        aria-label={title}
+        className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
+      >
+        {children}
+      </button>
+    </Tooltip>
   );
 }

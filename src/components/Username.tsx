@@ -1,5 +1,6 @@
 import type { UserBrief } from '../types';
 import { useUI } from '../state/ui';
+import { Tooltip } from './ui';
 
 const USERNAME_COLORS = [
   'text-like-400',
@@ -46,16 +47,17 @@ export function Username({
   const focusFanMemory = useUI((s) => s.focusFanMemory);
   const colorClass = colored ? colorFor(user.uniqueId) : '';
   return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        focusFanMemory(user.uniqueId);
-      }}
-      className={`inline-flex max-w-full items-center gap-1 truncate text-left hover:underline focus:outline-none ${colorClass} ${className}`}
-      title={`Fan memory for @${user.uniqueId}`}
-    >
-      <span className="truncate">{user.nickname}</span>
-      {user.verified && <VerifiedBadge />}
-    </button>
+    <Tooltip content={`Fan memory for @${user.uniqueId}`}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          focusFanMemory(user.uniqueId);
+        }}
+        className={`inline-flex max-w-full items-center gap-1 truncate text-left hover:underline focus:outline-none ${colorClass} ${className}`}
+      >
+        <span className="truncate">{user.nickname}</span>
+        {user.verified && <VerifiedBadge />}
+      </button>
+    </Tooltip>
   );
 }

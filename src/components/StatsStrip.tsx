@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { formatNumber } from '../lib/format';
 import { VerifiedBadge } from './Username';
+import { Tooltip } from './ui';
 
 function uptimeLabel(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -93,9 +94,11 @@ export function StatsStrip() {
       {(sessionTitle || uptime || (totalViewers ?? 0) > 0) && (
         <div className="mt-3 border-t border-[var(--separator)] pt-2.5">
           {sessionTitle && (
-            <div className="truncate text-[12px] font-semibold text-zinc-200" title={sessionTitle}>
-              {sessionTitle}
-            </div>
+            <Tooltip content={sessionTitle}>
+              <div className="truncate text-[12px] font-semibold text-zinc-200">
+                {sessionTitle}
+              </div>
+            </Tooltip>
           )}
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-zinc-500">
             <span className="inline-flex items-center gap-1">
@@ -103,14 +106,18 @@ export function StatsStrip() {
               LIVE
             </span>
             {uptime && (
-              <span className="tabular-nums" title="How long this stream has been live">
-                ⏱ {uptime} uptime
-              </span>
+              <Tooltip content="How long this stream has been live">
+                <span className="tabular-nums">
+                  ⏱ {uptime} uptime
+                </span>
+              </Tooltip>
             )}
             {(totalViewers ?? 0) > 0 && (
-              <span className="tabular-nums" title="Total viewers this session (EulerStream)">
-                {formatNumber(totalViewers!)} total viewers
-              </span>
+              <Tooltip content="Total viewers this session (EulerStream)">
+                <span className="tabular-nums">
+                  {formatNumber(totalViewers!)} total viewers
+                </span>
+              </Tooltip>
             )}
           </div>
         </div>

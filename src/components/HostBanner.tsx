@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
 import { formatNumber, formatUptime } from '../lib/format';
+import { Tooltip } from './ui';
 
 export function HostBanner() {
   const room = useStore((s) => s.roomInfo);
@@ -33,13 +34,14 @@ export function HostBanner() {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <button
-            onClick={() => window.tiktok.openProfile(room.hostUniqueId)}
-            className="block max-w-full truncate text-sm font-bold text-zinc-100 hover:text-like-400"
-            title={`Open @${room.hostUniqueId} on TikTok`}
-          >
-            {room.hostNickname}
-          </button>
+          <Tooltip content={`Open @${room.hostUniqueId} on TikTok`}>
+            <button
+              onClick={() => window.tiktok.openProfile(room.hostUniqueId)}
+              className="block max-w-full truncate text-sm font-bold text-zinc-100 hover:text-like-400"
+            >
+              {room.hostNickname}
+            </button>
+          </Tooltip>
           <div className="truncate text-[11px] text-zinc-500">@{room.hostUniqueId}</div>
           {uptime && (
             <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-like-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-like-400">

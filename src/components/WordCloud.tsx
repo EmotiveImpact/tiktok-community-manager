@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useStore } from '../state/store';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Tooltip } from './ui';
 
 const STOP_WORDS = new Set([
   'the', 'a', 'an', 'is', 'it', 'to', 'in', 'for', 'of', 'and', 'or', 'on', 'at', 'by',
@@ -195,13 +196,13 @@ export function WordCloud({ onClose }: { onClose: () => void }) {
             ) : (
               <div className="flex flex-1 flex-wrap items-center justify-center gap-x-4 gap-y-2 p-4">
                 {words.map((w) => (
-                  <span
-                    key={w.word}
-                    className={`${w.size} ${w.weight} ${w.color} cursor-default leading-none transition hover:opacity-70`}
-                    title={`${w.word}: ${w.count} uses`}
-                  >
-                    {w.word}
-                  </span>
+                  <Tooltip key={w.word} content={`${w.word}: ${w.count} uses`}>
+                    <span
+                      className={`${w.size} ${w.weight} ${w.color} cursor-default leading-none transition hover:opacity-70`}
+                    >
+                      {w.word}
+                    </span>
+                  </Tooltip>
                 ))}
               </div>
             )}

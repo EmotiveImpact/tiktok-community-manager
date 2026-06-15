@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Tooltip } from './ui';
 import { useStore } from '../state/store';
 import { useModeration } from '../state/moderation';
 import { useUI } from '../state/ui';
@@ -82,13 +83,14 @@ export function TopContributors() {
                     {t.user.nickname.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <button
-                  onClick={() => focusFanMemory(t.user.uniqueId)}
-                  className="min-w-0 flex-1 truncate text-left text-[13px] font-semibold text-zinc-100 hover:text-like-400"
-                  title={`Fan memory for @${t.user.uniqueId}`}
-                >
-                  {t.user.nickname}
-                </button>
+                <Tooltip content={`Fan memory for @${t.user.uniqueId}`}>
+                  <button
+                    onClick={() => focusFanMemory(t.user.uniqueId)}
+                    className="min-w-0 flex-1 truncate text-left text-[13px] font-semibold text-zinc-100 hover:text-like-400"
+                  >
+                    {t.user.nickname}
+                  </button>
+                </Tooltip>
                 <span className={`flex-none text-[12px] font-semibold tabular-nums ${
                   mode === 'diamonds' ? 'text-amber-300' : mode === 'likes' ? 'text-like-400' : 'text-zinc-300'
                 }`}>

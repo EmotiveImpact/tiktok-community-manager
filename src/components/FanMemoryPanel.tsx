@@ -14,6 +14,7 @@ import { tierClass } from '../lib/tier';
 import { avatarGradient } from '../lib/avatars';
 import { useSettingsLoad } from '../state/settings';
 import { ThankComposer } from './ThankComposer';
+import { Tooltip } from './ui';
 import type { Fan, GiftRecord, TimelineEvent } from '../types';
 
 /** Compact icon per timeline event type — mirrors the 360 profile feed. */
@@ -186,13 +187,14 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
             <span className="font-semibold normal-case tracking-normal text-zinc-600">· quick profile</span>
           </div>
           {fanMemoryId && (
-            <button
-              onClick={() => focusFanMemory(null)}
-              className="rounded-md px-1.5 text-xs text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300"
-              title="Clear selection"
-            >
-              ✕
-            </button>
+            <Tooltip content="Clear selection">
+              <button
+                onClick={() => focusFanMemory(null)}
+                className="rounded-md px-1.5 text-xs text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300"
+              >
+                ✕
+              </button>
+            </Tooltip>
           )}
         </div>
 
@@ -217,7 +219,9 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   </div>
                 )}
                 {online && (
-                  <span className="absolute bottom-0.5 right-0.5 block h-3.5 w-3.5 rounded-full border-2 border-[var(--card)] bg-[var(--green)]" title="In the room now" />
+                  <Tooltip content="In the room now">
+                    <span className="absolute bottom-0.5 right-0.5 block h-3.5 w-3.5 rounded-full border-2 border-[var(--card)] bg-[var(--green)]" />
+                  </Tooltip>
                 )}
               </div>
               <div className="mt-2 flex items-center gap-1.5">
@@ -308,14 +312,15 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                       rows={2}
                       className="min-w-0 flex-1 resize-none rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2 text-xs leading-relaxed text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
                     />
-                    <button
-                      onClick={addNote}
-                      disabled={!noteDraft.trim()}
-                      title="Add to timeline (⌘/Ctrl+Enter)"
-                      className="flex-none rounded-lg border border-zinc-800 px-2.5 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 hover:text-zinc-100 disabled:opacity-40"
-                    >
-                      Add
-                    </button>
+                    <Tooltip content="Add to timeline (⌘/Ctrl+Enter)">
+                      <button
+                        onClick={addNote}
+                        disabled={!noteDraft.trim()}
+                        className="flex-none rounded-lg border border-zinc-800 px-2.5 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 hover:text-zinc-100 disabled:opacity-40"
+                      >
+                        Add
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
 
@@ -339,15 +344,15 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                 {/* Tags */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {fan.tags.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => removeTag(t)}
-                      title="Remove tag"
-                      className="group inline-flex items-center gap-1 rounded-full bg-[color:var(--cyan)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--cyan)] hover:bg-[color:var(--red)]/15 hover:text-[var(--red)]"
-                    >
-                      {t}
-                      <span className="hidden group-hover:inline">✕</span>
-                    </button>
+                    <Tooltip key={t} content="Remove tag">
+                      <button
+                        onClick={() => removeTag(t)}
+                        className="group inline-flex items-center gap-1 rounded-full bg-[color:var(--cyan)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--cyan)] hover:bg-[color:var(--red)]/15 hover:text-[var(--red)]"
+                      >
+                        {t}
+                        <span className="hidden group-hover:inline">✕</span>
+                      </button>
+                    </Tooltip>
                   ))}
                   {addingTag ? (
                     <input
@@ -360,13 +365,14 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                       className="h-5 w-20 rounded-full border border-zinc-700 bg-zinc-900 px-2 text-[10px] text-zinc-200 outline-none focus:border-like-500/60"
                     />
                   ) : (
-                    <button
-                      onClick={() => setAddingTag(true)}
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-zinc-700 text-[11px] text-zinc-500 hover:border-like-500/60 hover:text-like-400"
-                      title="Add tag"
-                    >
-                      +
-                    </button>
+                    <Tooltip content="Add tag">
+                      <button
+                        onClick={() => setAddingTag(true)}
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-zinc-700 text-[11px] text-zinc-500 hover:border-like-500/60 hover:text-like-400"
+                      >
+                        +
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
 
@@ -380,24 +386,26 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   >
                     💌 Send a thank-you
                   </button>
-                  <button
-                    onClick={thank}
-                    disabled={thanked}
-                    title={thanked ? 'Reminder set for after LIVE' : 'Remind me to thank them after LIVE'}
-                    aria-label={thanked ? 'Reminder set for after LIVE' : 'Remind me to thank them after LIVE'}
-                    className="flex-none rounded-full border border-zinc-800 px-3 text-xs font-semibold text-zinc-400 transition hover:bg-zinc-800/60 hover:text-zinc-200 disabled:opacity-70"
-                  >
-                    {thanked ? '⏰ Set ✓' : '⏰ Later'}
-                  </button>
+                  <Tooltip content={thanked ? 'Reminder set for after LIVE' : 'Remind me to thank them after LIVE'}>
+                    <button
+                      onClick={thank}
+                      disabled={thanked}
+                      aria-label={thanked ? 'Reminder set for after LIVE' : 'Remind me to thank them after LIVE'}
+                      className="flex-none rounded-full border border-zinc-800 px-3 text-xs font-semibold text-zinc-400 transition hover:bg-zinc-800/60 hover:text-zinc-200 disabled:opacity-70"
+                    >
+                      {thanked ? '⏰ Set ✓' : '⏰ Later'}
+                    </button>
+                  </Tooltip>
                 </div>
+                <Tooltip content="See this fan's full record on the Followers page">
                 <button
                   onClick={() => openFanProfile(fan.uniqueId)}
-                  title="See this fan's full record on the Followers page"
                   className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-like-500/60 bg-like-500/10 px-3 py-2 text-xs font-bold text-like-300 shadow-[0_1px_8px_rgba(105,201,208,0.18)] transition hover:bg-like-500/20 hover:text-like-200"
                 >
                   <span aria-hidden>👤</span> Open full profile
                   <span aria-hidden className="text-like-400">→</span>
                 </button>
+                </Tooltip>
               </>
             ) : (
               <div className="py-6 text-center text-xs text-zinc-600">Loading…</div>
