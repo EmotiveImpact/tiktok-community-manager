@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import { Menu, MenuItem, MenuGroup } from './components/ui/Menu';
+import { Tabs, TabList, Tab } from './components/ui';
 import { ConnectBar } from './components/ConnectBar';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
@@ -276,11 +277,15 @@ export default function App() {
                 {status === 'connected' ? (
                   <>
                     <div className="flex h-[54px] flex-none items-center gap-2 border-b border-zinc-800/50 px-3">
-                      <TabButton active={tab === 'comments'} onClick={() => setTab('comments')}>Comments</TabButton>
-                      <TabButton active={tab === 'gifts'} onClick={() => setTab('gifts')}>Gifts</TabButton>
-                      <TabButton active={tab === 'questions'} onClick={() => setTab('questions')}>Q&amp;A</TabButton>
-                      <TabButton active={tab === 'top'} onClick={() => setTab('top')}>Top</TabButton>
-                      <TabButton active={tab === 'all'} onClick={() => setTab('all')}>All</TabButton>
+                      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} variant="pill">
+                        <TabList ariaLabel="Live feed">
+                          <Tab value="comments" label="Comments" />
+                          <Tab value="gifts" label="Gifts" />
+                          <Tab value="questions" label="Q&A" />
+                          <Tab value="top" label="Top" />
+                          <Tab value="all" label="All" />
+                        </TabList>
+                      </Tabs>
                       <div className="ml-auto flex items-center gap-1">
                         <FeedFilterMenu />
                         <FeedKebabMenu />
@@ -486,23 +491,3 @@ function FeedKebabMenu() {
   );
 }
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex h-[30px] items-center rounded-full px-3.5 text-xs font-bold transition ${
-        active ? 'bg-pink-gradient text-white' : 'text-zinc-500 hover:text-zinc-300'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
