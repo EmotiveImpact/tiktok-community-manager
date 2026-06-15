@@ -71,6 +71,34 @@ type UIState = {
   closeFanProfile: () => void;
   clearFanFocus: () => void;
 
+  /**
+   * ── Universal Fan PEEK drawer ────────────────────────────────────────────
+   * A GLOBAL right-side slide-over that previews ANY fan from ANY page WITHOUT
+   * changing `page` (so the underlying page stays put). Rendered once at the
+   * App root by <FanPeek/>. Escalate to the full 360 with `openFanProfile`.
+   *
+   * Contract for follow-up agents:
+   *   peekFanId            → the @uniqueId currently peeked, or null when closed.
+   *   openFanPeek(uniqueId)→ open/replace the peek for this fan (strips a leading
+   *                          '@' and trims). Does NOT touch `page`.
+   *   closeFanPeek()       → close the drawer (peekFanId → null).
+   */
+  peekFanId: string | null;
+  /** Open the global Fan Peek drawer for a fan (leaves `page` unchanged). */
+  openFanPeek: (uniqueId: string) => void;
+  /** Close the global Fan Peek drawer. */
+  closeFanPeek: () => void;
+
+  /**
+   * ── Global ⌘K command palette ────────────────────────────────────────────
+   * Open-state lifted here (was App-local) so ANY surface and the global ⌘K
+   * handler can toggle it. <CommandPalette/> is rendered globally driven by
+   * `commandOpen`.
+   */
+  commandOpen: boolean;
+  /** Open/close (or toggle, via updater fn) the global command palette. */
+  setCommandOpen: (v: boolean | ((prev: boolean) => boolean)) => void;
+
   /** Fan selected in the Messages page's follow-up panel (persists across page switches). */
   messagesFanFocus: string | null;
   setMessagesFanFocus: (uniqueId: string | null) => void;
@@ -110,6 +138,31 @@ function initialFanFocus(): string | null {
   }
 }
 
+/**
+ * Seed the Fan Peek from `?peek=<uniqueId>` — a deep-link / screenshot hook so
+ * the global drawer can be opened over any page without a ⌘K keystroke.
+ */
+function initialPeekFan(): string | null {
+  try {
+    const q = new URLSearchParams(window.location.search).get('peek');
+    return q ? q.replace(/^@/, '').trim() || null : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Seed the command palette open from `?cmdk=1` — a screenshot/dev hook since
+ * ⌘K can't be sent headlessly.
+ */
+function initialCommandOpen(): boolean {
+  try {
+    return new URLSearchParams(window.location.search).get('cmdk') === '1';
+  } catch {
+    return false;
+  }
+}
+
 export const useUI = create<UIState>((set, get) => ({
   page: initialPage(),
   fanFocus: initialFanFocus(),
@@ -135,9 +188,24 @@ export const useUI = create<UIState>((set, get) => ({
       // Remember where to land on "← Back" (don't stack fan→fan).
       fanReturnTo: s.page === 'fan' ? s.fanReturnTo : s.page,
       sidebarMode: 'main',
+      // Escalating to the full 360 always dismisses the lightweight peek.
+      peekFanId: null,
     })),
   closeFanProfile: () => set((s) => ({ page: s.fanReturnTo, fanFocus: null, sidebarMode: 'main' })),
   clearFanFocus: () => set({ fanFocus: null }),
+
+  // ── Global Fan PEEK drawer ─────────────────────────────────────────────
+  peekFanId: initialPeekFan(),
+  openFanPeek: (uniqueId) => {
+    const id = uniqueId.replace(/^@/, '').trim();
+    if (id) set({ peekFanId: id });
+  },
+  closeFanPeek: () => set({ peekFanId: null }),
+
+  // ── Global ⌘K command palette ──────────────────────────────────────────
+  commandOpen: initialCommandOpen(),
+  setCommandOpen: (v) =>
+    set((s) => ({ commandOpen: typeof v === 'function' ? v(s.commandOpen) : v })),
 
   messagesFanFocus: null,
   setMessagesFanFocus: (uniqueId) => set({ messagesFanFocus: uniqueId }),
