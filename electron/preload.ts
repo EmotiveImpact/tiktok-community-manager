@@ -71,26 +71,8 @@ const api = {
   openProfileInternal: (uniqueId: string) =>
     ipcRenderer.invoke('profile:openInternal', uniqueId) as Promise<{ ok: boolean }>,
 
-  notesGet: (uniqueId: string) =>
-    ipcRenderer.invoke('notes:get', uniqueId) as Promise<{
-      uniqueId: string;
-      nickname: string;
-      notes: string;
-      updatedAt: number;
-    } | null>,
-  notesAll: () =>
-    ipcRenderer.invoke('notes:all') as Promise<
-      Record<string, { uniqueId: string; nickname: string; notes: string; updatedAt: number }>
-    >,
-  notesSet: (payload: { uniqueId: string; nickname: string; notes: string }) =>
-    ipcRenderer.invoke('notes:set', payload) as Promise<{
-      uniqueId: string;
-      nickname: string;
-      notes: string;
-      updatedAt: number;
-    }>,
-  notesDelete: (uniqueId: string) =>
-    ipcRenderer.invoke('notes:delete', uniqueId) as Promise<{ ok: boolean }>,
+  // Legacy notes:* IPC removed — notes live on the fan record now (fansUpdate
+  // {notes} for the pinned About, fansAddNote for the dated timeline log).
 
   sessionsList: () => ipcRenderer.invoke('sessions:list') as Promise<any[]>,
   sessionsGet: (id: string) => ipcRenderer.invoke('sessions:get', id) as Promise<any>,

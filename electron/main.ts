@@ -7,6 +7,7 @@ import { settings, notesStore, customFieldsStore, setMyAccount, normalizeUsernam
 import * as sessions from './sessions';
 import * as crm from './crm';
 import { addInteraction } from './interactions';
+import { migrateNotesToFans } from './notes-migration';
 import { summarize, type SummaryInput } from './summarize';
 import { exportSession, type ExportType } from './export';
 import { startOverlayServer, pushEvent as pushOverlayEvent, resetStats as resetOverlayStats, getOverlayPort } from './overlay';
@@ -621,7 +622,9 @@ ipcMain.handle('backup:export', async () => {
       webhooks: settings.get('webhooks', {} as any),
       watchlist: settings.get('watchlist', []),
     },
-    notes: notesStore.all(),
+    // Notes now live on the fan record (pinned About + dated timeline notes),
+    // exported as part of the fans ledger below — no separate notes blob.
+    fans: fans.listFans({ pageSize: 100000 }).data,
     sessions: sessions.list(),
   };
   fs.writeFileSync(result.filePath, JSON.stringify(data, null, 2));
@@ -645,11 +648,34 @@ ipcMain.handle('backup:import', async () => {
         settings.set(k as any, v as any);
       }
     }
-    if (data.notes) {
-      for (const [uid, note] of Object.entries(data.notes)) {
-        const n = note as any;
-        notesStore.set(uid, n.nickname ?? uid, n.notes ?? '');
+    // Restore fans from a current backup (notes ride along on the record).
+    if (Array.isArray(data.fans)) {
+      for (const f of data.fans) {
+        if (!f?.uniqueId) continue;
+        fans.upsertFan({
+          uniqueId: f.uniqueId,
+          nickname: f.nickname,
+          displayName: f.displayName,
+          tags: Array.isArray(f.tags) ? f.tags : undefined,
+          notes: typeof f.notes === 'string' ? f.notes : undefined,
+          birthday: f.birthday ?? undefined,
+          totalDiamonds: typeof f.totalDiamonds === 'number' ? f.totalDiamonds : undefined,
+        });
       }
+    }
+    // Back-compat: a LEGACY backup carried a separate `notes` blob. Fold it onto
+    // the fan record the same way the one-time migration does, so no note is
+    // lost when importing an old backup.
+    if (data.notes && typeof data.notes === 'object') {
+      migrateNotesToFans({
+        allLegacyNotes: () => data.notes as Record<string, any>,
+        getFan: (uniqueId) => fans.getRawFan(uniqueId),
+        upsertFan: (p) => fans.upsertFan(p),
+        addInteraction: (p) => addInteraction(p),
+        clearLegacy: () => {},
+        isMigrated: () => false, // always process an explicit backup payload
+        setMigrated: () => {},
+      });
     }
     return { ok: true };
   } catch (err: any) {
@@ -797,22 +823,10 @@ ipcMain.handle('tracked:isTracked', (_e, uniqueId: string) => {
   return list.some((u) => u.uniqueId === uniqueId);
 });
 
-ipcMain.handle('notes:get', (_e, uniqueId: string) => {
-  return notesStore.get(uniqueId);
-});
-
-ipcMain.handle('notes:all', () => {
-  return notesStore.all();
-});
-
-ipcMain.handle('notes:set', (_e, payload: { uniqueId: string; nickname: string; notes: string }) => {
-  return notesStore.set(payload.uniqueId, payload.nickname, payload.notes);
-});
-
-ipcMain.handle('notes:delete', (_e, uniqueId: string) => {
-  notesStore.delete(uniqueId);
-  return { ok: true };
-});
+// NOTE: the legacy `notes:*` IPC (notesStore island) was REMOVED. Notes now
+// live on the fan record — pinned About via `fans:update` ({notes}) and dated
+// log via `fans:addNote`. A one-time migration (runNotesMigration at boot)
+// drained the old store onto the fan model with no data loss.
 
 // ---------------------------------------------------------------------------
 // Fan CRM IPC
@@ -946,7 +960,38 @@ ipcMain.handle('gifts:exportCsv', async (_e, q: fans.ListGiftsQuery) => {
 ipcMain.handle('fans:clear', () => fans.clearAll());
 ipcMain.handle('fans:dataDir', () => fans.fansDir());
 
+/**
+ * One-time, fail-safe migration of the legacy `notesStore` island onto the
+ * canonical fan notes model (pinned About `fan.notes` + dated timeline notes).
+ * Guarded by the `notesMigratedToFans` settings flag; never throws.
+ */
+function runNotesMigration(): void {
+  try {
+    const summary = migrateNotesToFans({
+      allLegacyNotes: () => notesStore.all(),
+      getFan: (uniqueId) => fans.getRawFan(uniqueId),
+      upsertFan: (payload) => fans.upsertFan(payload),
+      addInteraction: (p) => addInteraction(p),
+      clearLegacy: () => notesStore.clear(),
+      isMigrated: () => settings.get('notesMigratedToFans', false),
+      setMigrated: () => settings.set('notesMigratedToFans', true),
+    });
+    if (summary.ran && summary.total > 0) {
+      log.info(
+        `[main] notes migration: ${summary.total} legacy note(s) → ` +
+          `${summary.movedToAbout} About, ${summary.appendedToTimeline} timeline, ` +
+          `${summary.skippedEmpty} empty, ${summary.errored} errored`,
+      );
+    }
+  } catch (err) {
+    log.warn('[main] notes migration failed (non-fatal):', (err as any)?.message ?? err);
+  }
+}
+
 app.whenReady().then(async () => {
+  // Drain the legacy notesStore island onto the fan record BEFORE the renderer
+  // makes its first reads, so every surface sees one canonical notes model.
+  runNotesMigration();
   createWindow();
   await startOverlayServer();
   setupLikerIpc(broadcast);

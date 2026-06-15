@@ -134,7 +134,15 @@ type Schema = {
   aiSummaryConsented: boolean;
   /** One-time risk acknowledgement before the auto-liker can run. */
   likerRiskAck: boolean;
+  /**
+   * @deprecated Legacy island store. Notes now live on the fan record:
+   * a pinned "About" (`fan.notes`) + dated timeline notes (interactions
+   * `type:'note'`). Kept only so the one-time migration can drain it. New
+   * code MUST NOT read or write this — see `migrateNotesToFans` in main.ts.
+   */
   notes: Record<string, UserNote>;
+  /** Set once `migrateNotesToFans` has drained the legacy `notes` map. */
+  notesMigratedToFans: boolean;
   webhooks: WebhookConfig;
   watchlist: WatchEntry[];
   trackedUsers: TrackedUser[];
@@ -165,6 +173,7 @@ const DEFAULTS: Schema = {
   aiSummaryConsented: false,
   likerRiskAck: false,
   notes: {},
+  notesMigratedToFans: false,
   webhooks: {
     discordUrl: '',
     slackUrl: '',
@@ -375,6 +384,13 @@ export const notesStore = {
     if (!data.notes?.[uniqueId]) return;
     const { [uniqueId]: _, ...rest } = data.notes;
     data.notes = rest;
+    cache = data;
+    save(data);
+  },
+  /** Drain the whole legacy map (used by the one-time fan-notes migration). */
+  clear() {
+    const data = load();
+    data.notes = {};
     cache = data;
     save(data);
   },
