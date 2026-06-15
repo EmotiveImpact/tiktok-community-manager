@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
+import { Menu, MenuItem, MenuGroup } from './components/ui/Menu';
 import { ConnectBar } from './components/ConnectBar';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
@@ -44,12 +45,17 @@ import { useTracked } from './state/tracked';
 import { useModeration } from './state/moderation';
 import { useUI, type FeedFilter, type LiveTool } from './state/ui';
 
-function ToolbarBtn({ active, onClick, children, title, badge, badgeAccent }: { active?: boolean; onClick: () => void; children: React.ReactNode; title?: string; badge?: number; badgeAccent?: boolean }) {
+const ToolbarBtn = forwardRef<
+  HTMLButtonElement,
+  { active?: boolean; onClick?: () => void; children: React.ReactNode; title?: string; badge?: number; badgeAccent?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>
+>(function ToolbarBtn({ active, onClick, children, title, badge, badgeAccent, className, ...rest }, ref) {
   return (
     <button
+      ref={ref}
       onClick={onClick}
       title={title}
-      className={`no-drag panel-btn ${active ? 'panel-btn-active' : ''}`}
+      className={`no-drag panel-btn ${active ? 'panel-btn-active' : ''} ${className ?? ''}`}
+      {...rest}
     >
       {children}
       {badge !== undefined && badge > 0 && (
@@ -57,7 +63,7 @@ function ToolbarBtn({ active, onClick, children, title, badge, badgeAccent }: { 
       )}
     </button>
   );
-}
+});
 
 const TOOLS_GROUPS: { group: string; items: { id: LiveTool; label: string; icon: string }[] }[] = [
   {
@@ -98,18 +104,12 @@ function ConnectBarTools({
   trackedCount,
   alertCount,
   onOpen,
-  moreRef,
-  showMore,
-  setShowMore,
 }: {
   showStream: boolean;
   setShowStream: React.Dispatch<React.SetStateAction<boolean>>;
   trackedCount: number;
   alertCount: number;
   onOpen: (tool: LiveTool) => void;
-  moreRef: React.MutableRefObject<HTMLDivElement | null>;
-  showMore: boolean;
-  setShowMore: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   return (
     <>
@@ -122,32 +122,25 @@ function ConnectBarTools({
       <ToolbarBtn onClick={() => onOpen('alerts')} title="Alerts" badge={alertCount} badgeAccent>
         Alerts
       </ToolbarBtn>
-      <div ref={moreRef} className="relative">
-        <ToolbarBtn onClick={() => setShowMore((v) => !v)} active={showMore}>
-          Tools ▾
-        </ToolbarBtn>
-        {showMore && (
-          <div className="absolute right-0 top-9 z-50 w-56 rounded-xl border border-zinc-800/60 bg-zinc-950/95 py-2 shadow-2xl backdrop-blur">
-            {TOOLS_GROUPS.map((group, gi) => (
-              <div key={group.group} className={gi > 0 ? 'mt-1.5 border-t border-zinc-800/50 pt-1.5' : ''}>
-                <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-                  {group.group}
-                </div>
-                {group.items.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => { onOpen(item.id); setShowMore(false); }}
-                    className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800/80"
-                  >
-                    <span className="text-sm">{item.icon}</span>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+      <Menu
+        trigger={<ToolbarBtn>Tools ▾</ToolbarBtn>}
+        align="end"
+        sideOffset={6}
+        contentClassName="w-56"
+      >
+        {TOOLS_GROUPS.map((group, gi) => (
+          <MenuGroup key={group.group} label={group.group} first={gi === 0}>
+            {group.items.map((item) => (
+              <MenuItem
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                onSelect={() => onOpen(item.id)}
+              />
             ))}
-          </div>
-        )}
-      </div>
+          </MenuGroup>
+        ))}
+      </Menu>
     </>
   );
 }
@@ -163,19 +156,6 @@ export default function App() {
   const openLiveTool = useUI((s) => s.openLiveTool);
   const [showStream, setShowStream] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [showMore, setShowMore] = useState(false);
-  const moreRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!showMore) return;
-    const handler = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setShowMore(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showMore]);
   const setStatus = useStore((s) => s.setStatus);
   const ingest = useStore((s) => s.ingest);
   const status = useStore((s) => s.status);
@@ -254,7 +234,7 @@ export default function App() {
       if (mod && e.key === 't') { e.preventDefault(); toggleTool('transcript'); }
       if (mod && e.key === 'k') { e.preventDefault(); setShowCommandPalette((v) => !v); }
       if (e.key === 'Escape') {
-        setShowCommandPalette(false); setShowMore(false);
+        setShowCommandPalette(false);
         // Esc backs an in-content tool out to the live feed
         if (ui.page === 'live' && ui.liveTool !== 'feed') ui.openLiveTool('feed');
       }
@@ -285,9 +265,6 @@ export default function App() {
                   trackedCount={trackedCount}
                   alertCount={alertCount}
                   onOpen={openLiveTool}
-                  moreRef={moreRef}
-                  showMore={showMore}
-                  setShowMore={setShowMore}
                 />
               }
             />
@@ -434,104 +411,78 @@ const FILTER_LABELS: Record<FeedFilter, string> = {
   gifters: 'Top gifters',
 };
 
+const FilterPillTrigger = forwardRef<
+  HTMLButtonElement,
+  { activeFilter: FeedFilter } & React.ButtonHTMLAttributes<HTMLButtonElement>
+>(function FilterPillTrigger({ activeFilter, className, ...rest }, ref) {
+  return (
+    <button
+      ref={ref}
+      aria-label="Filter feed by viewer segment"
+      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${activeFilter !== 'all' ? 'bg-like-500/15 text-like-400' : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'} ${className ?? ''}`}
+      {...rest}
+    >
+      Filter {activeFilter !== 'all' ? `· ${FILTER_LABELS[activeFilter]}` : ''} ▾
+    </button>
+  );
+});
+
 /** "Filter ▾" — narrows the Comments feed to a viewer segment. */
 function FeedFilterMenu() {
   const feedFilter = useUI((s) => s.feedFilter);
   const setFeedFilter = useUI((s) => s.setFeedFilter);
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey); };
-  }, [open]);
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Filter feed by viewer segment"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${feedFilter !== 'all' ? 'bg-like-500/15 text-like-400' : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'}`}
-      >
-        Filter {feedFilter !== 'all' ? `· ${FILTER_LABELS[feedFilter]}` : ''} ▾
-      </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-40 w-40 rounded-xl border border-zinc-800/60 bg-zinc-950/95 py-1.5 shadow-2xl backdrop-blur">
-          {(Object.keys(FILTER_LABELS) as FeedFilter[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => { setFeedFilter(f); setOpen(false); }}
-              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-zinc-800/80 ${feedFilter === f ? 'font-bold text-like-400' : 'text-zinc-300'}`}
-            >
-              {FILTER_LABELS[f]}
-              {feedFilter === f && <span className="ml-auto">✓</span>}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <Menu
+      trigger={<FilterPillTrigger activeFilter={feedFilter} />}
+      align="end"
+      contentClassName="w-40"
+    >
+      {(Object.keys(FILTER_LABELS) as FeedFilter[]).map((f) => (
+        <MenuItem
+          key={f}
+          label={FILTER_LABELS[f]}
+          active={feedFilter === f}
+          onSelect={() => setFeedFilter(f)}
+        />
+      ))}
+    </Menu>
   );
 }
 
+const KebabTrigger = forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+  function KebabTrigger({ className, ...rest }, ref) {
+    return (
+      <button
+        ref={ref}
+        className={`rounded-full px-2 py-1 text-sm leading-none text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300 ${className ?? ''}`}
+        title="Feed menu"
+        aria-label="Feed menu"
+        {...rest}
+      >
+        ⋮
+      </button>
+    );
+  },
+);
+
 /** "⋮" feed menu — small utilities. */
 function FeedKebabMenu() {
-  const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey); };
-  }, [open]);
   const copyStats = async () => {
     const s = useStore.getState();
     const subs = s.subscribeCount > 0 ? ` · ${s.subscribeCount} subs` : '';
     const text = `LIVE @${s.roomInfo?.hostUniqueId ?? s.username}: ${s.totalLikes} likes · ${s.viewerCount} viewers · ${s.commentCount} comments · ${s.totalDiamonds} diamonds · ${s.giftCount} gifts${subs}`;
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      useAlerts.getState().pushToast({ title: 'Copied session stats', body: text });
     } catch {
       useAlerts.getState().pushToast({ title: 'Copy failed', body: 'Could not access the clipboard.' });
     }
   };
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="rounded-full px-2 py-1 text-sm leading-none text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
-        title="Feed menu"
-        aria-label="Feed menu"
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        ⋮
-      </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-40 w-44 rounded-xl border border-zinc-800/60 bg-zinc-950/95 py-1.5 shadow-2xl backdrop-blur">
-          <button onClick={copyStats} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800/80">
-            📋 {copied ? 'Copied ✓' : 'Copy session stats'}
-          </button>
-          <button
-            onClick={() => { useUI.getState().clearStreamNotes(); setOpen(false); }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800/80"
-          >
-            🧹 Clear stream notes
-          </button>
-        </div>
-      )}
-    </div>
+    <Menu trigger={<KebabTrigger />} align="end" contentClassName="w-44">
+      <MenuItem icon="📋" label="Copy session stats" onSelect={copyStats} />
+      <MenuItem icon="🧹" label="Clear stream notes" onSelect={() => useUI.getState().clearStreamNotes()} />
+    </Menu>
   );
 }
 
