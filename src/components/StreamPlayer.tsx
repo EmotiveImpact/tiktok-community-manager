@@ -33,13 +33,10 @@ export function StreamPlayer({
   onClose: () => void;
 }) {
   const room = useStore((s) => s.roomInfo);
-  const streamMeta = useStore((s) => s.streamMeta);
   const viewerCount = useStore((s) => s.viewerCount);
   const totalLikes = useStore((s) => s.totalLikes);
   const setPage = useUI((s) => s.setPage);
   const setPlayerMinimized = useUI((s) => s.setPlayerMinimized);
-  // room_info needs a paid plan, and the connector also gave us no HLS URL.
-  const needsPaidPlan = !!streamMeta?.unauthorized && !room?.hlsUrl;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,17 +44,14 @@ export function StreamPlayer({
   const [paused, setPaused] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const hasHls = !!room?.hlsUrl;
-  const [mode, setMode] = useState<ViewMode>(
-    hasHls ? 'hls' : needsPaidPlan ? 'locked' : 'mobile',
-  );
-  // The 'unauthorized' streamMeta usually arrives a beat after mount. When it
-  // does (and no HLS turned up), surface the honest locked state — unless the
-  // user has already chosen the Mobile view.
-  useEffect(() => {
-    if (needsPaidPlan && mode !== 'mobile' && mode !== 'locked') setMode('locked');
-    // If an HLS URL arrives later, prefer the real player over the locked state.
-    if (hasHls && mode === 'locked') setMode('hls');
-  }, [needsPaidPlan, hasHls, mode]);
+  // Default to the Mobile (TikTok web) view — it works on the free EulerStream
+  // tier. HLS video requires a paid plan, so we don't auto-open it; the user can
+  // switch to HLS from the toggle when it's available.
+  const [mode, setMode] = useState<ViewMode>('mobile');
+  // Open the EulerStream site so the creator can upgrade for live video / HLS.
+  const openEulerStream = () => {
+    window.tiktok.openExternal?.('https://www.eulerstream.com/').catch(() => {});
+  };
   // Real quality control, driven by the HLS manifest. `levels` lists the
   // selectable renditions (height in px); `currentLevel` is -1 for Auto.
   const [levels, setLevels] = useState<{ index: number; height: number }[]>([]);
@@ -170,6 +164,7 @@ export function StreamPlayer({
         compact={display === 'mini'}
         onSettings={() => setPage('settings')}
         onMobile={() => setMode('mobile')}
+        onUpgrade={openEulerStream}
       />
     ) : mode === 'hls' && hasHls ? (
       error ? (
@@ -381,7 +376,18 @@ export function StreamPlayer({
           ) : (
             <>
               <Ctrl title="Reload" onClick={() => setReloadKey((k) => k + 1)}>⟳</Ctrl>
-              <span className="ml-auto text-[10px] text-zinc-600">tiktok.com/@{room.hostUniqueId}/live</span>
+              {!hasHls ? (
+                <Tooltip content="Upgrade your EulerStream plan to embed the live HD video here">
+                  <button
+                    onClick={openEulerStream}
+                    className="no-drag ml-auto inline-flex items-center gap-1 rounded-md border border-[var(--brand-pink)]/40 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand-pink)] hover:bg-[var(--brand-pink)]/10"
+                  >
+                    💎 Get live HD video ↗
+                  </button>
+                </Tooltip>
+              ) : (
+                <span className="ml-auto text-[10px] text-zinc-600">tiktok.com/@{room.hostUniqueId}/live</span>
+              )}
             </>
           )}
         </div>
@@ -395,18 +401,27 @@ function LockedState({
   compact,
   onSettings,
   onMobile,
+  onUpgrade,
 }: {
   compact: boolean;
   onSettings: () => void;
   onMobile: () => void;
+  onUpgrade: () => void;
 }) {
   if (compact) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-1.5 p-3 text-center">
         <div className="text-xl">🔒</div>
         <div className="text-[11px] font-semibold leading-snug text-zinc-200">
-          Live video needs an EulerStream Business plan
+          Live video needs an EulerStream plan
         </div>
+        <button
+          onClick={onUpgrade}
+          className="no-drag rounded-md px-2 py-1 text-[10px] font-bold text-white"
+          style={{ background: 'var(--gradient-pink)' }}
+        >
+          💎 Upgrade plan ↗
+        </button>
         <button
           onClick={onMobile}
           className="no-drag rounded-md border border-zinc-700 px-2 py-1 text-[10px] font-semibold text-zinc-300 hover:bg-zinc-800"
@@ -423,23 +438,30 @@ function LockedState({
         Live video needs an EulerStream Business plan
       </div>
       <p className="text-[11px] leading-relaxed text-zinc-500">
-        Your EulerStream key signs the connection (free tier), but the in-app video player
-        pulls the live stream URL from EulerStream's <span className="text-zinc-400">room_info</span> endpoint,
-        which requires a paid plan. Add a Business/Premium key in Settings, or use the
-        Mobile view below.
+        Your EulerStream key signs the connection (free tier), but embedding the live video
+        pulls the stream URL from EulerStream's <span className="text-zinc-400">room_info</span> endpoint,
+        which needs a paid plan. Upgrade your EulerStream subscription to watch in HD here —
+        or use the Mobile view below for now.
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         <button
-          onClick={onSettings}
-          className="no-drag rounded-lg bg-gradient-to-r from-like-500 to-like-600 px-3 py-1.5 text-[11px] font-semibold text-white"
+          onClick={onUpgrade}
+          className="no-drag rounded-lg px-3 py-1.5 text-[11px] font-bold text-white"
+          style={{ background: 'var(--gradient-pink)' }}
         >
-          Open Settings
+          💎 Upgrade EulerStream plan ↗
         </button>
         <button
           onClick={onMobile}
           className="no-drag rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800"
         >
           📱 Mobile view
+        </button>
+        <button
+          onClick={onSettings}
+          className="no-drag rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800"
+        >
+          Add key in Settings
         </button>
       </div>
     </div>

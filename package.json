@@ -1,6 +1,6 @@
 {
   "name": "tiktok-community-manager",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Read-only TikTok Live viewer dashboard for macOS",
   "main": "dist-electron/main.js",
   "author": "LikeTapperMac",
