@@ -1,5 +1,6 @@
 /** Shared building blocks for the CRM pages (Followers / Gifts / Reminders / Import / Settings). */
 import { useState, type ReactNode } from 'react';
+import { Tooltip } from './ui';
 import { avatarGradient } from '../lib/avatars';
 import { tierClass } from '../lib/tier';
 import type { Fan, Temperature } from '../types';
@@ -116,11 +117,13 @@ const TEMP_META: Record<Temperature, { color: string; glow: string; label: strin
 export function TemperatureDot({ temperature, label = false, size = 10 }: { temperature: Temperature; label?: boolean; size?: number }) {
   const m = TEMP_META[temperature] ?? TEMP_META.cold;
   return (
-    <span className="inline-flex items-center gap-2 text-[12px]" style={{ fontWeight: 800 }} title={m.label}>
-      <span
-        className="flex-none rounded-full"
-        style={{ width: size, height: size, background: m.color, boxShadow: `0 0 14px ${m.glow}` }}
-      />
+    <span className="inline-flex items-center gap-2 text-[12px]" style={{ fontWeight: 800 }}>
+      <Tooltip content={m.label}>
+        <span
+          className="flex-none rounded-full"
+          style={{ width: size, height: size, background: m.color, boxShadow: `0 0 14px ${m.glow}` }}
+        />
+      </Tooltip>
       {label && <span style={{ color: 'var(--label)' }}>{m.label}</span>}
     </span>
   );

@@ -5,6 +5,7 @@ import type { WebhookConfig } from '../types';
 import { useAlerts } from '../state/alerts';
 import { useSettings, useSettingsLoad, DEFAULT_THANK_TEMPLATE } from '../state/settings';
 import { PageShell, FieldLabel, inputCls } from '../components/crm';
+import { Switch, Select } from '../components/ui';
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -111,29 +112,31 @@ export function SettingsPage() {
                   audience questions to Anthropic's API to generate the summary. Your key, your data —
                   it leaves your device only for this, and only when you run a summary.
                 </p>
-                <label className="mt-2 flex items-start gap-2 text-[13px]">
-                  <input
-                    type="checkbox"
+                <div className="mt-2 flex items-start gap-2 text-[13px]">
+                  <Switch
                     checked={aiConsent}
-                    onChange={(e) => {
-                      setAiConsent(e.target.checked);
-                      save(() => window.tiktok.setAiSummaryConsent(e.target.checked), 'AI summary consent');
+                    onCheckedChange={(val) => {
+                      setAiConsent(val);
+                      save(() => window.tiktok.setAiSummaryConsent(val), 'AI summary consent');
                     }}
-                    className="mt-0.5 accent-pink-600"
+                    className="mt-0.5"
+                    ariaLabel="Allow AI session summaries to send chat text and usernames to Anthropic"
                   />
                   <span>I understand and allow AI session summaries to send chat text + usernames to Anthropic.</span>
-                </label>
+                </div>
               </div>
             </div>
             <div className="mt-4 flex flex-col gap-2 text-[13px]">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={autoConnect} onChange={(e) => { setAutoConnect(e.target.checked); save(() => window.tiktok.setAutoConnect(e.target.checked), 'Auto-connect'); }} className="accent-pink-600" />
-                Auto-connect to last user on launch
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={chatLog} onChange={(e) => { setChatLog(e.target.checked); save(() => window.tiktok.setChatLog(e.target.checked), 'Chat log'); }} className="accent-pink-600" />
-                Save chat log to disk
-              </label>
+              <Switch
+                checked={autoConnect}
+                onCheckedChange={(val) => { setAutoConnect(val); save(() => window.tiktok.setAutoConnect(val), 'Auto-connect'); }}
+                label="Auto-connect to last user on launch"
+              />
+              <Switch
+                checked={chatLog}
+                onCheckedChange={(val) => { setChatLog(val); save(() => window.tiktok.setChatLog(val), 'Chat log'); }}
+                label="Save chat log to disk"
+              />
             </div>
             <div className="mt-4">
               <FieldLabel>Diagnostics</FieldLabel>
@@ -339,16 +342,16 @@ function GoLiveAlertsCard() {
 
   return (
     <Card title="Go-live alerts">
-      <label className="flex items-start gap-2 text-[13px]">
-        <input
-          type="checkbox"
+      <div className="flex items-start gap-2 text-[13px]">
+        <Switch
           checked={notify}
           disabled={!loaded}
-          onChange={(e) => toggle(e.target.checked)}
-          className="mt-0.5 accent-pink-600"
+          onCheckedChange={toggle}
+          className="mt-0.5"
+          ariaLabel="Desktop notification when a watched creator goes live"
         />
         <span>Desktop notification when a watched creator goes live.</span>
-      </label>
+      </div>
       <p className="mt-1.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
         Fires a native OS notification — even when the app is in the background — for creators on your
         Go-Live Watchlist that have alerts switched on. Click the notification to jump straight to their LIVE.
@@ -377,15 +380,11 @@ function EarningsCard() {
 
   return (
     <Card title="Earnings estimate">
-      <label className="flex items-center gap-2 text-[13px]">
-        <input
-          type="checkbox"
-          checked={earnings.enabled}
-          onChange={(e) => apply({ enabled: e.target.checked })}
-          className="accent-pink-600"
-        />
-        Show an approximate money value next to diamond counts
-      </label>
+      <Switch
+        checked={earnings.enabled}
+        onCheckedChange={(val) => apply({ enabled: val })}
+        label="Show an approximate money value next to diamond counts"
+      />
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div>
           <FieldLabel>Per 1,000 diamonds</FieldLabel>
@@ -400,11 +399,17 @@ function EarningsCard() {
         </div>
         <div>
           <FieldLabel>Currency</FieldLabel>
-          <select value={earnings.currency} onChange={(e) => apply({ currency: e.target.value as '£' | '$' | '€' })} className={inputCls}>
-            <option value="£">£ GBP</option>
-            <option value="$">$ USD</option>
-            <option value="€">€ EUR</option>
-          </select>
+          <Select
+            value={earnings.currency}
+            onValueChange={(val) => apply({ currency: val as '£' | '$' | '€' })}
+            ariaLabel="Currency"
+            className={`${inputCls} !w-full`}
+            options={[
+              { value: '£', label: '£ GBP' },
+              { value: '$', label: '$ USD' },
+              { value: '€', label: '€ EUR' },
+            ]}
+          />
         </div>
       </div>
       <p className="mt-1.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
