@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Switch } from './ui';
 
 export function TranscriptPanel({ onClose }: { onClose: () => void }) {
   const captions = useStore((s) => s.captions);
@@ -55,15 +56,12 @@ export function TranscriptPanel({ onClose }: { onClose: () => void }) {
           placeholder="Search transcript…"
           className="h-7 w-56 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 text-xs text-zinc-100 outline-none focus:border-like-500/60"
         />
-        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-zinc-400">
-          <input
-            type="checkbox"
-            checked={autoScroll}
-            onChange={(e) => setAutoScroll(e.target.checked)}
-            className="accent-like-500"
-          />
-          Auto-scroll
-        </label>
+        <Switch
+          checked={autoScroll}
+          onCheckedChange={setAutoScroll}
+          label="Auto-scroll"
+          className="text-xs text-zinc-400"
+        />
       </PanelHeader>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6">

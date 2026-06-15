@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useStore } from '../state/store';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Switch, Tooltip } from './ui';
 
 type LikerMode = 'normal' | 'human';
 
@@ -248,18 +249,18 @@ export function LikerPanel({ onClose }: { onClose: () => void }) {
               <span className="font-semibold"> your account warned, restricted, or banned</span>. There is no
               way to make this fully safe — use it sparingly, at your own risk.
             </p>
-            <label className="mt-3 flex items-start gap-2 text-[13px] text-zinc-200">
-              <input
-                type="checkbox"
+            <div className="mt-3 flex items-start gap-2 text-[13px] text-zinc-200">
+              <Switch
                 checked={riskAck}
-                onChange={(e) => {
-                  setRiskAck(e.target.checked);
-                  window.tiktok.setLikerRiskAck(e.target.checked).catch(() => {});
+                onCheckedChange={(val) => {
+                  setRiskAck(val);
+                  window.tiktok.setLikerRiskAck(val).catch(() => {});
                 }}
-                className="mt-0.5 accent-amber-500"
+                className="mt-0.5"
+                ariaLabel="I understand the risk to my account and accept it"
               />
               <span>I understand the risk to my account and accept it.</span>
-            </label>
+            </div>
           </div>
         )}
 
@@ -273,14 +274,15 @@ export function LikerPanel({ onClose }: { onClose: () => void }) {
               Stop Liking
             </button>
           ) : (
-            <button
-              onClick={handleStart}
-              disabled={!isOpen || !riskAck}
-              title={!riskAck ? 'Acknowledge the risk above to enable' : undefined}
-              className="flex-1 rounded-xl bg-gradient-to-r from-like-500 to-like-600 py-3 text-sm font-semibold text-white shadow-lg shadow-like-500/20 transition hover:shadow-like-500/40 disabled:opacity-40"
-            >
-              Start Auto-Liking
-            </button>
+            <Tooltip content={!riskAck ? 'Acknowledge the risk above to enable' : undefined}>
+              <button
+                onClick={handleStart}
+                disabled={!isOpen || !riskAck}
+                className="flex-1 rounded-xl bg-gradient-to-r from-like-500 to-like-600 py-3 text-sm font-semibold text-white shadow-lg shadow-like-500/20 transition hover:shadow-like-500/40 disabled:opacity-40"
+              >
+                Start Auto-Liking
+              </button>
+            </Tooltip>
           )}
         </div>
 
