@@ -7,6 +7,7 @@ import { timeAgo } from '../lib/format';
 import { Username } from './Username';
 import { UserBadges } from './UserBadges';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Select } from './ui';
 
 type SortBy = 'recent' | 'name' | 'joined';
 type Filter = 'all' | 'active' | 'inactive' | 'tracked';
@@ -70,25 +71,27 @@ export function RoomMembersPanel({ onClose }: { onClose: () => void }) {
           placeholder="Search members..."
           className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm outline-none focus:border-like-500/60"
         />
-        <select
+        <Select
           value={filter}
-          onChange={(e) => setFilter(e.target.value as Filter)}
-          className="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-300 outline-none"
-        >
-          <option value="all">All ({totalMembers})</option>
-          <option value="active">Active ({activeCount})</option>
-          <option value="inactive">Inactive ({totalMembers - activeCount})</option>
-          <option value="tracked">Tracked ({trackedInRoom})</option>
-        </select>
-        <select
+          onValueChange={(v) => setFilter(v as Filter)}
+          ariaLabel="Filter members"
+          options={[
+            { value: 'all', label: `All (${totalMembers})` },
+            { value: 'active', label: `Active (${activeCount})` },
+            { value: 'inactive', label: `Inactive (${totalMembers - activeCount})` },
+            { value: 'tracked', label: `Tracked (${trackedInRoom})` },
+          ]}
+        />
+        <Select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortBy)}
-          className="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-300 outline-none"
-        >
-          <option value="recent">Last seen</option>
-          <option value="joined">Join order</option>
-          <option value="name">Name A-Z</option>
-        </select>
+          onValueChange={(v) => setSortBy(v as SortBy)}
+          ariaLabel="Sort members"
+          options={[
+            { value: 'recent', label: 'Last seen' },
+            { value: 'joined', label: 'Join order' },
+            { value: 'name', label: 'Name A-Z' },
+          ]}
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto">

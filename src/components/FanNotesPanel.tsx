@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { avatarGradient } from '../lib/avatars';
 import { timeAgo } from '../lib/format';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Select } from './ui';
 import type { UserNote } from '../types';
 
 type SortBy = 'recent' | 'name';
@@ -75,14 +76,15 @@ export function FanNotesPanel({ onClose }: { onClose: () => void }) {
         onClose={onClose}
         actions={
           <>
-            <select
+            <Select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
-              className="h-7 rounded-md border border-zinc-700 bg-zinc-900 px-2 text-xs text-zinc-200 outline-none"
-            >
-              <option value="recent">Most recent</option>
-              <option value="name">Name A-Z</option>
-            </select>
+              onValueChange={(v) => setSortBy(v as SortBy)}
+              ariaLabel="Sort notes"
+              options={[
+                { value: 'recent', label: 'Most recent' },
+                { value: 'name', label: 'Name A-Z' },
+              ]}
+            />
             <button
               onClick={() => setAddMode(!addMode)}
               className="panel-btn panel-btn-primary"

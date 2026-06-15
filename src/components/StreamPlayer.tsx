@@ -4,6 +4,7 @@ import { useStore } from '../state/store';
 import { useUI } from '../state/ui';
 import { formatNumber } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
+import { Select, Tooltip } from './ui';
 
 type ViewMode = 'hls' | 'mobile' | 'locked';
 
@@ -160,14 +161,15 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
             LIVE
           </span>
-          <button
-            onClick={onClose}
-            className="rounded-md px-2 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800"
-            title="Close player"
-            aria-label="Close player"
-          >
-            ✕
-          </button>
+          <Tooltip content="Close player">
+            <button
+              onClick={onClose}
+              className="rounded-md px-2 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800"
+              aria-label="Close player"
+            >
+              ✕
+            </button>
+          </Tooltip>
         </header>
 
         {/* TikTok-style host header */}
@@ -252,24 +254,23 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
               </Ctrl>
               <Ctrl title="Reload stream" onClick={() => setReloadKey((k) => k + 1)}>⟳</Ctrl>
               {levels.length >= 2 ? (
-                <select
-                  value={currentLevel}
-                  onChange={(e) => selectLevel(Number(e.target.value))}
-                  title="Stream quality"
-                  className="cursor-pointer rounded-md border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-300 outline-none transition hover:border-zinc-600"
-                >
-                  <option value={-1}>Auto</option>
-                  {levels.map((l) => (
-                    <option key={l.index} value={l.index}>{l.height}p</option>
-                  ))}
-                </select>
+                <Select
+                  value={String(currentLevel)}
+                  onValueChange={(v) => selectLevel(Number(v))}
+                  ariaLabel="Stream quality"
+                  options={[
+                    { value: '-1', label: 'Auto' },
+                    ...levels.map((l) => ({ value: String(l.index), label: `${l.height}p` })),
+                  ]}
+                />
               ) : (
-                <span
-                  title="Live stream quality is set by the broadcaster"
-                  className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400"
-                >
-                  {currentLevelLabel === 'Auto' ? 'LIVE' : currentLevelLabel}
-                </span>
+                <Tooltip content="Live stream quality is set by the broadcaster">
+                  <span
+                    className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400"
+                  >
+                    {currentLevelLabel === 'Auto' ? 'LIVE' : currentLevelLabel}
+                  </span>
+                </Tooltip>
               )}
               <span className="ml-auto" />
               <Ctrl title="Picture in picture" onClick={togglePip}>⧉</Ctrl>
@@ -300,13 +301,14 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
 
 function Ctrl({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      className="flex h-7 w-7 items-center justify-center rounded-md text-sm text-zinc-300 transition hover:bg-zinc-800"
-    >
-      {children}
-    </button>
+    <Tooltip content={title}>
+      <button
+        onClick={onClick}
+        aria-label={title}
+        className="flex h-7 w-7 items-center justify-center rounded-md text-sm text-zinc-300 transition hover:bg-zinc-800"
+      >
+        {children}
+      </button>
+    </Tooltip>
   );
 }

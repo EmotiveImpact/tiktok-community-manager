@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { SessionSummary } from '../types';
 import { formatNumber } from '../lib/format';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Select } from './ui';
 
 function delta(a: number, b: number): { label: string; color: string } {
   if (b === 0) return { label: '-', color: 'text-zinc-500' };
@@ -41,26 +42,26 @@ export function SessionComparison({ onClose }: { onClose: () => void }) {
       <div className="flex gap-4 p-4 border-b border-zinc-800">
         <div className="flex-1">
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Session A</label>
-          <select value={leftId} onChange={(e) => setLeftId(e.target.value)} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 outline-none">
-            <option value="">Select session…</option>
-            {sessions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.hostNickname} — {new Date(s.startedAt).toLocaleDateString()}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={leftId}
+            onValueChange={setLeftId}
+            ariaLabel="Session A"
+            placeholder="Select session…"
+            className="!w-full"
+            options={sessions.map((s) => ({ value: s.id, label: `${s.hostNickname} — ${new Date(s.startedAt).toLocaleDateString()}` }))}
+          />
         </div>
         <div className="flex items-end pb-1.5 text-xs font-semibold text-zinc-600">vs</div>
         <div className="flex-1">
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Session B</label>
-          <select value={rightId} onChange={(e) => setRightId(e.target.value)} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 outline-none">
-            <option value="">Select session…</option>
-            {sessions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.hostNickname} — {new Date(s.startedAt).toLocaleDateString()}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={rightId}
+            onValueChange={setRightId}
+            ariaLabel="Session B"
+            placeholder="Select session…"
+            className="!w-full"
+            options={sessions.map((s) => ({ value: s.id, label: `${s.hostNickname} — ${new Date(s.startedAt).toLocaleDateString()}` }))}
+          />
         </div>
       </div>
 

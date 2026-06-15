@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import type { SessionSummary } from '../types';
 import { formatNumber } from '../lib/format';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Select, Tooltip } from './ui';
+
+const ALL_HOSTS = '__all__';
 
 export function CreatorAnalytics({ onClose }: { onClose: () => void }) {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
@@ -49,18 +52,15 @@ export function CreatorAnalytics({ onClose }: { onClose: () => void }) {
   return (
     <PanelShell>
       <PanelHeader title="Creator Analytics" onClose={onClose}>
-        <select
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-          className="h-7 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 text-xs text-zinc-200 outline-none"
-        >
-          <option value="">All creators</option>
-          {hosts.map(([uid, { nickname, count }]) => (
-            <option key={uid} value={uid}>
-              {nickname} ({count} sessions)
-            </option>
-          ))}
-        </select>
+        <Select
+          value={host === '' ? ALL_HOSTS : host}
+          onValueChange={(v) => setHost(v === ALL_HOSTS ? '' : v)}
+          ariaLabel="Filter by creator"
+          options={[
+            { value: ALL_HOSTS, label: 'All creators' },
+            ...hosts.map(([uid, { nickname, count }]) => ({ value: uid, label: `${nickname} (${count} sessions)` })),
+          ]}
+        />
       </PanelHeader>
 
       <div className="grid grid-cols-4 gap-3 border-b border-zinc-800 p-4">
@@ -115,12 +115,14 @@ function ChartSection({ label, data, getValue, max, color }: {
           const val = getValue(s);
           const pct = Math.max((val / max) * 100, 2);
           return (
-            <div key={s.id} className="flex-1 flex flex-col items-center gap-1 min-w-0" title={`${s.hostNickname} — ${new Date(s.startedAt).toLocaleDateString()}: ${formatNumber(val)}`}>
+            <Tooltip key={s.id} content={`${s.hostNickname} — ${new Date(s.startedAt).toLocaleDateString()}: ${formatNumber(val)}`}>
+              <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
               <div className={`w-full rounded-t ${color} transition-all`} style={{ height: `${pct}%` }} />
               <span className="text-[8px] text-zinc-600 truncate w-full text-center">
                 {new Date(s.startedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
               </span>
-            </div>
+              </div>
+            </Tooltip>
           );
         })}
       </div>
