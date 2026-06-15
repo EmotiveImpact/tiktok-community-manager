@@ -23,6 +23,7 @@ import { useUI } from '../state/ui';
 import { useAlerts } from '../state/alerts';
 import { copyText, buildThankMessage } from '../components/ThankComposer';
 import { FanAvatar, TierChip, fanName } from '../components/crm';
+import { Tooltip } from '../components/ui';
 
 const TIKTOK_MESSAGES_URL = 'https://www.tiktok.com/messages';
 /** Realistic Chrome UA — TikTok web blocks/limits the default Electron UA. */
@@ -169,35 +170,45 @@ export function MessagesPage() {
       <section className="glass flex min-w-0 flex-1 flex-col overflow-hidden" style={{ borderRadius: 18 }}>
         {/* Browser chrome */}
         <div className="flex flex-none items-center gap-1.5 border-b px-2.5 py-1.5" style={{ borderColor: 'var(--separator)' }}>
-          <button onClick={() => webviewRef.current?.goBack()} disabled={!navState.canBack} className="panel-btn panel-btn-icon no-drag" title="Back" aria-label="Back">
-            <ArrowLeft size={14} />
-          </button>
-          <button onClick={() => webviewRef.current?.goForward()} disabled={!navState.canForward} className="panel-btn panel-btn-icon no-drag" title="Forward" aria-label="Forward">
-            <ArrowRight size={14} />
-          </button>
-          <button onClick={() => webviewRef.current?.reload()} className="panel-btn panel-btn-icon no-drag" title="Reload" aria-label="Reload">
-            <RotateCw size={13} />
-          </button>
-          <span
-            className="ml-1 inline-flex min-w-0 items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-[11px] font-medium"
-            style={{ background: 'var(--fill-thin)', border: '1px solid var(--card-border)', color: 'var(--secondary-label)' }}
-            title="Your own TikTok session — nothing is automated"
-          >
-            <Lock size={11} className="flex-none" style={{ color: '#22c55e' }} />
-            <span className="truncate">{navState.host}</span>
-          </span>
-          <span className="ml-auto flex flex-none items-center gap-1.5">
-            <button onClick={() => navigateTo(TIKTOK_MESSAGES_URL)} className="panel-btn no-drag" title="Go to your TikTok inbox">
-              <MessageSquare size={12} /> Messages
+          <Tooltip content="Back">
+            <button onClick={() => webviewRef.current?.goBack()} disabled={!navState.canBack} className="panel-btn panel-btn-icon no-drag" aria-label="Back">
+              <ArrowLeft size={14} />
             </button>
-            <button
-              onClick={() => selected && navigateTo(profileUrl(selected))}
-              disabled={!selected}
-              className="panel-btn no-drag"
-              title={selected ? `Open @${selected}'s profile` : 'Select a fan in the follow-up list first'}
+          </Tooltip>
+          <Tooltip content="Forward">
+            <button onClick={() => webviewRef.current?.goForward()} disabled={!navState.canForward} className="panel-btn panel-btn-icon no-drag" aria-label="Forward">
+              <ArrowRight size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip content="Reload">
+            <button onClick={() => webviewRef.current?.reload()} className="panel-btn panel-btn-icon no-drag" aria-label="Reload">
+              <RotateCw size={13} />
+            </button>
+          </Tooltip>
+          <Tooltip content="Your own TikTok session — nothing is automated">
+            <span
+              className="ml-1 inline-flex min-w-0 items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-[11px] font-medium"
+              style={{ background: 'var(--fill-thin)', border: '1px solid var(--card-border)', color: 'var(--secondary-label)' }}
             >
-              <UserRound size={12} /> {selected ? `@${selected}` : 'Profile of selected fan'}
-            </button>
+              <Lock size={11} className="flex-none" style={{ color: '#22c55e' }} />
+              <span className="truncate">{navState.host}</span>
+            </span>
+          </Tooltip>
+          <span className="ml-auto flex flex-none items-center gap-1.5">
+            <Tooltip content="Go to your TikTok inbox">
+              <button onClick={() => navigateTo(TIKTOK_MESSAGES_URL)} className="panel-btn no-drag">
+                <MessageSquare size={12} /> Messages
+              </button>
+            </Tooltip>
+            <Tooltip content={selected ? `Open @${selected}'s profile` : 'Select a fan in the follow-up list first'}>
+              <button
+                onClick={() => selected && navigateTo(profileUrl(selected))}
+                disabled={!selected}
+                className="panel-btn no-drag"
+              >
+                <UserRound size={12} /> {selected ? `@${selected}` : 'Profile of selected fan'}
+              </button>
+            </Tooltip>
           </span>
         </div>
 
@@ -235,9 +246,11 @@ export function MessagesPage() {
               {reminders.length === 0 ? 'Nobody waiting' : `${reminders.length} ${reminders.length === 1 ? 'person' : 'people'} to reach out to`}
             </span>
           </span>
-          <button onClick={() => setPage('settings')} className="panel-btn panel-btn-icon no-drag" title="Edit message templates in Settings" aria-label="Templates">
-            <SettingsIcon size={14} />
-          </button>
+          <Tooltip content="Edit message templates in Settings">
+            <button onClick={() => setPage('settings')} className="panel-btn panel-btn-icon no-drag" aria-label="Templates">
+              <SettingsIcon size={14} />
+            </button>
+          </Tooltip>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1.5">
@@ -281,15 +294,21 @@ export function MessagesPage() {
                       <span className="truncate">{reasonFor(r)}</span>
                     </div>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <button onClick={(e) => { e.stopPropagation(); copyFor(r); }} className="panel-btn no-drag flex-1" title="Copy thank-you message (from your template)">
-                        <Copy size={11} /> Copy
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); openChat(r); }} className="panel-btn no-drag flex-1" title="Open their profile in the TikTok pane — tap Message there">
-                        <ExternalLink size={11} /> Open chat
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); markDone(r); }} className="panel-btn panel-btn-primary panel-btn-icon no-drag" title="Done — clears this reminder" aria-label="Done">
-                        <Check size={13} />
-                      </button>
+                      <Tooltip content="Copy thank-you message (from your template)">
+                        <button onClick={(e) => { e.stopPropagation(); copyFor(r); }} className="panel-btn no-drag flex-1">
+                          <Copy size={11} /> Copy
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Open their profile in the TikTok pane — tap Message there">
+                        <button onClick={(e) => { e.stopPropagation(); openChat(r); }} className="panel-btn no-drag flex-1">
+                          <ExternalLink size={11} /> Open chat
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Done — clears this reminder">
+                        <button onClick={(e) => { e.stopPropagation(); markDone(r); }} className="panel-btn panel-btn-primary panel-btn-icon no-drag" aria-label="Done">
+                          <Check size={13} />
+                        </button>
+                      </Tooltip>
                     </div>
                   </li>
                 );

@@ -6,6 +6,7 @@ import { useAlerts } from '../state/alerts';
 import { useSettingsLoad } from '../state/settings';
 import { ThankComposer } from '../components/ThankComposer';
 import { FanAvatar, TierChip, PageShell, fanName } from '../components/crm';
+import { Tooltip } from '../components/ui';
 
 export function Reminders() {
   const pushToast = useAlerts((s) => s.pushToast);
@@ -63,14 +64,15 @@ export function Reminders() {
           <>
             <button onClick={() => setThankFan({ uniqueId: r.fan.uniqueId, nickname: fanName(r.fan) })} className="panel-btn panel-btn-primary no-drag">💌 Thank</button>
             <button onClick={() => setSnoozeFor(r.id)} className="panel-btn no-drag">Snooze</button>
-            <button
-              onClick={() => act(r.id, 'done')}
-              className="panel-btn no-drag"
-              style={{ background: 'transparent', borderColor: 'transparent', color: 'var(--secondary-label)' }}
-              title="Dismiss this reminder"
-            >
-              Done
-            </button>
+            <Tooltip content="Dismiss this reminder">
+              <button
+                onClick={() => act(r.id, 'done')}
+                className="panel-btn no-drag"
+                style={{ background: 'transparent', borderColor: 'transparent', color: 'var(--secondary-label)' }}
+              >
+                Done
+              </button>
+            </Tooltip>
           </>
         )}
       </div>
