@@ -25,6 +25,7 @@ import {
 } from '../components/crm';
 import { ThankComposer } from '../components/ThankComposer';
 import { LogGiftModal } from '../components/LogGiftModal';
+import { Tabs, TabList, Tab, Tooltip } from '../components/ui';
 
 const DAY = 86400000;
 
@@ -268,20 +269,13 @@ export function FanProfile() {
         <Card className="overflow-hidden" bodyClass="!px-0 !pb-0 !pt-0">
           <div className="sticky top-0 z-10 border-b px-4 pb-3.5 pt-4 backdrop-blur" style={{ borderColor: 'var(--panel-border)', background: 'color-mix(in srgb, var(--panel-bg-strong) 82%, transparent)' }}>
             <h2 className="mb-3 text-[14px] font-extrabold tracking-tight">Activity timeline</h2>
-            <div className="mb-3 flex flex-wrap gap-2">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setFilter(f.id)}
-                  className={`h-7 rounded-full px-3 text-[12px] font-bold transition ${filter === f.id ? 'text-white' : ''}`}
-                  style={filter === f.id
-                    ? { background: 'linear-gradient(135deg, rgba(238,29,82,.32), rgba(105,201,208,.18))', border: '1px solid rgba(238,29,82,.35)' }
-                    : { color: 'var(--secondary-label)', background: 'var(--fill-thin)', border: '1px solid var(--separator)' }}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+            <Tabs value={filter} onValueChange={(v) => setFilter(v as TimelineFilter)} variant="segment" className="mb-3">
+              <TabList ariaLabel="Timeline filter" className="flex-wrap">
+                {FILTERS.map((f) => (
+                  <Tab key={f.id} value={f.id} label={f.label} />
+                ))}
+              </TabList>
+            </Tabs>
             <NoteComposerInline name={name} composerRef={composerRef} onSubmit={addNote} />
           </div>
 
@@ -562,14 +556,15 @@ function CustomFieldsCard({ uniqueId, defs, values, onChange }: {
                   style={{ borderColor: 'var(--panel-border)' }}
                 />
               ) : (
-                <button
-                  onClick={() => { setEditing(def.key); setDraft(v == null ? '' : String(v)); }}
-                  className="-mx-1 rounded px-1 text-left transition hover:bg-[var(--fill-quaternary)]"
-                  style={v == null || v === '' ? { color: 'var(--tertiary-label)' } : undefined}
-                  title="Click to edit"
-                >
-                  {fmt(def, v)}
-                </button>
+                <Tooltip content="Click to edit">
+                  <button
+                    onClick={() => { setEditing(def.key); setDraft(v == null ? '' : String(v)); }}
+                    className="-mx-1 rounded px-1 text-left transition hover:bg-[var(--fill-quaternary)]"
+                    style={v == null || v === '' ? { color: 'var(--tertiary-label)' } : undefined}
+                  >
+                    {fmt(def, v)}
+                  </button>
+                </Tooltip>
               )}
             </div>
           );
