@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Notes, done right — pinned About + dated notes log</title>
+<style>
+  :root{
+    --bg:#070B17; --navy1:#050816; --navy2:#080B18;
+    --pink:#EE1D52; --cyan:#69C9D0;
+    --text:#F6F7FB; --muted:#9AA3B8;
+    --card-border:rgba(255,255,255,.105);
+    --red:#FF5470; --amber:#FFA94D; --green:#39D98A; --lgreen:#9BE15D;
+    --gold:#F5C451; --purple:#B69CFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .canvas{width:1680px;margin:0 auto;padding:36px 44px 60px;}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.022)),#0B1020;
+    border:1px solid var(--card-border);border-radius:18px;box-shadow:0 18px 48px rgba(0,0,0,.42);}
+  .grad{background:linear-gradient(90deg,var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);
+    background:rgba(105,201,208,.10);border:1px solid rgba(105,201,208,.25);padding:6px 12px;border-radius:999px;}
+  .h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:14px;}
+  .sub{color:var(--muted);font-size:15px;margin-top:8px;max-width:920px;line-height:1.55;}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;}
+  .stamp{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;text-align:right;}
+
+  /* shared motifs */
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;
+    padding:4px 10px;border-radius:999px;letter-spacing:.02em;}
+  .c-whale{background:rgba(182,156,255,.16);color:var(--purple);border:1px solid rgba(182,156,255,.4);}
+  .c-vip{background:rgba(245,196,81,.15);color:var(--gold);border:1px solid rgba(245,196,81,.4);}
+  .c-reg{background:rgba(105,201,208,.14);color:var(--cyan);border:1px solid rgba(105,201,208,.4);}
+  .c-new{background:rgba(57,217,138,.14);color:var(--green);border:1px solid rgba(57,217,138,.4);}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .d-hot{background:var(--green);box-shadow:0 0 8px rgba(57,217,138,.6);}
+  .d-warm{background:var(--lgreen);} .d-cool{background:var(--amber);} .d-cold{background:var(--red);}
+  .strength{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;position:relative;}
+  .strength>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));}
+
+  .avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#0b1020;flex:none;}
+
+  .layout{display:grid;grid-template-columns:1fr 470px;gap:24px;align-items:start;}
+
+  /* ABOUT card */
+  .about{padding:28px 30px;}
+  .about-top{display:flex;gap:18px;align-items:center;}
+  .about .ava{width:72px;height:72px;font-size:26px;background:linear-gradient(135deg,var(--pink),var(--cyan));}
+  .about h2{font-size:24px;font-weight:800;letter-spacing:-.01em;}
+  .about .handle{color:var(--muted);font-size:14px;margin-top:2px;}
+  .about .editbtn{margin-left:auto;font-size:12px;font-weight:700;color:var(--text);
+    background:rgba(255,255,255,.05);border:1px solid var(--card-border);padding:8px 14px;border-radius:10px;
+    display:inline-flex;gap:7px;align-items:center;cursor:pointer;transition:.15s;}
+  .about .editbtn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);}
+  .pinrow{display:flex;align-items:center;gap:10px;margin:18px 0 6px;}
+  .pinrow .lbl{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .pinrow .pinmark{font-size:13px;}
+  .abouttext{font-size:18px;line-height:1.6;font-weight:500;color:#EBEEF6;
+    background:rgba(105,201,208,.05);border:1px solid rgba(105,201,208,.16);border-left:3px solid var(--cyan);
+    border-radius:12px;padding:18px 20px;}
+  .abouttext b{color:#fff;}
+  .facts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:18px;}
+  .fact{background:rgba(255,255,255,.03);border:1px solid var(--card-border);border-radius:12px;padding:14px 16px;}
+  .fact .k{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase;}
+  .fact .v{font-size:15px;font-weight:600;margin-top:6px;line-height:1.4;}
+
+  /* timeline */
+  .tl{padding:24px 28px 30px;margin-top:24px;}
+  .tl-head{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .tl-head h3{font-size:17px;font-weight:800;}
+  .tl-head .count{font-size:12px;color:var(--muted);background:rgba(255,255,255,.05);padding:3px 9px;border-radius:999px;}
+  .composer{display:flex;gap:12px;align-items:center;background:rgba(238,29,82,.06);
+    border:1px solid rgba(238,29,82,.28);border-radius:14px;padding:12px 14px;margin-bottom:22px;}
+  .composer .ava{width:36px;height:36px;font-size:13px;background:linear-gradient(135deg,#39507a,#22304d);color:#cfe0ff;}
+  .composer input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;}
+  .composer input::placeholder{color:#7c869c;}
+  .composer .send{background:linear-gradient(90deg,var(--pink),var(--cyan));color:#0b1020;font-weight:800;
+    font-size:13px;padding:9px 16px;border-radius:10px;border:none;cursor:pointer;}
+  .composer .hintkb{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;}
+
+  .stream{position:relative;padding-left:30px;}
+  .stream:before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;
+    background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));}
+  .ev{position:relative;margin-bottom:18px;}
+  .ev .marker{position:absolute;left:-30px;top:2px;width:20px;height:20px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:10px;border:2px solid var(--bg);}
+  .m-note{background:var(--pink);}
+  .m-gift{background:rgba(245,196,81,.25);color:var(--gold);}
+  .m-sess{background:rgba(105,201,208,.22);color:var(--cyan);}
+  /* notes visually heavier */
+  .note-entry{background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:14px 16px;box-shadow:0 8px 20px rgba(0,0,0,.25);}
+  .note-entry .body{font-size:15px;line-height:1.55;color:#EBEEF6;}
+  .note-entry .meta,.auto .meta{font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:10px;align-items:center;}
+  .auto{padding:6px 2px;}
+  .auto .line{font-size:13px;color:var(--muted);}
+  .auto .line b{color:var(--text);font-weight:600;}
+  .pinbadge{font-size:9px;font-weight:800;color:var(--cyan);background:rgba(105,201,208,.12);
+    border:1px solid rgba(105,201,208,.3);padding:2px 6px;border-radius:5px;letter-spacing:.05em;}
+
+  /* BEFORE / AFTER inset */
+  .ba{padding:22px 24px;}
+  .ba h3{font-size:15px;font-weight:800;margin-bottom:4px;}
+  .ba .desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:18px;}
+  .before-frame{border:1px dashed rgba(255,84,112,.4);border-radius:12px;padding:14px;background:rgba(255,84,112,.04);}
+  .before-frame .tag{font-size:10px;font-weight:800;color:var(--red);letter-spacing:.1em;text-transform:uppercase;}
+  .tinybox{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:7px;
+    padding:6px 8px;font-size:9px;color:#6b7488;margin-top:8px;height:26px;}
+  .tinybox.t2{height:36px;}
+  .ba-vs{text-align:center;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.2em;margin:16px 0;}
+  .after-frame{border:1px solid rgba(57,217,138,.4);border-radius:12px;padding:14px;background:rgba(57,217,138,.05);}
+  .after-frame .tag{font-size:10px;font-weight:800;color:var(--green);letter-spacing:.1em;text-transform:uppercase;}
+  .after-frame .one{margin-top:10px;background:rgba(105,201,208,.07);border-left:3px solid var(--cyan);
+    border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;color:#dbe3f0;}
+  .after-frame .miniadd{margin-top:8px;font-size:11px;color:var(--muted);border:1px dashed rgba(255,255,255,.15);
+    border-radius:7px;padding:7px 9px;}
+  .gain{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:12px;color:var(--green);font-weight:600;}
+  .principle{margin-top:18px;padding:14px 16px;border-top:1px solid var(--card-border);font-size:12px;color:var(--muted);line-height:1.55;}
+  .principle b{color:var(--text);}
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="head">
+    <div>
+      <div class="kicker">★ Flagship · The Notes Fix</div>
+      <h1 class="h1">One canonical home — <span class="grad">pinned About + a dated notes log</span></h1>
+      <p class="sub">Every note about a fan lives in exactly one place: a prominent, readable <b>About</b> card on top, then a <b>Notes &amp; activity</b> timeline where your dated notes sit heavier than auto-events. Modeled on Attio · Folk · HubSpot · Monica.</p>
+    </div>
+    <div class="stamp">TikTok Community Manager<br>Followers › Kendra M.<br>fan-record · canonical notes</div>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: the record done right -->
+    <div>
+      <!-- ABOUT -->
+      <div class="card about">
+        <div class="about-top">
+          <div class="avatar ava">KM</div>
+          <div>
+            <h2>Kendra M. <span class="chip c-whale" style="vertical-align:middle;margin-left:6px;">👑 Whale</span></h2>
+            <div class="handle">@kendraaax2 · joined Aug 2024</div>
+          </div>
+          <button class="editbtn">✏️ Edit About</button>
+        </div>
+
+        <div class="pinrow"><span class="pinmark">📌</span><span class="lbl">About Kendra — pinned</span></div>
+        <div class="abouttext">Your <b>biggest supporter</b> — sends galaxies during every Friday stream and always asks about your cat, Mochi. Going through a tough breakup; keep it light and warm. Wants a shoutout for her birthday in <b>March</b>.</div>
+
+        <div class="facts">
+          <div class="fact"><div class="k">Their thing</div><div class="v">Galaxy gifts on Fridays 🌌</div></div>
+          <div class="fact"><div class="k">How we met</div><div class="v">First subbed during the launch stream</div></div>
+          <div class="fact"><div class="k">Faves</div><div class="v">Cat content · late-night chats · K-pop</div></div>
+        </div>
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="card tl">
+        <div class="tl-head">
+          <h3>Notes &amp; activity</h3>
+          <span class="count">everything in one stream</span>
+        </div>
+
+        <div class="composer">
+          <div class="avatar ava">YOU</div>
+          <input placeholder="Add a note about Kendra…  (she mentioned her exam is next week)" >
+          <span class="hintkb">⏎ to save</span>
+          <button class="send">Add note</button>
+        </div>
+
+        <div class="stream">
+          <div class="ev">
+            <div class="marker m-note">✎</div>
+            <div class="note-entry">
+              <div class="body">She just got the promotion she was stressing about 🎉 — congratulate her on Friday's stream, she'll be on.</div>
+              <div class="meta"><span class="pinbadge"></span>You · Today, 2:14 PM <span style="opacity:.5">·</span> note</div>
+            </div>
+          </div>
+
+          <div class="ev">
+            <div class="marker m-gift">🎁</div>
+            <div class="auto"><div class="line"><b>Sent Galaxy ×3</b> — 4,500 coins during Friday Live</div><div class="meta">Jun 13 · 8:42 PM · auto</div></div>
+          </div>
+
+          <div class="ev">
+            <div class="marker m-note">✎</div>
+            <div class="note-entry">
+              <div class="body">Promised her a shoutout for her birthday in March. <b>Don't forget</b> — she asked twice.</div>
+              <div class="meta">You · Jun 13 <span style="opacity:.5">·</span> note <span class="pinbadge">★ pinned to About</span></div>
+            </div>
+          </div>
+
+          <div class="ev">
+            <div class="marker m-sess">📺</div>
+            <div class="auto"><div class="line"><b>Watched 47 min</b> of Friday Live · chatted 12 times</div><div class="meta">Jun 13 · 8:01 PM · session</div></div>
+          </div>
+
+          <div class="ev">
+            <div class="marker m-note">✎</div>
+            <div class="note-entry">
+              <div class="body">Going through a breakup — keep the vibe light, no relationship jokes for a bit.</div>
+              <div class="meta">You · Jun 6 <span style="opacity:.5">·</span> note</div>
+            </div>
+          </div>
+
+          <div class="ev">
+            <div class="marker m-gift">🎁</div>
+            <div class="auto"><div class="line"><b>Sent Universe ×1</b> — 34,999 coins 🏆 biggest gift this month</div><div class="meta">Jun 2 · 9:10 PM · auto</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: before/after + principle -->
+    <div>
+      <div class="card ba">
+        <h3>Why this is the fix</h3>
+        <div class="desc">The same notes, before and after. The improvement is structural, not cosmetic.</div>
+
+        <div class="before-frame">
+          <span class="tag">⚠ Before — scattered &amp; tiny</span>
+          <div class="tinybox">Quick note (rows=2, text-xs)…</div>
+          <div class="tinybox t2">Inline followers note…</div>
+          <div class="tinybox">Live mini-note (lost on close)…</div>
+          <div style="font-size:10px;color:var(--red);margin-top:10px;font-weight:600;">3 of 7 boxes · 4 unlinked stores · nothing dated · nothing at a glance</div>
+        </div>
+
+        <div class="ba-vs">↓  ↓  ↓</div>
+
+        <div class="after-frame">
+          <span class="tag">✓ After — one prominent home</span>
+          <div class="one">📌 <b>About Kendra</b> — large, readable, pinned to the top of the record.</div>
+          <div class="miniadd">＋ Add a note…  →  dated entry in the timeline below</div>
+          <div class="one" style="margin-top:8px;">🗂️ One store · every note dated · notes weigh more than auto-events</div>
+        </div>
+
+        <div class="gain">✓ Readable at a glance &nbsp; ✓ Never lost &nbsp; ✓ One source of truth</div>
+
+        <div class="principle">
+          <b>The model.</b> A pinned <b>About</b> answers "who is this person" instantly. The <b>notes log</b> answers "what's happened &amp; what did I promise." Auto-events (gifts, sessions) interleave for context but sit visually lighter — your handwritten notes are the signal. The same record renders at three depths everywhere: <b>glance → focus → full page</b>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

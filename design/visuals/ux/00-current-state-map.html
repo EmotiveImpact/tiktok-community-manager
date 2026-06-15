@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Current State Map — Notes Scatter & Redundant Renderers</title>
+<style>
+  :root{
+    --bg:#070B17; --navy1:#050816; --navy2:#080B18;
+    --pink:#EE1D52; --cyan:#69C9D0;
+    --text:#F6F7FB; --muted:#9AA3B8;
+    --card-border:rgba(255,255,255,.105);
+    --red:#FF5470; --amber:#FFA94D; --green:#39D98A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .canvas{width:1680px;margin:0 auto;padding:40px 48px 64px;}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.022)),#0B1020;
+    border:1px solid var(--card-border);border-radius:18px;
+    box-shadow:0 18px 48px rgba(0,0,0,.45);}
+  .h1{font-size:30px;font-weight:800;letter-spacing:-.02em;}
+  .sub{color:var(--muted);font-size:15px;margin-top:8px;max-width:880px;line-height:1.55;}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);
+    background:rgba(105,201,208,.10);border:1px solid rgba(105,201,208,.25);
+    padding:6px 12px;border-radius:999px;}
+  .grad{background:linear-gradient(90deg,var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .row{display:flex;gap:24px;}
+  .col{flex:1;}
+  .sec-title{font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+
+  /* scatter diagram */
+  .scatter{padding:28px 32px 32px;margin-top:24px;}
+  .inputs{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:6px;}
+  .ibox{border:1px dashed rgba(255,255,255,.18);border-radius:12px;padding:12px;
+    background:rgba(255,255,255,.02);min-height:88px;position:relative;}
+  .ibox .lbl{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.02em;}
+  .ibox .field{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;
+    height:30px;font-size:10px;color:#6b7488;display:flex;align-items:center;padding:0 8px;}
+  .ibox.tiny .field{height:18px;font-size:8px;}
+  .ibox .tag{position:absolute;top:-9px;right:10px;font-size:9px;font-weight:800;
+    padding:2px 7px;border-radius:6px;letter-spacing:.04em;}
+  .t-tiny{background:rgba(255,169,77,.16);color:var(--amber);border:1px solid rgba(255,169,77,.4);}
+  .t-lost{background:rgba(255,84,112,.16);color:var(--red);border:1px solid rgba(255,84,112,.45);}
+  .t-ok{background:rgba(57,217,138,.14);color:var(--green);border:1px solid rgba(57,217,138,.4);}
+
+  .stores{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px;}
+  .store{border-radius:14px;padding:16px 16px 18px;border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.025);position:relative;}
+  .store.bad{border-color:rgba(255,84,112,.5);box-shadow:inset 0 0 0 1px rgba(255,84,112,.12);}
+  .store h4{font-size:14px;font-weight:800;margin-bottom:6px;font-family:ui-monospace,Menlo,monospace;}
+  .store p{font-size:12px;color:var(--muted);line-height:1.5;}
+  .store .badge{position:absolute;top:14px;right:14px;font-size:9px;font-weight:800;
+    padding:3px 8px;border-radius:999px;}
+  .b-red{background:rgba(255,84,112,.16);color:var(--red);border:1px solid rgba(255,84,112,.45);}
+  .b-amber{background:rgba(255,169,77,.16);color:var(--amber);border:1px solid rgba(255,169,77,.4);}
+
+  .midband{display:flex;align-items:center;justify-content:center;gap:14px;margin:22px 0 18px;}
+  .arrows{flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 8px,transparent 8px 16px);}
+  .midband .pill{font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:var(--red);
+    border:1px solid rgba(255,84,112,.4);background:rgba(255,84,112,.08);padding:6px 14px;border-radius:999px;}
+
+  /* renderers flow */
+  .flow{display:flex;align-items:stretch;gap:18px;margin-top:6px;}
+  .node{flex:1;border-radius:14px;border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.025);padding:18px;position:relative;}
+  .node .icon{font-size:22px;}
+  .node h4{font-size:15px;font-weight:800;margin:8px 0 4px;}
+  .node p{font-size:12px;color:var(--muted);line-height:1.5;}
+  .node .meta{font-size:10px;font-family:ui-monospace,Menlo,monospace;color:#6b7488;margin-top:8px;}
+  .node.dup{border-color:rgba(255,169,77,.45);}
+  .node.dead{border-color:rgba(255,84,112,.5);}
+  .conn{display:flex;align-items:center;color:var(--muted);font-size:22px;}
+  .deadnote{margin-top:12px;font-size:12px;color:var(--red);font-weight:600;}
+
+  .cmdk{margin-top:18px;display:flex;align-items:center;gap:14px;
+    border:1px solid rgba(255,84,112,.4);background:rgba(255,84,112,.06);border-radius:12px;padding:14px 18px;}
+  .cmdk .kb{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:rgba(0,0,0,.4);
+    border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 9px;}
+  .cmdk .txt{flex:1;font-size:13px;color:var(--muted);}
+  .cmdk .txt b{color:var(--text);}
+
+  /* legend */
+  .legend{display:flex;gap:28px;flex-wrap:wrap;margin-top:24px;padding:18px 22px;}
+  .leg{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);}
+  .swatch{width:14px;height:14px;border-radius:4px;}
+  .complaint{margin-top:24px;padding:22px 26px;border-left:3px solid var(--pink);}
+  .complaint .q{font-size:18px;font-weight:600;line-height:1.5;font-style:italic;}
+  .complaint .who{font-size:12px;color:var(--muted);margin-top:8px;}
+  .footrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+  .stamp{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;}
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="footrow">
+    <div>
+      <div class="kicker">◆ Audit · Current State</div>
+      <h1 class="h1" style="margin-top:14px;">What's broken today — <span class="grad">the Notes Scatter</span></h1>
+      <p class="sub">A map of the existing app (not a redesign). It traces how a single fan's notes are split across <b>4 disconnected stores</b> fed by <b>7 input boxes</b>, and how <b>3 redundant fan-detail renderers</b> create a ⌘K dead-end. This is the problem the redesign solves.</p>
+    </div>
+    <div class="stamp">TikTok Community Manager<br>diagram · v0 · 2026-06</div>
+  </div>
+
+  <!-- SCATTER -->
+  <div class="card scatter">
+    <div class="sec-title">① The notes scatter — one fan, seven boxes, four stores</div>
+    <div style="font-size:12px;color:var(--muted);margin:-6px 0 14px;">Seven places a streamer types a note about <b style="color:var(--text)">Kendra M. @kendraaax2</b> — none of them talk to each other.</div>
+    <div class="inputs">
+      <div class="ibox"><span class="tag t-ok">saves</span><div class="lbl">Profile · About box</div><div class="field">Big spender, loves the cat filter…</div></div>
+      <div class="ibox tiny"><span class="tag t-tiny">rows=2 · text-xs</span><div class="lbl">Profile · Quick note</div><div class="field">tipped 5k</div></div>
+      <div class="ibox"><span class="tag t-ok">saves</span><div class="lbl">Followers · Inline note</div><div class="field">bday in March</div></div>
+      <div class="ibox tiny"><span class="tag t-tiny">rows=2 · text-xs</span><div class="lbl">Live panel · Mini note</div><div class="field">say hi to mom</div></div>
+      <div class="ibox"><span class="tag t-ok">saves</span><div class="lbl">Gifts · Note on gift</div><div class="field">galaxy x3</div></div>
+      <div class="ibox"><span class="tag t-lost">SILENTLY LOST</span><div class="lbl">Live · Stream note</div><div class="field">promised shoutout</div></div>
+      <div class="ibox"><span class="tag t-ok">saves</span><div class="lbl">Legacy drawer · Note</div><div class="field">old phone #…</div></div>
+    </div>
+
+    <div class="midband">
+      <div class="arrows"></div>
+      <div class="pill">↓ writes into 4 separate, unlinked stores ↓</div>
+      <div class="arrows"></div>
+    </div>
+
+    <div class="stores">
+      <div class="store bad"><span class="badge b-amber">blob</span><h4>fan.notes</h4><p>A single free-text string on the fan object. Overwritten by whichever box wrote last. No history, no dates.</p></div>
+      <div class="store bad"><span class="badge b-amber">island</span><h4>notesStore</h4><p>A separate client store keyed by id. Lives in its own module — the profile page never reads it.</p></div>
+      <div class="store bad"><span class="badge b-amber">scattered</span><h4>timeline.notes[]</h4><p>Notes buried inside activity events. Mixed with gifts &amp; sessions, never surfaced as "notes".</p></div>
+      <div class="store bad"><span class="badge b-red">LOST</span><h4>streamNotes</h4><p>Written during live, never persisted to the fan record. Gone when the session ends.</p></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:24px;">
+    <!-- RENDERERS -->
+    <div class="col">
+      <div class="card scatter" style="height:100%;">
+        <div class="sec-title">② Three fan-detail renderers — same person, three truths</div>
+        <div class="flow">
+          <div class="node dup"><div class="icon">🪟</div><h4>Full 360 page</h4><p>Route-level profile. Reads <code>fan.notes</code> + timeline.</p><div class="meta">/followers/:id</div></div>
+          <div class="conn">≠</div>
+          <div class="node dup"><div class="icon">📺</div><h4>Live mini-panel</h4><p>Reads <code>streamNotes</code> (lost) + a tiny box.</p><div class="meta">&lt;LiveFanPanel/&gt;</div></div>
+          <div class="conn">≠</div>
+          <div class="node dead"><div class="icon">🗄️</div><h4>Legacy drawer</h4><p>Reads <code>notesStore</code>. Where ⌘K lands.</p><div class="meta">&lt;FanDrawer/&gt;</div></div>
+        </div>
+        <p class="deadnote">⚠ Three components render the same fan with three different note sources — nothing is reconciled.</p>
+
+        <div class="cmdk">
+          <span class="kb">⌘K</span>
+          <div class="txt">Search <b>"ken"</b> → opens <b>Legacy drawer</b> → <b style="color:var(--red)">dead-end</b>: can't reach the 360 page, can't add a durable note.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- complaint + legend -->
+    <div class="col" style="max-width:560px;">
+      <div class="card complaint">
+        <div class="sec-title" style="margin-bottom:12px;">The #1 complaint (verbatim)</div>
+        <div class="q">"Notes appear in a few places per person — they should be in <span class="grad">ONE place</span>. They're shit, very small, and not accessible at a glance."</div>
+        <div class="who">— Founder audit, primary user feedback</div>
+      </div>
+      <div class="card legend">
+        <div class="leg"><span class="swatch" style="background:var(--green)"></span> Persists correctly</div>
+        <div class="leg"><span class="swatch" style="background:var(--amber)"></span> Saves, but isolated / tiny</div>
+        <div class="leg"><span class="swatch" style="background:var(--red)"></span> Lost or dead-end</div>
+        <div class="leg"><span class="swatch" style="background:repeating-linear-gradient(90deg,#fff3 0 4px,transparent 4px 8px)"></span> Disconnected input box</div>
+        <div class="leg" style="flex-basis:100%;color:#6b7488;font-size:11px;margin-top:4px;">Read top-to-bottom: 7 inputs → 4 stores → 3 renderers → ⌘K dead-end. The fix collapses all of this into one canonical notes model + one reusable peek.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

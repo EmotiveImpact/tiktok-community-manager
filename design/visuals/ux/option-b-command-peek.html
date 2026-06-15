@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction B — Command-bar + universal peek</title>
+<style>
+  :root{
+    --bg:#070B17; --navy1:#050816; --navy2:#080B18;
+    --pink:#EE1D52; --cyan:#69C9D0;
+    --text:#F6F7FB; --muted:#9AA3B8;
+    --card-border:rgba(255,255,255,.105);
+    --red:#FF5470; --amber:#FFA94D; --green:#39D98A; --lgreen:#9BE15D;
+    --gold:#F5C451; --purple:#B69CFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .canvas{width:1680px;margin:0 auto;position:relative;}
+  .grad{background:linear-gradient(90deg,var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  .caption{display:flex;align-items:center;gap:14px;padding:14px 28px;
+    background:linear-gradient(90deg,rgba(238,29,82,.10),rgba(105,201,208,.08));border-bottom:1px solid var(--card-border);}
+  .caption .b{font-size:13px;font-weight:800;color:var(--text);} .caption .b span{color:var(--cyan);}
+  .caption .t{font-size:13px;color:var(--muted);}
+  .caption .badge{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#0b1020;background:linear-gradient(90deg,var(--pink),var(--cyan));padding:5px 12px;border-radius:999px;}
+
+  .app{display:flex;min-height:1080px;position:relative;}
+  .rail{width:230px;flex:none;background:linear-gradient(180deg,var(--navy1),var(--navy2));border-right:1px solid rgba(255,255,255,.06);padding:22px 16px;}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--pink),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:900;color:#0b1020;font-size:16px;}
+  .brand .nm{font-weight:800;font-size:15px;} .brand .nm small{display:block;color:var(--muted);font-weight:500;font-size:10px;letter-spacing:.06em;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:11px;color:var(--muted);font-size:14px;font-weight:600;text-decoration:none;margin-bottom:3px;}
+  .nav a .ic{width:20px;text-align:center;font-size:15px;}
+  .nav a.active{background:linear-gradient(90deg,rgba(238,29,82,.22),rgba(105,201,208,.12));color:#fff;border:1px solid rgba(255,255,255,.1);}
+  .railfoot{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;}
+  .railfoot .ava{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#39507a,#22304d);display:flex;align-items:center;justify-content:center;font-weight:800;color:#cfe0ff;font-size:11px;}
+
+  .stage{flex:1;padding:26px 30px;position:relative;min-width:0;}
+  .stage h1{font-size:22px;font-weight:800;}
+  .stage .sub{color:var(--muted);font-size:13px;margin-top:4px;}
+
+  /* background = live feed, dimmed */
+  .dim{opacity:.42;filter:saturate(.8);pointer-events:none;}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.022)),#0B1020;border:1px solid var(--card-border);border-radius:16px;}
+  .feed{margin-top:18px;display:flex;flex-direction:column;gap:10px;}
+  .fitem{display:flex;align-items:center;gap:13px;padding:13px 16px;}
+  .avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#0b1020;flex:none;}
+  .fitem .ava{width:38px;height:38px;font-size:13px;}
+  .fitem .txt{flex:1;font-size:14px;} .fitem .txt b{font-weight:700;}
+  .fitem .when{font-size:12px;color:var(--muted);}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;}
+  .c-whale{background:rgba(182,156,255,.16);color:var(--purple);border:1px solid rgba(182,156,255,.4);}
+  .c-vip{background:rgba(245,196,81,.15);color:var(--gold);border:1px solid rgba(245,196,81,.4);}
+  .c-reg{background:rgba(105,201,208,.14);color:var(--cyan);border:1px solid rgba(105,201,208,.4);}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;}
+  .d-hot{background:var(--green);box-shadow:0 0 8px rgba(57,217,138,.6);} .d-cool{background:var(--amber);} .d-cold{background:var(--red);} .d-warm{background:var(--lgreen);}
+  .strength{height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .strength>i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));}
+
+  /* scrim */
+  .scrim{position:absolute;inset:0;background:rgba(4,6,14,.55);backdrop-filter:blur(1px);}
+
+  /* COMMAND PALETTE */
+  .cmdk{position:absolute;top:120px;left:50%;transform:translateX(-58%);width:640px;z-index:5;
+    background:linear-gradient(180deg,#11162a,#0a0e1d);border:1px solid rgba(255,255,255,.14);
+    border-radius:18px;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 0 1px rgba(105,201,208,.08);overflow:hidden;}
+  .cmdk-in{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+  .cmdk-in .mag{font-size:18px;color:var(--muted);}
+  .cmdk-in input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:18px;font-weight:500;}
+  .cmdk-in .esc{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:3px 8px;}
+  .cmdk-sec{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:14px 20px 8px;}
+  .cmdk-res{padding:0 10px 8px;}
+  .res{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:11px;cursor:pointer;}
+  .res.active{background:linear-gradient(90deg,rgba(238,29,82,.18),rgba(105,201,208,.1));border:1px solid rgba(255,255,255,.12);}
+  .res .ava{width:36px;height:36px;font-size:12px;}
+  .res .who{flex:1;min-width:0;}
+  .res .who .nm{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
+  .res .who .hd{font-size:12px;color:var(--muted);}
+  .res .enter{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;}
+  .cmdk-actions{border-top:1px solid rgba(255,255,255,.08);padding:10px 14px;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.015);}
+  .act{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--card-border);padding:7px 11px;border-radius:9px;}
+  .act .kb{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--muted);border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:1px 5px;}
+  .act.go{margin-left:auto;}
+
+  /* SIDE PEEK */
+  .peek{position:absolute;top:0;right:0;bottom:0;width:520px;z-index:6;
+    background:linear-gradient(180deg,#0d1226,#090d1c);border-left:1px solid rgba(255,255,255,.12);
+    box-shadow:-30px 0 80px rgba(0,0,0,.6);overflow:hidden;}
+  .peek-top{display:flex;align-items:center;gap:8px;padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.07);}
+  .peek-top .lbl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);}
+  .peek-top .x{margin-left:auto;color:var(--muted);font-size:16px;cursor:pointer;}
+  .peek-hd{display:flex;align-items:center;gap:15px;padding:20px 22px 12px;}
+  .peek-hd .ava{width:56px;height:56px;font-size:20px;background:linear-gradient(135deg,var(--pink),var(--cyan));}
+  .peek-hd h2{font-size:20px;font-weight:800;display:flex;align-items:center;gap:9px;}
+  .peek-hd .hd{color:var(--muted);font-size:12px;margin-top:2px;}
+  .peek-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 22px 16px;}
+  .pstat{background:rgba(255,255,255,.03);border:1px solid var(--card-border);border-radius:11px;padding:11px 12px;}
+  .pstat .k{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.04em;}
+  .pstat .v{font-size:16px;font-weight:800;margin-top:4px;}
+  .peek-pin{margin:0 22px 16px;padding:14px 16px;border-radius:12px;background:rgba(105,201,208,.05);border:1px solid rgba(105,201,208,.16);border-left:3px solid var(--cyan);}
+  .peek-pin .lbl{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .peek-pin .txt{font-size:15px;line-height:1.5;color:#EBEEF6;} .peek-pin .txt b{color:#fff;}
+  .peek-composer{display:flex;gap:10px;align-items:center;margin:0 22px 16px;background:rgba(238,29,82,.06);border:1px solid rgba(238,29,82,.26);border-radius:12px;padding:10px 12px;}
+  .peek-composer input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:13px;}
+  .peek-composer input::placeholder{color:#7c869c;}
+  .peek-composer .send{background:linear-gradient(90deg,var(--pink),var(--cyan));color:#0b1020;font-weight:800;font-size:11px;padding:7px 11px;border-radius:8px;border:none;}
+  .peek-tl{padding:0 22px;}
+  .peek-tl .lbl{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .ptl{position:relative;padding-left:26px;}
+  .ptl:before{content:"";position:absolute;left:8px;top:3px;bottom:3px;width:2px;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03));}
+  .pev{position:relative;margin-bottom:13px;}
+  .pev .mk{position:absolute;left:-26px;top:1px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;border:2px solid #0a0e1d;}
+  .mk-n{background:var(--pink);} .mk-g{background:rgba(245,196,81,.25);color:var(--gold);} .mk-s{background:rgba(105,201,208,.22);color:var(--cyan);}
+  .pnote{background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px 12px;}
+  .pnote .b{font-size:13px;line-height:1.45;color:#EBEEF6;} .pnote .m{font-size:10px;color:var(--muted);margin-top:5px;}
+  .pauto{font-size:12px;color:var(--muted);} .pauto b{color:var(--text);font-weight:600;}
+  .pauto .m{font-size:10px;color:#6b7488;margin-top:2px;}
+  .peek-foot{position:absolute;left:0;right:0;bottom:0;padding:16px 22px;border-top:1px solid rgba(255,255,255,.07);background:rgba(8,11,24,.9);}
+  .open-full{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(255,255,255,.05);border:1px solid var(--card-border);color:var(--text);font-weight:700;font-size:13px;padding:11px;border-radius:11px;cursor:pointer;}
+  .open-full:hover{background:rgba(255,255,255,.1);}
+  .avatar.ava{}
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="caption">
+    <div class="b">Direction B — <span>Command-bar + universal peek</span></div>
+    <div class="t">Jump to any fan from anywhere with ⌘K · glance at their record without leaving the page. (Linear / Notion / Raycast)</div>
+    <div class="badge">★ Recommended spine</div>
+  </div>
+
+  <div class="app">
+    <!-- RAIL -->
+    <div class="rail">
+      <div class="brand"><div class="logo">T</div><div class="nm">Community<small>MANAGER</small></div></div>
+      <div class="nav">
+        <a><span class="ic">▥</span> Dashboard</a>
+        <a class="active"><span class="ic">📡</span> Live Feed</a>
+        <a><span class="ic">👥</span> Followers</a>
+        <a><span class="ic">🎁</span> Gifts</a>
+        <a><span class="ic">⏰</span> Reminders</a>
+        <a><span class="ic">💬</span> Messages</a>
+        <a><span class="ic">⬇</span> Import</a>
+        <a><span class="ic">⚙</span> Settings</a>
+      </div>
+      <div class="railfoot"><div class="ava">YA</div><div>Yuna's Live<br><span style="color:#6b7488">@yunaplays</span></div></div>
+    </div>
+
+    <!-- STAGE (live feed, behind) -->
+    <div class="stage">
+      <div class="dim">
+        <h1>Live Feed</h1>
+        <div class="sub">🔴 LIVE · 412 watching · 2,140 coins this session</div>
+        <div class="feed">
+          <div class="card fitem"><div class="avatar ava" style="background:linear-gradient(135deg,var(--pink),var(--cyan))">KM</div><div class="txt"><b>Kendra M.</b> <span class="chip c-whale">👑 Whale</span> sent <b>Galaxy ×3</b></div><div class="when">just now</div></div>
+          <div class="card fitem"><div class="avatar ava" style="background:linear-gradient(135deg,#F5C451,#EE1D52)">AU</div><div class="txt"><b>Autumn</b> <span class="chip c-vip">⭐ VIP</span> joined the stream</div><div class="when">1m</div></div>
+          <div class="card fitem"><div class="avatar ava" style="background:linear-gradient(135deg,#69C9D0,#B69CFF)">MO</div><div class="txt"><b>Mochi</b> <span class="chip c-vip">⭐ VIP</span> commented "missed youu 🥺"</div><div class="when">2m</div></div>
+          <div class="card fitem"><div class="avatar ava" style="background:linear-gradient(135deg,#39D98A,#69C9D0)">RJ</div><div class="txt"><b>Riku J.</b> <span class="chip c-reg">Regular</span> followed</div><div class="when">3m</div></div>
+          <div class="card fitem"><div class="avatar ava" style="background:linear-gradient(135deg,#B69CFF,#EE1D52)">SP</div><div class="txt"><b>Sparrow</b> sent <b>Rose ×10</b></div><div class="when">4m</div></div>
+        </div>
+      </div>
+
+      <div class="scrim"></div>
+
+      <!-- COMMAND PALETTE -->
+      <div class="cmdk">
+        <div class="cmdk-in">
+          <span class="mag">🔍</span>
+          <input value="ken" >
+          <span class="esc">esc</span>
+        </div>
+        <div class="cmdk-sec">Fans</div>
+        <div class="cmdk-res">
+          <div class="res active">
+            <div class="avatar ava" style="background:linear-gradient(135deg,var(--pink),var(--cyan))">KM</div>
+            <div class="who"><div class="nm">Kendra M. <span class="chip c-whale">👑 Whale</span> <span class="dot d-hot"></span></div><div class="hd">@kendraaax2 · 214,500 coins lifetime</div></div>
+            <div class="enter">↵ peek</div>
+          </div>
+          <div class="res">
+            <div class="avatar ava" style="background:linear-gradient(135deg,#39D98A,#69C9D0)">KZ</div>
+            <div class="who"><div class="nm">Kenzo <span class="chip c-reg">Regular</span></div><div class="hd">@kenzo.live</div></div>
+          </div>
+          <div class="res">
+            <div class="avatar ava" style="background:linear-gradient(135deg,#FFA94D,#EE1D52)">KN</div>
+            <div class="who"><div class="nm">Kennedy R. <span class="chip c-reg">Regular</span></div><div class="hd">@kenrae</div></div>
+          </div>
+        </div>
+        <div class="cmdk-actions">
+          <span style="font-size:11px;color:var(--muted);font-weight:700;margin-right:4px;">Kendra M.</span>
+          <div class="act">Open profile <span class="kb">↵</span></div>
+          <div class="act">＋ Add note <span class="kb">⌘N</span></div>
+          <div class="act">⏰ Set reminder <span class="kb">⌘R</span></div>
+          <div class="act go"><span class="kb">↑↓</span> navigate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDE PEEK -->
+    <div class="peek">
+      <div class="peek-top"><span class="lbl">◧ Peek</span><span style="font-size:12px;color:var(--muted);">glance · doesn't leave Live Feed</span><span class="x">✕</span></div>
+      <div class="peek-hd">
+        <div class="avatar ava">KM</div>
+        <div><h2>Kendra M. <span class="chip c-whale">👑 Whale</span></h2><div class="hd">@kendraaax2 · <span class="dot d-hot" style="vertical-align:middle"></span> hot · 2h ago</div></div>
+      </div>
+      <div class="peek-stats">
+        <div class="pstat"><div class="k">Strength</div><div class="v">96%</div><div class="strength" style="margin-top:6px"><i style="width:96%"></i></div></div>
+        <div class="pstat"><div class="k">Lifetime</div><div class="v">214.5k 🪙</div></div>
+        <div class="pstat"><div class="k">Gifts</div><div class="v">132</div></div>
+      </div>
+      <div class="peek-pin">
+        <div class="lbl">📌 About Kendra</div>
+        <div class="txt">Your <b>biggest supporter</b> — galaxies every Friday, asks about cat Mochi. Breakup, keep it light. Birthday shoutout in <b>March</b>.</div>
+      </div>
+      <div class="peek-composer"><input placeholder="Add a note about Kendra…"><button class="send">Add</button></div>
+      <div class="peek-tl">
+        <div class="lbl">Recent</div>
+        <div class="ptl">
+          <div class="pev"><div class="mk mk-n">✎</div><div class="pnote"><div class="b">Got her promotion 🎉 — congratulate Friday.</div><div class="m">You · Today 2:14 PM</div></div></div>
+          <div class="pev"><div class="mk mk-g">🎁</div><div class="pauto"><b>Sent Galaxy ×3</b> · 4,500 coins<div class="m">Jun 13 · Friday Live</div></div></div>
+          <div class="pev"><div class="mk mk-n">✎</div><div class="pnote"><div class="b">Birthday shoutout in March — don't forget.</div><div class="m">You · Jun 13 · ★ pinned</div></div></div>
+          <div class="pev"><div class="mk mk-s">📺</div><div class="pauto"><b>Watched 47 min</b> · chatted 12×<div class="m">Jun 13</div></div></div>
+        </div>
+      </div>
+      <div class="peek-foot"><button class="open-full">Open full profile →</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

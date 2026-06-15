@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UX Redesign — Decision Artifacts</title>
+<style>
+  :root{
+    --bg:#070B17; --pink:#EE1D52; --cyan:#69C9D0;
+    --text:#F6F7FB; --muted:#9AA3B8;
+    --card-border:rgba(255,255,255,.105);
+    --green:#39D98A; --amber:#FFA94D; --gold:#F5C451; --purple:#B69CFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px;margin:0 auto;padding:64px 40px 80px;}
+  .grad{background:linear-gradient(90deg,var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);background:rgba(105,201,208,.10);border:1px solid rgba(105,201,208,.25);padding:6px 12px;border-radius:999px;}
+  h1{font-size:44px;font-weight:850;letter-spacing:-.025em;margin:18px 0 14px;line-height:1.08;}
+  .lede{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px;}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.022)),#0B1020;border:1px solid var(--card-border);border-radius:18px;box-shadow:0 18px 48px rgba(0,0,0,.42);}
+
+  .summary{margin:36px 0 44px;padding:26px 30px;display:grid;grid-template-columns:1fr 1fr;gap:30px;}
+  .summary h3{font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+  .summary ul{list-style:none;display:flex;flex-direction:column;gap:11px;}
+  .summary li{font-size:15px;line-height:1.5;color:#dbe1ee;padding-left:24px;position:relative;}
+  .summary li:before{position:absolute;left:0;top:1px;}
+  .found li:before{content:"⚠";color:var(--amber);}
+  .rec li:before{content:"✓";color:var(--green);}
+  .rec b{color:#fff;}
+  .recpill{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;margin-left:4px;}
+  .rp-b{background:rgba(238,29,82,.16);color:#ff8aa3;border:1px solid rgba(238,29,82,.35);}
+  .rp-c{background:rgba(245,196,81,.14);color:var(--gold);border:1px solid rgba(245,196,81,.35);}
+  .rp-n{background:rgba(105,201,208,.14);color:var(--cyan);border:1px solid rgba(105,201,208,.35);}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  .tile{padding:26px 28px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:0;transition:.16s;position:relative;overflow:hidden;}
+  .tile:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.25);box-shadow:0 26px 60px rgba(0,0,0,.5);}
+  .tile .num{font-size:12px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:var(--muted);letter-spacing:.1em;}
+  .tile h2{font-size:21px;font-weight:800;margin:8px 0 8px;display:flex;align-items:center;gap:10px;}
+  .tile p{font-size:14px;color:var(--muted);line-height:1.55;}
+  .tile .open{margin-top:16px;font-size:13px;font-weight:700;color:var(--cyan);display:flex;align-items:center;gap:6px;}
+  .tile.flagship{border-color:rgba(238,29,82,.4);background:linear-gradient(180deg,rgba(238,29,82,.08),rgba(255,255,255,.02)),#0B1020;}
+  .tile.flagship h2 .grad{}
+  .badge{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;}
+  .bd-flag{background:rgba(238,29,82,.16);color:#ff8aa3;border:1px solid rgba(238,29,82,.4);}
+  .bd-rec{background:rgba(57,217,138,.14);color:var(--green);border:1px solid rgba(57,217,138,.4);}
+  .bd-understand{background:rgba(255,169,77,.14);color:var(--amber);border:1px solid rgba(255,169,77,.4);}
+  .span2{grid-column:1 / -1;}
+  .foot{margin-top:48px;font-size:13px;color:#6b7488;font-family:ui-monospace,Menlo,monospace;}
+  .stack{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
+  .mini{font-size:11px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--card-border);padding:4px 10px;border-radius:999px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">◆ Decision Artifacts · Founder Review</div>
+  <h1>TikTok Community Manager —<br><span class="grad">a UX redesign you can open in a browser.</span></h1>
+  <p class="lede">Five artifacts. One understands what's broken, one fixes the flagship problem (notes), and three offer navigation directions. Open them in order, then pick a spine. Built to the brand system — dark-first, pink→cyan, the strength / temperature / tier motifs throughout.</p>
+
+  <div class="card summary">
+    <div class="found">
+      <h3>What we found</h3>
+      <ul>
+        <li>Notes live in <b style="color:#fff">4 disconnected stores</b> fed by 7 input boxes — two tiny (rows=2), one silently lost.</li>
+        <li>The #1 complaint: notes are "shit, very small, not accessible at a glance."</li>
+        <li><b style="color:#fff">3 different fan-detail renderers</b> show the same person three ways.</li>
+        <li>⌘K dead-ends in a legacy drawer — you can't reach the full profile.</li>
+        <li>No quick-peek: every fan click is a full-page navigation that loses your place.</li>
+      </ul>
+    </div>
+    <div class="rec">
+      <h3>What we recommend</h3>
+      <ul>
+        <li>Adopt one <b>canonical notes model</b>: a pinned <b>About</b> + a dated notes log in the timeline.<span class="recpill rp-n">the model</span></li>
+        <li>Make <b>Direction B</b> the navigation spine: ⌘K + one reusable peek everywhere.<span class="recpill rp-b">spine</span></li>
+        <li>Make <b>Direction C</b> the home screen: people-queues, not KPI tiles.<span class="recpill rp-c">home</span></li>
+        <li>Collapse the 3 renderers into <b>one record at three depths</b>: glance → focus → full page.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid">
+    <a class="tile span2 flagship" href="notes-redesign.html">
+      <div style="display:flex;align-items:center;gap:12px;"><span class="num">02 · FLAGSHIP</span><span class="badge bd-flag">The notes fix</span></div>
+      <h2>Notes, done right <span class="grad">— pinned About + dated log</span></h2>
+      <p>The most important file. A prominent, readable "About Kendra" on top, then a Notes &amp; activity timeline with a quick-add composer and dated entries weighted heavier than auto-events. Includes a before/after that makes the improvement obvious.</p>
+      <div class="open">Open the flagship →</div>
+    </a>
+
+    <a class="tile" href="00-current-state-map.html">
+      <div style="display:flex;align-items:center;gap:12px;"><span class="num">00 · MAP</span><span class="badge bd-understand">The understanding</span></div>
+      <h2>Current-state map</h2>
+      <p>An annotated diagram of what's broken: the notes scatter (7 boxes → 4 stores), the 3 redundant renderers, and the ⌘K dead-end. Proves we understand the problem before proposing a fix.</p>
+      <div class="open">Open the map →</div>
+    </a>
+
+    <a class="tile" href="option-a-master-detail.html">
+      <div style="display:flex;align-items:center;gap:12px;"><span class="num">A · DIRECTION</span></div>
+      <h2>Master-detail</h2>
+      <p>Followers list pinned left, the selected fan's full record fills the right. Scan and drill without losing your place. The HubSpot / Front model.</p>
+      <div class="open">Open Direction A →</div>
+    </a>
+
+    <a class="tile" href="option-b-command-peek.html">
+      <div style="display:flex;align-items:center;gap:12px;"><span class="num">B · DIRECTION</span><span class="badge bd-rec">Recommended spine</span></div>
+      <h2>Command-bar + peek</h2>
+      <p>⌘K to jump to any fan from anywhere, plus a universal side-peek to glance at their record without leaving the page. Linear / Notion / Raycast.</p>
+      <div class="open">Open Direction B →</div>
+    </a>
+
+    <a class="tile" href="option-c-dashboard-hub.html">
+      <div style="display:flex;align-items:center;gap:12px;"><span class="num">C · DIRECTION</span><span class="badge bd-rec">Recommended home</span></div>
+      <h2>Dashboard people-hub</h2>
+      <p>Open the app and see WHO needs you today — Reach out, Going cold, Reminders due, Notable gifters — each one click to act, with a slide-over profile. Dex / Monica.</p>
+      <div class="open">Open Direction C →</div>
+    </a>
+  </div>
+
+  <div class="foot">design/visuals/ux/ · TikTok Community Manager · brand-aligned · 2026-06</div>
+</div>
+</body>
+</html>

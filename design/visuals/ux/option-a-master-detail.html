@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction A — Master-detail</title>
+<style>
+  :root{
+    --bg:#070B17; --navy1:#050816; --navy2:#080B18;
+    --pink:#EE1D52; --cyan:#69C9D0;
+    --text:#F6F7FB; --muted:#9AA3B8;
+    --card-border:rgba(255,255,255,.105);
+    --red:#FF5470; --amber:#FFA94D; --green:#39D98A; --lgreen:#9BE15D;
+    --gold:#F5C451; --purple:#B69CFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .canvas{width:1680px;margin:0 auto;}
+  .grad{background:linear-gradient(90deg,var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  /* caption strip */
+  .caption{display:flex;align-items:center;gap:14px;padding:14px 28px;
+    background:linear-gradient(90deg,rgba(238,29,82,.10),rgba(105,201,208,.08));
+    border-bottom:1px solid var(--card-border);}
+  .caption .b{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--text);}
+  .caption .b span{color:var(--cyan);}
+  .caption .t{font-size:13px;color:var(--muted);}
+  .caption .badge{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--cyan);border:1px solid rgba(105,201,208,.35);background:rgba(105,201,208,.1);padding:5px 12px;border-radius:999px;}
+
+  .app{display:flex;min-height:1080px;}
+  /* NAV RAIL */
+  .rail{width:230px;flex:none;background:linear-gradient(180deg,var(--navy1),var(--navy2));
+    border-right:1px solid rgba(255,255,255,.06);padding:22px 16px;}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--pink),var(--cyan));
+    display:flex;align-items:center;justify-content:center;font-weight:900;color:#0b1020;font-size:16px;}
+  .brand .nm{font-weight:800;font-size:15px;}
+  .brand .nm small{display:block;color:var(--muted);font-weight:500;font-size:10px;letter-spacing:.06em;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:11px;color:var(--muted);
+    font-size:14px;font-weight:600;text-decoration:none;margin-bottom:3px;transition:.15s;cursor:pointer;}
+  .nav a .ic{width:20px;text-align:center;font-size:15px;}
+  .nav a:hover{background:rgba(255,255,255,.04);color:var(--text);}
+  .nav a.active{background:linear-gradient(90deg,rgba(238,29,82,.22),rgba(105,201,208,.12));
+    color:#fff;border:1px solid rgba(255,255,255,.1);}
+  .nav a.active .ic{filter:drop-shadow(0 0 6px rgba(105,201,208,.5));}
+  .railfoot{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.06);
+    display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;}
+  .railfoot .ava{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#39507a,#22304d);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#cfe0ff;font-size:11px;}
+
+  /* main split */
+  .main{flex:1;display:flex;min-width:0;}
+  .topbar{position:absolute;}
+  .list-pane{width:35%;min-width:430px;border-right:1px solid var(--card-border);padding:22px 20px;background:rgba(255,255,255,.012);}
+  .detail-pane{flex:1;padding:24px 28px;min-width:0;}
+
+  .pane-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .pane-head h2{font-size:19px;font-weight:800;}
+  .pane-head .ct{font-size:12px;color:var(--muted);}
+  .search{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.3);border:1px solid var(--card-border);
+    border-radius:11px;padding:9px 12px;margin-bottom:14px;}
+  .search input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:13px;}
+  .search input::placeholder{color:#6b7488;}
+  .search .kb{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;border:1px solid rgba(255,255,255,.12);border-radius:5px;padding:2px 6px;}
+
+  /* shared motifs */
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;}
+  .c-whale{background:rgba(182,156,255,.16);color:var(--purple);border:1px solid rgba(182,156,255,.4);}
+  .c-vip{background:rgba(245,196,81,.15);color:var(--gold);border:1px solid rgba(245,196,81,.4);}
+  .c-reg{background:rgba(105,201,208,.14);color:var(--cyan);border:1px solid rgba(105,201,208,.4);}
+  .c-new{background:rgba(57,217,138,.14);color:var(--green);border:1px solid rgba(57,217,138,.4);}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;}
+  .d-hot{background:var(--green);box-shadow:0 0 8px rgba(57,217,138,.6);}
+  .d-warm{background:var(--lgreen);} .d-cool{background:var(--amber);} .d-cold{background:var(--red);}
+  .strength{height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;width:64px;}
+  .strength>i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));}
+  .avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#0b1020;flex:none;}
+
+  /* rows */
+  .row{display:flex;align-items:center;gap:13px;padding:12px 12px;border-radius:13px;cursor:pointer;
+    border:1px solid transparent;transition:.13s;margin-bottom:4px;}
+  .row:hover{background:rgba(255,255,255,.035);}
+  .row.sel{background:linear-gradient(90deg,rgba(238,29,82,.14),rgba(105,201,208,.07));
+    border-color:rgba(255,255,255,.14);box-shadow:0 6px 18px rgba(0,0,0,.25);}
+  .row.sel:before{content:"";position:absolute;}
+  .row .ava{width:40px;height:40px;font-size:14px;}
+  .row .who{min-width:0;flex:1;}
+  .row .who .nm{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
+  .row .who .hd{font-size:12px;color:var(--muted);margin-top:1px;}
+  .row .meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .row .seen{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+
+  /* DETAIL */
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.022)),#0B1020;
+    border:1px solid var(--card-border);border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.4);}
+  .d-head{display:flex;align-items:center;gap:18px;padding:22px 24px;}
+  .d-head .ava{width:64px;height:64px;font-size:23px;background:linear-gradient(135deg,var(--pink),var(--cyan));}
+  .d-head h1{font-size:23px;font-weight:800;display:flex;align-items:center;gap:10px;}
+  .d-head .hd{color:var(--muted);font-size:13px;margin-top:3px;}
+  .d-actions{margin-left:auto;display:flex;gap:8px;}
+  .btn{font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;border:1px solid var(--card-border);
+    background:rgba(255,255,255,.05);color:var(--text);cursor:pointer;transition:.15s;}
+  .btn:hover{background:rgba(255,255,255,.1);}
+  .btn.primary{background:linear-gradient(90deg,var(--pink),var(--cyan));color:#0b1020;border:none;}
+
+  .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:0 24px 22px;
+    border:1px solid var(--card-border);border-radius:14px;overflow:hidden;}
+  .stat{padding:14px 16px;border-right:1px solid var(--card-border);}
+  .stat:last-child{border-right:none;}
+  .stat .k{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+  .stat .v{font-size:20px;font-weight:800;margin-top:5px;}
+  .stat .v small{font-size:12px;color:var(--muted);font-weight:600;}
+
+  .pin{margin:0 24px 20px;padding:16px 18px;border-radius:13px;background:rgba(105,201,208,.05);
+    border:1px solid rgba(105,201,208,.16);border-left:3px solid var(--cyan);}
+  .pin .lbl{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;gap:6px;align-items:center;}
+  .pin .txt{font-size:16px;line-height:1.55;font-weight:500;color:#EBEEF6;}
+  .pin .txt b{color:#fff;}
+
+  .tabs{display:flex;gap:4px;margin:0 24px 14px;border-bottom:1px solid var(--card-border);padding-bottom:0;}
+  .tab{font-size:13px;font-weight:700;color:var(--muted);padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;}
+  .tab.active{color:var(--text);border-bottom-color:var(--pink);}
+
+  .composer{display:flex;gap:11px;align-items:center;background:rgba(238,29,82,.06);
+    border:1px solid rgba(238,29,82,.26);border-radius:13px;padding:11px 13px;margin:0 24px 18px;}
+  .composer .ava{width:32px;height:32px;font-size:11px;background:linear-gradient(135deg,#39507a,#22304d);color:#cfe0ff;}
+  .composer input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;}
+  .composer input::placeholder{color:#7c869c;}
+  .composer .send{background:linear-gradient(90deg,var(--pink),var(--cyan));color:#0b1020;font-weight:800;font-size:12px;padding:8px 13px;border-radius:9px;border:none;}
+
+  .stream{position:relative;padding:0 24px 22px 52px;}
+  .stream:before{content:"";position:absolute;left:33px;top:4px;bottom:22px;width:2px;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));}
+  .ev{position:relative;margin-bottom:15px;}
+  .ev .marker{position:absolute;left:-25px;top:2px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;border:2px solid var(--bg);}
+  .m-note{background:var(--pink);} .m-gift{background:rgba(245,196,81,.25);color:var(--gold);} .m-sess{background:rgba(105,201,208,.22);color:var(--cyan);}
+  .note-entry{background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.13);border-radius:13px;padding:12px 14px;box-shadow:0 6px 16px rgba(0,0,0,.22);}
+  .note-entry .body{font-size:14px;line-height:1.5;color:#EBEEF6;}
+  .note-entry .meta,.auto .meta{font-size:11px;color:var(--muted);margin-top:6px;}
+  .auto .line{font-size:13px;color:var(--muted);} .auto .line b{color:var(--text);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="caption">
+    <div class="b">Direction A — <span>Master-detail</span></div>
+    <div class="t">Scan the list on the left · the full record fills the right · you never lose your place. (HubSpot / Front model)</div>
+    <div class="badge">Option A</div>
+  </div>
+
+  <div class="app">
+    <!-- RAIL -->
+    <div class="rail">
+      <div class="brand"><div class="logo">T</div><div class="nm">Community<small>MANAGER</small></div></div>
+      <div class="nav">
+        <a><span class="ic">▥</span> Dashboard</a>
+        <a><span class="ic">📡</span> Live Feed</a>
+        <a class="active"><span class="ic">👥</span> Followers</a>
+        <a><span class="ic">🎁</span> Gifts</a>
+        <a><span class="ic">⏰</span> Reminders</a>
+        <a><span class="ic">💬</span> Messages</a>
+        <a><span class="ic">⬇</span> Import</a>
+        <a><span class="ic">⚙</span> Settings</a>
+      </div>
+      <div class="railfoot"><div class="ava">YA</div><div>Yuna's Live<br><span style="color:#6b7488">@yunaplays</span></div></div>
+    </div>
+
+    <div class="main">
+      <!-- LIST -->
+      <div class="list-pane">
+        <div class="pane-head"><h2>Followers</h2><span class="ct">1,284 fans · sorted by strength</span></div>
+        <div class="search"><span>🔍</span><input placeholder="Search followers…"><span class="kb">⌘K</span></div>
+
+        <div class="row sel">
+          <div class="avatar ava" style="background:linear-gradient(135deg,var(--pink),var(--cyan))">KM</div>
+          <div class="who"><div class="nm">Kendra M. <span class="chip c-whale">👑 Whale</span></div><div class="hd">@kendraaax2</div></div>
+          <div class="meta"><div class="strength"><i style="width:96%"></i></div><div class="seen"><span class="dot d-hot"></span> 2h ago</div></div>
+        </div>
+        <div class="row">
+          <div class="avatar ava" style="background:linear-gradient(135deg,#F5C451,#EE1D52)">AU</div>
+          <div class="who"><div class="nm">Autumn <span class="chip c-vip">⭐ VIP</span></div><div class="hd">@autumnstar01</div></div>
+          <div class="meta"><div class="strength"><i style="width:78%"></i></div><div class="seen"><span class="dot d-hot"></span> 5h ago</div></div>
+        </div>
+        <div class="row">
+          <div class="avatar ava" style="background:linear-gradient(135deg,#69C9D0,#B69CFF)">MO</div>
+          <div class="who"><div class="nm">Mochi <span class="chip c-vip">⭐ VIP</span></div><div class="hd">@mochi.eats</div></div>
+          <div class="meta"><div class="strength"><i style="width:52%"></i></div><div class="seen"><span class="dot d-cool"></span> 9d ago</div></div>
+        </div>
+        <div class="row">
+          <div class="avatar ava" style="background:linear-gradient(135deg,#39D98A,#69C9D0)">RJ</div>
+          <div class="who"><div class="nm">Riku J. <span class="chip c-reg">Regular</span></div><div class="hd">@riku.jpg</div></div>
+          <div class="meta"><div class="strength"><i style="width:64%"></i></div><div class="seen"><span class="dot d-warm"></span> 1d ago</div></div>
+        </div>
+        <div class="row">
+          <div class="avatar ava" style="background:linear-gradient(135deg,#B69CFF,#EE1D52)">SP</div>
+          <div class="who"><div class="nm">Sparrow <span class="chip c-reg">Regular</span></div><div class="hd">@sparrowsings</div></div>
+          <div class="meta"><div class="strength"><i style="width:44%"></i></div><div class="seen"><span class="dot d-warm"></span> 3d ago</div></div>
+        </div>
+        <div class="row">
+          <div class="avatar ava" style="background:linear-gradient(135deg,#39D98A,#9BE15D)">LU</div>
+          <div class="who"><div class="nm">Luna B. <span class="chip c-new">New</span></div><div class="hd">@lunabeams</div></div>
+          <div class="meta"><div class="strength"><i style="width:22%"></i></div><div class="seen"><span class="dot d-hot"></span> 1h ago</div></div>
+        </div>
+        <div class="row">
+          <div class="avatar ava" style="background:linear-gradient(135deg,#FFA94D,#EE1D52)">DV</div>
+          <div class="who"><div class="nm">Dev <span class="chip c-reg">Regular</span></div><div class="hd">@devonthemic</div></div>
+          <div class="meta"><div class="strength"><i style="width:38%"></i></div><div class="seen"><span class="dot d-cold"></span> 21d ago</div></div>
+        </div>
+        <div class="row">
+          <div class="avatar ava" style="background:linear-gradient(135deg,#69C9D0,#39D98A)">TY</div>
+          <div class="who"><div class="nm">Tysha <span class="chip c-new">New</span></div><div class="hd">@tysha.wav</div></div>
+          <div class="meta"><div class="strength"><i style="width:18%"></i></div><div class="seen"><span class="dot d-warm"></span> 2d ago</div></div>
+        </div>
+      </div>
+
+      <!-- DETAIL -->
+      <div class="detail-pane">
+        <div class="card" style="overflow:hidden;">
+          <div class="d-head">
+            <div class="avatar ava">KM</div>
+            <div>
+              <h1>Kendra M. <span class="chip c-whale">👑 Whale</span> <span class="dot d-hot" title="hot"></span></h1>
+              <div class="hd">@kendraaax2 · joined Aug 2024 · last seen 2h ago</div>
+            </div>
+            <div class="d-actions">
+              <button class="btn">⏰ Remind</button>
+              <button class="btn">💬 Message</button>
+              <button class="btn primary">💌 Thank</button>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <div class="stat"><div class="k">Relationship</div><div class="v" style="display:flex;align-items:center;gap:10px;">96% <div class="strength" style="width:80px"><i style="width:96%"></i></div></div></div>
+            <div class="stat"><div class="k">Lifetime coins</div><div class="v">214,500 <small>🪙</small></div></div>
+            <div class="stat"><div class="k">Gifts sent</div><div class="v">132</div></div>
+            <div class="stat"><div class="k">Temperature</div><div class="v" style="font-size:15px;color:var(--green);display:flex;align-items:center;gap:8px;"><span class="dot d-hot"></span> Hot · engaged</div></div>
+          </div>
+
+          <div class="pin">
+            <div class="lbl">📌 About Kendra — pinned</div>
+            <div class="txt">Your <b>biggest supporter</b> — galaxies every Friday, always asks about your cat Mochi. Going through a breakup, keep it light. Wants a birthday shoutout in <b>March</b>.</div>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active">Notes &amp; activity</div>
+            <div class="tab">Gifts</div>
+            <div class="tab">Sessions</div>
+            <div class="tab">Messages</div>
+          </div>
+
+          <div class="composer">
+            <div class="avatar ava">YOU</div>
+            <input placeholder="Add a note about Kendra…">
+            <button class="send">Add note</button>
+          </div>
+
+          <div class="stream">
+            <div class="ev"><div class="marker m-note">✎</div><div class="note-entry"><div class="body">Got her promotion 🎉 — congratulate her Friday, she'll be on.</div><div class="meta">You · Today, 2:14 PM · note</div></div></div>
+            <div class="ev"><div class="marker m-gift">🎁</div><div class="auto"><div class="line"><b>Sent Galaxy ×3</b> — 4,500 coins · Friday Live</div><div class="meta">Jun 13 · 8:42 PM</div></div></div>
+            <div class="ev"><div class="marker m-note">✎</div><div class="note-entry"><div class="body">Promised a birthday shoutout in March — <b>don't forget</b>.</div><div class="meta">You · Jun 13 · note · ★ pinned</div></div></div>
+            <div class="ev"><div class="marker m-sess">📺</div><div class="auto"><div class="line"><b>Watched 47 min</b> · chatted 12 times</div><div class="meta">Jun 13 · 8:01 PM</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
