@@ -186,6 +186,18 @@ const api = {
   // Fan CRM
   fansList: (q?: any) => ipcRenderer.invoke('fans:list', q) as Promise<any>,
   fansGet: (uniqueId: string) => ipcRenderer.invoke('fans:get', uniqueId) as Promise<any>,
+  // 360 CRM: one call powers the whole profile (fan + strength + reminders + custom fields).
+  fansProfile: (uniqueId: string) => ipcRenderer.invoke('fans:profile', uniqueId) as Promise<any>,
+  fansTimeline: (uniqueId: string, opts?: { filter?: 'all' | 'gift' | 'comment' | 'note' | 'session'; limit?: number }) =>
+    ipcRenderer.invoke('fans:timeline', uniqueId, opts) as Promise<any[]>,
+  fansAddNote: (uniqueId: string, body: string) =>
+    ipcRenderer.invoke('fans:addNote', uniqueId, body) as Promise<{ ok: boolean; event?: any; error?: string }>,
+  fansSetField: (uniqueId: string, key: string, value: unknown) =>
+    ipcRenderer.invoke('fans:setField', uniqueId, key, value) as Promise<{ ok: boolean; fan?: any; error?: string }>,
+  fieldsListDefs: () => ipcRenderer.invoke('fields:listDefs') as Promise<any[]>,
+  fieldsAddDef: (input: { label: string; type: string; key?: string; options?: string[] }) =>
+    ipcRenderer.invoke('fields:addDef', input) as Promise<{ ok: boolean; def?: any; error?: string }>,
+  fieldsRemoveDef: (id: string) => ipcRenderer.invoke('fields:removeDef', id) as Promise<{ ok: boolean }>,
   fansAdd: (payload: any) => ipcRenderer.invoke('fans:add', payload) as Promise<any>,
   fansUpdate: (uniqueId: string, patch: any) =>
     ipcRenderer.invoke('fans:update', uniqueId, patch) as Promise<any>,

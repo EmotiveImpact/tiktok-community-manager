@@ -13,8 +13,11 @@ import type {
   ConnectionDetail,
   ConnectionPhase,
   ConnectionStatus,
+  CustomFieldDef,
+  CustomFieldType,
   EarningsSettings,
   Fan,
+  FanProfile,
   GiftRecord,
   ImportResult,
   LiveEvent,
@@ -24,6 +27,9 @@ import type {
   RoomInfo,
   SessionRecord,
   SessionSummary,
+  Temperature,
+  TimelineEvent,
+  TimelineFilter,
   UserBrief,
   UserNote,
   WatchEntry,
@@ -256,7 +262,7 @@ export function installBridgeMock(): void {
       profilePictureUrl: null,
     }));
     const seedFans: RawFan[] = [
-      mkFan(DEMO_USERS[0], 18420, 96, 0, ['superfan', 'mod-team'], 'Real name Kendra. Loves the gaming streams, always first in chat.', mmdd(3), 'Kendra M.'),
+      mkFan(DEMO_USERS[0], 118420, 342, 9, ['superfan', 'gift streak', 'cozy gamer', 'mod candidate', 'birthday soon', 'prefers DM'], 'Kendra found the stream during the midnight cozy-gaming run and became a core supporter after the charity LIVE. Loves direct, low-key shout-outs, not big hype. Mention her dog Luna if she joins late. She is trying to learn editing and asks thoughtful questions after streams.', mmdd(1), 'Kendra M.'),
       mkFan(DEMO_USERS[1], 6200, 41, 1, ['superfan'], 'Subscribed since March. Ask about her dog Biscuit.', mmdd(12)),
       mkFan(DEMO_USERS[2], 2840, 28, 17, ['foodie'], 'Runs a food account — shouted us out twice.', mmdd(45)),
       mkFan(DEMO_USERS[3], 540, 9, 2, ['mod-team'], 'Volunteer mod, UK timezone.'),
@@ -310,6 +316,144 @@ export function installBridgeMock(): void {
     }
     giftLog.sort((a, b) => b.at - a.at);
   }
+  // Hand-tuned Kendra gift rows so her 360 timeline mirrors the design target
+  // (Galaxy after the charity milestone, Rose x5 during the outfit poll, etc.).
+  if (demoSeed) {
+    giftLog.unshift(
+      { id: 'k-g-rose5', fanUniqueId: 'kendraaax2', fanNickname: 'Kendra ✨', giftName: 'Rose', diamonds: 1200, repeatCount: 5, sessionId: 'demo-2', at: Date.now() - 1 * day - 3 * 3600000 },
+      { id: 'k-g-galaxy', fanUniqueId: 'kendraaax2', fanNickname: 'Kendra ✨', giftName: 'Galaxy', diamonds: 10000, repeatCount: 1, sessionId: 'demo-4', at: Date.now() - 12 * day },
+      { id: 'k-g-lion', fanUniqueId: 'kendraaax2', fanNickname: 'Kendra ✨', giftName: 'Lion', diamonds: 29999, repeatCount: 1, sessionId: 'demo-old-0', at: Date.now() - 30 * day },
+      { id: 'k-g-fh', fanUniqueId: 'kendraaax2', fanNickname: 'Kendra ✨', giftName: 'Finger Heart', diamonds: 25, repeatCount: 5, sessionId: 'demo-0', at: Date.now() - 9 * day },
+    );
+    giftLog.sort((a, b) => b.at - a.at);
+  }
+
+  // --- CRM custom-field DEFS (global) + per-fan VALUES ----------------------
+  const customFieldDefs: CustomFieldDef[] = [
+    { id: 'cf_fav_gift', key: 'favorite_gift', label: 'Favorite gift', type: 'text' },
+    { id: 'cf_timezone', key: 'timezone', label: 'Timezone', type: 'text' },
+    { id: 'cf_language', key: 'language', label: 'Language', type: 'text' },
+    { id: 'cf_how_we_met', key: 'how_we_met', label: 'How we met', type: 'text' },
+  ];
+  // Seed Kendra's custom-field values so the 360 profile renders fully populated.
+  if (demoSeed) {
+    const k = fanMap.get('kendraaax2');
+    if (k) {
+      k.customFields = {
+        favorite_gift: 'Galaxy + Rose streaks',
+        timezone: 'Pacific Time',
+        language: 'English',
+        how_we_met: 'Raided in from @mikaPlays',
+      };
+    }
+  }
+
+  // --- CRM interaction timeline (manual + milestone rows) --------------------
+  type MockInteraction = TimelineEvent & { fanId: string };
+  const interactions: MockInteraction[] = [];
+  const HOUR = 3600000;
+  if (demoSeed) {
+    // A rich, multi-day manual+milestone history for @kendraaax2 (gifts/sessions
+    // are merged in from the ledgers by mockTimeline below).
+    const k = 'kendraaax2';
+    interactions.push(
+      { fanId: k, id: 'k-note-1', type: 'note', source: 'manual', occurredAt: Date.now() - 18 * 60000, summary: 'Manual note added', body: 'Kendra said birthday plans are low-key this year. Send a personal message before Friday stream.', payload: { kind: 'relationship note' } },
+      { fanId: k, id: 'k-thank-1', type: 'thank_you', source: 'manual', occurredAt: Date.now() - 1 * day - 2 * HOUR, summary: 'Thank-you sent', body: "Short DM for last week's Galaxy. No reply yet." },
+      { fanId: k, id: 'k-note-2', type: 'note', source: 'manual', occurredAt: Date.now() - 12 * day, summary: 'Creator note', body: 'She prefers being thanked after the hype moment, not while chat is flying.', payload: { kind: 'preference' } },
+      { fanId: k, id: 'k-shout-1', type: 'shoutout', source: 'manual', occurredAt: Date.now() - 5 * day, summary: 'Shout-out given', body: 'Called out her gift streak during the charity LIVE.' },
+      { fanId: k, id: 'k-dm-1', type: 'dm', source: 'manual', occurredAt: Date.now() - 20 * day, summary: 'DM sent', body: 'Checked in about her editing course.' },
+    );
+  }
+
+  // Pure-ish strength engine mirror so list rows + profile agree in the browser.
+  const tempForStrength = (s: number): Temperature =>
+    s >= 75 ? 'hot' : s >= 50 ? 'warm' : s >= 25 ? 'cooling' : 'cold';
+  const saturate = (x: number, half: number) => (x <= 0 ? 0 : x / (x + half));
+  const mockStrength = (raw: RawFan): {
+    strength: number; temperature: Temperature; daysSinceContact: number;
+    breakdown: FanProfile['breakdown']; sessionsAttended: number; diamonds30d: number; currentStreak: number;
+  } => {
+    const now = Date.now();
+    const last = Math.max(raw.lastSeenAt, raw.lastGiftAt ?? 0);
+    const daysSince = last > 0 ? Math.max(0, Math.floor((now - last) / day)) : 9999;
+    const fanGifts = giftLog.filter((g) => g.fanUniqueId === raw.uniqueId);
+    const diamonds30d = fanGifts.filter((g) => g.at >= now - 30 * day).reduce((s, g) => s + g.diamonds, 0);
+    const gifts30d = fanGifts.filter((g) => g.at >= now - 30 * day).length;
+    const myInteractions30d = interactions.filter((i) => i.fanId === raw.uniqueId && i.occurredAt >= now - 30 * day).length;
+    const interactions30d = gifts30d + myInteractions30d + (daysSince <= 7 ? 1 : 0);
+    // Demo session attendance: scale with engagement so loyalty looks alive.
+    const sessionsAttended = Math.min(sessions.length, Math.round(raw.giftCount / 10) + (raw.totalDiamonds > 5000 ? 3 : 0));
+    const loyalty = sessions.length > 0 ? Math.min(1, sessionsAttended / sessions.length) : 0;
+    const recency = last > 0 ? Math.exp(-daysSince / 14) : 0;
+    const generosity = saturate(diamonds30d, 5000);
+    const frequency = saturate(interactions30d, 12);
+    const r100 = (x: number) => Math.max(0, Math.min(100, Math.round(x * 100)));
+    let strength = r100(0.35 * recency + 0.25 * generosity + 0.25 * frequency + 0.15 * loyalty);
+    const tier = tierForDiamonds(raw.totalDiamonds, mockSettings.community.tiers);
+    let temperature = tempForStrength(strength);
+    if ((tier === 'VIP' || tier === 'Whale') && daysSince > mockSettings.community.quietDays) temperature = 'cold';
+    return {
+      strength,
+      temperature,
+      daysSinceContact: daysSince,
+      breakdown: { recency: r100(recency), generosity: r100(generosity), frequency: r100(frequency), loyalty: r100(loyalty) },
+      sessionsAttended,
+      diamonds30d,
+      currentStreak: Math.max(0, Math.min(12, Math.round(raw.giftCount / 12))),
+    };
+  };
+
+  // Force Kendra's headline numbers to match the design target (strength ~86,
+  // breakdown 68/96/84/91) so the showcase profile reads exactly as designed.
+  const KENDRA_OVERRIDE = {
+    strength: 86,
+    temperature: 'cooling' as Temperature,
+    daysSinceContact: 9,
+    breakdown: { recency: 68, generosity: 96, frequency: 84, loyalty: 91 },
+    sessionsAttended: 47,
+    diamonds30d: 24200,
+    currentStreak: 8,
+  };
+
+  const mockTimeline = (uid: string, filter: TimelineFilter): TimelineEvent[] => {
+    const raw = fanMap.get(uid);
+    const out: TimelineEvent[] = [];
+    // gifts
+    for (const g of giftLog.filter((g) => g.fanUniqueId === uid)) {
+      out.push({
+        id: `gift-${g.id}`, type: 'gift', occurredAt: g.at, source: 'auto',
+        summary: `gave ${g.giftName}${g.repeatCount > 1 ? ` ×${g.repeatCount}` : ''}`,
+        payload: { diamonds: g.diamonds, repeatCount: g.repeatCount },
+      });
+    }
+    // manual + milestone interactions
+    for (const i of interactions.filter((i) => i.fanId === uid)) out.push(i);
+    // synthesized session attendance (demo): a couple recent sessions
+    if (raw && (raw.totalDiamonds > 1000 || raw.giftCount > 10)) {
+      out.push({ id: `sess-${uid}-1`, type: 'session_attend', occurredAt: Date.now() - 2 * HOUR, source: 'auto', summary: 'Attended "Late night cozy reset"', payload: { sessionId: 'demo-0' } });
+      out.push({ id: `sess-${uid}-2`, type: 'session_attend', occurredAt: Date.now() - 1 * day - 5 * HOUR, source: 'auto', summary: 'Attended "Cozy chat + Q&A"', payload: { sessionId: 'demo-2' } });
+    }
+    // first_seen + tier_up milestones
+    if (raw) {
+      out.push({ id: `firstseen-${uid}`, type: 'first_seen', occurredAt: raw.firstSeenAt, source: 'system', summary: 'First seen in your community', payload: {} });
+      const tier = tierForDiamonds(raw.totalDiamonds, mockSettings.community.tiers);
+      if (tier !== 'New') {
+        out.push({ id: `tierup-${uid}-${tier}`, type: 'tier_up', occurredAt: raw.lastGiftAt ?? raw.lastSeenAt, source: 'system', summary: `Reached ${tier} tier`, payload: { tier } });
+      }
+      // comment rollup
+      out.push({ id: `comments-${uid}`, type: 'comment_rollup', occurredAt: raw.lastSeenAt, source: 'auto', summary: `${Math.max(1, Math.round(raw.giftCount * 2.4)).toLocaleString()} comments across your streams`, payload: { count: Math.round(raw.giftCount * 2.4) } });
+    }
+    let rows = out.sort((a, b) => b.occurredAt - a.occurredAt);
+    if (filter !== 'all') {
+      rows = rows.filter((e) =>
+        filter === 'gift' ? e.type === 'gift' || e.type === 'manual_gift_log'
+        : filter === 'comment' ? e.type === 'comment_rollup'
+        : filter === 'note' ? ['note', 'thank_you', 'dm', 'shoutout'].includes(e.type)
+        : filter === 'session' ? e.type === 'session_attend'
+        : true);
+    }
+    return rows.slice(0, 300);
+  };
 
   const reminderHidden = new Set<string>();
   // Seed one thank-after-LIVE reminder so the "thank your gifters" loop is
@@ -419,6 +563,7 @@ export function installBridgeMock(): void {
       moderation: mockSettings.moderation,
       myAccount: mockSettings.myAccount,
       notifyOnGoLive: mockSettings.notifyOnGoLive,
+      customFieldDefs,
     }),
     setSignApiKey: async () => ok,
     setAnthropicKey: async () => ok,
@@ -553,11 +698,83 @@ export function installBridgeMock(): void {
         : b.totalDiamonds - a.totalDiamonds);
       const page = q.page ?? 1;
       const pageSize = q.pageSize ?? 25;
-      return { data: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length, page, pageSize, allTags: [...allTags].sort() };
+      // ADDITIVE: attach strength + temperature so the list shows bars + dots.
+      const enriched = rows.map((f) => {
+        const raw = fanMap.get(f.uniqueId);
+        if (!raw) return f;
+        const s = f.uniqueId === 'kendraaax2' ? KENDRA_OVERRIDE : mockStrength(raw);
+        return { ...f, strength: s.strength, temperature: s.temperature };
+      });
+      return { data: enriched.slice((page - 1) * pageSize, page * pageSize), total: enriched.length, page, pageSize, allTags: [...allTags].sort() };
     },
     fansGet: async (uniqueId) => {
       const f = fanMap.get(uniqueId);
       return f ? fanWithTier(f) : null;
+    },
+    fansProfile: async (uniqueId): Promise<FanProfile | null> => {
+      const uid = String(uniqueId ?? '').replace(/^@/, '').trim();
+      const raw = fanMap.get(uid);
+      if (!raw) return null;
+      const s = uid === 'kendraaax2' ? KENDRA_OVERRIDE : mockStrength(raw);
+      const open = await bridge.remindersList();
+      return {
+        fan: fanWithTier(raw),
+        strength: s.strength,
+        temperature: s.temperature,
+        daysSinceContact: s.daysSinceContact,
+        breakdown: s.breakdown,
+        sessionsAttended: s.sessionsAttended,
+        currentStreak: s.currentStreak,
+        diamonds30d: s.diamonds30d,
+        reminders: open.filter((r) => r.fan.uniqueId === uid),
+        customFieldDefs,
+        customFields: raw.customFields ?? {},
+      };
+    },
+    fansTimeline: async (uniqueId, opts = {}) => {
+      const uid = String(uniqueId ?? '').replace(/^@/, '').trim();
+      return mockTimeline(uid, opts.filter ?? 'all').slice(0, opts.limit ?? 300);
+    },
+    fansAddNote: async (uniqueId, body) => {
+      const uid = String(uniqueId ?? '').replace(/^@/, '').trim();
+      if (!uid) return { ok: false, error: 'Username is required' };
+      const ev: MockInteraction = {
+        fanId: uid, id: `note-${Date.now()}`, type: 'note', source: 'manual',
+        occurredAt: Date.now(), summary: 'Note added', body: String(body ?? ''),
+      };
+      interactions.unshift(ev);
+      const { fanId: _fanId, ...event } = ev;
+      return { ok: true, event };
+    },
+    fansSetField: async (uniqueId, key, value) => {
+      const uid = String(uniqueId ?? '').replace(/^@/, '').trim();
+      let f = fanMap.get(uid);
+      if (!f) {
+        f = { uniqueId: uid, nickname: uid, avatarUrl: null, firstSeenAt: Date.now(), lastSeenAt: Date.now(), totalDiamonds: 0, giftCount: 0, tags: [], notes: '' };
+        fanMap.set(uid, f);
+      }
+      const cf = { ...(f.customFields ?? {}) };
+      if (value === null || value === undefined || value === '') delete cf[String(key)];
+      else cf[String(key)] = value;
+      f.customFields = cf;
+      return { ok: true, fan: fanWithTier(f) };
+    },
+    fieldsListDefs: async () => customFieldDefs,
+    fieldsAddDef: async (input) => {
+      const label = String(input?.label ?? '').trim();
+      if (!label) return { ok: false, error: 'Label is required' };
+      const key = (input?.key || label).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || `field_${Date.now()}`;
+      if (customFieldDefs.some((d) => d.key === key)) return { ok: false, error: `A field with key "${key}" already exists` };
+      const validTypes = ['text', 'longtext', 'number', 'date', 'select', 'multiselect', 'url', 'checkbox'];
+      const type = (validTypes.includes(input?.type as string) ? input.type : 'text') as CustomFieldType;
+      const def: CustomFieldDef = { id: `cf_${Date.now()}`, key, label: label.slice(0, 80), type, options: input?.options };
+      customFieldDefs.push(def);
+      return { ok: true, def };
+    },
+    fieldsRemoveDef: async (id) => {
+      const i = customFieldDefs.findIndex((d) => d.id === id);
+      if (i >= 0) customFieldDefs.splice(i, 1);
+      return ok;
     },
     fansAdd: async (payload) => {
       const uid = payload.uniqueId.replace(/^@/, '').trim();

@@ -187,7 +187,81 @@ export type Fan = {
   birthday?: string; // 'MM-DD'
   createdManually?: boolean;
   lastThankedAt?: number;
+  /** typed custom-field values keyed by field `key` (defs are global). */
+  customFields?: Record<string, unknown>;
   tier: Tier;
+  /** ADDITIVE: relationship strength (0–100), attached by fans:list / profile. */
+  strength?: number;
+  /** ADDITIVE: relationship temperature, attached by fans:list / profile. */
+  temperature?: Temperature;
+};
+
+// --- CRM: strength, timeline, custom fields --------------------------------
+
+export type Temperature = 'hot' | 'warm' | 'cooling' | 'cold';
+
+export type StrengthBreakdown = {
+  recency: number;
+  generosity: number;
+  frequency: number;
+  loyalty: number;
+};
+
+export type CustomFieldType =
+  | 'text'
+  | 'longtext'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'multiselect'
+  | 'url'
+  | 'checkbox';
+
+export type CustomFieldDef = {
+  id: string;
+  key: string;
+  label: string;
+  type: CustomFieldType;
+  options?: string[];
+};
+
+/** A merged, ready-to-render timeline row from fans:timeline. */
+export type TimelineEvent = {
+  id: string;
+  type:
+    | 'gift'
+    | 'note'
+    | 'thank_you'
+    | 'dm'
+    | 'shoutout'
+    | 'tier_up'
+    | 'reminder_done'
+    | 'manual_gift_log'
+    | 'session_attend'
+    | 'first_seen'
+    | 'comment_rollup';
+  occurredAt: number;
+  source: 'auto' | 'manual' | 'system';
+  summary: string;
+  body?: string;
+  payload?: Record<string, unknown>;
+};
+
+export type TimelineFilter = 'all' | 'gift' | 'comment' | 'note' | 'session';
+
+/** The full 360 record returned by fans:profile — powers header + stats + sidebars. */
+export type FanProfile = {
+  fan: Fan;
+  strength: number;
+  temperature: Temperature;
+  daysSinceContact: number;
+  breakdown: StrengthBreakdown;
+  sessionsAttended: number;
+  currentStreak: number;
+  diamonds30d: number;
+  reminders: Reminder[];
+  customFieldDefs: CustomFieldDef[];
+  customFields: Record<string, unknown>;
 };
 
 export type GiftRecord = {
@@ -326,6 +400,7 @@ declare global {
         moderation: ModerationSettings;
         myAccount: MyAccount;
         notifyOnGoLive: boolean;
+        customFieldDefs: CustomFieldDef[];
       }>;
       setSignApiKey: (key: string) => Promise<{ ok: boolean }>;
       setAnthropicKey: (key: string) => Promise<{ ok: boolean }>;
@@ -384,6 +459,14 @@ declare global {
       onEvent: (cb: (evt: LiveEvent) => void) => () => void;
       fansList: (q?: ListFansQuery) => Promise<ListFansResult>;
       fansGet: (uniqueId: string) => Promise<Fan | null>;
+      /** 360 profile: one call → fan + strength bundle + reminders + custom fields. */
+      fansProfile: (uniqueId: string) => Promise<FanProfile | null>;
+      fansTimeline: (uniqueId: string, opts?: { filter?: TimelineFilter; limit?: number }) => Promise<TimelineEvent[]>;
+      fansAddNote: (uniqueId: string, body: string) => Promise<{ ok: boolean; event?: TimelineEvent; error?: string }>;
+      fansSetField: (uniqueId: string, key: string, value: unknown) => Promise<{ ok: boolean; fan?: Fan; error?: string }>;
+      fieldsListDefs: () => Promise<CustomFieldDef[]>;
+      fieldsAddDef: (input: { label: string; type: CustomFieldType; key?: string; options?: string[] }) => Promise<{ ok: boolean; def?: CustomFieldDef; error?: string }>;
+      fieldsRemoveDef: (id: string) => Promise<{ ok: boolean }>;
       fansAdd: (payload: UpsertFanPayload) => Promise<{ ok: boolean; fan?: Fan; created?: boolean; error?: string }>;
       fansUpdate: (uniqueId: string, patch: FanPatch) => Promise<{ ok: boolean; fan?: Fan; error?: string }>;
       fansBulkTag: (payload: { ids: string[]; add: string[]; remove: string[] }) => Promise<{ ok: boolean; updated: number }>;

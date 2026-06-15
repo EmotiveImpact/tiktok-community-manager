@@ -3,8 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TikTokSession, type ConnectionStatus, type ConnectionDetail, type NormalizedEvent } from './tiktok';
 import { log, logsDir, revealLogs } from './logger';
-import { settings, notesStore, setMyAccount, normalizeUsername, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, DEFAULT_MY_ACCOUNT, type CommunitySettings, type EarningsSettings, type ModerationSettings, type WatchEntry, type MyAccount } from './store';
+import { settings, notesStore, customFieldsStore, setMyAccount, normalizeUsername, DEFAULT_COMMUNITY, DEFAULT_EARNINGS, DEFAULT_THANK_TEMPLATE, DEFAULT_MODERATION, DEFAULT_MY_ACCOUNT, type CommunitySettings, type EarningsSettings, type ModerationSettings, type WatchEntry, type MyAccount, type CustomFieldType } from './store';
 import * as sessions from './sessions';
+import * as crm from './crm';
+import { addInteraction } from './interactions';
 import { summarize, type SummaryInput } from './summarize';
 import { exportSession, type ExportType } from './export';
 import { startOverlayServer, pushEvent as pushOverlayEvent, resetStats as resetOverlayStats, getOverlayPort } from './overlay';
@@ -416,6 +418,7 @@ ipcMain.handle('settings:get', () => {
     moderation: settings.get('moderation', DEFAULT_MODERATION),
     myAccount: settings.get('myAccount', DEFAULT_MY_ACCOUNT),
     notifyOnGoLive: settings.get('notifyOnGoLive', true),
+    customFieldDefs: customFieldsStore.list(),
   };
 });
 
@@ -783,23 +786,84 @@ ipcMain.handle('notes:delete', (_e, uniqueId: string) => {
 // ---------------------------------------------------------------------------
 // Fan CRM IPC
 
-ipcMain.handle('fans:list', (_e, q: fans.ListFansQuery) => fans.listFans(q ?? {}));
+ipcMain.handle('fans:list', (_e, q: fans.ListFansQuery) => {
+  const res = fans.listFans(q ?? {});
+  // ADDITIVE enrichment: attach strength + temperature to each row so the list
+  // can render strength bars + temperature dots. Existing callers that ignore
+  // these fields are unaffected. Fail-safe per-row — a bad signal never drops a
+  // fan from the list.
+  try {
+    res.data = res.data.map((f) => {
+      try {
+        const { result } = crm.strengthForFan(f.uniqueId);
+        return { ...f, strength: result.strength, temperature: result.temperature };
+      } catch {
+        return f;
+      }
+    });
+  } catch (err) {
+    log.warn('[main] fans:list strength enrichment failed:', (err as any)?.message ?? err);
+  }
+  return res;
+});
 ipcMain.handle('fans:get', (_e, uniqueId: string) => fans.getFan(uniqueId));
+ipcMain.handle('fans:profile', (_e, uniqueId: string) => crm.fanProfile(String(uniqueId ?? '')));
+ipcMain.handle('fans:timeline', (_e, uniqueId: string, opts?: { filter?: crm.TimelineFilter; limit?: number }) =>
+  crm.fanTimeline(String(uniqueId ?? ''), opts ?? {}),
+);
+ipcMain.handle('fans:addNote', (_e, uniqueId: string, body: string) => {
+  const uid = String(uniqueId ?? '').replace(/^@/, '').trim();
+  return addInteraction({ fanId: uid, type: 'note', body: String(body ?? ''), summary: 'Note added' });
+});
+ipcMain.handle('fans:setField', (_e, uniqueId: string, key: string, value: unknown) =>
+  fans.setFanField(String(uniqueId ?? ''), String(key ?? ''), value),
+);
+ipcMain.handle('fields:listDefs', () => customFieldsStore.list());
+ipcMain.handle('fields:addDef', (_e, input: { label: string; type: CustomFieldType; key?: string; options?: string[] }) =>
+  customFieldsStore.add(input ?? ({} as any)),
+);
+ipcMain.handle('fields:removeDef', (_e, id: string) => customFieldsStore.remove(String(id ?? '')));
 ipcMain.handle('fans:add', (_e, payload: fans.UpsertFanPayload) => fans.upsertFan(payload));
 ipcMain.handle('fans:update', (_e, uniqueId: string, patch: any) => fans.updateFan(uniqueId, patch ?? {}));
 ipcMain.handle('fans:bulkTag', (_e, payload: { ids: string[]; add: string[]; remove: string[] }) =>
   fans.bulkTag(payload?.ids ?? [], payload?.add ?? [], payload?.remove ?? []),
 );
-ipcMain.handle('fans:logGift', (_e, payload: { uniqueId: string; nickname?: string; giftName: string; diamonds: number; at?: number }) =>
-  fans.logGift(payload),
-);
+ipcMain.handle('fans:logGift', (_e, payload: { uniqueId: string; nickname?: string; giftName: string; diamonds: number; at?: number }) => {
+  const res = fans.logGift(payload);
+  // Mirror a manual_gift_log milestone into the interaction timeline so the 360
+  // profile shows a human "logged X" row. Fail-safe — never block the gift.
+  if (res.ok) {
+    try {
+      addInteraction({
+        fanId: String(payload?.uniqueId ?? '').replace(/^@/, '').trim(),
+        type: 'manual_gift_log',
+        summary: `Logged ${payload.giftName} (${Math.floor(payload.diamonds)} 💎)`,
+        occurredAt: payload.at,
+        payload: { diamonds: Math.floor(payload.diamonds), giftName: payload.giftName },
+      });
+    } catch (err) { log.warn('[main] manual_gift_log interaction failed:', (err as any)?.message ?? err); }
+  }
+  return res;
+});
 ipcMain.handle('gifts:list', (_e, q: fans.ListGiftsQuery) => fans.listGifts(q ?? {}));
 ipcMain.handle('reminders:list', (_e, withinDays?: number) => fans.listReminders(withinDays));
 ipcMain.handle('reminders:action', (_e, payload: { id: string; action: 'done' | 'snooze'; days?: number }) =>
   fans.reminderAction(payload?.id, payload?.action, payload?.days),
 );
 ipcMain.handle('reminders:addThank', (_e, uniqueId: string) => fans.addThankReminder(String(uniqueId ?? '')));
-ipcMain.handle('fans:markThanked', (_e, uniqueId: string) => fans.markThanked(String(uniqueId ?? '')));
+ipcMain.handle('fans:markThanked', (_e, uniqueId: string) => {
+  const res = fans.markThanked(String(uniqueId ?? ''));
+  if (res.ok) {
+    try {
+      addInteraction({
+        fanId: String(uniqueId ?? '').replace(/^@/, '').trim(),
+        type: 'thank_you',
+        summary: 'Thank-you sent',
+      });
+    } catch (err) { log.warn('[main] thank_you interaction failed:', (err as any)?.message ?? err); }
+  }
+  return res;
+});
 ipcMain.handle('fans:importCsv', (_e, csvText: string) => fans.importCsv(String(csvText ?? '')));
 ipcMain.handle('fans:importCsvFile', async () => {
   if (!mainWindow || mainWindow.isDestroyed()) return { ok: false, created: 0, updated: 0, skipped: 0, errors: [], canceled: true };
