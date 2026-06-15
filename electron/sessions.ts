@@ -318,6 +318,54 @@ export function userTallies(uniqueId: string): UserHistoricalTally {
   return tally;
 }
 
+export type FanSessionAttend = {
+  sessionId: string;
+  roomTitle: string;
+  /** epoch ms of the fan's FIRST recorded event in that session (their join). */
+  attendedAt: number;
+};
+
+/**
+ * Per-session attendance for a fan, derived from the session ledgers.
+ *
+ * "Attended" = the fan produced at least one recorded event (chat / gift /
+ * question) in that session — that's the only honest presence signal we have
+ * (likes/follows aren't stored per-user in the events array). Returns the
+ * matched sessions (newest-first) plus `totalSessions` so the caller can
+ * compute a loyalty/attendance rate. Bounded + fail-safe.
+ */
+export function fanSessionAttendance(uniqueId: string, cap = 200): {
+  attended: FanSessionAttend[];
+  attendedCount: number;
+  totalSessions: number;
+} {
+  const uid = String(uniqueId ?? '').replace(/^@/, '').trim();
+  const out: FanSessionAttend[] = [];
+  let totalSessions = 0;
+  if (!uid) return { attended: out, attendedCount: 0, totalSessions: 0 };
+  try {
+    const summaries = list();
+    totalSessions = summaries.length;
+    for (const summary of summaries) {
+      const rec = read(summary.id);
+      if (!rec) continue;
+      let firstAt: number | null = null;
+      for (const e of rec.events) {
+        if (e.user?.uniqueId !== uid) continue;
+        if (firstAt === null || e.ts < firstAt) firstAt = e.ts;
+      }
+      if (firstAt !== null) {
+        out.push({ sessionId: rec.id, roomTitle: rec.roomTitle, attendedAt: firstAt });
+      }
+      if (out.length >= cap) break;
+    }
+  } catch (err) {
+    console.error('[sessions] fanSessionAttendance failed:', err);
+  }
+  out.sort((a, b) => b.attendedAt - a.attendedAt);
+  return { attended: out, attendedCount: out.length, totalSessions };
+}
+
 export function allTimeLeaderboard(limit = 50): UserHistoricalTally[] {
   const map = new Map<string, UserHistoricalTally>();
   for (const summary of list()) {

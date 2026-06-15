@@ -37,6 +37,8 @@ export type Fan = {
   createdManually?: boolean;
   /** last time the creator marked this fan as thanked */
   lastThankedAt?: number;
+  /** typed custom-field values keyed by field `key` (defs live in settings). */
+  customFields?: Record<string, unknown>;
 };
 
 export type FanWithTier = Fan & { tier: Tier };
@@ -409,6 +411,41 @@ export function getFan(uniqueId: string): FanWithTier | null {
   return f ? withTier(f) : null;
 }
 
+/** Raw (untiered) fan record — used by the CRM profile builder for strength signals. */
+export function getRawFan(uniqueId: string): Fan | null {
+  return loadFans().get((uniqueId ?? '').replace(/^@/, '').trim()) ?? null;
+}
+
+/**
+ * Set a single typed custom-field VALUE on a fan (defs are global, in settings).
+ * Fail-safe: returns ok:false rather than throwing. A null/undefined value
+ * deletes the key. Ensures the fan exists (creates a manual stub if not) so the
+ * 360 profile can set fields on a fan the creator just opened.
+ */
+export function setFanField(
+  uniqueId: string,
+  key: string,
+  value: unknown,
+): { ok: boolean; fan?: FanWithTier; error?: string } {
+  const uid = (uniqueId ?? '').replace(/^@/, '').trim();
+  const k = String(key ?? '').trim();
+  if (!uid) return { ok: false, error: 'Username is required' };
+  if (!k) return { ok: false, error: 'Field key is required' };
+  let fan = loadFans().get(uid);
+  if (!fan) {
+    const res = upsertFan({ uniqueId: uid });
+    if (!res.ok) return { ok: false, error: res.error ?? 'Could not create fan' };
+    fan = loadFans().get(uid)!;
+  }
+  const cf = { ...(fan.customFields ?? {}) };
+  if (value === null || value === undefined || value === '') delete cf[k];
+  else cf[k] = value;
+  fan.customFields = cf;
+  markDirty();
+  flush();
+  return { ok: true, fan: withTier(fan) };
+}
+
 export type UpsertFanPayload = {
   uniqueId: string;
   nickname?: string;
@@ -557,6 +594,26 @@ function readAllGifts(): GiftRecord[] {
     /* no gifts yet */
   }
   return out;
+}
+
+/** All gift records for a single fan, newest-first. Used by the CRM timeline. */
+export function giftsForFan(uniqueId: string, limit = 300): GiftRecord[] {
+  const uid = (uniqueId ?? '').replace(/^@/, '').trim();
+  if (!uid) return [];
+  const rows = readAllGifts().filter((g) => g.fanUniqueId === uid);
+  rows.sort((a, b) => b.at - a.at);
+  return rows.slice(0, Math.max(1, limit));
+}
+
+/** Sum of diamonds a fan received since `sinceMs`. */
+export function diamondsSince(uniqueId: string, sinceMs: number): number {
+  const uid = (uniqueId ?? '').replace(/^@/, '').trim();
+  if (!uid) return 0;
+  let sum = 0;
+  for (const g of readAllGifts()) {
+    if (g.fanUniqueId === uid && g.at >= sinceMs) sum += g.diamonds;
+  }
+  return sum;
 }
 
 export type ListGiftsQuery = {

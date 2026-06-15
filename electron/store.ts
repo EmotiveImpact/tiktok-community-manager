@@ -65,6 +65,40 @@ export const DEFAULT_MODERATION: ModerationSettings = {
   spamThreshold: 20,
 };
 
+/**
+ * A typed, user-extensible custom-field definition (Attio-style). DEFS are
+ * GLOBAL (live here in settings); per-fan VALUES live in fan.customFields keyed
+ * by `key`. `options` is only meaningful for select/multiselect.
+ */
+export type CustomFieldType =
+  | 'text'
+  | 'longtext'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'multiselect'
+  | 'url'
+  | 'checkbox';
+
+export type CustomFieldDef = {
+  id: string;
+  key: string;
+  label: string;
+  type: CustomFieldType;
+  options?: string[];
+};
+
+export const DEFAULT_CUSTOM_FIELD_DEFS: CustomFieldDef[] = [
+  { id: 'cf_fav_gift', key: 'favorite_gift', label: 'Favorite gift', type: 'text' },
+  { id: 'cf_timezone', key: 'timezone', label: 'Timezone', type: 'text' },
+  { id: 'cf_language', key: 'language', label: 'Language', type: 'text' },
+  { id: 'cf_how_we_met', key: 'how_we_met', label: 'How we met', type: 'text' },
+];
+
+const VALID_FIELD_TYPES: ReadonlySet<string> = new Set([
+  'text', 'longtext', 'number', 'date', 'select', 'multiselect', 'url', 'checkbox',
+]);
+
 export type EarningsSettings = {
   enabled: boolean;
   /** payout per 1,000 diamonds, in the selected currency */
@@ -111,6 +145,8 @@ type Schema = {
   myAccount: MyAccount;
   /** Fire a native OS notification when a watched creator goes live. */
   notifyOnGoLive: boolean;
+  /** Global, user-extensible CRM custom-field definitions (values live per-fan). */
+  customFieldDefs: CustomFieldDef[];
 };
 
 export const DEFAULT_MY_ACCOUNT: MyAccount = { username: '' };
@@ -143,6 +179,7 @@ const DEFAULTS: Schema = {
   moderation: DEFAULT_MODERATION,
   myAccount: DEFAULT_MY_ACCOUNT,
   notifyOnGoLive: true,
+  customFieldDefs: DEFAULT_CUSTOM_FIELD_DEFS,
 };
 
 let cache: Schema | null = null;
@@ -260,6 +297,58 @@ export function setMyAccount(patch: Partial<MyAccount>): MyAccount {
   save(data);
   return next;
 }
+
+// ---------------------------------------------------------------------------
+// CRM custom-field definitions (global). Values live per-fan in fan.customFields.
+
+function slugifyKey(label: string): string {
+  return String(label).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60);
+}
+
+export const customFieldsStore = {
+  /** All field defs. Seeds the defaults the first time and persists them. */
+  list(): CustomFieldDef[] {
+    const data = load();
+    if (!Array.isArray(data.customFieldDefs)) {
+      data.customFieldDefs = [...DEFAULT_CUSTOM_FIELD_DEFS];
+      cache = data;
+      save(data);
+    }
+    return data.customFieldDefs;
+  },
+  /** Add a def. Fail-safe: validates type, dedups by key, auto-derives key from label. */
+  add(input: { label: string; type: CustomFieldType; key?: string; options?: string[] }): { ok: boolean; def?: CustomFieldDef; error?: string } {
+    const label = String(input?.label ?? '').trim();
+    if (!label) return { ok: false, error: 'Label is required' };
+    const type = VALID_FIELD_TYPES.has(input?.type as string) ? input.type : 'text';
+    const key = (input?.key ? slugifyKey(input.key) : slugifyKey(label)) || `field_${Date.now()}`;
+    const data = load();
+    const defs = Array.isArray(data.customFieldDefs) ? data.customFieldDefs : [...DEFAULT_CUSTOM_FIELD_DEFS];
+    if (defs.some((d) => d.key === key)) return { ok: false, error: `A field with key "${key}" already exists` };
+    const def: CustomFieldDef = {
+      id: `cf_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      key,
+      label: label.slice(0, 80),
+      type,
+      options: (type === 'select' || type === 'multiselect') && Array.isArray(input?.options)
+        ? input.options.map((o) => String(o).trim()).filter(Boolean).slice(0, 50)
+        : undefined,
+    };
+    data.customFieldDefs = [...defs, def];
+    cache = data;
+    save(data);
+    return { ok: true, def };
+  },
+  /** Remove a def by id (values on fans are left intact, just unsurfaced). */
+  remove(id: string): { ok: boolean } {
+    const data = load();
+    const defs = Array.isArray(data.customFieldDefs) ? data.customFieldDefs : [...DEFAULT_CUSTOM_FIELD_DEFS];
+    data.customFieldDefs = defs.filter((d) => d.id !== id);
+    cache = data;
+    save(data);
+    return { ok: true };
+  },
+};
 
 export const notesStore = {
   all(): Record<string, UserNote> {
