@@ -551,7 +551,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
         )}
 
         {/* ROW 1 — prominent stat cards (3D icons + trends). */}
-        <div className={`grid grid-cols-2 gap-3 xl:grid-cols-4 ${!hasData ? 'opacity-60' : ''}`}>
+        <div className={`grid grid-cols-2 gap-3 lg:grid-cols-4 ${!hasData ? 'opacity-60' : ''}`}>
           <StatCard
             label="Supporters remembered"
             value={formatNumber(fansTotal)}
@@ -627,7 +627,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
         </div>
 
         {/* ROW 3 — the daily-driver PEOPLE-QUEUES (2×2 on wide). */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* QUEUE 1 — Reach out today */}
           <QueueCard
             title="Reach out today"
@@ -791,7 +791,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
       </div>
 
       {/* RIGHT RAIL (xl+) — Top-supporter spotlight. */}
-      <aside aria-label="Top supporter" className="hidden w-[290px] flex-none xl:block">
+      <aside aria-label="Top supporter" className="block w-[260px] flex-none">
         {!supporter ? (
           <div className="glass p-6 text-center" style={{ borderRadius: 20 }}>
             <img src="./assets/png/icon_heart_3d.png" alt="" className="mx-auto mb-3 h-14 w-14" draggable={false} />

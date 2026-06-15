@@ -247,7 +247,7 @@ export function FanProfile() {
       <AboutCard uniqueId={fan.uniqueId} name={name} initial={fan.notes} onPatched={onFanPatched} />
 
       {/* ── 3-COLUMN BODY ─────────────────────────────────────────────── */}
-      <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-[326px_minmax(0,1fr)_336px]">
+      <section className="mt-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-[288px_minmax(0,1fr)_300px]">
         {/* LEFT */}
         <div className="flex flex-col gap-4">
           <CustomFieldsCard

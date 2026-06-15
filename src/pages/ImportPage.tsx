@@ -40,7 +40,7 @@ export function ImportPage({ onGoFollowers }: { onGoFollowers: () => void }) {
 
   return (
     <PageShell title="Import" subtitle="Bring an existing follower list into the fan ledger from CSV.">
-      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-stretch gap-4 xl:grid-cols-[1fr_320px]">
+      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_320px]">
         <div className="glass p-4" style={{ borderRadius: 18 }}>
           <FieldLabel>Paste CSV (header row required)</FieldLabel>
           <textarea

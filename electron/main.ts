@@ -155,10 +155,10 @@ function createWindow() {
       };
 
   mainWindow = new BrowserWindow({
-    width: 1240,
-    height: 820,
-    minWidth: 900,
-    minHeight: 600,
+    width: 1320,
+    height: 860,
+    minWidth: 1180,
+    minHeight: 640,
     ...platformWindowOptions,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),

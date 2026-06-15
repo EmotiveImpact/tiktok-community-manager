@@ -59,7 +59,7 @@ export function SettingsPage() {
 
   return (
     <PageShell title="Settings" subtitle="Connection, integrations and your fan-ledger data.">
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <div className="space-y-4">
           <MyAccountCard />
 
