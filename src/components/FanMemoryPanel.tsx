@@ -283,16 +283,19 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   )}
                 </div>
 
-                {/* Pinned "About" — the one-line memory blob on the fan record.
-                    Distinct from the timeline notes below. */}
-                <div className="mt-3">
-                  <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">📌 Pinned · about</div>
+                {/* Pinned "About" — the one stable summary on the fan record.
+                    Larger + auto-grow so it's readable at a glance, not cramped.
+                    Distinct from the dated timeline notes below. */}
+                <div className="mt-3 rounded-xl border border-[color:var(--cyan)]/25 bg-[color:var(--cyan)]/[0.05] p-2.5"
+                     style={{ borderLeft: '3px solid var(--cyan)' }}>
+                  <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--cyan)]">📌 About — pinned</div>
                   <textarea
                     value={notes}
-                    onChange={(e) => saveAbout(e.target.value)}
-                    placeholder="One line to always remember (real name, how you met…)"
-                    rows={2}
-                    className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2 text-xs leading-relaxed text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
+                    onChange={(e) => { saveAbout(e.target.value); }}
+                    placeholder="The one thing to always remember — real name, how you met, how they like to be thanked…"
+                    rows={3}
+                    className="w-full resize-y rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[13px] leading-relaxed text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-like-500/30"
+                    style={{ minHeight: 56 }}
                   />
                 </div>
 
@@ -300,7 +303,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                     fansAddNote (the SAME store the 360 profile + rows below read). */}
                 <div className="mt-3">
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">✍️ Add a note</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">✍️ Add a dated note</span>
                     {noteAdded && <span className="text-[10px] font-semibold text-[var(--green)]">added ✓</span>}
                   </div>
                   <div className="flex items-end gap-1.5">
@@ -308,15 +311,16 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                       value={noteDraft}
                       onChange={(e) => setNoteDraft(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addNote(); } }}
-                      placeholder="Jot something — appears on their timeline"
+                      placeholder="Jot something — lands on their timeline"
                       rows={2}
-                      className="min-w-0 flex-1 resize-none rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2 text-xs leading-relaxed text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
+                      className="min-w-0 flex-1 resize-none rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2 text-[13px] leading-relaxed text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
                     />
                     <Tooltip content="Add to timeline (⌘/Ctrl+Enter)">
                       <button
                         onClick={addNote}
                         disabled={!noteDraft.trim()}
-                        className="flex-none rounded-lg border border-zinc-800 px-2.5 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 hover:text-zinc-100 disabled:opacity-40"
+                        className="flex-none rounded-lg px-3 py-2 text-xs font-bold text-white transition disabled:opacity-40"
+                        style={{ background: 'var(--gradient-pink)' }}
                       >
                         Add
                       </button>

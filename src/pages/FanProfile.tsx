@@ -243,11 +243,13 @@ export function FanProfile() {
         <StatTile label="Days since contact" value={String(profile.daysSinceContact)} icon="./assets/png/icon_clock_3d.png" tint="rgba(255,179,92,0.16)" />
       </section>
 
+      {/* ── PINNED "ABOUT" — prominent, full-width, large readable text ── */}
+      <AboutCard uniqueId={fan.uniqueId} name={name} initial={fan.notes} onPatched={onFanPatched} />
+
       {/* ── 3-COLUMN BODY ─────────────────────────────────────────────── */}
       <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-[326px_minmax(0,1fr)_336px]">
         {/* LEFT */}
         <div className="flex flex-col gap-4">
-          <NotesCard uniqueId={fan.uniqueId} initial={fan.notes} onPatched={onFanPatched} />
           <CustomFieldsCard
             uniqueId={fan.uniqueId}
             defs={profile.customFieldDefs}
@@ -369,7 +371,11 @@ function NoteComposerInline({ name, composerRef, onSubmit }: {
     setDraft('');
   };
   return (
-    <div className="flex items-center gap-2 rounded-2xl border px-3 py-2" style={{ borderColor: 'var(--panel-border)', background: 'var(--fill-quaternary)' }}>
+    <div
+      className="flex items-center gap-2.5 rounded-2xl border px-3.5 py-2.5"
+      style={{ borderColor: 'rgba(238,29,82,.28)', background: 'rgba(238,29,82,.06)' }}
+    >
+      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg text-[14px]" style={{ background: 'rgba(238,29,82,.18)' }} aria-hidden>✍️</span>
       <textarea
         ref={composerRef}
         value={draft}
@@ -377,9 +383,9 @@ function NoteComposerInline({ name, composerRef, onSubmit }: {
         onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); } }}
         rows={1}
         placeholder={`Add a note about ${name}…`}
-        className="min-h-[24px] flex-1 resize-none bg-transparent text-[13px] outline-none placeholder:text-[color:var(--tertiary-label)]"
+        className="min-h-[24px] flex-1 resize-none bg-transparent text-[14px] outline-none placeholder:text-[color:var(--tertiary-label)]"
       />
-      <button onClick={submit} disabled={!draft.trim()} className="panel-btn panel-btn-primary no-drag !h-7 flex-none">Add note</button>
+      <button onClick={submit} disabled={!draft.trim()} className="panel-btn panel-btn-primary no-drag !h-8 flex-none">Add note</button>
     </div>
   );
 }
@@ -460,11 +466,17 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   );
 }
 
-// ── About / Notes (debounced autosave) ──────────────────────────────────────
-function NotesCard({ uniqueId, initial, onPatched }: { uniqueId: string; initial: string; onPatched: (fan?: Fan) => void }) {
+// ── Pinned "About" — the prominent, at-a-glance card at the top of the record.
+// Large readable text (reads like prose when not editing), click to edit inline,
+// debounced autosave. This is the canonical fan.notes summary.
+function AboutCard({ uniqueId, name, initial, onPatched }: {
+  uniqueId: string; name: string; initial: string; onPatched: (fan?: Fan) => void;
+}) {
   const [notes, setNotes] = useState(initial);
+  const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState<'idle' | 'saving' | 'saved'>('idle');
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => { setNotes(initial); }, [uniqueId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onChange = (text: string) => {
@@ -478,20 +490,53 @@ function NotesCard({ uniqueId, initial, onPatched }: { uniqueId: string; initial
     }, 600);
   };
 
+  const startEdit = () => { setEditing(true); setTimeout(() => taRef.current?.focus(), 30); };
+  const hasText = notes.trim().length > 0;
+
   return (
-    <Card title="About / Notes">
-      <textarea
-        value={notes}
-        onChange={(e) => onChange(e.target.value)}
-        rows={6}
-        placeholder="What do you want to remember about them? How you met, what they love, how they like to be thanked…"
-        className="w-full resize-y rounded-2xl border px-3.5 py-3 text-[13px] leading-relaxed outline-none transition placeholder:text-[color:var(--tertiary-label)] focus:border-pink-500/60"
-        style={{ minHeight: 140, borderColor: 'var(--panel-border)', background: 'var(--fill-quaternary)' }}
-      />
-      <div className="mt-1.5 h-4 text-[11px]" style={{ color: 'var(--tertiary-label)' }}>
-        {saved === 'saving' ? 'Saving…' : saved === 'saved' ? 'Saved ✓' : ''}
+    <section className="glass mt-4 p-5" style={{ borderRadius: 18 }}>
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-[15px]" aria-hidden>📌</span>
+        <h2 className="text-[13px] font-extrabold uppercase tracking-wider" style={{ color: 'var(--secondary-label)' }}>
+          About {name.split(' ')[0]} — pinned
+        </h2>
+        <span className="ml-auto text-[11px]" style={{ color: 'var(--tertiary-label)' }}>
+          {saved === 'saving' ? 'Saving…' : saved === 'saved' ? 'Saved ✓' : ''}
+        </span>
+        {!editing && (
+          <button onClick={startEdit} className="panel-btn no-drag !h-7 !px-3">{hasText ? '✏️ Edit' : '+ Add'}</button>
+        )}
       </div>
-    </Card>
+
+      {editing ? (
+        <textarea
+          ref={taRef}
+          value={notes}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={() => setEditing(false)}
+          rows={4}
+          placeholder="The one stable summary: how you met, what they love, how they like to be thanked, anything to never forget…"
+          className="w-full resize-y rounded-2xl border px-4 py-3.5 text-[16px] leading-relaxed outline-none transition placeholder:text-[color:var(--tertiary-label)] focus:border-pink-500/60"
+          style={{ minHeight: 120, borderColor: 'var(--panel-border)', background: 'var(--fill-quaternary)' }}
+        />
+      ) : hasText ? (
+        <button
+          onClick={startEdit}
+          className="block w-full rounded-2xl border px-5 py-4 text-left transition hover:border-pink-500/40"
+          style={{ borderColor: 'var(--panel-border)', borderLeft: '3px solid var(--cyan)', background: 'color-mix(in srgb, var(--cyan) 5%, var(--fill-quaternary))' }}
+        >
+          <p className="whitespace-pre-wrap text-[17px] font-medium leading-relaxed" style={{ color: 'var(--label)' }}>{notes}</p>
+        </button>
+      ) : (
+        <button
+          onClick={startEdit}
+          className="block w-full rounded-2xl border border-dashed px-5 py-6 text-left text-[14px] transition hover:border-pink-500/40"
+          style={{ borderColor: 'var(--panel-border)', color: 'var(--tertiary-label)' }}
+        >
+          Add a pinned summary about {name.split(' ')[0]} — the first thing you want to see every time.
+        </button>
+      )}
+    </section>
   );
 }
 
