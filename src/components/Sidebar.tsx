@@ -16,7 +16,7 @@ const PRIMARY: { id: Page; label: string; icon: LucideIcon }[] = [
   { id: 'live', label: 'Live Feed', icon: Radio },
   { id: 'followers', label: 'Followers', icon: Users },
   { id: 'gifts', label: 'Gifts', icon: Gift },
-  { id: 'reminders', label: 'Reminders', icon: CalendarDays },
+  { id: 'reminders', label: 'Reach out', icon: CalendarDays },
   { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'import', label: 'Import', icon: Upload },
   { id: 'settings', label: 'Settings', icon: Settings },
