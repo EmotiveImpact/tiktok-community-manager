@@ -8,6 +8,7 @@ import { useSettingsLoad } from '../state/settings';
 import { ThankComposer } from '../components/ThankComposer';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { FanAvatar, TierChip, fanName } from '../components/crm';
+import { Tooltip } from '../components/ui';
 
 // ---------------------------------------------------------------------------
 // Optional ui store (created by a parallel agent). Loaded defensively via glob
@@ -363,13 +364,14 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
               {myUsername ? <>@{myUsername} · here&apos;s your community at a glance</> : <>Here&apos;s your community at a glance</>}
             </p>
           </div>
-          <span
-            className="flex h-8 flex-none items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold"
-            style={{ background: 'var(--fill-thin)', border: '1px solid var(--card-border)', color: 'var(--secondary-label)' }}
-            title="Current week"
-          >
-            <Calendar size={13} /> {weekRangeLabel()}
-          </span>
+          <Tooltip content="Current week">
+            <span
+              className="flex h-8 flex-none items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold"
+              style={{ background: 'var(--fill-thin)', border: '1px solid var(--card-border)', color: 'var(--secondary-label)' }}
+            >
+              <Calendar size={13} /> {weekRangeLabel()}
+            </span>
+          </Tooltip>
           <ThemeToggle />
           <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag !h-8 !px-4 whitespace-nowrap"><Radio size={13} className="mr-1.5" /> Go LIVE</button>
           <button onClick={() => navTo('followers')} className="panel-btn no-drag !h-8 !px-4 whitespace-nowrap">Fan profile</button>
@@ -391,14 +393,15 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
               </p>
             </div>
             <button onClick={onGoLive} className="panel-btn panel-btn-primary no-drag whitespace-nowrap !h-8 !px-4">Connect to your first LIVE →</button>
-            <button
-              onClick={() => { setCoachDismissed(true); try { localStorage.setItem('dash-coach-dismissed', '1'); } catch { /* ignore */ } }}
-              className="panel-btn panel-btn-icon no-drag"
-              aria-label="Dismiss hint"
-              title="Dismiss"
-            >
-              ✕
-            </button>
+            <Tooltip content="Dismiss">
+              <button
+                onClick={() => { setCoachDismissed(true); try { localStorage.setItem('dash-coach-dismissed', '1'); } catch { /* ignore */ } }}
+                className="panel-btn panel-btn-icon no-drag"
+                aria-label="Dismiss hint"
+              >
+                ✕
+              </button>
+            </Tooltip>
           </div>
         )}
 
@@ -497,10 +500,9 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
             ) : (
               <ul className="text-[13px]">
                 {gifters.map((g, i) => (
+                  <Tooltip key={g.uniqueId} content={`Open @${g.uniqueId}'s profile`}>
                   <li
-                    key={g.uniqueId}
                     onClick={() => navTo('followers', g.uniqueId)}
-                    title={`Open @${g.uniqueId}'s profile`}
                     className={`no-drag flex cursor-pointer items-center gap-3 rounded-lg px-1 py-2 transition-colors hover:bg-[var(--fill-quaternary)] ${i > 0 ? 'border-t' : ''}`}
                     style={{ borderColor: 'var(--separator)' }}
                   >
@@ -519,6 +521,7 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                     </span>
                     {g.fan && <TierChip tier={g.fan.tier} />}
                   </li>
+                  </Tooltip>
                 ))}
               </ul>
             )}
@@ -546,14 +549,15 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                       </span>
                       <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>🎂 {birthdayLabel(r)}</span>
                     </span>
-                    <button
-                      onClick={() => navTo('followers', r.fan.uniqueId)}
-                      className="panel-btn panel-btn-icon no-drag"
-                      aria-label={`Open ${fanName(r.fan)}'s profile`}
-                      title="Open fan profile"
-                    >
-                      <Gift size={14} />
-                    </button>
+                    <Tooltip content="Open fan profile">
+                      <button
+                        onClick={() => navTo('followers', r.fan.uniqueId)}
+                        className="panel-btn panel-btn-icon no-drag"
+                        aria-label={`Open ${fanName(r.fan)}'s profile`}
+                      >
+                        <Gift size={14} />
+                      </button>
+                    </Tooltip>
                   </li>
                 ))}
               </ul>
@@ -612,13 +616,14 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
                     <span className="flex items-center gap-1.5">
                       <span className="truncate font-semibold">{s.roomTitle || `@${s.hostUniqueId}`}</span>
                       {isMine && (
-                        <span
-                          className="flex-none rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
-                          style={{ background: 'var(--brand-pink, #EE1D52)' }}
-                          title="This was your own stream"
-                        >
-                          You
-                        </span>
+                        <Tooltip content="This was your own stream">
+                          <span
+                            className="flex-none rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
+                            style={{ background: 'var(--brand-pink, #EE1D52)' }}
+                          >
+                            You
+                          </span>
+                        </Tooltip>
                       )}
                     </span>
                     <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>
