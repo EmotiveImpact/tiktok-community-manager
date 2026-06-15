@@ -24,6 +24,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "3501", "--directory", "dist"],
       "port": 3501
+    },
+    {
+      "name": "notes-dist",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3530", "--directory", "dist"],
+      "port": 3530
     }
   ]
 }
