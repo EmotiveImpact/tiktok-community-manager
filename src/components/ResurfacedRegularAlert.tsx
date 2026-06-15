@@ -84,6 +84,7 @@ function memoryLine(fan: Fan): string {
 
 export function ResurfacedRegularAlert() {
   const focusFanMemory = useUI((s) => s.focusFanMemory);
+  const openFanProfile = useUI((s) => s.openFanProfile);
   // Subscribe only to the membership map — re-renders when a viewer is touched
   // (member/join/chat/gift/like/follow all flow through touchMember in store.ts).
   const roomMembers = useStore((s) => s.roomMembers);
@@ -179,7 +180,11 @@ export function ResurfacedRegularAlert() {
   const dismiss = (key: string) => setCards((prev) => prev.filter((c) => c.key !== key));
 
   const view = (fan: Fan) => {
-    focusFanMemory(fan.uniqueId); // pins the fan in the Fan Memory panel
+    // Consistent with every other fan entry point: open the full 360 profile.
+    // Also pin them in the live Fan Memory panel so returning to LIVE keeps
+    // context on that fan.
+    focusFanMemory(fan.uniqueId);
+    openFanProfile(fan.uniqueId);
     dismissFan(fan.uniqueId);
   };
 
