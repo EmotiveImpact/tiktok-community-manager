@@ -415,6 +415,63 @@ body {
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
+/* Radix Switch — brand pink toggle (src/components/ui/Switch.tsx) */
+.brand-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex: none;
+  border-radius: 9999px;
+  border: 1px solid var(--separator);
+  background: var(--fill);
+  cursor: pointer;
+  outline: none;
+  transition: background 140ms, border-color 140ms, box-shadow 140ms;
+  -webkit-app-region: no-drag;
+}
+.brand-switch:focus-visible { box-shadow: 0 0 0 3px var(--focus-ring); }
+.brand-switch[data-state='checked'] {
+  background: var(--gradient-pink);
+  border-color: transparent;
+}
+.brand-switch:disabled { cursor: default; opacity: 0.5; }
+.brand-switch-thumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transform: translateX(1px);
+  transition: transform 140ms;
+  will-change: transform;
+}
+.brand-switch-thumb[data-state='checked'] { transform: translateX(17px); }
+
+/* Radix Select trigger — mirrors .native-input (src/components/ui/Select.tsx) */
+.select-trigger {
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid var(--separator);
+  background: var(--fill-thin);
+  color: var(--label);
+  font-size: 12px;
+  padding: 0 8px;
+  outline: none;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  letter-spacing: -0.005em;
+}
+.select-trigger:hover { background: var(--fill); }
+.select-trigger:focus-visible,
+.select-trigger[data-state='open'] {
+  border-color: var(--accent);
+  background: var(--fill-quaternary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.select-trigger[data-placeholder] { color: var(--tertiary-label); }
+.select-item { position: relative; }
+
 /* Tier / level chips (pastel) */
 .tier-chip {
   display: inline-flex;
@@ -433,6 +490,73 @@ body {
 [data-theme='light'] .tier-regular { background: #e3f6f8; color: #0e7490; }
 [data-theme='light'] .tier-vip { background: #fdf3d7; color: #a16207; }
 [data-theme='light'] .tier-whale { background: #f3e8ff; color: #7e22ce; }
+
+/* ============================================================
+   Radix Tabs (src/components/ui/Tabs.tsx) — two variants.
+   data-state="active" is set by Radix on the active trigger.
+   ============================================================ */
+/* variant="pill" — live-feed tab bar (Comments / Gifts / Q&A / Top / All) */
+.tab-pill {
+  color: var(--tertiary-label);
+  cursor: pointer;
+}
+.tab-pill:hover { color: var(--secondary-label); }
+.tab-pill[data-state='active'] {
+  background: var(--gradient-pink);
+  color: #ffffff;
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.18);
+}
+.tab-pill[data-state='active']:hover { color: #ffffff; }
+.tab-pill-badge {
+  height: 14px;
+  min-width: 14px;
+  padding: 0 4px;
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fill);
+  color: var(--label);
+  font-feature-settings: "tnum";
+}
+.tab-pill[data-state='active'] .tab-pill-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* variant="segment" — CRM segment chips (All / Whales / Going cold) */
+.tab-segment {
+  color: var(--secondary-label);
+  background: var(--fill-thin);
+  border: 1px solid var(--separator);
+  cursor: pointer;
+}
+.tab-segment:hover { background: var(--fill); }
+.tab-segment[data-state='active'] {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(238, 29, 82, 0.32), rgba(105, 201, 208, 0.18));
+  border-color: rgba(238, 29, 82, 0.35);
+}
+.tab-segment-badge {
+  height: 16px;
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fill);
+  color: var(--label);
+  font-feature-settings: "tnum";
+}
+.tab-segment[data-state='active'] .tab-segment-badge {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
 
 /* Avatar gradients */
 .avatar-gradient-pink { background: linear-gradient(135deg, #ee1d52, #ff5b85); }
