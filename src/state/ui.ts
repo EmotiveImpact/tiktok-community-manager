@@ -87,6 +87,17 @@ type UIState = {
   /** Navigate to the Messages page with a fan preselected in the follow-up panel. */
   openMessagesFor: (uniqueId: string) => void;
 
+  /**
+   * Persistent stream player. `showStream` lives here (not in App-local state)
+   * so the single StreamPlayer instance survives page navigation — letting the
+   * live audio keep playing while the user browses the CRM. `playerMinimized`
+   * forces the floating mini "now playing" widget even while on the live page.
+   */
+  showStream: boolean;
+  setShowStream: (v: boolean | ((prev: boolean) => boolean)) => void;
+  playerMinimized: boolean;
+  setPlayerMinimized: (v: boolean | ((prev: boolean) => boolean)) => void;
+
   /** Live feed tab (lifted so e.g. the composer gift button can switch tabs). */
   tab: FeedTab;
   setTab: (tab: FeedTab) => void;
@@ -146,6 +157,13 @@ export const useUI = create<UIState>((set, get) => ({
   messagesFanFocus: null,
   setMessagesFanFocus: (uniqueId) => set({ messagesFanFocus: uniqueId }),
   openMessagesFor: (uniqueId) => set({ page: 'messages', messagesFanFocus: uniqueId, sidebarMode: 'main' }),
+
+  showStream: false,
+  setShowStream: (v) =>
+    set((s) => ({ showStream: typeof v === 'function' ? v(s.showStream) : v })),
+  playerMinimized: false,
+  setPlayerMinimized: (v) =>
+    set((s) => ({ playerMinimized: typeof v === 'function' ? v(s.playerMinimized) : v })),
 
   tab: 'comments',
   setTab: (tab) => set({ tab }),

@@ -1,4 +1,5 @@
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Menu, MenuItem, MenuGroup } from './components/ui/Menu';
 import { Tabs, TabList, Tab } from './components/ui';
 import { ConnectBar } from './components/ConnectBar';
@@ -44,7 +45,7 @@ import { useStore } from './state/store';
 import { useAlerts } from './state/alerts';
 import { useTracked } from './state/tracked';
 import { useModeration } from './state/moderation';
-import { useUI, type FeedFilter, type LiveTool } from './state/ui';
+import { useUI, type FeedFilter, type LiveTool, type Page } from './state/ui';
 
 const ToolbarBtn = forwardRef<
   HTMLButtonElement,
@@ -100,21 +101,28 @@ const TOOLS_GROUPS: { group: string; items: { id: LiveTool; label: string; icon:
 ];
 
 function ConnectBarTools({
-  showStream,
-  setShowStream,
   trackedCount,
   alertCount,
   onOpen,
 }: {
-  showStream: boolean;
-  setShowStream: React.Dispatch<React.SetStateAction<boolean>>;
   trackedCount: number;
   alertCount: number;
   onOpen: (tool: LiveTool) => void;
 }) {
+  const showStream = useUI((s) => s.showStream);
+  const setShowStream = useUI((s) => s.setShowStream);
+  const setPlayerMinimized = useUI((s) => s.setPlayerMinimized);
   return (
     <>
-      <ToolbarBtn active={showStream} onClick={() => setShowStream((v) => !v)} title="Watch (⌘W)">
+      <ToolbarBtn
+        active={showStream}
+        onClick={() => {
+          setShowStream((v) => !v);
+          // Reopening the Watch toggle un-minimizes so it lands full on live.
+          setPlayerMinimized(false);
+        }}
+        title="Watch (⌘W)"
+      >
         Watch
       </ToolbarBtn>
       <ToolbarBtn onClick={() => onOpen('tracked')} title="Tracked users" badge={trackedCount}>
@@ -155,7 +163,9 @@ export default function App() {
   const setPage = useUI((s) => s.setPage);
   const liveTool = useUI((s) => s.liveTool);
   const openLiveTool = useUI((s) => s.openLiveTool);
-  const [showStream, setShowStream] = useState(false);
+  const showStream = useUI((s) => s.showStream);
+  const setShowStream = useUI((s) => s.setShowStream);
+  const playerMinimized = useUI((s) => s.playerMinimized);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const setStatus = useStore((s) => s.setStatus);
   const ingest = useStore((s) => s.ingest);
@@ -231,7 +241,7 @@ export default function App() {
       if (mod && e.key === 'l') { e.preventDefault(); toggleTool('leaderboard'); }
       if (mod && e.key === 'm') { e.preventDefault(); toggleTool('multiroom'); }
       if (mod && e.key === 'i') { e.preventDefault(); toggleTool('insights'); }
-      if (mod && e.key === 'w') { e.preventDefault(); setShowStream((v) => !v); }
+      if (mod && e.key === 'w') { e.preventDefault(); ui.setShowStream((v) => !v); ui.setPlayerMinimized(false); }
       if (mod && e.key === 't') { e.preventDefault(); toggleTool('transcript'); }
       if (mod && e.key === 'k') { e.preventDefault(); setShowCommandPalette((v) => !v); }
       if (e.key === 'Escape') {
@@ -261,8 +271,6 @@ export default function App() {
             <ConnectBar
               rightExtras={
                 <ConnectBarTools
-                  showStream={showStream}
-                  setShowStream={setShowStream}
                   trackedCount={trackedCount}
                   alertCount={alertCount}
                   onOpen={openLiveTool}
@@ -308,8 +316,11 @@ export default function App() {
                 )}
               </section>
               )}
+              {/* FULL-mode player docks here via a portal target so the SAME
+                  StreamPlayer DOM node (and its <video>) is reused — never
+                  remounted — when switching full↔mini or navigating away. */}
               {showStream && status === 'connected' && !WIDE_TOOLS.has(liveTool) && (
-                <StreamPlayer onClose={() => setShowStream(false)} />
+                <div id="player-dock-full" className="flex h-full flex-none" />
               )}
               {/* Right rail: stat counters (top) then Fan Memory. */}
               {status === 'connected' && (
@@ -340,6 +351,19 @@ export default function App() {
         )}
       </div>
 
+      {/* Persistent live player — mounted ONCE here at the App root so it does
+          NOT unmount on page navigation. It keeps the live audio playing while
+          the user browses the CRM. FULL mode portals into the live column's
+          dock; MINI mode floats bottom-right. Either way it's the same instance
+          and the same <video> node, so playback never interrupts. */}
+      <PersistentPlayer
+        show={showStream && status === 'connected'}
+        page={page}
+        liveTool={liveTool}
+        minimized={playerMinimized}
+        onClose={() => setShowStream(false)}
+      />
+
       <UserDetailDrawer />
       {showCommandPalette && (
         <CommandPalette
@@ -350,6 +374,7 @@ export default function App() {
             { id: 'tab-questions', label: 'Switch to Q&A', hint: '⌘3', group: 'Tabs', icon: '❓', run: () => setTab('questions') },
             { id: 'tab-all', label: 'Switch to All events', hint: '⌘4', group: 'Tabs', icon: '📜', run: () => setTab('all') },
             { id: 'panel-stream', label: 'Toggle stream player', hint: '⌘W', group: 'Panels', icon: '▶️', run: () => setShowStream((v) => !v) },
+            { id: 'panel-stream-mini', label: 'Minimize / restore now-playing', group: 'Panels', icon: '🔉', run: () => useUI.getState().setPlayerMinimized((v) => !v) },
             { id: 'panel-feed', label: 'Open Live Feed', group: 'Panels', icon: '📡', run: () => openLiveTool('feed') },
             { id: 'panel-history', label: 'Open Session History', hint: '⌘H', group: 'Panels', icon: '🕒', run: () => openLiveTool('history') },
             { id: 'panel-leaderboard', label: 'Open All-Time Leaderboard', hint: '⌘L', group: 'Panels', icon: '🏆', run: () => openLiveTool('leaderboard') },
@@ -381,6 +406,79 @@ export default function App() {
  * hide the StreamPlayer column but keep the Fan Memory panel visible.
  */
 const WIDE_TOOLS = new Set<LiveTool>(['analytics', 'compare', 'history', 'multiroom']);
+
+/**
+ * Single persistent StreamPlayer instance. Mounted once at the App root so it
+ * survives page navigation (the live audio keeps playing while the user browses
+ * the CRM).
+ *
+ * Display mode is derived, not a second instance:
+ *   - FULL  → on the live page, not minimized, and the active tool leaves room
+ *             for the player column. The player's DOM is portalled INTO the
+ *             live column's `#player-dock-full` slot so it visually sits where
+ *             it always did. Same component instance, same <video>.
+ *   - MINI  → any other situation (navigated away, minimized, or a wide tool is
+ *             open) → floats bottom-right as the "now playing" widget.
+ *
+ * Because `<StreamPlayer>` keeps a stable position in this component's render
+ * tree, switching full↔mini (and re-targeting the portal) never remounts the
+ * <video>, so playback is uninterrupted.
+ */
+function PersistentPlayer({
+  show,
+  page,
+  liveTool,
+  minimized,
+  onClose,
+}: {
+  show: boolean;
+  page: Page;
+  liveTool: LiveTool;
+  minimized: boolean;
+  onClose: () => void;
+}) {
+  const wantsFull = show && page === 'live' && !minimized && !WIDE_TOOLS.has(liveTool);
+
+  // A single, app-owned container DIV that the StreamPlayer always portals
+  // into. We move THIS div (via appendChild) between the live-column dock and a
+  // fixed root host. Reparenting a DOM node does NOT remount the React subtree
+  // (the portal target — `container` — never changes), so the <video> survives
+  // every full↔mini switch and every page navigation uninterrupted.
+  const [container] = useState(() => document.createElement('div'));
+
+  // The fixed host that anchors the mini widget at the App root.
+  const [miniHost] = useState(() => {
+    const el = document.createElement('div');
+    el.id = 'player-mini-host';
+    return el;
+  });
+
+  useEffect(() => {
+    document.body.appendChild(miniHost);
+    return () => {
+      miniHost.remove();
+    };
+  }, [miniHost]);
+
+  // Reparent the stable container into the right home for the current mode.
+  useEffect(() => {
+    if (!show) return;
+    const dock = wantsFull ? document.getElementById('player-dock-full') : null;
+    const target = dock ?? miniHost;
+    if (container.parentElement !== target) target.appendChild(container);
+    // Full mode stretches to the dock; mini mode positions itself (fixed).
+    container.className = wantsFull ? 'flex h-full w-full' : 'contents';
+  }, [show, wantsFull, page, liveTool, minimized, container, miniHost]);
+
+  if (!show) return null;
+
+  // `wantsFull` decides ONLY the display prop; the portal target (`container`)
+  // is constant, so the StreamPlayer instance and its <video> never remount.
+  return createPortal(
+    <StreamPlayer display={wantsFull ? 'full' : 'mini'} onClose={onClose} />,
+    container,
+  );
+}
 
 /**
  * Renders the selected live tool inside the content slot. Each panel already

@@ -164,6 +164,11 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       webviewTag: true,
+      // Persistent background audio: Chromium throttles (and can pause) media
+      // timers when the window is unfocused/minimized. The app keeps the live
+      // stream playing while the user browses the CRM, so disable throttling so
+      // audio/video don't stutter or stop in the background.
+      backgroundThrottling: false,
       // sandbox is intentionally LEFT OFF (defaults to false here): vite-plugin-
       // electron emits the preload as an ES module (preload.mjs), and Electron's
       // sandbox only supports CommonJS preloads — a sandboxed renderer cannot

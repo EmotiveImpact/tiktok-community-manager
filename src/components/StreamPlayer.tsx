@@ -8,12 +8,36 @@ import { Select, Tooltip } from './ui';
 
 type ViewMode = 'hls' | 'mobile' | 'locked';
 
-export function StreamPlayer({ onClose }: { onClose: () => void }) {
+/**
+ * Persistent live-stream player.
+ *
+ * This component is mounted ONCE at the App root (not inside the live page) so
+ * that navigating to another page does not unmount it — the live audio keeps
+ * playing while the user browses the CRM.
+ *
+ * It renders in one of two DISPLAY modes via the `display` prop:
+ *   - 'full' : the phone-frame card that sits in the live feed column.
+ *   - 'mini' : a compact floating "now playing" widget docked bottom-right.
+ *
+ * CRITICAL: the same `<video>` / `<webview>` DOM nodes are reused across both
+ * display modes (they sit at a stable position in the render tree), so React
+ * never remounts them and playback never interrupts when switching full↔mini.
+ * Only the surrounding chrome (header/controls) and the outer container's
+ * position/size change.
+ */
+export function StreamPlayer({
+  display,
+  onClose,
+}: {
+  display: 'full' | 'mini';
+  onClose: () => void;
+}) {
   const room = useStore((s) => s.roomInfo);
   const streamMeta = useStore((s) => s.streamMeta);
   const viewerCount = useStore((s) => s.viewerCount);
   const totalLikes = useStore((s) => s.totalLikes);
   const setPage = useUI((s) => s.setPage);
+  const setPlayerMinimized = useUI((s) => s.setPlayerMinimized);
   // room_info needs a paid plan, and the connector also gave us no HLS URL.
   const needsPaidPlan = !!streamMeta?.unauthorized && !room?.hlsUrl;
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -39,6 +63,8 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
   const [levels, setLevels] = useState<{ index: number; height: number }[]>([]);
   const [currentLevel, setCurrentLevel] = useState(-1);
 
+  // hls.js lifecycle is tied to this persistent instance — it is NOT re-created
+  // on page navigation or full↔mini switches (those don't change the deps).
   useEffect(() => {
     if (mode !== 'hls') return;
     const url = room?.hlsUrl;
@@ -135,6 +161,115 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
       ? 'Auto'
       : `${levels.find((l) => l.index === currentLevel)?.height ?? ''}p`;
 
+  // The actual media surface (video OR webview OR locked card). This subtree is
+  // identical regardless of display mode so React keeps the same DOM nodes and
+  // playback never interrupts when switching full↔mini.
+  const mediaSurface =
+    mode === 'locked' ? (
+      <LockedState
+        compact={display === 'mini'}
+        onSettings={() => setPage('settings')}
+        onMobile={() => setMode('mobile')}
+      />
+    ) : mode === 'hls' && hasHls ? (
+      error ? (
+        <div className="flex h-full items-center justify-center p-4 text-center text-xs text-zinc-500">
+          {error}
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          className="h-full w-full object-contain"
+          autoPlay
+          muted={muted}
+          playsInline
+        />
+      )
+    ) : (
+      <webview
+        key={reloadKey}
+        src={liveUrl}
+        className="h-full w-full"
+        partition="persist:tiktok"
+        useragent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
+        // @ts-expect-error allowpopups is a valid webview attribute
+        allowpopups="true"
+      />
+    );
+
+  // ── MINI ("now playing") ──────────────────────────────────────────────────
+  if (display === 'mini') {
+    const expand = () => {
+      setPlayerMinimized(false);
+      setPage('live');
+    };
+    return (
+      <aside
+        className="glass no-drag fixed bottom-4 right-4 z-[60] flex w-[300px] flex-col overflow-hidden !rounded-2xl border border-zinc-800/60 shadow-2xl shadow-black/50"
+        aria-label="Now playing — live stream"
+      >
+        {/* Mini header: live label + host */}
+        <header className="flex flex-none items-center gap-2 border-b border-zinc-800/50 bg-black/40 px-2.5 py-1.5">
+          {room.hostAvatar ? (
+            <img src={room.hostAvatar} alt="" className="h-6 w-6 flex-none rounded-full object-cover ring-1 ring-like-500/60" />
+          ) : (
+            <div className={`flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white ${avatarGradient(room.hostNickname)}`}>
+              {room.hostNickname.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span
+            className="inline-flex flex-none items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white"
+            style={{ background: 'var(--brand-pink)' }}
+          >
+            <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
+            LIVE
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-zinc-200">
+            @{room.hostUniqueId}
+          </span>
+          <Tooltip content="Close player (keeps you connected)">
+            <button
+              onClick={onClose}
+              className="no-drag flex-none rounded-md px-1.5 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800"
+              aria-label="Close player"
+            >
+              ✕
+            </button>
+          </Tooltip>
+        </header>
+
+        {/* Compact video (≈300×169, 16:9) */}
+        <div className="relative h-[169px] flex-none overflow-hidden bg-black">{mediaSurface}</div>
+
+        {/* Mini controls: expand · play/pause · mute */}
+        <div className="flex flex-none items-center gap-1 border-t border-zinc-800/50 bg-zinc-950/70 px-2 py-1.5">
+          <Tooltip content="Expand to live">
+            <button
+              onClick={expand}
+              aria-label="Expand to live"
+              className="no-drag flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-semibold text-zinc-200 transition hover:bg-zinc-800"
+            >
+              ⤢ Live
+            </button>
+          </Tooltip>
+          <span className="ml-auto" />
+          {mode === 'hls' && hasHls && !error && (
+            <>
+              <Ctrl title={paused ? 'Play' : 'Pause'} onClick={togglePause}>
+                {paused ? '▶' : '⏸'}
+              </Ctrl>
+              <Ctrl title={muted ? 'Unmute' : 'Mute'} onClick={toggleMute}>{muted ? '🔇' : '🔊'}</Ctrl>
+            </>
+          )}
+          {mode === 'mobile' && (
+            <Ctrl title="Reload" onClick={() => setReloadKey((k) => k + 1)}>⟳</Ctrl>
+          )}
+        </div>
+      </aside>
+    );
+  }
+
+  // ── FULL (phone-frame card in the live column) ────────────────────────────
   return (
     <aside className="flex h-full w-[390px] flex-none flex-col p-0">
       {/* Phone-frame card */}
@@ -145,14 +280,14 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
             {hasHls && (
               <button
                 onClick={() => setMode('hls')}
-                className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition ${mode === 'hls' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`no-drag rounded-md px-2.5 py-1 text-[11px] font-medium transition ${mode === 'hls' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
               >
                 HLS
               </button>
             )}
             <button
               onClick={() => setMode('mobile')}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition ${mode === 'mobile' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`no-drag rounded-md px-2.5 py-1 text-[11px] font-medium transition ${mode === 'mobile' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               📱 Mobile
             </button>
@@ -161,10 +296,19 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
             LIVE
           </span>
+          <Tooltip content="Minimize to now-playing">
+            <button
+              onClick={() => setPlayerMinimized(true)}
+              className="no-drag rounded-md px-2 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800"
+              aria-label="Minimize player"
+            >
+              ▾
+            </button>
+          </Tooltip>
           <Tooltip content="Close player">
             <button
               onClick={onClose}
-              className="rounded-md px-2 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800"
+              className="no-drag rounded-md px-2 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800"
               aria-label="Close player"
             >
               ✕
@@ -190,60 +334,7 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Video area — playback logic unchanged */}
-        <div className="relative flex-1 overflow-hidden bg-black">
-          {mode === 'locked' ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 p-5 text-center">
-              <div className="text-3xl">🔒</div>
-              <div className="text-[13px] font-semibold text-zinc-200">
-                Live video needs an EulerStream Business plan
-              </div>
-              <p className="text-[11px] leading-relaxed text-zinc-500">
-                Your EulerStream key signs the connection (free tier), but the in-app video player
-                pulls the live stream URL from EulerStream's <span className="text-zinc-400">room_info</span> endpoint,
-                which requires a paid plan. Add a Business/Premium key in Settings, or use the
-                Mobile view below.
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage('settings')}
-                  className="rounded-lg bg-gradient-to-r from-like-500 to-like-600 px-3 py-1.5 text-[11px] font-semibold text-white"
-                >
-                  Open Settings
-                </button>
-                <button
-                  onClick={() => setMode('mobile')}
-                  className="rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800"
-                >
-                  📱 Mobile view
-                </button>
-              </div>
-            </div>
-          ) : mode === 'hls' && hasHls ? (
-            error ? (
-              <div className="flex h-full items-center justify-center p-4 text-center text-xs text-zinc-500">
-                {error}
-              </div>
-            ) : (
-              <video
-                ref={videoRef}
-                className="h-full w-full object-contain"
-                autoPlay
-                muted={muted}
-                playsInline
-              />
-            )
-          ) : (
-            <webview
-              key={reloadKey}
-              src={liveUrl}
-              className="h-full w-full"
-              partition="persist:tiktok"
-              useragent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
-              // @ts-expect-error allowpopups is a valid webview attribute
-              allowpopups="true"
-            />
-          )}
-        </div>
+        <div className="relative flex-1 overflow-hidden bg-black">{mediaSurface}</div>
 
         {/* Controls bar */}
         <div className="flex flex-none items-center gap-1 border-t border-zinc-800/50 bg-zinc-950/70 px-2 py-1.5">
@@ -282,7 +373,7 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
               <span className="ml-auto" />
               <button
                 onClick={() => setPage('settings')}
-                className="rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-300 hover:bg-zinc-800"
+                className="no-drag rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-300 hover:bg-zinc-800"
               >
                 Settings
               </button>
@@ -299,13 +390,69 @@ export function StreamPlayer({ onClose }: { onClose: () => void }) {
   );
 }
 
+/** Honest "needs a paid plan" state, shared by full + mini display modes. */
+function LockedState({
+  compact,
+  onSettings,
+  onMobile,
+}: {
+  compact: boolean;
+  onSettings: () => void;
+  onMobile: () => void;
+}) {
+  if (compact) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-1.5 p-3 text-center">
+        <div className="text-xl">🔒</div>
+        <div className="text-[11px] font-semibold leading-snug text-zinc-200">
+          Live video needs an EulerStream Business plan
+        </div>
+        <button
+          onClick={onMobile}
+          className="no-drag rounded-md border border-zinc-700 px-2 py-1 text-[10px] font-semibold text-zinc-300 hover:bg-zinc-800"
+        >
+          📱 Mobile view
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-5 text-center">
+      <div className="text-3xl">🔒</div>
+      <div className="text-[13px] font-semibold text-zinc-200">
+        Live video needs an EulerStream Business plan
+      </div>
+      <p className="text-[11px] leading-relaxed text-zinc-500">
+        Your EulerStream key signs the connection (free tier), but the in-app video player
+        pulls the live stream URL from EulerStream's <span className="text-zinc-400">room_info</span> endpoint,
+        which requires a paid plan. Add a Business/Premium key in Settings, or use the
+        Mobile view below.
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={onSettings}
+          className="no-drag rounded-lg bg-gradient-to-r from-like-500 to-like-600 px-3 py-1.5 text-[11px] font-semibold text-white"
+        >
+          Open Settings
+        </button>
+        <button
+          onClick={onMobile}
+          className="no-drag rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800"
+        >
+          📱 Mobile view
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Ctrl({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) {
   return (
     <Tooltip content={title}>
       <button
         onClick={onClick}
         aria-label={title}
-        className="flex h-7 w-7 items-center justify-center rounded-md text-sm text-zinc-300 transition hover:bg-zinc-800"
+        className="no-drag flex h-7 w-7 items-center justify-center rounded-md text-sm text-zinc-300 transition hover:bg-zinc-800"
       >
         {children}
       </button>
