@@ -7,9 +7,11 @@ import { useSettingsLoad } from '../state/settings';
 import { ThankComposer } from '../components/ThankComposer';
 import { FanAvatar, TierChip, PageShell, fanName } from '../components/crm';
 import { Tooltip } from '../components/ui';
+import { useUI } from '../state/ui';
 
 export function Reminders() {
   const pushToast = useAlerts((s) => s.pushToast);
+  const openFanPeek = useUI((s) => s.openFanPeek);
   const { community } = useSettingsLoad();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -36,7 +38,14 @@ export function Reminders() {
   const quiet = reminders.filter((r) => r.kind !== 'birthday');
 
   const Row = ({ r }: { r: Reminder }) => (
-    <li className="flex items-center gap-3 border-t py-2.5 first:border-t-0" style={{ borderColor: 'var(--separator)' }}>
+    <li
+      onClick={() => openFanPeek(r.fan.uniqueId)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFanPeek(r.fan.uniqueId); } }}
+      className="flex cursor-pointer items-center gap-3 border-t py-2.5 transition first:border-t-0 hover:bg-[var(--fill-quaternary)]"
+      style={{ borderColor: 'var(--separator)' }}
+    >
       <FanAvatar name={fanName(r.fan)} url={r.fan.avatarUrl} />
       <span className="min-w-0 flex-1 leading-tight">
         <span className="flex items-center gap-1.5">
@@ -52,7 +61,8 @@ export function Reminders() {
           {r.fan.lastThankedAt ? ` · Last thanked ${new Date(r.fan.lastThankedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
         </span>
       </span>
-      <div className="relative flex flex-none items-center gap-1.5">
+      {/* Action cluster — stop clicks here from bubbling to the row's peek-open. */}
+      <div className="relative flex flex-none items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
         {snoozeFor === r.id ? (
           <>
             {[1, 3, 7, 14, 30].map((d) => (

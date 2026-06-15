@@ -7,6 +7,7 @@ import { useSettingsLoad } from '../state/settings';
 import { FanAvatar, Pager, PageShell, inputCls } from '../components/crm';
 import { LogGiftModal } from '../components/LogGiftModal';
 import { Tooltip } from '../components/ui';
+import { useUI } from '../state/ui';
 
 const RANGES = [
   { id: '7d', label: '7 days' },
@@ -19,6 +20,7 @@ type Range = (typeof RANGES)[number]['id'];
 
 export function Gifts({ onGoLive }: { onGoLive: () => void }) {
   const pushToast = useAlerts((s) => s.pushToast);
+  const openFanPeek = useUI((s) => s.openFanPeek);
   const [range, setRange] = useState<Range>('30d');
   const [fan, setFan] = useState('');
   const [page, setPage] = useState(1);
@@ -155,13 +157,19 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
                       {new Date(g.at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="py-2">
-                      <span className="flex items-center gap-2">
+                      {/* Fan → quick PEEK drawer (glance without leaving the ledger). */}
+                      <button
+                        type="button"
+                        onClick={() => openFanPeek(g.fanUniqueId)}
+                        className="flex max-w-full items-center gap-2 rounded-lg text-left transition hover:opacity-80 cursor-pointer"
+                        aria-label={`Peek at ${g.fanNickname || g.fanUniqueId}`}
+                      >
                         <FanAvatar name={g.fanNickname || g.fanUniqueId} size={26} />
                         <span className="min-w-0 leading-tight">
                           <span className="block truncate font-semibold">{g.fanNickname}</span>
                           <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>@{g.fanUniqueId}</span>
                         </span>
-                      </span>
+                      </button>
                     </td>
                     <td className="py-2">{g.giftName}{g.repeatCount > 1 ? ` ×${g.repeatCount}` : ''}</td>
                     <td className="py-2 text-right font-bold tabular-nums">{formatNumber(g.diamonds)} 💎</td>

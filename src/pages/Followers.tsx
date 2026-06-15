@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-/** Followers — the fan CRM table. Search, segment tabs, tag/tier filters, bulk tag, add fan. Row → 360 profile page. */
+/** Followers — the fan CRM table. Search, segment tabs, tag/tier filters, bulk tag, add fan. Row → quick PEEK drawer (escalate to 360 from there). */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Fan, ListFansResult, Temperature, Tier } from '../types';
 import { formatNumber, daysAgoLabel } from '../lib/format';
@@ -52,7 +52,7 @@ type Props = { onGoImport: () => void; onGoLive: () => void };
 
 export function Followers({ onGoImport, onGoLive }: Props) {
   const pushToast = useAlerts((s) => s.pushToast);
-  const openFanProfile = useUI((s) => s.openFanProfile);
+  const openFanPeek = useUI((s) => s.openFanPeek);
   const [q, setQ] = useState('');
   const [tag, setTag] = useState('');
   const [tier, setTier] = useState<Tier | ''>('');
@@ -81,7 +81,9 @@ export function Followers({ onGoImport, onGoLive }: Props) {
   // birthday/firstSeen already ride along on each row).
   const rows = useMemo(() => resp.data.filter((f) => matchesSegment(f, segment)), [resp.data, segment]);
 
-  const openProfile = (uid: string) => openFanProfile(uid);
+  // Row click now opens the lightweight PEEK drawer (glance without leaving the
+  // list); the peek itself offers "Open full profile →" to escalate to the 360.
+  const openPeek = (uid: string) => openFanPeek(uid);
 
   const toggle = (uid: string) =>
     setSelected((s) => {
@@ -181,7 +183,7 @@ export function Followers({ onGoImport, onGoLive }: Props) {
             </div>
           ) : (
             <div className="flex items-center border-b px-4 text-[11px]" style={{ borderColor: 'var(--panel-border)', color: 'var(--tertiary-label)' }}>
-              Click any row to open the 360 profile · select fans to tag them in bulk.
+              Click any row for a quick peek · select fans to tag them in bulk.
             </div>
           )}
 
@@ -222,7 +224,7 @@ export function Followers({ onGoImport, onGoLive }: Props) {
                   return (
                   <tr
                     key={f.uniqueId}
-                    onClick={() => openProfile(f.uniqueId)}
+                    onClick={() => openPeek(f.uniqueId)}
                     className="h-[64px] cursor-pointer border-t transition hover:bg-[var(--fill-quaternary)]"
                     style={cold
                       ? { borderColor: 'var(--separator)', background: 'linear-gradient(90deg, rgba(255,159,10,.09), transparent 40%)' }
