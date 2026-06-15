@@ -212,6 +212,7 @@ export function ReachOutRow({
 
 export function Reminders() {
   const openFanPeek = useUI((s) => s.openFanPeek);
+  const openMessagesFor = useUI((s) => s.openMessagesFor);
   const pushToast = useAlerts((s) => s.pushToast);
   const { community } = useSettingsLoad();
   const { reminders, loaded, refresh, snooze, markDone } = useReachOut();
@@ -227,10 +228,9 @@ export function Reminders() {
   const visible = filter === 'all' ? reminders : reminders.filter((r) => r.kind === filter);
 
   const onThank = (r: Reminder) => setThankFan({ uniqueId: r.fan.uniqueId, nickname: fanName(r.fan) });
-  const onOpenChat = (r: Reminder) => {
-    window.tiktok.openExternal(profileUrl(r.fan.uniqueId)).catch(() =>
-      pushToast({ title: 'Could not open profile', body: `@${r.fan.uniqueId}` }));
-  };
+  // Open chat IN-APP: jump to the Messages page (embedded TikTok webview) with
+  // this fan loaded — consistent with the rest of the app, not the system browser.
+  const onOpenChat = (r: Reminder) => openMessagesFor(r.fan.uniqueId);
 
   const EMPTY: Record<ReachOutFilter, string> = {
     all: `No thank-yous, no birthdays in the next ${community.birthdayWindowDays} days, and no VIPs going quiet.`,
