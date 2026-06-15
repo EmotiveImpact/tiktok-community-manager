@@ -6,6 +6,7 @@ import { useAlerts } from '../state/alerts';
 import { useSettingsLoad } from '../state/settings';
 import { FanAvatar, Pager, PageShell, inputCls } from '../components/crm';
 import { LogGiftModal } from '../components/LogGiftModal';
+import { Tooltip } from '../components/ui';
 
 const RANGES = [
   { id: '7d', label: '7 days' },
@@ -116,18 +117,19 @@ export function Gifts({ onGoLive }: { onGoLive: () => void }) {
                 </button>
               ))}
             </div>
-            <span
-              className="flex h-7 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold"
-              style={{ background: 'var(--fill-thin)', border: '1px solid var(--card-border)', color: 'var(--secondary-label)' }}
-              title={`Total diamonds in the ${rangeLabel.toLowerCase()} view`}
-            >
-              {rangeLabel}:&nbsp;
-              {rangeTotal !== null ? (
-                <strong style={{ color: 'var(--label, inherit)' }}>{formatNumber(rangeTotal)} 💎</strong>
-              ) : (
-                <strong style={{ color: 'var(--label, inherit)' }}>{formatNumber(resp.total)} gifts</strong>
-              )}
-            </span>
+            <Tooltip content={`Total diamonds in the ${rangeLabel.toLowerCase()} view`}>
+              <span
+                className="flex h-7 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold"
+                style={{ background: 'var(--fill-thin)', border: '1px solid var(--card-border)', color: 'var(--secondary-label)' }}
+              >
+                {rangeLabel}:&nbsp;
+                {rangeTotal !== null ? (
+                  <strong style={{ color: 'var(--label, inherit)' }}>{formatNumber(rangeTotal)} 💎</strong>
+                ) : (
+                  <strong style={{ color: 'var(--label, inherit)' }}>{formatNumber(resp.total)} gifts</strong>
+                )}
+              </span>
+            </Tooltip>
             <input value={fan} onChange={(e) => setFan(e.target.value)} placeholder="Filter by fan…" className={`${inputCls} !w-52 ml-auto`} />
           </div>
 
