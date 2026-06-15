@@ -18,6 +18,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "3470"],
       "port": 3470
+    },
+    {
+      "name": "dist3501",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3501", "--directory", "dist"],
+      "port": 3501
     }
   ]
 }
