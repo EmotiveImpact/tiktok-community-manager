@@ -9,12 +9,27 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { useUI } from '../state/ui';
-import { formatNumber, formatDate, estimateMoney } from '../lib/format';
+import { formatNumber, formatDate, estimateMoney, relativeTime } from '../lib/format';
 import { tierClass } from '../lib/tier';
 import { avatarGradient } from '../lib/avatars';
 import { useSettingsLoad } from '../state/settings';
 import { ThankComposer } from './ThankComposer';
-import type { Fan, GiftRecord } from '../types';
+import type { Fan, GiftRecord, TimelineEvent } from '../types';
+
+/** Compact icon per timeline event type — mirrors the 360 profile feed. */
+const TIMELINE_ICON: Record<TimelineEvent['type'], string> = {
+  gift: '🎁',
+  note: '✍️',
+  thank_you: '💌',
+  dm: '✉️',
+  shoutout: '⭐',
+  tier_up: '👑',
+  reminder_done: '✅',
+  manual_gift_log: '🎁',
+  session_attend: '📺',
+  first_seen: '👋',
+  comment_rollup: '💬',
+};
 
 function birthdayInfo(mmdd?: string): { label: string; days: number } | null {
   if (!mmdd) return null;
@@ -50,6 +65,9 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
   const [fan, setFan] = useState<Fan | null>(null);
   const [lastGift, setLastGift] = useState<GiftRecord | null>(null);
   const [notes, setNotes] = useState('');
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [noteAdded, setNoteAdded] = useState(false);
   const [tagDraft, setTagDraft] = useState('');
   const [addingTag, setAddingTag] = useState(false);
   const [thanked, setThanked] = useState(false);
@@ -60,23 +78,28 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
   const notesDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = useCallback(async (uid: string) => {
-    const [f, gifts] = await Promise.all([
-      window.tiktok.fansGet(uid),
-      window.tiktok.giftsList({ fan: uid, range: 'all', pageSize: 1 }),
+    // Fail-safe: a CRM read must never throw into the live panel.
+    const [f, gifts, events] = await Promise.all([
+      window.tiktok.fansGet(uid).catch(() => null),
+      window.tiktok.giftsList({ fan: uid, range: 'all', pageSize: 1 }).catch(() => ({ data: [] } as any)),
+      window.tiktok.fansTimeline(uid, { limit: 3 }).catch(() => [] as TimelineEvent[]),
     ]);
     if (loadedFor.current !== uid) return;
     setFan(f);
     setLastGift(gifts.data[0] ?? null);
+    setTimeline(events ?? []);
     setLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (!fanMemoryId) { setFan(null); setLastGift(null); return; }
+    if (!fanMemoryId) { setFan(null); setLastGift(null); setTimeline([]); return; }
     loadedFor.current = fanMemoryId;
     setLoaded(false);
     setThanked(false);
     setShowThank(false);
     setAddingTag(false);
+    setNoteDraft('');
+    setNoteAdded(false);
     refresh(fanMemoryId).then(() => {
       // sync notes textarea after fan loads
     });
@@ -93,13 +116,34 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
     setNotes(fan?.notes ?? '');
   }, [fan?.uniqueId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const saveNotes = (text: string) => {
+  // Pinned "About" — a single one-line blob stored on the fan record. Edited
+  // here and on the 360 profile; debounced autosave.
+  const saveAbout = (text: string) => {
     setNotes(text);
     if (!fanMemoryId) return;
     if (notesDebounce.current) clearTimeout(notesDebounce.current);
     notesDebounce.current = setTimeout(() => {
-      window.tiktok.fansUpdate(fanMemoryId, { notes: text });
+      window.tiktok.fansUpdate(fanMemoryId, { notes: text }).catch(() => {});
     }, 600);
+  };
+
+  // Quick "Add to timeline" — appends a real timeline note (the SAME store the
+  // 360 profile reads), not the pinned About blob. Optimistically prepends the
+  // new row so the panel reflects the write immediately.
+  const addNote = async () => {
+    const text = noteDraft.trim();
+    if (!text || !fanMemoryId) return;
+    setNoteDraft('');
+    const res = await window.tiktok.fansAddNote(fanMemoryId, text).catch(() => null);
+    if (res?.ok) {
+      if (res.event) setTimeline((prev) => [res.event!, ...prev].slice(0, 3));
+      setNoteAdded(true);
+      setTimeout(() => setNoteAdded(false), 1600);
+      // Reconcile against the canonical store.
+      if (loadedFor.current === fanMemoryId) refresh(fanMemoryId);
+    } else {
+      setNoteDraft(text); // restore on failure
+    }
   };
 
   const addTag = async () => {
@@ -235,14 +279,62 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                   )}
                 </div>
 
-                {/* Notes */}
-                <textarea
-                  value={notes}
-                  onChange={(e) => saveNotes(e.target.value)}
-                  placeholder="What do you want to remember about them?"
-                  rows={3}
-                  className="mt-3 w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2 text-xs leading-relaxed text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
-                />
+                {/* Pinned "About" — the one-line memory blob on the fan record.
+                    Distinct from the timeline notes below. */}
+                <div className="mt-3">
+                  <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">📌 Pinned · about</div>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => saveAbout(e.target.value)}
+                    placeholder="One line to always remember (real name, how you met…)"
+                    rows={2}
+                    className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2 text-xs leading-relaxed text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
+                  />
+                </div>
+
+                {/* Quick add-to-timeline note — writes a real timeline event via
+                    fansAddNote (the SAME store the 360 profile + rows below read). */}
+                <div className="mt-3">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">✍️ Add a note</span>
+                    {noteAdded && <span className="text-[10px] font-semibold text-[var(--green)]">added ✓</span>}
+                  </div>
+                  <div className="flex items-end gap-1.5">
+                    <textarea
+                      value={noteDraft}
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addNote(); } }}
+                      placeholder="Jot something — appears on their timeline"
+                      rows={2}
+                      className="min-w-0 flex-1 resize-none rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-2 text-xs leading-relaxed text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
+                    />
+                    <button
+                      onClick={addNote}
+                      disabled={!noteDraft.trim()}
+                      title="Add to timeline (⌘/Ctrl+Enter)"
+                      className="flex-none rounded-lg border border-zinc-800 px-2.5 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800/60 hover:text-zinc-100 disabled:opacity-40"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                {/* Recent timeline — last 3 events from the canonical store, so
+                    the live panel reads the same model it writes to. */}
+                {timeline.length > 0 && (
+                  <div className="mt-3">
+                    <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">🕒 Recent</div>
+                    <ul className="space-y-1">
+                      {timeline.slice(0, 3).map((ev) => (
+                        <li key={ev.id} className="flex items-baseline gap-1.5 text-[11px] leading-snug text-zinc-400">
+                          <span aria-hidden className="flex-none">{TIMELINE_ICON[ev.type] ?? '•'}</span>
+                          <span className="min-w-0 flex-1 truncate text-zinc-300">{ev.summary}</span>
+                          <span className="flex-none text-zinc-600">{relativeTime(ev.occurredAt)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {/* Tags */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
