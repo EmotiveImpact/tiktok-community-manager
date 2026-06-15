@@ -76,12 +76,8 @@ function LogoMark() {
         className="flex h-10 w-10 flex-none items-center justify-center rounded-2xl"
         style={{ background: '#10142a' }}
       >
-        {/* TikTok-style note mark (matches web app) */}
-        <svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-          <path d="M30 8v20.5a9.5 9.5 0 1 1-9.5-9.5" stroke="#69C9D0" strokeWidth="5" strokeLinecap="round" />
-          <path d="M33 11c3.8 4.1 7.1 5.9 11 6.4" stroke="#EE1D52" strokeWidth="5" strokeLinecap="round" />
-          <path d="M26 8v21a7 7 0 1 1-7-7" stroke="white" strokeWidth="4" strokeLinecap="round" />
-        </svg>
+        {/* Official TikTok note mark */}
+        <img src="./assets/svg/tiktok-mark.svg" width="22" height="22" alt="TikTok" draggable={false} />
       </span>
       <span className="min-w-0 leading-tight">
         <span className="block text-[15px] font-extrabold text-white">TikTok</span>
