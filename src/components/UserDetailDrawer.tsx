@@ -3,7 +3,7 @@ import { useStore } from '../state/store';
 import { formatNumber, timeAgo } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 import { UserBadges } from './UserBadges';
-import { useDialog } from './useDialog';
+import { Dialog } from './ui/Dialog';
 import { useTracked } from '../state/tracked';
 import type { UserBrief, UserNote, LiveEvent, UserHistoricalTally } from '../types';
 
@@ -65,22 +65,17 @@ export function UserDetailDrawer() {
     [selectedUserId, recentForUser],
   );
 
-  // Arm the focus trap / Esc-to-close only while the drawer is open. This
-  // component stays mounted and returns null when nothing is selected.
-  const { ref: dialogRef, dialogProps } = useDialog<HTMLElement>(
-    () => selectUser(null),
-    !!(selectedUserId && user),
-  );
-
-  if (!selectedUserId || !user) return null;
+  const open = !!(selectedUserId && user);
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
-        onClick={() => selectUser(null)}
-      />
-      <aside ref={dialogRef} {...dialogProps} role="dialog" aria-modal="true" aria-label={`Details for ${user.nickname}`} className="animate-slide-in fixed right-0 top-0 z-[70] flex h-screen w-[420px] flex-col border-l border-zinc-800/60 bg-zinc-950/95 shadow-2xl backdrop-blur">
+    <Dialog
+      open={open}
+      onOpenChange={(o) => { if (!o) selectUser(null); }}
+      variant="drawer"
+      ariaLabel={user ? `Details for ${user.nickname}` : 'User details'}
+    >
+      {user && (
+      <>
         <header className="relative overflow-hidden border-b border-zinc-800/50 p-5">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-like-500/8 to-transparent" />
           <div className="relative flex items-center gap-3">
@@ -218,8 +213,9 @@ export function UserDetailDrawer() {
             ✕
           </button>
         </footer>
-      </aside>
-    </>
+      </>
+      )}
+    </Dialog>
   );
 }
 

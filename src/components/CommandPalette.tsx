@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
-import { useDialog } from './useDialog';
+import { Dialog } from './ui/Dialog';
 
 export type Command = {
   id: string;
@@ -18,7 +18,6 @@ export function CommandPalette({ commands, onClose }: { commands: Command[]; onC
   const listRef = useRef<HTMLDivElement | null>(null);
   const tallies = useStore((s) => s.tallies);
   const selectUser = useStore((s) => s.selectUser);
-  const { ref: dialogRef, dialogProps } = useDialog<HTMLDivElement>(onClose);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -97,16 +96,13 @@ export function CommandPalette({ commands, onClose }: { commands: Command[]; onC
   let runningIdx = 0;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        {...dialogProps}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Command palette"
-        className="w-[600px] max-w-[90vw] overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-950/95 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog
+      open
+      onOpenChange={(o) => { if (!o) onClose(); }}
+      ariaLabel="Command palette"
+      bare
+      className="left-1/2 top-[15vh] w-[600px] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-950/95 shadow-2xl"
+    >
         <div className="flex items-center gap-2 border-b border-zinc-800/60 px-4 py-3">
           <span className="text-zinc-500">⌘K</span>
           <input
@@ -154,7 +150,6 @@ export function CommandPalette({ commands, onClose }: { commands: Command[]; onC
           <span>↑↓ navigate · ↵ select · esc close</span>
           <span>{filtered.length} results</span>
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }

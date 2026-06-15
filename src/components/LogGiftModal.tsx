@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAlerts } from '../state/alerts';
 import { FieldLabel, inputCls } from './crm';
+import { Dialog } from './ui/Dialog';
 
 export function LogGiftModal({
   onClose,
@@ -49,9 +50,7 @@ export function LogGiftModal({
   };
 
   return (
-    <>
-      <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="glass fixed left-1/2 top-1/2 z-[70] w-[380px] -translate-x-1/2 -translate-y-1/2 p-5 shadow-2xl" style={{ borderRadius: 18 }}>
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }} ariaLabel="Log gift" width={380}>
         <h2 className="mb-3 text-base font-extrabold">Log gift</h2>
         <div className="space-y-3">
           <div>
@@ -90,7 +89,6 @@ export function LogGiftModal({
           <button onClick={onClose} className="panel-btn no-drag">Cancel</button>
           <button onClick={submit} disabled={!valid} className="panel-btn panel-btn-primary no-drag">Log gift</button>
         </div>
-      </div>
-    </>
+    </Dialog>
   );
 }

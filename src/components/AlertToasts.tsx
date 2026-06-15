@@ -16,7 +16,12 @@ export function AlertToasts() {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-40 flex flex-col gap-2 w-80">
+    <div
+      className="fixed bottom-4 left-4 z-40 flex flex-col gap-2 w-80"
+      role="status"
+      aria-live="polite"
+      aria-relevant="additions"
+    >
       {toasts.slice(0, 5).map((t) => {
         const rule = rules.find((r) => r.id === t.ruleId);
         const accent = ACCENT[rule?.type ?? ''] ?? 'border-l-like-500';
@@ -34,6 +39,7 @@ export function AlertToasts() {
             <button
               onClick={() => dismiss(t.id)}
               className="flex-none text-xs text-zinc-500 hover:text-zinc-300"
+              aria-label={`Dismiss alert: ${t.title}`}
             >
               ✕
             </button>

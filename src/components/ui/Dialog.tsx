@@ -59,7 +59,9 @@ export function Dialog({
   const baseContent =
     isDrawer
       ? 'animate-slide-in fixed right-0 top-0 z-[90] flex h-screen w-[420px] flex-col shadow-2xl backdrop-blur'
-      : 'fixed left-1/2 top-1/2 z-[90] -translate-x-1/2 -translate-y-1/2 shadow-2xl';
+      : bare
+        ? 'fixed z-[90]'
+        : 'fixed left-1/2 top-1/2 z-[90] -translate-x-1/2 -translate-y-1/2 shadow-2xl';
 
   const surfaceClass = bare ? '' : isDrawer ? '' : 'glass';
 
