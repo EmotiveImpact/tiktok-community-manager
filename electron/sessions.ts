@@ -60,6 +60,28 @@ let dirty = false;
 let flushTimer: NodeJS.Timeout | null = null;
 const FLUSH_MS = 2000;
 
+/**
+ * Cached one-pass attendance index, shared by the batched fans:list / reminders
+ * strength path AND the single-fan profile. Without it, computing attendance for
+ * N fans re-read + re-parsed EVERY session file N times (the O(N_fans × sessions)
+ * half of the slow-Followers bug).
+ *
+ * `perFan` maps fanUniqueId -> per-session FIRST-event timestamps (their join in
+ * each session they actually appeared in). `totalSessions` is the denominator
+ * for the loyalty rate. Sessions only change during a live stream, so the cache
+ * is safe to hold and is invalidated whenever a session is written/removed (and
+ * we always fold the in-RAM active session in fresh, since it lags disk).
+ */
+type AttendanceIndex = {
+  perFan: Map<string, Map<string, number>>; // uid -> (sessionId -> firstEventTs)
+  sessionMeta: Map<string, { roomTitle: string }>;
+  totalSessions: number;
+};
+let attendanceCache: AttendanceIndex | null = null;
+function invalidateAttendanceCache() {
+  attendanceCache = null;
+}
+
 function scheduleFlush() {
   if (flushTimer) return;
   flushTimer = setTimeout(() => {
@@ -158,6 +180,8 @@ function write(rec: SessionRecord) {
   const tmp = dest + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(rec, null, 2));
   fs.renameSync(tmp, dest);
+  // A session's on-disk events changed → the cached attendance index is stale.
+  invalidateAttendanceCache();
 }
 
 export function append(evt: any) {
@@ -271,6 +295,7 @@ export function remove(id: string) {
   } catch {
     /* ignore */
   }
+  invalidateAttendanceCache();
 }
 
 export type UserHistoricalTally = {
@@ -326,6 +351,78 @@ export type FanSessionAttend = {
 };
 
 /**
+ * Fold one session record into an attendance index: record, per fan, the FIRST
+ * event timestamp the fan produced in this session, plus the session's room
+ * title. Used by both the cached finished-session pass and the fresh active-
+ * session overlay.
+ */
+function indexSession(rec: SessionRecord, idx: AttendanceIndex) {
+  idx.sessionMeta.set(rec.id, { roomTitle: rec.roomTitle });
+  for (const e of rec.events) {
+    const uid = e.user?.uniqueId;
+    if (!uid) continue;
+    let perSession = idx.perFan.get(uid);
+    if (!perSession) {
+      perSession = new Map();
+      idx.perFan.set(uid, perSession);
+    }
+    const prev = perSession.get(rec.id);
+    if (prev === undefined || e.ts < prev) perSession.set(rec.id, e.ts);
+  }
+}
+
+/**
+ * Build (or return cached) the attendance index across ALL sessions in a single
+ * pass. Finished sessions are read from disk once and cached; the in-RAM active
+ * session is always folded in fresh (its events grow between flushes, so a stale
+ * disk copy would under-count). `totalSessions` counts every session file.
+ */
+function buildAttendanceIndex(): AttendanceIndex {
+  let base = attendanceCache;
+  if (!base) {
+    base = { perFan: new Map(), sessionMeta: new Map(), totalSessions: 0 };
+    try {
+      const files = fs.readdirSync(dir()).filter((f) => f.endsWith('.json'));
+      for (const f of files) {
+        const id = f.replace(/\.json$/, '');
+        // Skip the live session here — it's folded in fresh below from RAM.
+        if (activeRecord && activeRecord.id === id) continue;
+        try {
+          const rec = JSON.parse(fs.readFileSync(path.join(dir(), f), 'utf8')) as SessionRecord;
+          base.totalSessions++;
+          indexSession(rec, base);
+        } catch {
+          /* skip corrupt */
+        }
+      }
+    } catch {
+      /* no sessions dir yet */
+    }
+    attendanceCache = base;
+  }
+  // Overlay the live session fresh (not cached — it mutates every event).
+  if (activeRecord) {
+    const overlay: AttendanceIndex = {
+      perFan: new Map(base.perFan),
+      sessionMeta: new Map(base.sessionMeta),
+      totalSessions: base.totalSessions + 1,
+    };
+    // Build the live session's contribution in isolation, then merge into the
+    // overlay without ever mutating the cached `base` maps.
+    const liveIdx: AttendanceIndex = { perFan: new Map(), sessionMeta: new Map(), totalSessions: 0 };
+    indexSession(activeRecord, liveIdx);
+    for (const [uid, perSession] of liveIdx.perFan) {
+      const merged = new Map(overlay.perFan.get(uid) ?? new Map<string, number>());
+      for (const [sid, ts] of perSession) merged.set(sid, ts);
+      overlay.perFan.set(uid, merged);
+    }
+    for (const [sid, meta] of liveIdx.sessionMeta) overlay.sessionMeta.set(sid, meta);
+    return overlay;
+  }
+  return base;
+}
+
+/**
  * Per-session attendance for a fan, derived from the session ledgers.
  *
  * "Attended" = the fan produced at least one recorded event (chat / gift /
@@ -333,6 +430,9 @@ export type FanSessionAttend = {
  * (likes/follows aren't stored per-user in the events array). Returns the
  * matched sessions (newest-first) plus `totalSessions` so the caller can
  * compute a loyalty/attendance rate. Bounded + fail-safe.
+ *
+ * Now backed by the shared one-pass attendance index instead of re-reading every
+ * session file on each call.
  */
 export function fanSessionAttendance(uniqueId: string, cap = 200): {
   attended: FanSessionAttend[];
@@ -341,29 +441,74 @@ export function fanSessionAttendance(uniqueId: string, cap = 200): {
 } {
   const uid = String(uniqueId ?? '').replace(/^@/, '').trim();
   const out: FanSessionAttend[] = [];
-  let totalSessions = 0;
   if (!uid) return { attended: out, attendedCount: 0, totalSessions: 0 };
   try {
-    const summaries = list();
-    totalSessions = summaries.length;
-    for (const summary of summaries) {
-      const rec = read(summary.id);
-      if (!rec) continue;
-      let firstAt: number | null = null;
-      for (const e of rec.events) {
-        if (e.user?.uniqueId !== uid) continue;
-        if (firstAt === null || e.ts < firstAt) firstAt = e.ts;
+    const idx = buildAttendanceIndex();
+    const perSession = idx.perFan.get(uid);
+    if (perSession) {
+      for (const [sessionId, attendedAt] of perSession) {
+        out.push({
+          sessionId,
+          roomTitle: idx.sessionMeta.get(sessionId)?.roomTitle ?? '',
+          attendedAt,
+        });
       }
-      if (firstAt !== null) {
-        out.push({ sessionId: rec.id, roomTitle: rec.roomTitle, attendedAt: firstAt });
-      }
-      if (out.length >= cap) break;
     }
+    out.sort((a, b) => b.attendedAt - a.attendedAt);
+    if (out.length > cap) out.length = cap;
+    return { attended: out, attendedCount: out.length, totalSessions: idx.totalSessions };
   } catch (err) {
     console.error('[sessions] fanSessionAttendance failed:', err);
+    return { attended: out, attendedCount: out.length, totalSessions: 0 };
   }
-  out.sort((a, b) => b.attendedAt - a.attendedAt);
-  return { attended: out, attendedCount: out.length, totalSessions };
+}
+
+export type FanAttendanceAggregate = {
+  attendedCount: number;
+  /** epoch ms of the fan's most-recent session join, or null. */
+  lastAttendedAt: number | null;
+  /** sessions attended in the [sinceMs, ∞) window (for recent-interaction counts). */
+  recentAttendedCount: number;
+};
+
+/**
+ * Batched attendance for ALL fans in a SINGLE session-ledger pass. Returns the
+ * per-fan aggregates plus the shared `totalSessions` denominator, so the
+ * fans:list / reminders strength pass can look attendance up from a map instead
+ * of re-scanning sessions per fan. Fail-safe.
+ */
+export function allFansAttendance(sinceMs = 0): {
+  byFan: Map<string, FanAttendanceAggregate>;
+  totalSessions: number;
+} {
+  const byFan = new Map<string, FanAttendanceAggregate>();
+  try {
+    const idx = buildAttendanceIndex();
+    for (const [uid, perSession] of idx.perFan) {
+      let attendedCount = 0;
+      let recentAttendedCount = 0;
+      let lastAttendedAt: number | null = null;
+      for (const ts of perSession.values()) {
+        attendedCount++;
+        if (ts >= sinceMs) recentAttendedCount++;
+        if (lastAttendedAt === null || ts > lastAttendedAt) lastAttendedAt = ts;
+      }
+      byFan.set(uid, { attendedCount, lastAttendedAt, recentAttendedCount });
+    }
+    return { byFan, totalSessions: idx.totalSessions };
+  } catch (err) {
+    console.error('[sessions] allFansAttendance failed:', err);
+    return { byFan, totalSessions: 0 };
+  }
+}
+
+/**
+ * Test/maintenance hook: drop the cached attendance index so the next read
+ * re-scans from disk. Used by tests that seed session files directly (bypassing
+ * write()), and safe to call any time.
+ */
+export function _resetAttendanceCache(): void {
+  invalidateAttendanceCache();
 }
 
 export function allTimeLeaderboard(limit = 50): UserHistoricalTally[] {
