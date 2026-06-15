@@ -3,6 +3,7 @@ import { avatarGradient } from '../lib/avatars';
 import { relativeTime } from '../lib/format';
 import type { WatchEntry } from '../types';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Switch, Tooltip } from './ui';
 
 export function FollowerWatchlist({ onClose }: { onClose: () => void }) {
   const [watchlist, setWatchlist] = useState<WatchEntry[]>([]);
@@ -91,19 +92,21 @@ export function FollowerWatchlist({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-zinc-200">@{w.username}</div>
-                  <div className="text-[10px] text-zinc-600" title={w.lastSeen ? new Date(w.lastSeen).toLocaleString() : undefined}>
-                    {w.lastSeen ? `Last seen live ${relativeTime(w.lastSeen)}` : 'Not seen live yet'}
-                  </div>
+                  <Tooltip content={w.lastSeen ? new Date(w.lastSeen).toLocaleString() : undefined}>
+                    <div className="text-[10px] text-zinc-600">
+                      {w.lastSeen ? `Last seen live ${relativeTime(w.lastSeen)}` : 'Not seen live yet'}
+                    </div>
+                  </Tooltip>
                 </div>
-                <button
-                  onClick={() => toggleNotify(w.username)}
-                  title={w.notify ? 'Alerts on — you\'ll be notified when this user goes live' : 'Alerts off — no go-live notification for this user'}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
-                    w.notify ? 'bg-like-500/15 text-like-400' : 'bg-zinc-800 text-zinc-500'
-                  }`}
-                >
-                  {w.notify ? 'Notify ON' : 'Notify OFF'}
-                </button>
+                <Tooltip content={w.notify ? 'Alerts on — you\'ll be notified when this user goes live' : 'Alerts off — no go-live notification for this user'}>
+                  <span className="inline-flex">
+                    <Switch
+                      checked={w.notify}
+                      onCheckedChange={() => toggleNotify(w.username)}
+                      label={w.notify ? 'Notify ON' : 'Notify OFF'}
+                    />
+                  </span>
+                </Tooltip>
                 <button
                   onClick={() => window.tiktok.openProfileInternal(w.username)}
                   className="rounded-lg border border-zinc-800 px-2.5 py-1 text-xs text-zinc-400 hover:bg-zinc-800"

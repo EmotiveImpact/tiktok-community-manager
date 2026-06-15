@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAlerts, type AlertRule, type AlertToast } from '../state/alerts';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Select, Switch, Tooltip } from './ui';
 import { timeAgo } from '../lib/format';
 
 const ruleTypes: { value: AlertRule['type']; label: string; placeholder: string; pillClass: string; pillLabel: string; description: string; accent: string }[] = [
@@ -11,28 +12,8 @@ const ruleTypes: { value: AlertRule['type']; label: string; placeholder: string;
   { value: 'viewer_threshold', label: 'Viewer Threshold', placeholder: 'viewer count (e.g. 1000)', pillClass: 'bg-emerald-500/15 text-emerald-300', pillLabel: 'Viewers', description: 'Alerts when viewer count exceeds limit', accent: 'border-l-emerald-400' },
 ];
 
-function Toggle({ active, onClick }: { active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{ width: 36, height: 20, padding: 0, flex: 'none' }}
-      className={`relative inline-block rounded-full transition ${active ? 'bg-like-500' : 'bg-zinc-700'}`}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          top: 2,
-          left: active ? 18 : 2,
-          width: 16,
-          height: 16,
-          borderRadius: 9999,
-          background: 'white',
-          transition: 'left 150ms',
-        }}
-      />
-    </button>
-  );
+function Toggle({ active, onClick, ariaLabel }: { active: boolean; onClick: () => void; ariaLabel?: string }) {
+  return <Switch checked={active} onCheckedChange={onClick} ariaLabel={ariaLabel} />;
 }
 
 export function AlertsPanel({ onClose }: { onClose: () => void }) {
@@ -74,14 +55,16 @@ export function AlertsPanel({ onClose }: { onClose: () => void }) {
 
       {/* Settings strip */}
       <div className="flex items-center gap-5 border-b border-zinc-800/60 bg-zinc-900/30 px-6 py-2.5">
-        <label className="flex cursor-pointer items-center gap-2">
-          <Toggle active={soundEnabled} onClick={toggleSound} />
+        <div className="flex items-center gap-2">
+          <Toggle active={soundEnabled} onClick={toggleSound} ariaLabel="Sound" />
           <span className="text-xs text-zinc-300">Sound</span>
-        </label>
-        <label className="flex cursor-pointer items-center gap-2" title="Auto-save 60s clip when alert fires (needs FFmpeg)">
-          <Toggle active={autoClip} onClick={toggleAutoClip} />
-          <span className="text-xs text-zinc-300">Auto-clip</span>
-        </label>
+        </div>
+        <Tooltip content="Auto-save 60s clip when alert fires (needs FFmpeg)">
+          <div className="flex items-center gap-2">
+            <Toggle active={autoClip} onClick={toggleAutoClip} ariaLabel="Auto-clip" />
+            <span className="text-xs text-zinc-300">Auto-clip</span>
+          </div>
+        </Tooltip>
       </div>
 
       <div className="flex-1 overflow-hidden p-6">
@@ -94,17 +77,13 @@ export function AlertsPanel({ onClose }: { onClose: () => void }) {
             <div className="mb-5 rounded-xl border border-dashed border-zinc-700 bg-zinc-900/60 p-4">
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Add New Rule</div>
               <div className="mb-3 flex gap-2">
-                <select
+                <Select
                   value={newType}
-                  onChange={(e) => setNewType(e.target.value as AlertRule['type'])}
-                  className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 outline-none"
-                >
-                  {ruleTypes.map((rt) => (
-                    <option key={rt.value} value={rt.value}>
-                      {rt.label}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(v) => setNewType(v as AlertRule['type'])}
+                  ariaLabel="Alert rule type"
+                  className="flex-1"
+                  options={ruleTypes.map((rt) => ({ value: rt.value, label: rt.label }))}
+                />
                 {newType !== 'follower' && (
                   <input
                     value={newValue}

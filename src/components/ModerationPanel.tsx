@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useModeration, type UserTag } from '../state/moderation';
 import { PanelHeader, PanelShell } from './PanelHeader';
+import { Select, Switch } from './ui';
 
 const TAG_COLORS: Record<UserTag, string> = {
   vip: 'bg-amber-500/15 text-amber-300 border-amber-500/20',
@@ -112,16 +113,17 @@ export function ModerationPanel({ onClose }: { onClose: () => void }) {
                 placeholder="@username"
                 className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm outline-none transition focus:border-like-500/60"
               />
-              <select
+              <Select
                 value={newTag}
-                onChange={(e) => setNewTag(e.target.value as UserTag)}
-                className="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 outline-none"
-              >
-                <option value="vip">VIP</option>
-                <option value="regular">Regular</option>
-                <option value="troll">Troll</option>
-                <option value="blocked">Blocked</option>
-              </select>
+                onValueChange={(v) => setNewTag(v as UserTag)}
+                ariaLabel="User tag"
+                options={[
+                  { value: 'vip', label: 'VIP' },
+                  { value: 'regular', label: 'Regular' },
+                  { value: 'troll', label: 'Troll' },
+                  { value: 'blocked', label: 'Blocked' },
+                ]}
+              />
               <button
                 onClick={() => {
                   if (newTagUser.trim()) {
@@ -149,14 +151,11 @@ export function ModerationPanel({ onClose }: { onClose: () => void }) {
           <section className="glass rounded-xl p-4">
             <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Spam Filter</h3>
             <div className="flex items-center gap-3 mb-3">
-              <button
-                onClick={toggleSpamFilter}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                  spamFilterEnabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-zinc-800 text-zinc-500'
-                }`}
-              >
-                {spamFilterEnabled ? 'Enabled' : 'Disabled'}
-              </button>
+              <Switch
+                checked={spamFilterEnabled}
+                onCheckedChange={toggleSpamFilter}
+                label={spamFilterEnabled ? 'Enabled' : 'Disabled'}
+              />
               <span className="text-xs text-zinc-500">
                 Hide users who send more than
               </span>
