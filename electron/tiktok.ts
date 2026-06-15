@@ -600,6 +600,28 @@ export class TikTokSession {
       //   top level so a future shape that flattens again still works.
       const ri = state?.roomInfo?.data ?? state?.roomInfo ?? {};
       const owner = ri?.owner ?? {};
+
+      // UNREADABLE-ROOM GUARD. TikTok returns a placeholder room (only a
+      // `prompts` field — no owner/title/user_count) when the room can't be
+      // read: the user is OFFLINE, or the LIVE is PRIVATE / subscriber-only
+      // (which an unauthenticated reader simply can't access). The transport
+      // then drops a beat later. Without this guard the 'disconnected' handler
+      // schedules a reconnect and the app loops forever ("stuck connecting").
+      // Detect it, surface an honest message, and tear down so we DON'T loop.
+      const hasRealRoom = !!(
+        owner?.display_id || owner?.unique_id || owner?.nickname ||
+        ri?.title || ri?.user_count || ri?.create_time
+      );
+      if (!hasRealRoom) {
+        this.destroyed = true; // makes the imminent 'disconnected' terminal
+        this.stopStallWatchdog();
+        if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+        this.nextRetryAt = null;
+        try { this.conn.disconnect(); } catch { /* ignore */ }
+        log.info(`[tiktok] @${this.username} room unreadable (prompt only) — offline or private/sub-only LIVE`);
+        this.setPhase('offline', `Can't open @${this.username}'s LIVE — they're either offline or running a private/subscriber-only LIVE, which can only be read for public streams.`);
+        return;
+      }
       const su = ri?.stream_url ?? ri?.streamUrl ?? {};
       const hasConnectorStreamUrl = !!su && Object.keys(su).length > 0;
       if (!hasConnectorStreamUrl) {
