@@ -99,6 +99,25 @@ export function setColdResolver(fn: (uniqueId: string) => boolean | null) {
   };
 }
 
+/**
+ * BATCHED cold resolver: given the candidate VIP/Whale fan ids, return a map
+ * uid -> isCold computed in ONE strength pass. Injected by main.ts so
+ * `listReminders` doesn't invoke the per-fan resolver (each of which used to do a
+ * full ledger read + session re-scan) once per VIP/Whale. Fail-safe: any error
+ * yields an empty map and `listReminders` falls back to the per-fan resolver,
+ * then to the legacy lastSeenAt heuristic.
+ */
+let coldResolverBatch: ((ids: string[]) => Map<string, boolean>) | null = null;
+export function setColdResolverBatch(fn: (ids: string[]) => Map<string, boolean>) {
+  coldResolverBatch = (ids: string[]) => {
+    try {
+      return fn(ids);
+    } catch {
+      return new Map();
+    }
+  };
+}
+
 /** Diamond thresholds (mirrors web tier.ts shape; unit here is diamonds). */
 export function tierForDiamonds(d: number): Tier {
   const t = rulesGetter().tiers;
@@ -152,6 +171,20 @@ let giftBuffer: string[] = [];
 let fansDirty = false;
 let flushTimer: NodeJS.Timeout | null = null;
 const FLUSH_MS = 2000;
+
+/**
+ * In-memory cache of the parsed gift ledger. The old code re-read + re-parsed
+ * the entire gifts.jsonl file on EVERY readAllGifts() call (and the fans:list /
+ * reminders paths call it hundreds of times), which is the O(N_fans × ledger)
+ * blowup behind the slow Followers page. We now parse the file ONCE, keep the
+ * array in RAM, and keep it correct by appending newly-logged gifts to the cache
+ * as they're written and invalidating it on any path that mutates the file out
+ * of band (clearAll). `giftsCache === null` means "cold — re-read from disk".
+ */
+let giftsCache: GiftRecord[] | null = null;
+function invalidateGiftsCache() {
+  giftsCache = null;
+}
 
 /**
  * Pull the uniqueId->Fan map out of either the versioned envelope
@@ -248,8 +281,14 @@ function scheduleFlush() {
  * data — we never let them sit in the in-memory buffer waiting for the 2s
  * debounce, so the crash-loss window for a gift is effectively zero.
  * Falls back to buffering only if the immediate append fails.
+ *
+ * Also keeps the in-memory gifts cache coherent: the parsed `rec` is pushed onto
+ * the warm cache so a freshly-logged gift is visible to readAllGifts() without a
+ * full re-read. (If the cache is cold it stays cold and re-reads lazily, which
+ * already includes the just-written line.)
  */
-function appendGiftNow(line: string) {
+function appendGiftNow(rec: GiftRecord) {
+  const line = JSON.stringify(rec) + '\n';
   try {
     // Drain any previously-buffered gifts first to preserve order, then append.
     if (giftBuffer.length > 0) {
@@ -257,9 +296,14 @@ function appendGiftNow(line: string) {
       giftBuffer = [];
     }
     fs.appendFileSync(giftsFile(), line);
+    if (giftsCache !== null) giftsCache.push(rec);
   } catch (err) {
     console.error('[fans] immediate gift append failed, buffering:', err);
     giftBuffer.push(line); // retried on the next flush()
+    // The line isn't on disk yet, but it IS part of the ledger the user expects
+    // to see. Keep the warm cache truthful by reflecting it now; the buffered
+    // line will reach disk on the next flush() (which won't re-touch the cache).
+    if (giftsCache !== null) giftsCache.push(rec);
   }
 }
 
@@ -352,7 +396,7 @@ export function ingestLiveEvent(evt: any, sessionId?: string | null) {
         // Gifts are money — persist the record to disk immediately rather than
         // waiting for the debounced flush. The fans.json map (totals) still
         // rides the debounce via markDirty().
-        appendGiftNow(JSON.stringify(rec) + '\n');
+        appendGiftNow(rec);
         markDirty();
         break;
       }
@@ -588,14 +632,24 @@ export function logGift(payload: {
     manual: true,
     at,
   };
-  appendGiftNow(JSON.stringify(rec) + '\n');
+  appendGiftNow(rec);
   markDirty();
   flush(); // manual actions persist the fans-map immediately too
   return { ok: true };
 }
 
+/**
+ * The full parsed gift ledger, newest gifts last (file order). Cached in RAM:
+ * the file is parsed ONCE and the array reused until a gift is appended (which
+ * updates the cache in place) or the ledger is wiped (which invalidates it).
+ *
+ * IMPORTANT: callers MUST treat the returned array as read-only — it's the live
+ * cache, not a copy. Every existing caller only iterates/filters, so this is
+ * safe and avoids a per-call clone of a potentially large ledger.
+ */
 function readAllGifts(): GiftRecord[] {
-  flush();
+  flush(); // drain any buffered (retry) gift lines to disk first
+  if (giftsCache !== null) return giftsCache;
   const out: GiftRecord[] = [];
   try {
     const raw = fs.readFileSync(giftsFile(), 'utf8');
@@ -611,6 +665,7 @@ function readAllGifts(): GiftRecord[] {
   } catch {
     /* no gifts yet */
   }
+  giftsCache = out;
   return out;
 }
 
@@ -621,6 +676,43 @@ export function giftsForFan(uniqueId: string, limit = 300): GiftRecord[] {
   const rows = readAllGifts().filter((g) => g.fanUniqueId === uid);
   rows.sort((a, b) => b.at - a.at);
   return rows.slice(0, Math.max(1, limit));
+}
+
+/** Per-fan gift aggregates over a window, derived in a SINGLE ledger pass. */
+export type FanGiftAggregate = {
+  /** diamonds received since the window start. */
+  diamonds30d: number;
+  /** count of gift records since the window start. */
+  gifts30d: number;
+  /** epoch ms of the fan's most recent gift (all-time), or null. */
+  lastGiftAt: number | null;
+};
+
+/**
+ * Batched alternative to calling diamondsSince()/giftsForFan() per fan: walk the
+ * gift ledger ONCE and bucket per-fan aggregates over the [sinceMs, ∞) window.
+ * This turns the fans:list / reminders strength pass from O(N_fans × ledger)
+ * into O(ledger). Fail-safe: a read error yields an empty map, never throws.
+ */
+export function giftAggregatesByFan(sinceMs: number): Map<string, FanGiftAggregate> {
+  const map = new Map<string, FanGiftAggregate>();
+  try {
+    for (const g of readAllGifts()) {
+      let agg = map.get(g.fanUniqueId);
+      if (!agg) {
+        agg = { diamonds30d: 0, gifts30d: 0, lastGiftAt: null };
+        map.set(g.fanUniqueId, agg);
+      }
+      if (g.at >= sinceMs) {
+        agg.diamonds30d += g.diamonds;
+        agg.gifts30d += 1;
+      }
+      if (agg.lastGiftAt === null || g.at > agg.lastGiftAt) agg.lastGiftAt = g.at;
+    }
+  } catch (err) {
+    console.error('[fans] giftAggregatesByFan failed:', err);
+  }
+  return map;
 }
 
 /** Sum of diamonds a fan received since `sinceMs`. */
@@ -753,8 +845,19 @@ export function listReminders(withinDays?: number): Reminder[] {
     return false;
   };
 
+  // Compute the cold map for ALL VIP/Whale fans in ONE batched strength pass
+  // (instead of the per-fan resolver re-reading the ledger + sessions each call).
+  // Falls back to the per-fan resolver / legacy heuristic for any fan the batch
+  // doesn't cover, so behavior is identical and still fail-safe.
+  const fanList = [...loadFans().values()];
+  const bigFishIds = fanList
+    .filter((f) => { const t = withTier(f).tier; return t === 'VIP' || t === 'Whale'; })
+    .map((f) => f.uniqueId);
+  const coldMap: Map<string, boolean> =
+    coldResolverBatch && bigFishIds.length > 0 ? coldResolverBatch(bigFishIds) : new Map();
+
   const out: Reminder[] = [];
-  for (const f of loadFans().values()) {
+  for (const f of fanList) {
     const fan = withTier(f);
     if (f.birthday) {
       const days = birthdayDaysAway(f.birthday);
@@ -770,7 +873,8 @@ export function listReminders(withinDays?: number): Reminder[] {
       // encodes the cold-VIP override + uses lastInteractionAt across
       // gifts/sessions/notes, not just lastSeenAt). Fall back to the legacy
       // lastSeenAt heuristic only when the resolver isn't wired (boot/tests).
-      const resolved = coldResolver ? coldResolver(f.uniqueId) : null;
+      const batched = coldMap.has(f.uniqueId) ? coldMap.get(f.uniqueId)! : null;
+      const resolved = batched !== null ? batched : (coldResolver ? coldResolver(f.uniqueId) : null);
       const daysSince = f.lastSeenAt ? Math.floor((now - f.lastSeenAt) / 86400000) : 9999;
       const isCold = resolved !== null ? resolved : (!!f.lastSeenAt && daysSince > rules.quietDays);
       if (isCold) {
@@ -983,6 +1087,7 @@ export function clearAll(): { ok: boolean } {
   reminderEvents = [];
   thankRequests = [];
   giftBuffer = [];
+  invalidateGiftsCache();
   fansDirty = true;
   try {
     fs.rmSync(giftsFile(), { force: true });

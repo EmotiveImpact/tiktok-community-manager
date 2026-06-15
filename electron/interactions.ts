@@ -189,6 +189,37 @@ export function listInteractions(fanId: string): Interaction[] {
   }
 }
 
+export type InteractionAggregate = {
+  /** count of interactions in the [sinceMs, ∞) window. */
+  recentCount: number;
+  /** epoch ms of this fan's most-recent interaction (all-time), or null. */
+  lastAt: number | null;
+};
+
+/**
+ * Batched per-fan interaction aggregates in ONE pass over the cache. Mirrors the
+ * per-fan derivation `strengthForFan` did (count in last 30d + newest occurredAt)
+ * but for ALL fans at once, so the fans:list / reminders strength pass doesn't
+ * call listInteractions() per fan. Fail-safe: returns an empty map on error.
+ */
+export function interactionAggregatesByFan(sinceMs: number): Map<string, InteractionAggregate> {
+  const map = new Map<string, InteractionAggregate>();
+  try {
+    for (const rec of load()) {
+      let agg = map.get(rec.fanId);
+      if (!agg) {
+        agg = { recentCount: 0, lastAt: null };
+        map.set(rec.fanId, agg);
+      }
+      if (rec.occurredAt >= sinceMs) agg.recentCount++;
+      if (agg.lastAt === null || rec.occurredAt > agg.lastAt) agg.lastAt = rec.occurredAt;
+    }
+  } catch (err) {
+    console.error('[interactions] interactionAggregatesByFan failed:', err);
+  }
+  return map;
+}
+
 // ---------------------------------------------------------------------------
 // timeline merge
 
