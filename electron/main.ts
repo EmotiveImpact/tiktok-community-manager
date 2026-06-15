@@ -23,6 +23,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Tier/quiet/birthday thresholds come from the settings store (Settings → Community rules).
 fans.setRulesGetter(() => settings.get('community', DEFAULT_COMMUNITY));
 
+// ONE definition of "cold": reminders defer to the strength engine (same source
+// the Followers "Going cold" segment, dashboard watchlist + profile header use).
+// Fail-safe: any error → null, and fans.ts falls back to its legacy heuristic.
+fans.setColdResolver((uniqueId) => {
+  try {
+    return crm.strengthForFan(uniqueId).result.temperature === 'cold';
+  } catch {
+    return null;
+  }
+});
+
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
 let mainWindow: BrowserWindow | null = null;

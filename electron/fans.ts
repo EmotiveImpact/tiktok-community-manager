@@ -81,6 +81,24 @@ export function setRulesGetter(fn: () => CommunityRules) {
   };
 }
 
+/**
+ * Injected by main.ts so `listReminders` can ask the STRENGTH ENGINE whether a
+ * fan is "cold" — the single source of truth shared with the Followers segment,
+ * the dashboard watchlist and the profile header. Without injection (e.g. early
+ * boot or tests) we fall back to the legacy lastSeenAt heuristic so reminders
+ * never break. Returns 'cold' | other-temperature | null (null = unknown).
+ */
+let coldResolver: ((uniqueId: string) => boolean | null) | null = null;
+export function setColdResolver(fn: (uniqueId: string) => boolean | null) {
+  coldResolver = (uid: string) => {
+    try {
+      return fn(uid);
+    } catch {
+      return null;
+    }
+  };
+}
+
 /** Diamond thresholds (mirrors web tier.ts shape; unit here is diamonds). */
 export function tierForDiamonds(d: number): Tier {
   const t = rulesGetter().tiers;
@@ -747,9 +765,15 @@ export function listReminders(withinDays?: number): Reminder[] {
         }
       }
     }
-    if ((fan.tier === 'VIP' || fan.tier === 'Whale') && f.lastSeenAt) {
-      const daysSince = Math.floor((now - f.lastSeenAt) / 86400000);
-      if (daysSince > rules.quietDays) {
+    if (fan.tier === 'VIP' || fan.tier === 'Whale') {
+      // ONE definition of "cold": defer to the strength engine (which already
+      // encodes the cold-VIP override + uses lastInteractionAt across
+      // gifts/sessions/notes, not just lastSeenAt). Fall back to the legacy
+      // lastSeenAt heuristic only when the resolver isn't wired (boot/tests).
+      const resolved = coldResolver ? coldResolver(f.uniqueId) : null;
+      const daysSince = f.lastSeenAt ? Math.floor((now - f.lastSeenAt) / 86400000) : 9999;
+      const isCold = resolved !== null ? resolved : (!!f.lastSeenAt && daysSince > rules.quietDays);
+      if (isCold) {
         // bucket by month so a "done" silences it for ~30 days
         const bucket = Math.floor(now / (30 * 86400000));
         const id = `quiet:${f.uniqueId}:${bucket}`;

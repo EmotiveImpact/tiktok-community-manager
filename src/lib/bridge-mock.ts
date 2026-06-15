@@ -863,9 +863,12 @@ export function installBridgeMock(): void {
           }
         }
         if ((f.tier === 'VIP' || f.tier === 'Whale')) {
+          // ONE definition of "cold" — defer to the same strength engine the
+          // Followers segment + profile header use (mirrors the desktop wiring).
+          const s = f.uniqueId === 'kendraaax2' ? KENDRA_OVERRIDE : mockStrength(raw);
           const daysSince = Math.floor((Date.now() - f.lastSeenAt) / day);
           const id = `quiet:${f.uniqueId}:0`;
-          if (daysSince > rules.quietDays && !reminderHidden.has(id)) out.push({ id, kind: 'quiet', fan: f, days: daysSince });
+          if (s.temperature === 'cold' && !reminderHidden.has(id)) out.push({ id, kind: 'quiet', fan: f, days: daysSince });
         }
       }
       for (const t of thankRequests) {
