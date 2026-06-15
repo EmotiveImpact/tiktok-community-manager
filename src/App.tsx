@@ -31,6 +31,7 @@ import { CreatorAnalytics } from './components/CreatorAnalytics';
 import { FollowerWatchlist } from './components/FollowerWatchlist';
 import { TranscriptPanel } from './components/TranscriptPanel';
 import { CommandPalette } from './components/CommandPalette';
+import { FanPeek } from './components/FanPeek';
 import { HighlightsPanel } from './components/HighlightsPanel';
 import { LikerPanel } from './components/LikerPanel';
 import { FanNotesPanel } from './components/FanNotesPanel';
@@ -166,7 +167,8 @@ export default function App() {
   const showStream = useUI((s) => s.showStream);
   const setShowStream = useUI((s) => s.setShowStream);
   const playerMinimized = useUI((s) => s.playerMinimized);
-  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const commandOpen = useUI((s) => s.commandOpen);
+  const setCommandOpen = useUI((s) => s.setCommandOpen);
   const setStatus = useStore((s) => s.setStatus);
   const ingest = useStore((s) => s.ingest);
   const status = useStore((s) => s.status);
@@ -228,8 +230,16 @@ export default function App() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       const mod = e.metaKey || e.ctrlKey;
+      // ⌘K is GLOBAL — it toggles the palette from any page and even while a
+      // field is focused (Superhuman-style). Handle it before the input guard.
+      if (mod && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        useUI.getState().setCommandOpen((v) => !v);
+        return;
+      }
+      // Every other shortcut stays inert while typing in a field.
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       if (mod && e.key === '1') { e.preventDefault(); setTab('comments'); }
       if (mod && e.key === '2') { e.preventDefault(); setTab('gifts'); }
       if (mod && e.key === '3') { e.preventDefault(); setTab('questions'); }
@@ -243,9 +253,8 @@ export default function App() {
       if (mod && e.key === 'i') { e.preventDefault(); toggleTool('insights'); }
       if (mod && e.key === 'w') { e.preventDefault(); ui.setShowStream((v) => !v); ui.setPlayerMinimized(false); }
       if (mod && e.key === 't') { e.preventDefault(); toggleTool('transcript'); }
-      if (mod && e.key === 'k') { e.preventDefault(); setShowCommandPalette((v) => !v); }
       if (e.key === 'Escape') {
-        setShowCommandPalette(false);
+        useUI.getState().setCommandOpen(false);
         // Esc backs an in-content tool out to the live feed
         if (ui.page === 'live' && ui.liveTool !== 'feed') ui.openLiveTool('feed');
       }
@@ -365,10 +374,24 @@ export default function App() {
       />
 
       <UserDetailDrawer />
-      {showCommandPalette && (
+
+      {/* Global universal Fan PEEK — mounted ONCE so it overlays every page. */}
+      <FanPeek />
+
+      {commandOpen && (
         <CommandPalette
-          onClose={() => setShowCommandPalette(false)}
+          onClose={() => setCommandOpen(false)}
           commands={[
+            // Page navigation — available on every page.
+            { id: 'go-dashboard', label: 'Go to Dashboard', group: 'Go to', icon: '🏠', run: () => setPage('dashboard') },
+            { id: 'go-live', label: 'Go to Live', group: 'Go to', icon: '📡', run: () => setPage('live') },
+            { id: 'go-followers', label: 'Go to Followers', group: 'Go to', icon: '👥', run: () => setPage('followers') },
+            { id: 'go-gifts', label: 'Go to Gifts', group: 'Go to', icon: '🎁', run: () => setPage('gifts') },
+            { id: 'go-reminders', label: 'Go to Reminders', group: 'Go to', icon: '⏰', run: () => setPage('reminders') },
+            { id: 'go-messages', label: 'Go to Messages', group: 'Go to', icon: '💬', run: () => setPage('messages') },
+            { id: 'go-import', label: 'Go to Import', group: 'Go to', icon: '📥', run: () => setPage('import') },
+            { id: 'go-settings', label: 'Go to Settings', group: 'Go to', icon: '⚙️', run: () => setPage('settings') },
+            // Live tabs (only meaningful on the live page, but harmless elsewhere).
             { id: 'tab-comments', label: 'Switch to Comments', hint: '⌘1', group: 'Tabs', icon: '💬', run: () => setTab('comments') },
             { id: 'tab-gifts', label: 'Switch to Gifts', hint: '⌘2', group: 'Tabs', icon: '🎁', run: () => setTab('gifts') },
             { id: 'tab-questions', label: 'Switch to Q&A', hint: '⌘3', group: 'Tabs', icon: '❓', run: () => setTab('questions') },
