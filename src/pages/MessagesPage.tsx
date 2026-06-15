@@ -1,5 +1,5 @@
 /**
- * 💬 Messages — embedded TikTok web (your own session) + follow-up list.
+ * 💬 Messages — embedded TikTok web (your own session) + reach-out rail.
  *
  * LEFT: a plain user-driven <webview> on https://www.tiktok.com/messages.
  * The user logs in inside it once; the session lives in its own persistent
@@ -9,21 +9,23 @@
  * type on the user's behalf. The webview is just a browser pane. Navigation is
  * allowlisted to tiktok.com (+ login hosts) in electron/main.ts.
  *
- * RIGHT: "Follow-up list" — our OWN ledger's reminders (thank-after-LIVE,
- * birthdays, quiet VIPs). Copy the message, open their profile in the webview,
- * and send it yourself.
+ * RIGHT: the SAME reach-out list as the Reach-out workspace (Reminders page) —
+ * same items, same reason lines, same action set (💌 Thank · 💬 Open chat ·
+ * 💤 Snooze · ✓ Done) via the shared ReachOutRow + useReachOut. One source of
+ * truth: a Done/Snooze here reflects on the Reach-out page after refresh. The
+ * one Messages-specific twist: "Open chat" navigates the embedded webview to the
+ * fan's profile (the whole point of this page) instead of an external browser.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, RotateCw, Lock, MessageSquare, UserRound,
-  Heart, Cake, Clock, Copy, ExternalLink, Check, Settings as SettingsIcon,
+  Settings as SettingsIcon,
 } from 'lucide-react';
-import type { Reminder } from '../types';
 import { useUI } from '../state/ui';
-import { useAlerts } from '../state/alerts';
-import { copyText, buildThankMessage } from '../components/ThankComposer';
-import { FanAvatar, TierChip, fanName } from '../components/crm';
+import { ThankComposer } from '../components/ThankComposer';
+import { fanName } from '../components/crm';
 import { Tooltip } from '../components/ui';
+import { ReachOutRow, useReachOut } from './Reminders';
 
 const TIKTOK_MESSAGES_URL = 'https://www.tiktok.com/messages';
 /** Realistic Chrome UA — TikTok web blocks/limits the default Electron UA. */
@@ -47,27 +49,9 @@ interface WebviewEl extends HTMLElement {
 /** The <webview> tag only exists inside Electron — browser demo gets a placeholder. */
 const IS_ELECTRON = typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron');
 
-const KIND_ORDER: Record<Reminder['kind'], number> = { thank: 0, birthday: 1, quiet: 2 };
-
-function reasonFor(r: Reminder): string {
-  if (r.kind === 'thank') {
-    return r.days === 0 ? 'Sent gifts in your last LIVE — say thanks' : `Gifted ${r.days} day${r.days === 1 ? '' : 's'} ago — say thanks`;
-  }
-  if (r.kind === 'birthday') {
-    return r.days === 0 ? 'Birthday today! 🎂' : `Birthday in ${r.days} day${r.days === 1 ? '' : 's'}`;
-  }
-  return `Quiet for ${r.days} days`;
-}
-
-function KindIcon({ kind }: { kind: Reminder['kind'] }) {
-  if (kind === 'thank') return <Heart size={13} className="flex-none" style={{ color: '#ff5b85' }} fill="#ff5b85" />;
-  if (kind === 'birthday') return <Cake size={13} className="flex-none" style={{ color: '#f59e0b' }} />;
-  return <Clock size={13} className="flex-none" style={{ color: '#a78bfa' }} />;
-}
-
 export function MessagesPage() {
-  const pushToast = useAlerts((s) => s.pushToast);
   const setPage = useUI((s) => s.setPage);
+  const openFanPeek = useUI((s) => s.openFanPeek);
   const messagesFanFocus = useUI((s) => s.messagesFanFocus);
   const setMessagesFanFocus = useUI((s) => s.setMessagesFanFocus);
 
@@ -76,21 +60,8 @@ export function MessagesPage() {
   /** Focus values we've already navigated for (or that came from local row clicks). */
   const consumedFocus = useRef<string | null>(null);
 
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [leaving, setLeaving] = useState<Set<string>>(new Set());
-
-  const refresh = useCallback(() => {
-    window.tiktok.remindersList()
-      .then((r) => {
-        const sorted = [...(r ?? [])].sort((a, b) =>
-          KIND_ORDER[a.kind] !== KIND_ORDER[b.kind] ? KIND_ORDER[a.kind] - KIND_ORDER[b.kind] : a.days - b.days);
-        setReminders(sorted);
-        setLoaded(true);
-      })
-      .catch(() => setLoaded(true));
-  }, []);
-  useEffect(() => { refresh(); }, [refresh]);
+  const { reminders, loaded, refresh, snooze, markDone } = useReachOut();
+  const [thankFan, setThankFan] = useState<{ uniqueId: string; nickname?: string } | null>(null);
 
   // Webview navigation chrome (read-only: we only listen to navigation events).
   const attachWebview = useCallback((el: WebviewEl | null) => {
@@ -129,37 +100,21 @@ export function MessagesPage() {
     setMessagesFanFocus(uniqueId);
   };
 
-  const copyFor = async (r: Reminder) => {
-    const { message } = await buildThankMessage(r.fan.uniqueId, fanName(r.fan));
-    const ok = await copyText(message);
-    pushToast(ok
-      ? { title: 'Copied — paste it in TikTok', body: `Message for @${r.fan.uniqueId}` }
-      : { title: 'Copy failed', body: 'Open the composer and copy manually' });
+  // Row body click → select (drives webview "Profile" button) AND peek for a glance.
+  const onBody = (uniqueId: string) => {
+    selectRow(uniqueId);
+    openFanPeek(uniqueId);
   };
 
-  const openChat = (r: Reminder) => {
-    selectRow(r.fan.uniqueId);
+  // "Open chat" on the Messages page = navigate the embedded webview to the fan
+  // (or external browser in the demo) — keeps the page's whole point intact.
+  const onOpenChat = (uniqueId: string) => {
+    selectRow(uniqueId);
     if (IS_ELECTRON) {
-      navigateTo(profileUrl(r.fan.uniqueId));
+      navigateTo(profileUrl(uniqueId));
     } else {
-      window.tiktok.openExternal(profileUrl(r.fan.uniqueId)).catch(() => {});
+      window.tiktok.openExternal(profileUrl(uniqueId)).catch(() => {});
     }
-  };
-
-  const markDone = async (r: Reminder) => {
-    setLeaving((s) => new Set(s).add(r.id));
-    // Let the row animate out before it disappears from the list.
-    await new Promise((res) => setTimeout(res, 260));
-    const res = r.kind === 'thank'
-      ? await window.tiktok.fansMarkThanked(r.fan.uniqueId)
-      : await window.tiktok.reminderAction({ id: r.id, action: 'done' });
-    if (res.ok) {
-      pushToast({ title: r.kind === 'thank' ? 'Marked thanked 💌' : 'Marked done', body: `@${r.fan.uniqueId}` });
-    } else {
-      pushToast({ title: 'Action failed', body: res.error ?? 'Unknown error' });
-    }
-    setLeaving((s) => { const n = new Set(s); n.delete(r.id); return n; });
-    refresh();
   };
 
   const selected = messagesFanFocus;
@@ -200,7 +155,7 @@ export function MessagesPage() {
                 <MessageSquare size={12} /> Messages
               </button>
             </Tooltip>
-            <Tooltip content={selected ? `Open @${selected}'s profile` : 'Select a fan in the follow-up list first'}>
+            <Tooltip content={selected ? `Open @${selected}'s profile` : 'Select a fan in the reach-out list first'}>
               <button
                 onClick={() => selected && navigateTo(profileUrl(selected))}
                 disabled={!selected}
@@ -230,18 +185,18 @@ export function MessagesPage() {
               <h2 className="text-base font-extrabold">TikTok web embeds inside the desktop app</h2>
               <p className="max-w-sm text-[13px]" style={{ color: 'var(--secondary-label)' }}>
                 In the desktop app this pane is tiktok.com/messages with your own login —
-                you read and send every message yourself. The follow-up list on the right works everywhere.
+                you read and send every message yourself. The reach-out list on the right works everywhere.
               </p>
             </div>
           )}
         </div>
       </section>
 
-      {/* RIGHT — Follow-up list (our ledger only) */}
-      <aside className="glass flex w-[300px] flex-none flex-col overflow-hidden" style={{ borderRadius: 18 }}>
+      {/* RIGHT — Reach-out list (shared with the Reach-out workspace) */}
+      <aside className="glass flex w-[320px] flex-none flex-col overflow-hidden" style={{ borderRadius: 18 }}>
         <header className="flex flex-none items-center gap-2 border-b px-3.5 py-3" style={{ borderColor: 'var(--separator)' }}>
           <span className="min-w-0 flex-1 leading-tight">
-            <span className="block text-[13px] font-extrabold">Follow-up list</span>
+            <span className="block text-[13px] font-extrabold">Reach out</span>
             <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>
               {reminders.length === 0 ? 'Nobody waiting' : `${reminders.length} ${reminders.length === 1 ? 'person' : 'people'} to reach out to`}
             </span>
@@ -264,59 +219,32 @@ export function MessagesPage() {
             </div>
           ) : (
             <ul>
-              {reminders.map((r) => {
-                const isLeaving = leaving.has(r.id);
-                const isSelected = selected === r.fan.uniqueId;
-                return (
-                  <li
-                    key={r.id}
-                    onClick={() => selectRow(r.fan.uniqueId)}
-                    className="mb-1.5 cursor-pointer rounded-xl p-2.5 transition-all duration-300"
-                    style={{
-                      background: isSelected ? 'rgba(238,29,82,0.10)' : 'var(--fill-thin)',
-                      border: `1px solid ${isSelected ? 'rgba(238,29,82,0.35)' : 'var(--card-border)'}`,
-                      opacity: isLeaving ? 0 : 1,
-                      transform: isLeaving ? 'translateX(24px)' : 'none',
-                    }}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FanAvatar name={fanName(r.fan)} url={r.fan.avatarUrl} size={30} />
-                      <span className="min-w-0 flex-1 leading-tight">
-                        <span className="flex items-center gap-1.5">
-                          <span className="truncate text-[12px] font-bold">{fanName(r.fan)}</span>
-                          <TierChip tier={r.fan.tier} />
-                        </span>
-                        <span className="block truncate text-[11px]" style={{ color: 'var(--secondary-label)' }}>@{r.fan.uniqueId}</span>
-                      </span>
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--secondary-label)' }}>
-                      <KindIcon kind={r.kind} />
-                      <span className="truncate">{reasonFor(r)}</span>
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5">
-                      <Tooltip content="Copy thank-you message (from your template)">
-                        <button onClick={(e) => { e.stopPropagation(); copyFor(r); }} className="panel-btn no-drag flex-1">
-                          <Copy size={11} /> Copy
-                        </button>
-                      </Tooltip>
-                      <Tooltip content="Open their profile in the TikTok pane — tap Message there">
-                        <button onClick={(e) => { e.stopPropagation(); openChat(r); }} className="panel-btn no-drag flex-1">
-                          <ExternalLink size={11} /> Open chat
-                        </button>
-                      </Tooltip>
-                      <Tooltip content="Done — clears this reminder">
-                        <button onClick={(e) => { e.stopPropagation(); markDone(r); }} className="panel-btn panel-btn-primary panel-btn-icon no-drag" aria-label="Done">
-                          <Check size={13} />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </li>
-                );
-              })}
+              {reminders.map((r) => (
+                <ReachOutRow
+                  key={r.id}
+                  r={r}
+                  compact
+                  selected={selected === r.fan.uniqueId}
+                  onThank={(rr) => setThankFan({ uniqueId: rr.fan.uniqueId, nickname: fanName(rr.fan) })}
+                  onSnooze={snooze}
+                  onDone={markDone}
+                  onOpenChat={(rr) => onOpenChat(rr.fan.uniqueId)}
+                  onBody={(rr) => onBody(rr.fan.uniqueId)}
+                />
+              ))}
             </ul>
           )}
         </div>
       </aside>
+
+      {thankFan && (
+        <ThankComposer
+          uniqueId={thankFan.uniqueId}
+          nickname={thankFan.nickname}
+          onClose={() => setThankFan(null)}
+          onThanked={refresh}
+        />
+      )}
     </div>
   );
 }
