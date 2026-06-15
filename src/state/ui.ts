@@ -26,15 +26,7 @@ const LIVE_TOOLS: LiveTool[] = [
 ];
 export type FeedFilter = 'all' | 'followers' | 'subs' | 'mods' | 'gifters';
 
-export type StreamNote = {
-  id: string;
-  ts: number;
-  text: string;
-  /** uniqueId when the note mentioned @user and was synced to their fan notes */
-  syncedTo?: string;
-};
-
-const PAGES: Page[] = ['dashboard', 'live', 'followers', 'gifts', 'reminders', 'messages', 'import', 'settings', 'fan'];
+const PAGES: Page[] =['dashboard', 'live', 'followers', 'gifts', 'reminders', 'messages', 'import', 'settings', 'fan'];
 
 function initialPage(): Page {
   try {
@@ -53,8 +45,6 @@ function initialTool(): LiveTool {
     return 'feed';
   }
 }
-
-let noteCounter = 0;
 
 type UIState = {
   page: Page;
@@ -108,11 +98,6 @@ type UIState = {
   fanMemoryId: string | null;
   fanMemoryPinned: boolean;
   focusFanMemory: (uniqueId: string | null, opts?: { auto?: boolean }) => void;
-
-  /** Personal stream notes for the current session (read-only connector → in-memory). */
-  streamNotes: StreamNote[];
-  addStreamNote: (text: string, syncedTo?: string) => StreamNote;
-  clearStreamNotes: () => void;
 };
 
 /** Seed fanFocus from ?fan= so the `?page=fan&fan=…` deep-link renders the profile. */
@@ -180,12 +165,4 @@ export const useUI = create<UIState>((set, get) => ({
       set({ fanMemoryId: uniqueId, fanMemoryPinned: uniqueId !== null });
     }
   },
-
-  streamNotes: [],
-  addStreamNote: (text, syncedTo) => {
-    const note: StreamNote = { id: `note-${Date.now()}-${noteCounter++}`, ts: Date.now(), text, syncedTo };
-    set((s) => ({ streamNotes: [note, ...s.streamNotes] }));
-    return note;
-  },
-  clearStreamNotes: () => set({ streamNotes: [] }),
 }));

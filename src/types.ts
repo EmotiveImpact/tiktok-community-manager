@@ -436,10 +436,6 @@ declare global {
       }>;
       openProfile: (uniqueId: string) => Promise<{ ok: boolean }>;
       openProfileInternal: (uniqueId: string) => Promise<{ ok: boolean }>;
-      notesGet: (uniqueId: string) => Promise<UserNote | null>;
-      notesAll: () => Promise<Record<string, UserNote>>;
-      notesSet: (payload: { uniqueId: string; nickname: string; notes: string }) => Promise<UserNote>;
-      notesDelete: (uniqueId: string) => Promise<{ ok: boolean }>;
       sessionsList: () => Promise<SessionSummary[]>;
       sessionsGet: (id: string) => Promise<SessionRecord | null>;
       sessionsDelete: (id: string) => Promise<{ ok: boolean }>;

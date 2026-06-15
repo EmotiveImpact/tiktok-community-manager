@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
+import { useUI } from '../state/ui';
 import { formatNumber, timeAgo } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 import { UserBadges } from './UserBadges';
 import { Dialog } from './ui/Dialog';
 import { useTracked } from '../state/tracked';
-import type { UserBrief, UserNote, LiveEvent, UserHistoricalTally } from '../types';
+import type { UserBrief, LiveEvent, UserHistoricalTally } from '../types';
 
 export function UserDetailDrawer() {
   const selectedUserId = useStore((s) => s.selectedUserId);
   const selectUser = useStore((s) => s.selectUser);
   const tallies = useStore((s) => s.tallies);
   const recentForUser = useStore((s) => s.recentForUser);
+  const openFanProfile = useUI((s) => s.openFanProfile);
 
   const tally = selectedUserId ? tallies.get(selectedUserId) : null;
   const user: UserBrief | null = tally?.user ?? null;
@@ -20,9 +22,14 @@ export function UserDetailDrawer() {
   const removeTracked = useTracked((s) => s.remove);
   const tracked = selectedUserId ? isTracked(selectedUserId) : false;
 
+  // Pinned "About" — the canonical fan.notes blob (NOT the retired notesStore).
   const [note, setNote] = useState('');
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [savingFlash, setSavingFlash] = useState(false);
+  const [inLedger, setInLedger] = useState(false);
+  // Quick dated note → the fan's timeline (the same log the 360 profile shows).
+  const [noteDraft, setNoteDraft] = useState('');
+  const [noteAdded, setNoteAdded] = useState(false);
   const [historical, setHistorical] = useState<UserHistoricalTally | null>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedFor = useRef<string | null>(null);
@@ -30,11 +37,14 @@ export function UserDetailDrawer() {
   useEffect(() => {
     if (!selectedUserId) return;
     loadedFor.current = selectedUserId;
-    window.tiktok.notesGet(selectedUserId).then((n) => {
+    setNoteDraft('');
+    setNoteAdded(false);
+    window.tiktok.fansGet(selectedUserId).then((f) => {
       if (loadedFor.current !== selectedUserId) return;
-      setNote(n?.notes ?? '');
-      setSavedAt(n?.updatedAt ?? null);
-    });
+      setNote(f?.notes ?? '');
+      setInLedger(!!f);
+      setSavedAt(null);
+    }).catch(() => {});
     window.tiktok.sessionsUserTallies(selectedUserId).then((t) => {
       if (loadedFor.current !== selectedUserId) return;
       setHistorical(t);
@@ -46,19 +56,35 @@ export function UserDetailDrawer() {
     if (loadedFor.current !== selectedUserId) return;
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(async () => {
-      const saved = await window.tiktok.notesSet({
-        uniqueId: selectedUserId,
-        nickname: user.nickname,
-        notes: note,
-      });
-      setSavedAt(saved.updatedAt);
-      setSavingFlash(true);
-      setTimeout(() => setSavingFlash(false), 700);
+      // Ensure the fan exists, then persist the About onto the fan record.
+      await window.tiktok.fansAdd({ uniqueId: selectedUserId, nickname: user.nickname }).catch(() => {});
+      const res = await window.tiktok.fansUpdate(selectedUserId, { notes: note }).catch(() => null);
+      if (res?.ok) {
+        setInLedger(true);
+        setSavedAt(Date.now());
+        setSavingFlash(true);
+        setTimeout(() => setSavingFlash(false), 700);
+      }
     }, 500);
     return () => {
       if (debounce.current) clearTimeout(debounce.current);
     };
   }, [note, selectedUserId, user]);
+
+  const addDatedNote = async () => {
+    const text = noteDraft.trim();
+    if (!text || !selectedUserId || !user) return;
+    setNoteDraft('');
+    await window.tiktok.fansAdd({ uniqueId: selectedUserId, nickname: user.nickname }).catch(() => {});
+    const res = await window.tiktok.fansAddNote(selectedUserId, text).catch(() => null);
+    if (res?.ok) {
+      setInLedger(true);
+      setNoteAdded(true);
+      setTimeout(() => setNoteAdded(false), 1600);
+    } else {
+      setNoteDraft(text);
+    }
+  };
 
   const recent: LiveEvent[] = useMemo(
     () => (selectedUserId ? recentForUser(selectedUserId, 30) : []),
@@ -131,10 +157,10 @@ export function UserDetailDrawer() {
 
         <section className="px-4">
           <div className="mb-1 flex items-baseline justify-between">
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Notes</label>
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">📌 About — pinned</label>
             <span className={`text-[10px] ${savingFlash ? 'text-[var(--green)]' : 'text-zinc-600'}`}>
               {savingFlash
-                ? 'Saved'
+                ? 'Saved ✓'
                 : savedAt
                   ? `Updated ${timeAgo(savedAt)} ago`
                   : 'Auto-saves as you type'}
@@ -143,10 +169,36 @@ export function UserDetailDrawer() {
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Remember key facts: real name, interests, where they're from, how you met, VIP status..."
+            placeholder="One stable summary: real name, interests, how you met, how they like to be thanked…"
             rows={4}
             className="w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-sm leading-relaxed outline-none transition focus:border-like-500/60"
           />
+
+          {/* Dated note → the fan's timeline (canonical log). */}
+          <div className="mt-3 mb-1 flex items-baseline justify-between">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">✍️ Add a dated note</label>
+            {noteAdded && <span className="text-[10px] font-semibold text-[var(--green)]">added ✓</span>}
+          </div>
+          <div className="flex items-end gap-2">
+            <textarea
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addDatedNote(); } }}
+              placeholder="Something that happened — lands on their timeline"
+              rows={2}
+              className="min-w-0 flex-1 resize-none rounded-lg border border-zinc-800 bg-zinc-900 p-2.5 text-sm leading-relaxed outline-none transition focus:border-like-500/60"
+            />
+            <button
+              onClick={addDatedNote}
+              disabled={!noteDraft.trim()}
+              className="flex-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-40"
+            >
+              Add
+            </button>
+          </div>
+          {!inLedger && (
+            <p className="mt-1.5 text-[10px] text-zinc-600">Saving a note adds @{user.uniqueId} to your fan ledger.</p>
+          )}
         </section>
 
         <section className="mt-3 flex min-h-0 flex-1 flex-col px-4 pb-4">
@@ -187,30 +239,18 @@ export function UserDetailDrawer() {
             {tracked ? '★ Tracked' : '☆ Track'}
           </button>
           <button
-            onClick={() => window.tiktok.openProfileInternal(user.uniqueId)}
-            className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
+            onClick={() => { selectUser(null); openFanProfile(user.uniqueId); }}
+            className="rounded-lg border border-like-500/60 bg-like-500/10 px-3 py-2 text-xs font-bold text-like-300 hover:bg-like-500/20"
+            title="See this fan's full 360 profile"
           >
-            Profile
+            Open full profile →
           </button>
           <button
             onClick={() => window.tiktok.openProfile(user.uniqueId)}
-            className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
+            className="ml-auto rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
             title="Open in default browser"
           >
             Browser ↗
-          </button>
-          <button
-            onClick={async () => {
-              if (!confirm('Delete notes for this user?')) return;
-              await window.tiktok.notesDelete(user.uniqueId);
-              setNote('');
-              setSavedAt(null);
-            }}
-            className="ml-auto rounded-lg px-2 py-2 text-xs text-zinc-500 hover:text-[var(--red)]"
-            title="Delete notes"
-            aria-label="Delete notes"
-          >
-            ✕
           </button>
         </footer>
       </>
@@ -254,6 +294,3 @@ function describeRecent(e: LiveEvent): string {
       return e.type;
   }
 }
-
-function _markUsed(_: UserNote) {}
-_markUsed;

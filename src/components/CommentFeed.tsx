@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { useStore } from '../state/store';
 import { useModeration } from '../state/moderation';
 import { useTracked } from '../state/tracked';
-import { useUI, type FeedFilter, type StreamNote } from '../state/ui';
+import { useUI, type FeedFilter } from '../state/ui';
 import { timeAgo } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
 import { Username } from './Username';
@@ -34,10 +34,9 @@ export function CommentFeed() {
   const userTags = useModeration((s) => s.userTags);
   const isTracked = useTracked((s) => s.isTracked);
   const feedFilter = useUI((s) => s.feedFilter);
-  const streamNotes = useUI((s) => s.streamNotes);
 
   const rows = useMemo(() => {
-    const items: (FeedItem | StreamNote)[] = [];
+    const items: FeedItem[] = [];
     for (const e of all) {
       if (items.length >= 200) break;
       if (e.type === 'chat') {
@@ -50,16 +49,8 @@ export function CommentFeed() {
         items.push(e);
       }
     }
-    if (streamNotes.length === 0) return items;
-    // merge personal notes into the timeline by timestamp (both lists newest-first)
-    const merged: (FeedItem | StreamNote)[] = [];
-    let i = 0, j = 0;
-    while (i < items.length || j < streamNotes.length) {
-      if (j >= streamNotes.length || (i < items.length && items[i].ts >= streamNotes[j].ts)) merged.push(items[i++]);
-      else merged.push(streamNotes[j++]);
-    }
-    return merged;
-  }, [all, isFiltered, feedFilter, streamNotes]);
+    return items;
+  }, [all, isFiltered, feedFilter]);
 
   if (rows.length === 0 && pinnedMessages.length === 0) {
     return (
@@ -94,9 +85,7 @@ export function CommentFeed() {
         aria-label="Comment feed"
       >
         {rows.map((r) =>
-          'text' in r ? (
-            <NoteRow key={r.id} note={r} />
-          ) : r.type === 'chat' ? (
+          r.type === 'chat' ? (
             <ChatRow key={r.id} item={r} tag={userTags.get(r.user.uniqueId)} tracked={isTracked(r.user.uniqueId)} pinned={pinnedIds.has(r.id)} />
           ) : (
             <EventRow key={r.id} item={r} />
@@ -182,20 +171,6 @@ const EventRow = memo(function EventRow({ item }: { item: FeedItem }) {
           <path d="M9 18l6-6-6-6" />
         </svg>
       </button>
-    </li>
-  );
-});
-
-/** Personal stream note — "Note to self" (never posted to TikTok). */
-const NoteRow = memo(function NoteRow({ note }: { note: StreamNote }) {
-  return (
-    <li className="rounded-lg border border-dashed border-[color:var(--cyan)]/30 bg-[color:var(--cyan)]/[0.06] px-3 py-1.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--cyan)]">
-        📝 Note to self
-        {note.syncedTo && <span className="normal-case tracking-normal text-[color:var(--cyan)]/70">· saved to @{note.syncedTo}</span>}
-        <span className="ml-auto font-normal normal-case tracking-normal text-zinc-600">{timeAgo(note.ts)}</span>
-      </div>
-      <div className="mt-0.5 break-words text-[13px] text-zinc-200">{note.text}</div>
     </li>
   );
 });

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
+import { useUI } from '../state/ui';
 import { Dialog } from './ui/Dialog';
 
 export type Command = {
@@ -17,7 +18,9 @@ export function CommandPalette({ commands, onClose }: { commands: Command[]; onC
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const tallies = useStore((s) => s.tallies);
-  const selectUser = useStore((s) => s.selectUser);
+  // ⌘K "jump to any fan" lands on the real 360 profile, not the shallow
+  // session-only drawer. One canonical destination for a fan.
+  const openFanProfile = useUI((s) => s.openFanProfile);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -38,11 +41,11 @@ export function CommandPalette({ commands, onClose }: { commands: Command[]; onC
         group: 'Users in this session',
         icon: '👤',
         run: () => {
-          selectUser(t.user.uniqueId);
+          openFanProfile(t.user.uniqueId);
           onClose();
         },
       }));
-  }, [query, tallies, selectUser, onClose]);
+  }, [query, tallies, openFanProfile, onClose]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

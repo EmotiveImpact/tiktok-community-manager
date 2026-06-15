@@ -1,19 +1,29 @@
 /**
  * Bottom composer of the live feed. The connector is READ-ONLY (we cannot
- * post to TikTok chat) — this is a STREAM NOTES box: sending appends a
- * timestamped personal note into the feed. When the note mentions
- * @username and that fan exists in the ledger, the note is also appended
- * to their fan notes.
+ * post to TikTok chat) — this is a NOTES box.
+ *
+ * Every note is PERSISTED to the canonical fan notes model (a dated timeline
+ * note via fansAddNote) — nothing is dropped silently. Target resolution, in
+ * order:
+ *   1. the fan currently pinned in the Fan Memory panel, else
+ *   2. an @mention that matches a ledger fan, else
+ *   3. the current LIVE session's host (roomInfo.hostUniqueId).
+ * If we truly have no fan target (no host, no pin, no mention) the note is kept
+ * in the box and the user is told to pick a fan — we never quietly lose it.
  */
 import { useEffect, useRef, useState } from 'react';
 import { useUI } from '../state/ui';
+import { useStore } from '../state/store';
 import { Tooltip } from './ui';
 
 const EMOJIS = ['💖', '🔥', '😂', '🎉', '🙏', '⭐', '💎', '🎁'];
 
 export function NoteComposer() {
-  const addStreamNote = useUI((s) => s.addStreamNote);
   const setTab = useUI((s) => s.setTab);
+  const fanMemoryId = useUI((s) => s.fanMemoryId);
+  const fanMemoryPinned = useUI((s) => s.fanMemoryPinned);
+  const focusFanMemory = useUI((s) => s.focusFanMemory);
+  const hostUniqueId = useStore((s) => s.roomInfo?.hostUniqueId ?? null);
   const [text, setText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [highlightsOk, setHighlightsOk] = useState(false);
@@ -37,22 +47,49 @@ export function NoteComposer() {
   const send = async () => {
     const t = text.trim();
     if (!t) return;
-    setText('');
-    // Sync to fan notes when an @mention matches a ledger fan.
-    let syncedTo: string | undefined;
-    const mention = t.match(/@([\w.]+)/);
-    if (mention) {
-      try {
-        const fan = await window.tiktok.fansGet(mention[1]);
-        if (fan) {
-          const stamp = new Date().toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-          const appended = `${fan.notes ? fan.notes + '\n' : ''}[LIVE ${stamp}] ${t}`;
-          await window.tiktok.fansUpdate(fan.uniqueId, { notes: appended });
-          syncedTo = fan.uniqueId;
-        }
-      } catch { /* note still kept locally */ }
+
+    // Resolve a fan target so the note is NEVER lost.
+    // 1) the pinned Fan Memory selection.
+    let targetId: string | null = fanMemoryPinned && fanMemoryId ? fanMemoryId : null;
+    let targetLabel = '';
+
+    // 2) an @mention that matches a ledger fan.
+    if (!targetId) {
+      const mention = t.match(/@([\w.]+)/);
+      if (mention) {
+        try {
+          const fan = await window.tiktok.fansGet(mention[1]);
+          if (fan) { targetId = fan.uniqueId; targetLabel = fan.displayName || fan.nickname || `@${fan.uniqueId}`; }
+        } catch { /* fall through */ }
+      }
     }
-    addStreamNote(t, syncedTo);
+
+    // 3) the current LIVE session's host.
+    if (!targetId && hostUniqueId) {
+      targetId = hostUniqueId.replace(/^@/, '').trim() || null;
+      if (targetId) targetLabel = `@${targetId} (host)`;
+    }
+
+    if (!targetId) {
+      // No host, no pin, no mention — keep the note and tell the user, rather
+      // than dropping it silently (the old streamNotes bug).
+      setFlash('Pick a fan (click a name) or @mention to save this note');
+      setTimeout(() => setFlash(null), 2600);
+      return;
+    }
+
+    setText('');
+    const res = await window.tiktok.fansAddNote(targetId, t).catch(() => null);
+    if (res?.ok) {
+      // Surface the saved fan in the memory panel so it's visible immediately.
+      focusFanMemory(targetId);
+      setFlash(`Saved to ${targetLabel || `@${targetId}`} ✓`);
+      setTimeout(() => setFlash(null), 2000);
+    } else {
+      setText(t); // restore on failure — still no silent loss
+      setFlash('Could not save note — try again');
+      setTimeout(() => setFlash(null), 2400);
+    }
   };
 
   const capture = async () => {
@@ -68,7 +105,13 @@ export function NoteComposer() {
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
-        placeholder="Add a note for this stream…"
+        placeholder={
+          fanMemoryPinned && fanMemoryId
+            ? `Add a note about @${fanMemoryId}…`
+            : hostUniqueId
+              ? 'Add a note (saved to host — or pin a fan / @mention)…'
+              : 'Add a note — pin a fan or @mention to save…'
+        }
         className="h-8 min-w-0 flex-1 rounded-full border border-zinc-800 bg-zinc-900/70 px-3.5 text-xs text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-like-500/50"
       />
       <div ref={emojiRef} className="relative">
@@ -102,11 +145,11 @@ export function NoteComposer() {
         Gifts
       </button>
       </Tooltip>
-      <Tooltip content="Save note (notes are private — the connector can't post to TikTok)">
+      <Tooltip content="Save note to the fan's timeline (private — the connector can't post to TikTok)">
       <button
         onClick={send}
         disabled={!text.trim()}
-        aria-label="Save stream note"
+        aria-label="Save note to fan timeline"
         className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-white transition disabled:opacity-40"
         style={{ background: 'var(--gradient-pink)' }}
       >

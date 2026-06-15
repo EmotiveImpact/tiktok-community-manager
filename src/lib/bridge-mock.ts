@@ -31,7 +31,6 @@ import type {
   TimelineEvent,
   TimelineFilter,
   UserBrief,
-  UserNote,
   WatchEntry,
   WebhookConfig,
 } from '../types';
@@ -102,7 +101,6 @@ export function installBridgeMock(): void {
   let timer: ReturnType<typeof setInterval> | null = null;
   let viewerCount = 1180;
   let totalLikes = 38420;
-  const notes: Record<string, UserNote> = {};
   const demoSeed = new URLSearchParams(window.location.search).get('demo') !== 'off';
   let tracked: Array<{ uniqueId: string; nickname: string; addedAt: number }> = demoSeed
     ? [
@@ -636,14 +634,8 @@ export function installBridgeMock(): void {
     summarizeSession: async () => ({ ok: false, error: 'Not available in browser mode' }),
     openProfile: async () => ok,
     openProfileInternal: async () => ok,
-    notesGet: async (uniqueId) => notes[uniqueId] ?? null,
-    notesAll: async () => notes,
-    notesSet: async ({ uniqueId, nickname, notes: text }) => {
-      const note: UserNote = { uniqueId, nickname, notes: text, updatedAt: Date.now() };
-      notes[uniqueId] = note;
-      return note;
-    },
-    notesDelete: async (uniqueId) => { delete notes[uniqueId]; return ok; },
+    // Legacy notes:* island removed — notes live on the fan record (fansUpdate
+    // {notes} for the pinned About, fansAddNote for the dated timeline log).
     sessionsList: async () => sessions.map((s): SessionSummary => ({ ...s, eventCount: s.events.length })),
     sessionsGet: async (id) => sessions.find((s) => s.id === id) ?? null,
     sessionsDelete: async () => ok,

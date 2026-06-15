@@ -2,7 +2,7 @@
 /** Dashboard — community at a glance: stats, follow-ups, top gifters, birthdays, VIP watchlist, top supporter. */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Calendar, Clock, Gift, Heart, Radio, Star, Users } from 'lucide-react';
-import type { Fan, GiftRecord, Reminder, SessionRecord, SessionSummary, UserNote } from '../types';
+import type { Fan, GiftRecord, Reminder, SessionRecord, SessionSummary } from '../types';
 import { estimateMoney, formatDiamonds, formatNumber } from '../lib/format';
 import { useSettingsLoad } from '../state/settings';
 import { ThankComposer } from '../components/ThankComposer';
@@ -192,7 +192,6 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
   const [topFans, setTopFans] = useState<Fan[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [gifts90, setGifts90] = useState<{ data: GiftRecord[]; total: number; diamondsMonth: number } | null>(null);
-  const [notes, setNotes] = useState<Record<string, UserNote>>({});
   const [supporterGifts, setSupporterGifts] = useState<GiftRecord[] | null>(null);
   const [gifterRange, setGifterRange] = useState<'month' | 'all'>('month');
   const [showThank, setShowThank] = useState(false);
@@ -215,7 +214,6 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
     window.tiktok.giftsList({ range: '90d', pageSize: 500 }).then((r) =>
       setGifts90({ data: r.data, total: r.total, diamondsMonth: r.diamondsMonth }),
     ).catch(() => {});
-    window.tiktok.notesAll().then((n) => setNotes(n ?? {})).catch(() => {});
   }, []);
 
   const supporter = topFans[0] ?? null;
@@ -340,7 +338,9 @@ export function Dashboard({ onOpenHistory, onGoLive, onGoReminders }: {
     };
   }, [supporter, supporterGifts]);
 
-  const supporterNote = supporter ? (supporter.notes || notes[supporter.uniqueId]?.notes || '') : '';
+  // Canonical: the pinned About on the fan record. (The legacy notesStore
+  // fallback was removed — its data was migrated onto fan.notes.)
+  const supporterNote = supporter?.notes || '';
   const hasData = sessions.length > 0 || fansTotal > 0;
 
   // ---------------------------------------------------------------------------

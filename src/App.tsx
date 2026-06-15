@@ -584,7 +584,6 @@ function FeedKebabMenu() {
   return (
     <Menu trigger={<KebabTrigger />} align="end" contentClassName="w-44">
       <MenuItem icon="📋" label="Copy session stats" onSelect={copyStats} />
-      <MenuItem icon="🧹" label="Clear stream notes" onSelect={() => useUI.getState().clearStreamNotes()} />
     </Menu>
   );
 }
