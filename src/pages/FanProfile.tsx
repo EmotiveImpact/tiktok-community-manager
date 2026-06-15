@@ -17,10 +17,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   CustomFieldDef, Fan, FanProfile as FanProfileData, Reminder, TimelineEvent, TimelineFilter,
 } from '../types';
-import { formatNumber, formatDiamonds, relativeTime } from '../lib/format';
+import { formatNumber, relativeTime } from '../lib/format';
 import { useUI } from '../state/ui';
 import { useAlerts } from '../state/alerts';
-import { useSettingsLoad } from '../state/settings';
 import {
   FanAvatar, TierChip, TagsEditor, StrengthBar, TemperatureDot, strengthColor, fanName,
 } from '../components/crm';
@@ -97,7 +96,6 @@ export function FanProfile() {
   const closeFanProfile = useUI((s) => s.closeFanProfile);
   const fanReturnTo = useUI((s) => s.fanReturnTo);
   const pushToast = useAlerts((s) => s.pushToast);
-  const { earnings } = useSettingsLoad();
 
   const [profile, setProfile] = useState<FanProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -237,8 +235,7 @@ export function FanProfile() {
 
       {/* ── STAT STRIP ────────────────────────────────────────────────── */}
       <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatTile label="Lifetime diamonds" value={formatDiamonds(fan.totalDiamonds)} icon="./assets/png/icon_diamond_3d.png" tint="rgba(105,201,208,0.16)"
-          sub={earnings.enabled ? undefined : undefined} />
+        <StatTile label="Lifetime diamonds" value={`${fan.totalDiamonds.toLocaleString()} 💎`} icon="./assets/png/icon_diamond_3d.png" tint="rgba(105,201,208,0.16)" />
         <StatTile label="Gifts" value={formatNumber(fan.giftCount)} icon="./assets/png/icon_gift_box_3d.png" tint="rgba(238,29,82,0.14)" />
         <StatTile label="Sessions attended" value={String(profile.sessionsAttended)} icon="./assets/png/icon_group_3d.png" tint="rgba(197,155,255,0.16)" />
         <StatTile label="Current streak" value={profile.currentStreak > 0 ? `${profile.currentStreak} wk${profile.currentStreak === 1 ? '' : 's'}` : '—'} icon="./assets/png/icon_star_award_3d.png" tint="rgba(255,209,102,0.16)" />
@@ -288,7 +285,7 @@ export function FanProfile() {
             <NoteComposerInline name={name} composerRef={composerRef} onSubmit={addNote} />
           </div>
 
-          <TimelineBody events={events} loading={timelineLoading} name={name} earningsEnabled={earnings.enabled} />
+          <TimelineBody events={events} loading={timelineLoading} name={name} />
         </Card>
 
         {/* RIGHT */}
@@ -394,7 +391,7 @@ function NoteComposerInline({ name, composerRef, onSubmit }: {
 }
 
 // ── timeline body (grouped by day) ──────────────────────────────────────────
-function TimelineBody({ events, loading, name, earningsEnabled }: { events: TimelineEvent[]; loading: boolean; name: string; earningsEnabled: boolean }) {
+function TimelineBody({ events, loading, name }: { events: TimelineEvent[]; loading: boolean; name: string }) {
   const groups = useMemo(() => {
     const out: { key: string; label: string; rows: TimelineEvent[] }[] = [];
     for (const ev of events) {
@@ -420,7 +417,6 @@ function TimelineBody({ events, loading, name, earningsEnabled }: { events: Time
       </div>
     );
   }
-  void earningsEnabled;
   return (
     <div className="px-4 pb-4">
       {groups.map((g) => (
