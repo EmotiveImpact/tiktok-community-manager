@@ -144,7 +144,9 @@ export function Sidebar() {
         {sidebarMode === 'main' ? (
           <nav aria-label="Main navigation" className="no-drag min-h-0 flex-1 space-y-1.5 overflow-y-auto">
             {PRIMARY.map((it) => {
-              const isActive = page === it.id;
+              // The full fan profile lives "inside" the Followers section, so keep
+              // Followers highlighted while a 360 profile is open.
+              const isActive = page === it.id || (it.id === 'followers' && page === 'fan');
               const Icon = it.icon;
               return (
                 <button

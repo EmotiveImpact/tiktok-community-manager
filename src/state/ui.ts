@@ -7,7 +7,7 @@
  */
 import { create } from 'zustand';
 
-export type Page = 'dashboard' | 'live' | 'followers' | 'gifts' | 'reminders' | 'messages' | 'import' | 'settings';
+export type Page = 'dashboard' | 'live' | 'followers' | 'gifts' | 'reminders' | 'messages' | 'import' | 'settings' | 'fan';
 export type FeedTab = 'comments' | 'gifts' | 'questions' | 'top' | 'all';
 
 /** Which face the sidebar shows: main app nav, or the live toolset. */
@@ -34,7 +34,7 @@ export type StreamNote = {
   syncedTo?: string;
 };
 
-const PAGES: Page[] = ['dashboard', 'live', 'followers', 'gifts', 'reminders', 'messages', 'import', 'settings'];
+const PAGES: Page[] = ['dashboard', 'live', 'followers', 'gifts', 'reminders', 'messages', 'import', 'settings', 'fan'];
 
 function initialPage(): Page {
   try {
@@ -58,8 +58,13 @@ let noteCounter = 0;
 
 type UIState = {
   page: Page;
-  /** Fan to preselect when navigating to the Followers page (read by pages). */
+  /**
+   * Fan whose full 360 profile is open (read by the FanProfile page and, for
+   * back-compat, by the Followers list to preselect a row).
+   */
   fanFocus: string | null;
+  /** Page to return to when the fan profile's "← Back" is pressed. */
+  fanReturnTo: Page;
   setPage: (page: Page) => void;
 
   /** Sidebar face: flips to the live toolset while on the live page. */
@@ -70,8 +75,10 @@ type UIState = {
   openLiveTool: (tool: LiveTool) => void;
   /** "← Back" from the live sidebar: restore main nav and return to dashboard. */
   backToMain: () => void;
-  /** Navigate to the Followers page with a fan preselected. */
+  /** Open a fan's full 360 profile page (remembers where we came from). */
   openFanProfile: (uniqueId: string) => void;
+  /** "← Back" from the fan profile: return to the page we opened it from. */
+  closeFanProfile: () => void;
   clearFanFocus: () => void;
 
   /** Fan selected in the Messages page's follow-up panel (persists across page switches). */
@@ -97,9 +104,20 @@ type UIState = {
   clearStreamNotes: () => void;
 };
 
+/** Seed fanFocus from ?fan= so the `?page=fan&fan=…` deep-link renders the profile. */
+function initialFanFocus(): string | null {
+  try {
+    const q = new URLSearchParams(window.location.search).get('fan');
+    return q ? q.replace(/^@/, '').trim() || null : null;
+  } catch {
+    return null;
+  }
+}
+
 export const useUI = create<UIState>((set, get) => ({
   page: initialPage(),
-  fanFocus: null,
+  fanFocus: initialFanFocus(),
+  fanReturnTo: 'followers',
   setPage: (page) =>
     set((s) => ({
       page,
@@ -114,7 +132,15 @@ export const useUI = create<UIState>((set, get) => ({
   openLiveTool: (tool) => set({ page: 'live', sidebarMode: 'live', liveTool: tool }),
   backToMain: () => set({ sidebarMode: 'main', page: 'dashboard', liveTool: 'feed' }),
 
-  openFanProfile: (uniqueId) => set({ page: 'followers', fanFocus: uniqueId, sidebarMode: 'main' }),
+  openFanProfile: (uniqueId) =>
+    set((s) => ({
+      page: 'fan',
+      fanFocus: uniqueId.replace(/^@/, '').trim(),
+      // Remember where to land on "← Back" (don't stack fan→fan).
+      fanReturnTo: s.page === 'fan' ? s.fanReturnTo : s.page,
+      sidebarMode: 'main',
+    })),
+  closeFanProfile: () => set((s) => ({ page: s.fanReturnTo, fanFocus: null, sidebarMode: 'main' })),
   clearFanFocus: () => set({ fanFocus: null }),
 
   messagesFanFocus: null,

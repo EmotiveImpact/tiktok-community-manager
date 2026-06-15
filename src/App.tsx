@@ -3,6 +3,7 @@ import { ConnectBar } from './components/ConnectBar';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { Followers } from './pages/Followers';
+import { FanProfile } from './pages/FanProfile';
 import { Gifts } from './pages/Gifts';
 import { Reminders } from './pages/Reminders';
 import { MessagesPage } from './pages/MessagesPage';
@@ -346,6 +347,7 @@ export default function App() {
         )}
         {page !== 'live' && page !== 'dashboard' && (
           <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {page === 'fan' && <FanProfile />}
             {page === 'followers' && <Followers onGoImport={() => setPage('import')} onGoLive={() => setPage('live')} />}
             {page === 'gifts' && <Gifts onGoLive={() => setPage('live')} />}
             {page === 'reminders' && <Reminders />}

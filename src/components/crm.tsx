@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from 'react';
 import { avatarGradient } from '../lib/avatars';
 import { tierClass } from '../lib/tier';
-import type { Fan } from '../types';
+import type { Fan, Temperature } from '../types';
 
 export function FanAvatar({ name, url, size = 32 }: { name: string; url?: string | null; size?: number }) {
   if (url) {
@@ -38,6 +38,92 @@ export function TagChip({ tag, onRemove }: { tag: string; onRemove?: () => void 
 
 export function fanName(f: Fan): string {
   return f.displayName || f.nickname || f.uniqueId;
+}
+
+/** Solid color for a strength score: green ≥75 / light-green 50-74 / orange 25-49 / red <25. */
+export function strengthColor(score: number): string {
+  if (score >= 75) return 'var(--green)';
+  if (score >= 50) return '#79f2a8';
+  if (score >= 25) return 'var(--orange)';
+  return 'var(--red)';
+}
+
+/**
+ * Thin rounded relationship-strength bar (0–100). Fill is the brand
+ * green→orange→red gradient clipped to the score (matches the CRM mockups),
+ * with an optional numeric label on the right.
+ */
+export function StrengthBar({
+  score,
+  width,
+  label = false,
+  barWidth,
+  height = 8,
+}: {
+  score: number;
+  /** total width of the bar+label group (CSS length); defaults to fluid */
+  width?: number | string;
+  /** show the numeric "NN" score after the bar */
+  label?: boolean;
+  /** fixed track width (CSS length); when unset the track flexes to fill */
+  barWidth?: number | string;
+  height?: number;
+}) {
+  const pct = Math.max(0, Math.min(100, Math.round(score)));
+  return (
+    <span
+      className="inline-flex items-center gap-2.5"
+      style={{ width }}
+      role="meter"
+      aria-valuenow={pct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Relationship strength ${pct} of 100`}
+    >
+      <span
+        className="overflow-hidden rounded-full"
+        style={{
+          flex: barWidth ? '0 0 auto' : '1 1 auto',
+          width: barWidth,
+          height,
+          background: 'var(--fill-thin)',
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.07)',
+        }}
+      >
+        <span
+          className="block h-full rounded-full"
+          style={{
+            width: `${pct}%`,
+            background: 'linear-gradient(90deg, var(--green), var(--orange), var(--red))',
+          }}
+        />
+      </span>
+      {label && (
+        <span className="flex-none text-[13px] tabular-nums" style={{ fontWeight: 900 }}>{pct}</span>
+      )}
+    </span>
+  );
+}
+
+const TEMP_META: Record<Temperature, { color: string; glow: string; label: string }> = {
+  hot: { color: 'var(--green)', glow: 'rgba(121,242,168,.55)', label: 'hot' },
+  warm: { color: 'var(--cyan)', glow: 'rgba(105,201,208,.5)', label: 'warm' },
+  cooling: { color: 'var(--orange)', glow: 'rgba(255,179,92,.55)', label: 'cooling' },
+  cold: { color: 'var(--red)', glow: 'rgba(255,101,120,.55)', label: 'cold' },
+};
+
+/** A glowing temperature dot (hot/warm/cooling/cold) with an optional label. */
+export function TemperatureDot({ temperature, label = false, size = 10 }: { temperature: Temperature; label?: boolean; size?: number }) {
+  const m = TEMP_META[temperature] ?? TEMP_META.cold;
+  return (
+    <span className="inline-flex items-center gap-2 text-[12px]" style={{ fontWeight: 800 }} title={m.label}>
+      <span
+        className="flex-none rounded-full"
+        style={{ width: size, height: size, background: m.color, boxShadow: `0 0 14px ${m.glow}` }}
+      />
+      {label && <span style={{ color: 'var(--label)' }}>{m.label}</span>}
+    </span>
+  );
 }
 
 export function Pager({ page, pageSize, total, onPage }: { page: number; pageSize: number; total: number; onPage: (p: number) => void }) {

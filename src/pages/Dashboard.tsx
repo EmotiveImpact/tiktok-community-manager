@@ -13,15 +13,21 @@ import { FanAvatar, TierChip, fanName } from '../components/crm';
 // Optional ui store (created by a parallel agent). Loaded defensively via glob
 // so the build never breaks if the module is absent.
 const uiModules = import.meta.glob('../state/ui.ts', { eager: true }) as Record<string, unknown>;
+type UiStoreLike = { getState?: () => Record<string, unknown> };
 const uiMod = Object.values(uiModules)[0] as
-  | { useUi?: { getState?: () => Record<string, unknown> }; useUiStore?: { getState?: () => Record<string, unknown> } }
+  | { useUi?: UiStoreLike; useUiStore?: UiStoreLike; useUI?: UiStoreLike }
   | undefined;
 
 function navTo(page: string, fan?: string): boolean {
   try {
-    const store = (uiMod?.useUi ?? uiMod?.useUiStore) as { getState?: () => Record<string, unknown> } | undefined;
+    const store = (uiMod?.useUi ?? uiMod?.useUiStore ?? uiMod?.useUI) as { getState?: () => Record<string, unknown> } | undefined;
     const st = store?.getState?.();
     if (st) {
+      // Clicking a fan anywhere opens the full 360 profile page.
+      if (fan && typeof st.openFanProfile === 'function') {
+        (st.openFanProfile as (f: string) => void)(fan);
+        return true;
+      }
       if (fan && typeof st.setFanFocus === 'function') (st.setFanFocus as (f: string) => void)(fan);
       if (typeof st.setPage === 'function') {
         (st.setPage as (p: string) => void)(page);
@@ -33,7 +39,7 @@ function navTo(page: string, fan?: string): boolean {
   }
   if (window.location.protocol.startsWith('http')) {
     const q = new URLSearchParams(window.location.search);
-    q.set('page', page);
+    q.set('page', fan ? 'fan' : page);
     if (fan) q.set('fan', fan);
     else q.delete('fan');
     window.location.search = q.toString();

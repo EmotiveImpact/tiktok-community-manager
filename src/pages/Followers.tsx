@@ -1,74 +1,65 @@
 /// <reference types="vite/client" />
-/** Followers — the fan CRM table. Search, tag/tier filters, bulk tag, add fan, detail drawer. */
-import { useCallback, useEffect, useState } from 'react';
-import type { Fan, ListFansResult, Tier } from '../types';
-import { formatNumber, formatDate, daysAgoLabel } from '../lib/format';
+/** Followers — the fan CRM table. Search, segment tabs, tag/tier filters, bulk tag, add fan. Row → 360 profile page. */
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Fan, ListFansResult, Temperature, Tier } from '../types';
+import { formatNumber, daysAgoLabel } from '../lib/format';
 import { TIERS } from '../lib/tier';
 import { useAlerts } from '../state/alerts';
-import { FanAvatar, TierChip, TagChip, Pager, PageShell, FieldLabel, inputCls, fanName, birthdayValid } from '../components/crm';
-import { FanDrawer } from '../components/FanDrawer';
+import { FanAvatar, TierChip, TagChip, Pager, PageShell, FieldLabel, inputCls, fanName, birthdayValid, StrengthBar, TemperatureDot } from '../components/crm';
 import { useUI } from '../state/ui';
 
-type Props = { onGoImport: () => void; onGoLive: () => void };
+type Segment = 'all' | 'whales' | 'cold' | 'new' | 'birthdays';
+const SEGMENTS: { id: Segment; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'whales', label: 'Whales' },
+  { id: 'cold', label: 'Going cold' },
+  { id: 'new', label: 'New this week' },
+  { id: 'birthdays', label: 'Birthdays soon' },
+];
+const DAY = 86400000;
+const COLD_TEMPS: Temperature[] = ['cooling', 'cold'];
 
-/**
- * Fan to preselect on mount: the ?fan= query param wins, otherwise the
- * ui-store `fanFocus` set by "Open full profile →" on the Fan Memory card.
- *
- * NOTE: this is intentionally side-effect-free (no clearFanFocus here). It's
- * read from a useState initializer, which React StrictMode double-invokes in
- * dev — clearing the focus inside it would consume the value on the first
- * invocation and return null on the second. The focus is consumed/cleared
- * exactly once in the mount effect below.
- */
-function initialFanFocus(): string | null {
-  try {
-    const q = new URLSearchParams(window.location.search).get('fan');
-    if (q) return q;
-    return useUI.getState().fanFocus;
-  } catch {
-    return null;
+/** Days until a fan's next MM-DD birthday, or null. */
+function daysUntilBirthday(mmdd?: string, now = new Date()): number | null {
+  if (!mmdd) return null;
+  const m = mmdd.match(/^(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let next = new Date(now.getFullYear(), Number(m[1]) - 1, Number(m[2]));
+  if (next < today) next = new Date(now.getFullYear() + 1, Number(m[1]) - 1, Number(m[2]));
+  return Math.round((next.getTime() - today.getTime()) / DAY);
+}
+
+/** A VIP/Whale that's cooling or cold — gets a subtle highlighted row. */
+function isGoingColdVip(f: Fan): boolean {
+  return (f.tier === 'VIP' || f.tier === 'Whale') && !!f.temperature && COLD_TEMPS.includes(f.temperature);
+}
+
+function matchesSegment(f: Fan, seg: Segment, now = Date.now()): boolean {
+  switch (seg) {
+    case 'whales': return f.tier === 'Whale';
+    case 'cold': return isGoingColdVip(f);
+    case 'new': return now - f.firstSeenAt <= 7 * DAY;
+    case 'birthdays': { const d = daysUntilBirthday(f.birthday); return d !== null && d <= 30; }
+    default: return true;
   }
 }
 
+type Props = { onGoImport: () => void; onGoLive: () => void };
+
 export function Followers({ onGoImport, onGoLive }: Props) {
   const pushToast = useAlerts((s) => s.pushToast);
+  const openFanProfile = useUI((s) => s.openFanProfile);
   const [q, setQ] = useState('');
   const [tag, setTag] = useState('');
   const [tier, setTier] = useState<Tier | ''>('');
+  const [segment, setSegment] = useState<Segment>('all');
   const [page, setPage] = useState(1);
   const [resp, setResp] = useState<ListFansResult>({ data: [], total: 0, page: 1, pageSize: 25, allTags: [] });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [openFan, setOpenFan] = useState<string | null>(() => initialFanFocus());
   const [showAdd, setShowAdd] = useState(false);
   const [bulkTag, setBulkTag] = useState('');
   const [loaded, setLoaded] = useState(false);
-  // Selected-fan preview drawer (spec item 12) — wide layouts only.
-  const [preview, setPreview] = useState<Fan | null>(null);
-  const [wide, setWide] = useState(() => window.matchMedia('(min-width: 1280px)').matches);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1280px)');
-    const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-
-  // Single owner of fanFocus consumption. initialFanFocus() read the value for
-  // the first render (without clearing — StrictMode-safe); here we clear it so
-  // navigating away and back doesn't re-open the same drawer, and we also catch
-  // any fanFocus set while Followers is already mounted (e.g. "Open full
-  // profile →" fired without this page unmounting).
-  useEffect(() => {
-    const consume = (focus: string | null) => {
-      if (focus) {
-        setOpenFan(focus);
-        useUI.getState().clearFanFocus();
-      }
-    };
-    consume(useUI.getState().fanFocus);
-    return useUI.subscribe((s) => consume(s.fanFocus));
-  }, []);
 
   const refresh = useCallback(() => {
     window.tiktok
@@ -76,13 +67,18 @@ export function Followers({ onGoImport, onGoLive }: Props) {
       .then((r) => {
         setResp(r);
         setLoaded(true);
-        setPreview((p) => (p ? r.data.find((f) => f.uniqueId === p.uniqueId) ?? p : p));
       })
       .catch(() => setLoaded(true));
   }, [q, tag, tier, page]);
 
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => { setPage(1); }, [q, tag, tier]);
+
+  // Segment is a client-side filter over the loaded page (strength/temperature/
+  // birthday/firstSeen already ride along on each row).
+  const rows = useMemo(() => resp.data.filter((f) => matchesSegment(f, segment)), [resp.data, segment]);
+
+  const openProfile = (uid: string) => openFanProfile(uid);
 
   const toggle = (uid: string) =>
     setSelected((s) => {
@@ -109,8 +105,8 @@ export function Followers({ onGoImport, onGoLive }: Props) {
 
   return (
     <PageShell
-      title="Followers"
-      subtitle="Every fan the ledger has ever seen — gifts build this list automatically."
+      title="Fans"
+      subtitle="A real CRM workspace for creator relationships, not a follower dump."
       actions={
         <>
           <button onClick={onGoImport} className="panel-btn no-drag">Import CSV</button>
@@ -118,6 +114,22 @@ export function Followers({ onGoImport, onGoLive }: Props) {
         </>
       }
     >
+      {!isEmpty && (
+        <div className="flex flex-wrap gap-2">
+          {SEGMENTS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setSegment(s.id)}
+              className={`h-8 rounded-full px-3 text-[12px] font-extrabold transition ${segment === s.id ? 'text-white' : ''}`}
+              style={segment === s.id
+                ? { background: 'linear-gradient(135deg, rgba(238,29,82,.32), rgba(105,201,208,.18))', border: '1px solid rgba(238,29,82,.35)' }
+                : { color: 'var(--secondary-label)', background: 'var(--fill-thin)', border: '1px solid var(--separator)' }}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
       {isEmpty ? (
         <div className="glass flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center" style={{ borderRadius: 22 }}>
           <img src="./assets/png/icon_group_3d.png" alt="" className="h-20 w-20 object-contain" draggable={false} />
@@ -131,7 +143,6 @@ export function Followers({ onGoImport, onGoLive }: Props) {
           </div>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 gap-4">
         <div className="glass grid min-h-0 min-w-0 flex-1 grid-rows-[66px_44px_minmax(0,1fr)_52px]" style={{ borderRadius: 20 }}>
           {/* Filters — 66px bar */}
           <div className="flex flex-wrap items-center gap-2 border-b px-4" style={{ borderColor: 'var(--panel-border)' }}>
@@ -150,7 +161,7 @@ export function Followers({ onGoImport, onGoLive }: Props) {
               {resp.allTags.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
             <span className="ml-auto text-[12px]" style={{ color: 'var(--secondary-label)' }}>
-              {resp.total} fan{resp.total === 1 ? '' : 's'}
+              {segment === 'all' ? `${resp.total} fan${resp.total === 1 ? '' : 's'}` : `${rows.length} of ${resp.data.length} shown`}
             </span>
           </div>
 
@@ -168,15 +179,15 @@ export function Followers({ onGoImport, onGoLive }: Props) {
             </div>
           ) : (
             <div className="flex items-center border-b px-4 text-[11px]" style={{ borderColor: 'var(--panel-border)', color: 'var(--tertiary-label)' }}>
-              Select fans to tag them in bulk.
+              Click any row to open the 360 profile · select fans to tag them in bulk.
             </div>
           )}
 
-          {/* Table — 34px header, 49px rows */}
+          {/* Table — 34px header, 64px rows */}
           <div className="min-h-0 overflow-y-auto">
-          {resp.data.length === 0 ? (
+          {rows.length === 0 ? (
             <div className="py-10 text-center text-[13px]" style={{ color: 'var(--secondary-label)' }}>
-              No fans match these filters.
+              {segment === 'all' ? 'No fans match these filters.' : `No fans in "${SEGMENTS.find((s) => s.id === segment)?.label}" on this page.`}
             </div>
           ) : (
             <table className="w-full text-left text-[13px]">
@@ -185,37 +196,42 @@ export function Followers({ onGoImport, onGoLive }: Props) {
                   <th className="w-8 pl-3.5">
                     <input
                       type="checkbox"
-                      checked={resp.data.length > 0 && resp.data.every((f) => selected.has(f.uniqueId))}
+                      checked={rows.length > 0 && rows.every((f) => selected.has(f.uniqueId))}
                       onChange={(e) =>
                         setSelected(e.target.checked
-                          ? new Set([...selected, ...resp.data.map((f) => f.uniqueId)])
-                          : new Set([...selected].filter((id) => !resp.data.some((f) => f.uniqueId === id))))
+                          ? new Set([...selected, ...rows.map((f) => f.uniqueId)])
+                          : new Set([...selected].filter((id) => !rows.some((f) => f.uniqueId === id))))
                       }
                       className="accent-pink-600"
                     />
                   </th>
                   <th className="px-3.5 font-bold">Fan</th>
                   <th className="px-3.5 font-bold">Tier</th>
-                  <th className="px-3.5 text-right font-bold">Diamonds</th>
-                  <th className="px-3.5 font-bold">Tags</th>
+                  <th className="px-3.5 font-bold">Strength</th>
+                  <th className="px-3.5 text-right font-bold">Lifetime 💎</th>
                   <th className="px-3.5 font-bold">Last seen</th>
-                  <th className="px-3.5 font-bold">Birthday</th>
+                  <th className="px-3.5 font-bold">Tags</th>
+                  <th className="px-3.5 font-bold">Temp</th>
                 </tr>
               </thead>
               <tbody>
-                {resp.data.map((f: Fan) => (
+                {rows.map((f: Fan) => {
+                  const cold = isGoingColdVip(f);
+                  return (
                   <tr
                     key={f.uniqueId}
-                    onClick={() => (wide ? setPreview(f) : setOpenFan(f.uniqueId))}
-                    className={`h-[49px] cursor-pointer border-t transition ${preview?.uniqueId === f.uniqueId && wide ? 'bg-[#EE1D52]/[0.07]' : 'hover:bg-[var(--fill-quaternary)]'}`}
-                    style={{ borderColor: 'var(--separator)' }}
+                    onClick={() => openProfile(f.uniqueId)}
+                    className="h-[64px] cursor-pointer border-t transition hover:bg-[var(--fill-quaternary)]"
+                    style={cold
+                      ? { borderColor: 'var(--separator)', background: 'linear-gradient(90deg, rgba(255,159,10,.09), transparent 40%)' }
+                      : { borderColor: 'var(--separator)' }}
                   >
                     <td className="pl-3.5" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" checked={selected.has(f.uniqueId)} onChange={() => toggle(f.uniqueId)} className="accent-pink-600" />
                     </td>
                     <td className="px-3.5">
                       <span className="flex items-center gap-2.5">
-                        <FanAvatar name={fanName(f)} url={f.avatarUrl} />
+                        <FanAvatar name={fanName(f)} url={f.avatarUrl} size={38} />
                         <span className="min-w-0 leading-tight">
                           <span className="block truncate text-[13px]" style={{ fontWeight: 750 }}>{fanName(f)}</span>
                           <span className="block text-[11px]" style={{ color: 'var(--secondary-label)' }}>@{f.uniqueId}</span>
@@ -223,17 +239,25 @@ export function Followers({ onGoImport, onGoLive }: Props) {
                       </span>
                     </td>
                     <td className="px-3.5"><TierChip tier={f.tier} /></td>
-                    <td className="px-3.5 text-right text-[13px] tabular-nums" style={{ fontWeight: 900 }}>{formatNumber(f.totalDiamonds)} 💎</td>
-                    <td className="max-w-[180px] px-3.5">
+                    <td className="px-3.5">
+                      {typeof f.strength === 'number'
+                        ? <StrengthBar score={f.strength} barWidth={120} label height={8} />
+                        : <span className="text-[12px]" style={{ color: 'var(--tertiary-label)' }}>—</span>}
+                    </td>
+                    <td className="px-3.5 text-right text-[13px] tabular-nums" style={{ fontWeight: 900 }}>{formatNumber(f.totalDiamonds)}</td>
+                    <td className="px-3.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>{daysAgoLabel(f.lastSeenAt)}</td>
+                    <td className="max-w-[170px] px-3.5">
                       <span className="flex flex-wrap gap-1">
-                        {f.tags.slice(0, 3).map((t) => <TagChip key={t} tag={t} />)}
-                        {f.tags.length > 3 && <span className="text-[11px]" style={{ color: 'var(--secondary-label)' }}>+{f.tags.length - 3}</span>}
+                        {f.tags.slice(0, 2).map((t) => <TagChip key={t} tag={t} />)}
+                        {f.tags.length > 2 && <span className="text-[11px]" style={{ color: 'var(--secondary-label)' }}>+{f.tags.length - 2}</span>}
                       </span>
                     </td>
-                    <td className="px-3.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>{daysAgoLabel(f.lastSeenAt)}</td>
-                    <td className="px-3.5 text-[12px]" style={{ color: 'var(--secondary-label)' }}>{f.birthday ?? '—'}</td>
+                    <td className="px-3.5">
+                      {f.temperature ? <TemperatureDot temperature={f.temperature} label /> : <span style={{ color: 'var(--tertiary-label)' }}>—</span>}
+                    </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -246,67 +270,8 @@ export function Followers({ onGoImport, onGoLive }: Props) {
             </div>
           </div>
         </div>
-
-        {/* Selected-fan preview drawer — ≥1280px only (spec item 12) */}
-        {wide && preview && (
-          <aside className="glass hidden w-[300px] flex-none self-stretch overflow-y-auto xl:block" style={{ borderRadius: 18 }}>
-            <div className="h-[54px]" style={{ background: 'linear-gradient(120deg, #EE1D52, #ff5e7e 45%, #69C9D0)' }} />
-            <div className="-mt-7 px-4 pb-4">
-              <div className="flex items-end justify-between">
-                <span className="inline-block rounded-full p-[3px]" style={{ background: 'var(--panel-bg-strong)' }}>
-                  <FanAvatar name={fanName(preview)} url={preview.avatarUrl} size={58} />
-                </span>
-                <button onClick={() => setPreview(null)} className="panel-btn panel-btn-icon no-drag" aria-label="Close preview">✕</button>
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <span className="truncate text-[15px]" style={{ fontWeight: 800 }}>{fanName(preview)}</span>
-                <TierChip tier={preview.tier} />
-              </div>
-              <div className="text-[12px]" style={{ color: 'var(--secondary-label)' }}>@{preview.uniqueId}</div>
-
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                {[
-                  { label: 'Diamonds', value: formatNumber(preview.totalDiamonds) },
-                  { label: 'Gifts', value: formatNumber(preview.giftCount) },
-                  { label: 'Seen', value: daysAgoLabel(preview.lastSeenAt) },
-                ].map((s) => (
-                  <div key={s.label} className="rounded-xl px-1.5 py-2" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--panel-border)' }}>
-                    <div className="truncate text-[13px] tabular-nums" style={{ fontWeight: 900 }}>{s.value}</div>
-                    <div className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--secondary-label)' }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {preview.notes && (
-                <div className="mt-3 rounded-2xl rounded-tl-sm px-3 py-2 text-[12px] leading-snug" style={{ background: 'var(--fill-quaternary)', border: '1px solid var(--panel-border)' }}>
-                  “{preview.notes.length > 140 ? `${preview.notes.slice(0, 140)}…` : preview.notes}”
-                </div>
-              )}
-
-              {preview.tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {preview.tags.map((t) => <TagChip key={t} tag={t} />)}
-                </div>
-              )}
-
-              <div className="mt-3 space-y-1 text-[12px]" style={{ color: 'var(--secondary-label)' }}>
-                <div>📅 First seen {formatDate(preview.firstSeenAt)}</div>
-                {preview.birthday && <div>🎂 Birthday {preview.birthday}</div>}
-                {preview.lastThankedAt && <div>💌 Last thanked {formatDate(preview.lastThankedAt)}</div>}
-              </div>
-
-              <button onClick={() => setOpenFan(preview.uniqueId)} className="panel-btn panel-btn-primary no-drag mt-4 !h-8 w-full justify-center">
-                Open profile
-              </button>
-            </div>
-          </aside>
-        )}
-        </div>
       )}
 
-      {openFan && (
-        <FanDrawer uniqueId={openFan} tagSuggestions={resp.allTags} onClose={() => setOpenFan(null)} onChanged={refresh} />
-      )}
       {showAdd && (
         <AddFanModal
           onClose={() => setShowAdd(false)}
