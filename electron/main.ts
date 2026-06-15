@@ -34,6 +34,21 @@ fans.setColdResolver((uniqueId) => {
   }
 });
 
+// BATCHED cold resolver: compute "is cold" for all VIP/Whale fans in ONE strength
+// pass (same engine, same result) so listReminders doesn't re-read the ledger +
+// re-scan sessions per fan. Fail-safe — falls back to the per-fan resolver above.
+fans.setColdResolverBatch((ids) => {
+  const map = new Map<string, boolean>();
+  try {
+    const tierOf = (uid: string) => fans.getFan(uid)?.tier ?? 'New';
+    const bundles = crm.strengthForAll(ids.map((uniqueId) => ({ uniqueId, tier: tierOf(uniqueId) })));
+    for (const [uid, b] of bundles) map.set(uid, b.result.temperature === 'cold');
+  } catch {
+    /* empty map → listReminders falls back to the per-fan resolver */
+  }
+  return map;
+});
+
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
 let mainWindow: BrowserWindow | null = null;
@@ -804,13 +819,12 @@ ipcMain.handle('fans:list', (_e, q: fans.ListFansQuery) => {
   // these fields are unaffected. Fail-safe per-row — a bad signal never drops a
   // fan from the list.
   try {
+    // BATCHED: one gift/session/interaction pass for the whole page instead of a
+    // full ledger re-read + session re-scan PER ROW (the old O(N×ledger) blowup).
+    const bundles = crm.strengthForAll(res.data.map((f) => ({ uniqueId: f.uniqueId, tier: f.tier })));
     res.data = res.data.map((f) => {
-      try {
-        const { result } = crm.strengthForFan(f.uniqueId);
-        return { ...f, strength: result.strength, temperature: result.temperature };
-      } catch {
-        return f;
-      }
+      const b = bundles.get(f.uniqueId);
+      return b ? { ...f, strength: b.result.strength, temperature: b.result.temperature } : f;
     });
   } catch (err) {
     log.warn('[main] fans:list strength enrichment failed:', (err as any)?.message ?? err);

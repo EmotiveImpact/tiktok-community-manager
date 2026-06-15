@@ -13,7 +13,12 @@
  */
 import * as fans from './fans';
 import * as sessions from './sessions';
-import { buildTimeline, listInteractions, type TimelineEvent } from './interactions';
+import {
+  buildTimeline,
+  listInteractions,
+  interactionAggregatesByFan,
+  type TimelineEvent,
+} from './interactions';
 import { computeStrength, type StrengthResult } from './strength';
 import { settings, customFieldsStore, DEFAULT_COMMUNITY, type CustomFieldDef } from './store';
 
@@ -101,6 +106,92 @@ export function strengthForFan(uniqueId: string): {
     console.error('[crm] strengthForFan failed:', err);
     return { fan: fans.getFan(uniqueId), result: empty, sessionsAttended: 0, diamonds30d: 0 };
   }
+}
+
+export type FanStrengthBundle = {
+  result: StrengthResult;
+  sessionsAttended: number;
+  diamonds30d: number;
+};
+
+/**
+ * BATCHED strength for many fans at once — the perf-critical replacement for
+ * calling `strengthForFan` per fan in `fans:list` / `listReminders`.
+ *
+ * The old per-fan path re-read the WHOLE gift ledger and re-scanned EVERY session
+ * file for each fan: O(N_fans × (ledger + sessions)). This builds the gift,
+ * session-attendance and interaction aggregates in ONE pass each, then runs the
+ * PURE `computeStrength` per fan from in-memory map lookups — O(ledger + sessions
+ * + N_fans). Results are byte-identical to `strengthForFan` (same signals, same
+ * formula, same cold-VIP override).
+ *
+ * Fully fail-safe: any error degrades that fan to the same empty default
+ * `strengthForFan` returns, and never throws to the caller.
+ */
+export function strengthForAll(
+  fanList: Array<{ uniqueId: string; tier: fans.Tier }>,
+): Map<string, FanStrengthBundle> {
+  const out = new Map<string, FanStrengthBundle>();
+  const empty: StrengthResult = {
+    strength: 0,
+    temperature: 'cold',
+    daysSinceContact: 9999,
+    breakdown: { recency: 0, generosity: 0, frequency: 0, loyalty: 0 },
+  };
+  const now = Date.now();
+  const since30 = now - 30 * DAY_MS;
+  const cd = coldDays();
+
+  // One pass each over gifts / sessions / interactions.
+  let giftAgg: Map<string, fans.FanGiftAggregate>;
+  let attAll: ReturnType<typeof sessions.allFansAttendance>;
+  let interAgg: Map<string, import('./interactions').InteractionAggregate>;
+  try { giftAgg = fans.giftAggregatesByFan(since30); } catch { giftAgg = new Map(); }
+  try { attAll = sessions.allFansAttendance(since30); } catch { attAll = { byFan: new Map(), totalSessions: 0 }; }
+  try { interAgg = interactionAggregatesByFan(since30); } catch { interAgg = new Map(); }
+  const totalSessions = attAll.totalSessions;
+
+  for (const f of fanList) {
+    const uid = String(f?.uniqueId ?? '').replace(/^@/, '').trim();
+    if (!uid) continue;
+    try {
+      const g = giftAgg.get(uid);
+      const att = attAll.byFan.get(uid);
+      const it = interAgg.get(uid);
+      const raw = fans.getRawFan(uid);
+
+      const diamonds30d = g?.diamonds30d ?? 0;
+      const gifts30d = g?.gifts30d ?? 0;
+      const recentAttended = att?.recentAttendedCount ?? 0;
+      const interactions30d = gifts30d + recentAttended + (it?.recentCount ?? 0);
+
+      // last interaction across gift/session/lastSeen/interactions — identical to
+      // crm.lastInteractionAt() but sourced from the batched aggregates.
+      let last = 0;
+      if (raw?.lastGiftAt) last = Math.max(last, raw.lastGiftAt);
+      if (raw?.lastSeenAt) last = Math.max(last, raw.lastSeenAt);
+      if (att?.lastAttendedAt) last = Math.max(last, att.lastAttendedAt);
+      if (it?.lastAt) last = Math.max(last, it.lastAt);
+
+      const result = computeStrength(
+        { tier: f.tier },
+        {
+          lastInteractionAt: last > 0 ? last : null,
+          diamonds30d,
+          interactions30d,
+          sessionsAttended: att?.attendedCount ?? 0,
+          recentSessionsCount: totalSessions,
+          coldDays: cd,
+          now,
+        },
+      );
+      out.set(uid, { result, sessionsAttended: att?.attendedCount ?? 0, diamonds30d });
+    } catch (err) {
+      console.error('[crm] strengthForAll fan failed:', err);
+      out.set(uid, { result: empty, sessionsAttended: 0, diamonds30d: 0 });
+    }
+  }
+  return out;
 }
 
 /** Consecutive-week streak: count back-to-back ISO weeks the fan was active. */
