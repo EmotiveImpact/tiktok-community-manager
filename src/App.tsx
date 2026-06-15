@@ -17,7 +17,6 @@ import { GiftFeed } from './components/GiftFeed';
 import { AllFeed } from './components/AllFeed';
 import { TopContributors } from './components/TopContributors';
 import { QuestionFeed } from './components/QuestionFeed';
-import { UserDetailDrawer } from './components/UserDetailDrawer';
 import { HistoryView } from './components/HistoryView';
 import { StreamPlayer } from './components/StreamPlayer';
 import { AllTimeLeaderboard } from './components/AllTimeLeaderboard';
@@ -373,8 +372,6 @@ export default function App() {
         onClose={() => setShowStream(false)}
       />
 
-      <UserDetailDrawer />
-
       {/* Global universal Fan PEEK — mounted ONCE so it overlays every page. */}
       <FanPeek />
 
@@ -387,7 +384,7 @@ export default function App() {
             { id: 'go-live', label: 'Go to Live', group: 'Go to', icon: '📡', run: () => setPage('live') },
             { id: 'go-followers', label: 'Go to Followers', group: 'Go to', icon: '👥', run: () => setPage('followers') },
             { id: 'go-gifts', label: 'Go to Gifts', group: 'Go to', icon: '🎁', run: () => setPage('gifts') },
-            { id: 'go-reminders', label: 'Go to Reminders', group: 'Go to', icon: '⏰', run: () => setPage('reminders') },
+            { id: 'go-reminders', label: 'Go to Reach out', group: 'Go to', icon: '⏰', run: () => setPage('reminders') },
             { id: 'go-messages', label: 'Go to Messages', group: 'Go to', icon: '💬', run: () => setPage('messages') },
             { id: 'go-import', label: 'Go to Import', group: 'Go to', icon: '📥', run: () => setPage('import') },
             { id: 'go-settings', label: 'Go to Settings', group: 'Go to', icon: '⚙️', run: () => setPage('settings') },

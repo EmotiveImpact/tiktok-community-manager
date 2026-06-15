@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { UserHistoricalTally } from '../types';
 import { formatNumber } from '../lib/format';
 import { avatarGradient } from '../lib/avatars';
-import { useStore } from '../state/store';
+import { useUI } from '../state/ui';
 import { PanelHeader, PanelShell } from './PanelHeader';
 
 type SortKey = 'diamonds' | 'comments' | 'gifts' | 'sessionsAppeared';
@@ -16,7 +16,7 @@ const RANK_STYLES = [
 export function AllTimeLeaderboard({ onClose }: { onClose: () => void }) {
   const [data, setData] = useState<UserHistoricalTally[]>([]);
   const [sortBy, setSortBy] = useState<SortKey>('diamonds');
-  const selectUser = useStore((s) => s.selectUser);
+  const openFanPeek = useUI((s) => s.openFanPeek);
 
   useEffect(() => {
     window.tiktok.sessionsLeaderboard(100).then(setData);
@@ -74,7 +74,7 @@ export function AllTimeLeaderboard({ onClose }: { onClose: () => void }) {
               {sorted.map((t, i) => (
                 <tr
                   key={t.uniqueId}
-                  onClick={() => selectUser(t.uniqueId)}
+                  onClick={() => openFanPeek(t.uniqueId)}
                   className="cursor-pointer border-b border-zinc-900 transition hover:bg-zinc-900/60"
                 >
                   <td className="px-3 py-2.5">

@@ -401,7 +401,7 @@ export const FanMemoryPanel = memo(function FanMemoryPanel() {
                     </button>
                   </Tooltip>
                 </div>
-                <Tooltip content="See this fan's full record on the Followers page">
+                <Tooltip content="Open this fan's full 360 profile">
                 <button
                   onClick={() => openFanProfile(fan.uniqueId)}
                   className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-like-500/60 bg-like-500/10 px-3 py-2 text-xs font-bold text-like-300 shadow-[0_1px_8px_rgba(105,201,208,0.18)] transition hover:bg-like-500/20 hover:text-like-200"

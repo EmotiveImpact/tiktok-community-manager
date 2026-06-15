@@ -11,7 +11,7 @@
  * Two variants:
  *   - "center" (default): the `.glass` surface centered, same radius/shadow as
  *     the old ThankComposer / LogGiftModal modals.
- *   - "drawer": a right-side slide-in panel for UserDetailDrawer.
+ *   - "drawer": a right-side slide-in panel (e.g. the Fan Peek).
  *
  * Theming: content is portaled, but tokens are declared on :root and the theme
  * lives on <html data-theme>, so `var()`s cascade into the portal automatically

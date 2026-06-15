@@ -60,13 +60,11 @@ type State = {
 
   tallies: Map<string, Tally>;
   roomMembers: Map<string, RoomMember>;
-  selectedUserId: string | null;
   pinnedMessages: FeedItem[];
 
   setStatus: (s: ConnectionStatus, error?: string) => void;
   setHealth: (d: ConnectionDetail) => void;
   setUsername: (u: string) => void;
-  selectUser: (uniqueId: string | null) => void;
   pinMessage: (item: FeedItem) => void;
   unpinMessage: (id: string) => void;
   reset: () => void;
@@ -96,7 +94,6 @@ const baseStats = {
   streamMeta: null as StreamMeta | null,
   tallies: new Map<string, Tally>(),
   roomMembers: new Map<string, RoomMember>(),
-  selectedUserId: null as string | null,
   pinnedMessages: [] as FeedItem[],
 };
 
@@ -162,7 +159,6 @@ export const useStore = create<State>((set, get) => ({
 
   setUsername: (username) => set({ username }),
 
-  selectUser: (uniqueId) => set({ selectedUserId: uniqueId }),
 
   pinMessage: (item) =>
     set((s) => ({
