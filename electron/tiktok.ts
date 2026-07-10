@@ -182,7 +182,12 @@ export class TikTokSession {
   private lastErrorPhase: ConnectionPhase | null = null;
 
   constructor(username: string, cbs: Callbacks) {
-    this.username = username.replace(/^@/, '').trim();
+    // TikTok unique IDs are always lowercase. TikTok's room-lookup API is
+    // case-SENSITIVE and returns `user_not_found` for any mixed-case handle
+    // (e.g. "James0cap" fails, "james0cap" connects), which surfaced as a
+    // confusing FetchIsLiveError. Normalize to lowercase so any casing the
+    // user types resolves the same live room.
+    this.username = username.replace(/^@/, '').trim().toLowerCase();
     this.cbs = cbs;
     // v2 signing: the constructor accepts `signApiKey` (Euler / eulerstream API
     // key) directly on the options object — it is forwarded to the bundled
