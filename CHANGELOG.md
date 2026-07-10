@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.1.x — CRM flow polish
+- **2.1.3** – Distribution ready: the build is now **notarized + stapled** (reusing the studio `vlume-notary` App Store Connect key via an electron-builder `afterSign` hook), so it opens with zero Gatekeeper warnings on any Mac. Also fixed connecting to mixed-case usernames (TikTok's room lookup is case-sensitive, so `James0cap` now normalizes to `james0cap`) and made "Reach out → Open chat" open the in-app Messages page instead of the system browser.
 - **2.1.2** — Retired the legacy fan-detail drawer (the Leaderboard now opens the universal peek like everywhere else); fixed command-palette + tooltip label drift. The peek is now the single fan-detail surface app-wide. QA sweep: all flows verified.
 - **2.1.1** — The full layout is now the default window state (window 1320×860, minWidth 1180). No more "cramped vs wide" — the complete layout (4 stat cards, top-supporter spotlight, 3-column profile) shows at the normal size without dragging.
 - **2.1.0** — One **Reach out** model across the Reminders page and the Messages follow-up rail (same data, same actions). Sidebar renamed "Reach out".
