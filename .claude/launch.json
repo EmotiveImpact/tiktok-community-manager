@@ -30,6 +30,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "3530", "--directory", "dist"],
       "port": 3530
+    },
+    {
+      "name": "saya-dist",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3552", "--directory", "dist"],
+      "port": 3552
     }
   ]
 }
