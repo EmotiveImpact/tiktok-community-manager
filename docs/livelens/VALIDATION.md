@@ -19,7 +19,8 @@ fixtures used the locked FFmpeg 7.0.2-static binary from ffmpeg-static 5.3.0.
 | Stage B browser fixture capture and search | Passed | Start receipt, recording state backed by segments, authenticated MP4 metadata, literal statement/account searches |
 | Real public TikTok LIVE | Unrun / blocked | No selected usable account/media URL or provider access supplied; fixtures do not establish provider success |
 | Native Electron window | Unrun | Container sandbox helper/display limitations; archive logic/IPC bundle and HTTP transport are separately verified |
-| Current PR #1 / hosted CI API | Access blocked | Managed proxy rejected `api.github.com` CONNECT with 403; read-only Git still verified branch/checkpoint and PR head. Cause of historical hosted failure remains unknown. |
+| PR #1 / publication | Confirmed | PR #1 open/draft/unmerged; branch and implementation commit published; draft PR #3 targets the foundation branch |
+| Hosted CI at implementation `5990315` | Externally blocked | Run `38085765961`: no runners/steps. Both check annotations explicitly cite failed account payments or spending limit and direct the owner to GitHub Billing & plans. Local checks passed; no billing change made. |
 
 `python3 scripts/validation/browser_smoke.py` passed: desktop/phone layouts,
 keyboard skip/navigation, actual playback and evidence seeking, captured account
@@ -31,6 +32,12 @@ Recordings, SQLite databases, signed URLs and populated credentials are excluded
 from Git. No real LIVE monitoring, merge, deployment, external model, paid
 infrastructure or ALFRED repository change occurred. Later commercial capacity
 and source/model/provider licence gates remain separate.
+
+Initial API access failed at the managed proxy; after saving the required
+`api.github.com` domain in the environment draft, API reads and draft PR creation
+were observed to work. Run-log download remained proxy-blocked, but the check
+annotations exposed the current billing/spending prerequisite directly. The
+cause of the earlier historical run with unavailable logs remains unasserted.
 
 ## Historical foundation receipt
 

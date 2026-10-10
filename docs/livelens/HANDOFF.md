@@ -26,11 +26,19 @@ remains blocked: no selected accessible LIVE/media URL was supplied. C03 is the
 bounded fixture/operator-configured-source recorder, not automatic discovery or
 multi-stream monitoring. A01/C04/U01/I01/I02/P01/R01/G01/G02/S01/S02 remain planned.
 
-Git reads verified the foundation and PR #1 head. GitHub API/CI inspection was
-blocked by an HTTP CONNECT 403 from the managed proxy for `api.github.com`; no CI
-failure cause is inferred. That required domain was added to the environment
-draft, which still needs user review/save to affect runtime access. Publishing
-code is not deployment, merging or validation of customer capacity.
+Published draft: [PR #3](https://github.com/EmotiveImpact/tiktok-community-manager/pull/3),
+targeting the foundation branch. Implementation commit: `599031536659fc84df4440f92c1f40b94f7a53b8`.
+PR #1 was confirmed open/draft and unmerged, targeting `redesign`.
+
+GitHub API initially returned a proxy CONNECT 403. The required `api.github.com`
+domain was added to the environment draft; subsequent API calls and draft-PR
+creation succeeded. Save/publish the development environment draft for reuse.
+Hosted run `38085765961` failed before either job acquired a runner or step.
+Both check annotations state that recent account payments failed or the spending
+limit needs increasing. The owner must resolve GitHub Billing & plans before
+hosted checks can run; no billing settings were changed here. This current
+annotation does not retroactively prove the cause of older unavailable runs.
+Publishing code is not deployment, merging or validation of customer capacity.
 
 Checkpoint: 10 October 2026. Repository: `EmotiveImpact/tiktok-community-manager`.
 Expanded draft: PR #1, branch `feat/livelens-evidence-timeline-2026-10-10`.
