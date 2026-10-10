@@ -1,0 +1,42 @@
+name: LiveLens source inventory
+on:
+  push:
+    paths:
+      - '.gitmodules'
+      - 'research/upstream/**'
+      - 'integrations/alfred/**'
+      - '.github/workflows/livelens-upstreams.yml'
+  pull_request:
+    paths:
+      - '.gitmodules'
+      - 'research/upstream/**'
+      - 'integrations/alfred/**'
+      - '.github/workflows/livelens-upstreams.yml'
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python3 research/upstream/verify_pins.py
+      - name: Baseline ALFRED manifest format
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("integrations/alfred/manifest.v1.json").read_text())
+          assert d["contract_version"] == 1
+          assert d["product"]["id"] == "livelens" and d["product"]["independent"]
+          assert d["mode"] == "live"
+          assert 60 <= d["freshness_seconds"] <= 604800
+          assert all(c["kind"] == "read" and c["effect"] == "none" and c["approval"] == "not_required" for c in d["capabilities"])
+          print("ALFRED manifest shape checked; full cross-repo integration untested")
+          PY
