@@ -7,7 +7,7 @@ Do not treat this checkpoint as a merge, deployment or live collection receipt.
 
 For a new cloud coding task, use [CLOUD_HANDOFF.md](CLOUD_HANDOFF.md). It contains
 the product vision, verified starting branch, cloud setup guidance and a
-paste-ready C01/C02/C03 continuation prompt. The foundation code checkpoint is
+paste-ready U00/C01/C02/C03 continuation prompt. The foundation code checkpoint is
 `48deedee8f39b31b3f21414720cdf6f3007abfaa`; read the latest branch head, including
 later handoff changes, instead of resetting to that historical commit.
 
@@ -20,6 +20,10 @@ later handoff changes, instead of resetting to that historical commit.
 5. `services/intelligence/README.md`
 6. `docs/livelens/ALFRED_INTEGRATION.md`
 7. `docs/livelens/VALIDATION.md`
+
+Also read `APP_BLUEPRINT.md` before implementation. It folds the earlier
+LiveLens requirements into the complete app, design overhaul and eventual
+server/paid-user programme. U00 is planned, not implemented by this handoff.
 
 `PRD.md` retains the original timeline slice requirements. `PLATFORM.md` is the
 current wider scope: an intelligence engine that ALFRED and an operator console
@@ -70,7 +74,8 @@ check current-head CI independently. Full receipt: `VALIDATION.md`.
 
 ## Next complete engineering slice
 
-Start with C01/C02/C03: bridge selected desktop evidence into a service session,
+Start with U00/C01 and continue C02/C03: build the actual operator app, bridge
+selected desktop evidence into a service session,
 choose a supported source/connector route, then build one durable recorder worker.
 Prove a replayable media-plus-chat session survives restart before extending to
 independent speech processing and two concurrent streams.

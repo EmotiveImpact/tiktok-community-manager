@@ -63,6 +63,24 @@
       ]
     },
     {
+      "id": "U00",
+      "title": "Complete operator app foundation and design overhaul",
+      "status": "planned",
+      "dependsOn": [
+        "F03",
+        "C01"
+      ],
+      "implementationBrief": "docs/livelens/APP_BLUEPRINT.md",
+      "acceptance": [
+        "Coherent React/TypeScript navigation and real overview, sessions, evidence/context, account search, cases/reports and configuration journeys",
+        "Explicit authenticated browser transport; broad service credentials remain on the server; existing browser-origin refusal is not replaced by global CORS",
+        "Any required case/session read routes are bounded and workspace-bound; existing API clients remain compatible",
+        "Useful desktop/community/CRM workflows preserved; loading, empty, pending, failed and unavailable states reflect real service capabilities",
+        "Operator browses a retained session, searches evidence, opens context, links a case and previews/exports a report after service restart",
+        "Actual desktop and phone browser verification, accessible keyboard navigation, documented reproduction and labelled demo fixtures"
+      ]
+    },
+    {
       "id": "C01",
       "title": "Desktop-to-service evidence bridge",
       "status": "planned",
@@ -121,7 +139,8 @@
       ],
       "acceptance": [
         "Two independent sessions collected concurrently without event/identity mixing",
-        "Live-status polling, leases, backoff, quotas and durable restart handling"
+        "Live-status polling, leases, backoff, quotas and durable restart handling",
+        "Selected account watchlists discover their available broadcasts; observed guest/chat appearances do not imply a universal room-to-room locator"
       ]
     },
     {
@@ -130,11 +149,13 @@
       "status": "planned",
       "dependsOn": [
         "C01",
-        "C03"
+        "C03",
+        "U00"
       ],
       "acceptance": [
         "Sessions, worker health, media replay, account activity, evidence and cases use the real API",
-        "Desktop and phone browser acceptance; no decorative controls implying unavailable collection"
+        "Desktop and phone browser acceptance; no decorative controls implying unavailable collection",
+        "Full application map and design in APP_BLUEPRINT.md: conversation seek/context, evidence bookmarks, account activity, case notes/corrections and consistent navigation"
       ]
     },
     {
@@ -147,7 +168,8 @@
       ],
       "acceptance": [
         "Topics, claims, possible incidents and counterevidence reference exact evidence",
-        "Human review status preserved; adversarial transcript instructions cannot dispatch tools"
+        "Human review status preserved; adversarial transcript instructions cannot dispatch tools",
+        "Cross-session statement/topic comparisons use captured evidence and distinguish suggested interpretation from original records"
       ]
     },
     {
@@ -225,7 +247,10 @@
       "acceptance": [
         "PostgreSQL/object storage/queue deployment validated",
         "Case permissions, encryption, retention/deletion, metering, billing and backup recovery",
-        "Measured capacity and failure budget before customer rollout"
+        "Measured capacity and failure budget before customer rollout",
+        "Customer login, teams/roles and case-level permissions are enforced at the server; invited customer pilot precedes wider rollout",
+        "Representative app-user load, recording concurrency and speech/analysis concurrency measured separately, with explicit latency, queue, storage and cost budgets",
+        "Hundreds-of-users ambition remains a target until capacity and failure/recovery results support a stated service limit"
       ]
     },
     {
@@ -241,5 +266,17 @@
         "Independent provider failures and credentials isolated"
       ]
     }
-  ]
+  ],
+  "productTarget": {
+    "application": "Complete browser-capable operator app with a substantial design overhaul; preserve useful existing desktop/community workflows",
+    "growth": "Private operator app, invited customer pilot, then measured server operation towards hundreds of users",
+    "capacityStatus": "unvalidated",
+    "firstBuild": [
+      "U00",
+      "C01",
+      "C02",
+      "C03"
+    ],
+    "blueprint": "docs/livelens/APP_BLUEPRINT.md"
+  }
 }

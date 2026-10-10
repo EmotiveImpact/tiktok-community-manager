@@ -5,6 +5,14 @@ platform that can serve the owner, paying users, creator teams, investigators an
 ALFRED. TikTok is the first source adapter. The community manager is an existing
 collection and interface asset within the wider product.
 
+The latest requirement is a complete application and a substantial design
+overhaul, with eventual server operation for hundreds of users as a measured
+target. Read [APP_BLUEPRINT.md](APP_BLUEPRINT.md) for the full navigation/screen
+map, design direction, earlier-plan consolidation and commercial growth gates.
+U00 introduces a real operator app over the existing API alongside C01; U01
+later completes media replay and worker operations. Backend-only progress does
+not satisfy the full app brief.
+
 ## The product question
 
 With the existing application and all eight source repositories available, what
@@ -105,3 +113,8 @@ Read `ALFRED_INTEGRATION.md` for the concrete integration sequence.
 The next useful vertical slice is one replayable recorded conversation that
 survives a worker restart and produces a report whose evidence can be reopened.
 That gives the larger console and ALFRED reliable material to work with.
+
+Begin the operator app U00 alongside C01 rather than delaying every interface
+improvement until the entire recording/speech stack exists. Keep its available
+features grounded in real service data; complete C02/C03 for recording, then
+expand the same app through A01/C04/U01 and the later intelligence milestones.

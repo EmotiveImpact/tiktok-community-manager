@@ -10,6 +10,7 @@ searches captured evidence, assembles cases and exports source-linked reports.
 The existing desktop application remains available below.
 
 - [Platform vision and build sequence](docs/livelens/PLATFORM.md)
+- [Full app blueprint, design and consolidated plans](docs/livelens/APP_BLUEPRINT.md)
 - [Current implementation and handoff](docs/livelens/HANDOFF.md)
 - [Cloud build handoff and continuation prompt](docs/livelens/CLOUD_HANDOFF.md)
 - [Source library and reuse decisions](research/REUSE_REGISTER.md)
