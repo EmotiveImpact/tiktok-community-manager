@@ -15,6 +15,16 @@ const caption = (id: string, offset: number, text: string, definite = true) =>
   }) as FeedItem;
 
 describe('LiveLens evidence timeline', () => {
+  it('keeps provider and collector clocks separate and deduplicates provider IDs', () => {
+    const entry = { ...chat('local-one', 1000, 'ann', 'Original'), sourceTimestampMs: base + 500, sourceEventId: 'provider-one' };
+    const rows = buildTimeline('host', [entry, { ...entry, id: 'local-two' }], [caption('unknown', 2000, 'Anonymous')]);
+    expect(rows).toHaveLength(2);
+    expect(rows[0].sourceTimestampMs).toBe(base + 500);
+    expect(rows[0].capturedAtMs).toBe(base + 1000);
+    expect(rows[0].sourceId).toBe('provider-one');
+    expect(rows[1].sourceTimestampMs).toBeNull();
+    expect(rows[1].timestampBasis).toBe('collector-only');
+  });
   it('normalises a handle without inventing another identity', () => {
     expect(normaliseHandle(' @Host_Name ')).toBe('host_name');
   });

@@ -8,6 +8,12 @@ import { settings } from './store';
 import { log } from './logger';
 import { getRoomInfo } from './eulerstream';
 
+function providerTime(value: unknown, seconds = false): number | null {
+  const n = Number(value);
+  const ms = seconds ? n * 1000 : n;
+  return value != null && Number.isSafeInteger(ms) && ms > 0 ? ms : null;
+}
+
 export type ConnectionStatus =
   | 'idle'
   | 'connecting'
@@ -64,7 +70,7 @@ const STALL_CHECK_INTERVAL_MS = 5_000;
 
 export type NormalizedEvent =
   | { type: 'like'; ts: number; user: UserBrief; likeCount: number; totalLikeCount: number }
-  | { type: 'chat'; ts: number; user: UserBrief; comment: string }
+  | { type: 'chat'; ts: number; user: UserBrief; comment: string; sourceTimestampMs?: number | null; sourceEventId?: string }
   | { type: 'gift'; ts: number; user: UserBrief; giftId: number; giftName: string; diamondCount: number; repeatCount: number }
   | { type: 'member'; ts: number; user: UserBrief }
   | { type: 'follow'; ts: number; user: UserBrief }
@@ -76,7 +82,7 @@ export type NormalizedEvent =
   | { type: 'envelope'; ts: number; user: UserBrief; coins: number; canOpen: number }
   | { type: 'linkMicBattle'; ts: number; armies: { hostUserId: string; points: number }[] }
   | { type: 'emote'; ts: number; user: UserBrief; emoteId: string; emoteUrl: string | null }
-  | { type: 'caption'; ts: number; text: string; lang: string; sentenceId: string; definite: boolean; durationMs: number }
+  | { type: 'caption'; ts: number; text: string; lang: string; sentenceId: string; definite: boolean; durationMs: number; sourceTimestampMs?: number | null; sourceEventId?: string }
   | { type: 'streamMeta'; ts: number; meta: StreamMeta }
   | { type: 'streamEnd'; ts: number };
 
@@ -101,6 +107,7 @@ export type StreamMeta = {
 };
 
 export type RoomInfo = {
+  broadcastId?: string;
   title: string;
   hostNickname: string;
   hostUniqueId: string;
@@ -396,6 +403,8 @@ export class TikTokSession {
         ts: Date.now(),
         user: brief(d),
         comment: d?.comment ?? '',
+        sourceEventId: d?.common?.msgId ? String(d.common.msgId) : undefined,
+        sourceTimestampMs: providerTime(d?.common?.createTime, true),
       });
     });
 
@@ -505,6 +514,8 @@ export class TikTokSession {
         sentenceId: String(d?.sentenceId ?? ''),
         definite: d?.definite !== false,
         durationMs: Number(d?.durationMs ?? 0),
+        sourceTimestampMs: providerTime(d?.timestampMs),
+        sourceEventId: d?.common?.msgId ? String(d.common.msgId) : undefined,
       });
     });
 
@@ -651,6 +662,7 @@ export class TikTokSession {
         type: 'roomInfo',
         ts: Date.now(),
         info: {
+          broadcastId: state?.roomId ? String(state.roomId) : startedAt ? `started-${startedAt}` : undefined,
           title: ri?.title ?? '',
           hostNickname: owner?.nickname ?? this.username,
           hostUniqueId: owner?.display_id ?? owner?.unique_id ?? this.username,

@@ -65,7 +65,7 @@
     {
       "id": "U00",
       "title": "Complete operator app foundation and design overhaul",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "F03",
         "C01"
@@ -78,12 +78,19 @@
         "Useful desktop/community/CRM workflows preserved; loading, empty, pending, failed and unavailable states reflect real service capabilities",
         "Operator browses a retained session, searches evidence, opens context, links a case and previews/exports a report after service restart",
         "Actual desktop and phone browser verification, accessible keyboard navigation, documented reproduction and labelled demo fixtures"
+      ],
+      "evidence": [
+        "src/pages/LiveLensConsole.tsx",
+        "src/pages/livelens.css",
+        "services/intelligence/src/browser.mjs",
+        "scripts/validation/browser_smoke.py",
+        "docs/livelens/FIRST_RELEASE.md"
       ]
     },
     {
       "id": "C01",
       "title": "Desktop-to-service evidence bridge",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "F03"
       ],
@@ -91,24 +98,42 @@
         "Explicit operator action archives a real captured timeline",
         "Source versus receipt timestamp basis retained; session IDs do not mix broadcasts",
         "Renderer never holds broad operator credentials"
+      ],
+      "evidence": [
+        "electron/livelens-archive.ts",
+        "electron/sessions.ts",
+        "test/livelens-archive.test.ts",
+        "docs/livelens/FIRST_RELEASE.md"
+      ],
+      "limitations": [
+        "Native Electron window startup is unverified in the container; archive contract and actual HTTP upload/retry are covered by tests."
       ]
     },
     {
       "id": "C02",
       "title": "Recorder source and licence selection",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "F01"
       ],
       "acceptance": [
         "Exact event connector and all direct/transitive runtime licence routes recorded",
         "One selected accessible media source produces available stream URLs without bypassing access controls"
+      ],
+      "evidence": [
+        "research/REUSE_REGISTER.md",
+        "research/runtime-lock.json",
+        "research/runtime-licences",
+        "docs/livelens/FIRST_RELEASE.md"
+      ],
+      "remaining": [
+        "Validate the selected accessible public LIVE and its permitted HTTPS media URL; no usable provider source supplied. Runtime/licence selection is recorded; fixture recording is verified separately."
       ]
     },
     {
       "id": "C03",
       "title": "Durable recorder worker",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "F03",
         "C02"
@@ -116,6 +141,15 @@
       "acceptance": [
         "One session has segmented media plus chat and gap records",
         "Durable jobs, stop/retry and restart recovery; recording-active requires written media"
+      ],
+      "evidence": [
+        "services/intelligence/src/recorder.mjs",
+        "services/intelligence/src/recorder-exec.py",
+        "services/intelligence/test/recorder.test.mjs",
+        "services/intelligence/scripts/recording-demo.mjs"
+      ],
+      "limitations": [
+        "One bounded Linux worker and local storage; production multi-worker scheduling/quotas remain C04/S01. Real provider capture is unverified."
       ]
     },
     {
@@ -277,6 +311,7 @@
       "C02",
       "C03"
     ],
-    "blueprint": "docs/livelens/APP_BLUEPRINT.md"
+    "blueprint": "docs/livelens/APP_BLUEPRINT.md",
+    "firstBuildStatus": "private-operator-implementation; provider-validation-pending"
   }
 }

@@ -1,5 +1,12 @@
 # LiveLens cloud build handoff
 
+First application release continuation: see [FIRST_RELEASE.md](FIRST_RELEASE.md),
+the new section in [HANDOFF.md](HANDOFF.md), and [VALIDATION.md](VALIDATION.md).
+U00/C01 and the bounded C03 recorder are implemented on
+`feat/livelens-first-release-2026-10-10`; C02's real provider check is pending.
+Use its latest head when continuing this implementation; do not reset to the
+historical foundation. The original authorised programme below remains retained.
+
 Prepared 10 October 2026. This is the product vision and continuation brief for
 the next coding task. Use the repository, backlog and verified code as the
 project memory. The next task must not depend on access to the previous chat.

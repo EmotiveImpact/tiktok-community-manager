@@ -29,6 +29,11 @@ export type SessionTotals = {
 };
 
 export type StoredEvent = {
+  sourceTimestampMs?: number | null;
+  capturedAtMs?: number;
+  sourceEventId?: string;
+  text?: string;
+  definite?: boolean;
   ts: number;
   type: string;
   user?: { uniqueId: string; nickname: string };
@@ -85,7 +90,7 @@ export type SearchHit = {
 
 export type LiveEvent =
   | { type: 'like'; ts: number; user: UserBrief; likeCount: number; totalLikeCount: number }
-  | { type: 'chat'; ts: number; user: UserBrief; comment: string }
+  | { type: 'chat'; ts: number; user: UserBrief; comment: string; sourceTimestampMs?: number | null; sourceEventId?: string }
   | { type: 'gift'; ts: number; user: UserBrief; giftId: number; giftName: string; diamondCount: number; repeatCount: number }
   | { type: 'member'; ts: number; user: UserBrief }
   | { type: 'follow'; ts: number; user: UserBrief }
@@ -97,7 +102,7 @@ export type LiveEvent =
   | { type: 'envelope'; ts: number; user: UserBrief; coins: number; canOpen: number }
   | { type: 'linkMicBattle'; ts: number; armies: { hostUserId: string; points: number }[] }
   | { type: 'emote'; ts: number; user: UserBrief; emoteId: string; emoteUrl: string | null }
-  | { type: 'caption'; ts: number; text: string; lang: string; sentenceId: string; definite: boolean; durationMs: number }
+  | { type: 'caption'; ts: number; text: string; lang: string; sentenceId: string; definite: boolean; durationMs: number; sourceTimestampMs?: number | null; sourceEventId?: string }
   | { type: 'streamMeta'; ts: number; meta: StreamMeta }
   | { type: 'streamEnd'; ts: number };
 
@@ -380,6 +385,9 @@ export type ConnectionDetail = {
 declare global {
   interface Window {
     tiktok: {
+      livelensOpenConsole?: () => Promise<{ ok: boolean; error?: string }>;
+      livelensArchive?: (id?: string) => Promise<{ state: 'unavailable' | 'pending' | 'failed' | 'archived'; sessionId?: string; error?: string }>;
+      livelensArchiveStatus?: (id?: string) => Promise<{ state: 'unavailable' | 'pending' | 'failed' | 'archived'; sessionId?: string; error?: string }>;
       connect: (username: string) => Promise<{ ok: boolean; error?: string }>;
       disconnect: () => Promise<{ ok: boolean }>;
       /** Manually re-fetch EulerStream stream meta (e.g. on HLS URL expiry). */

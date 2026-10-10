@@ -4,10 +4,13 @@ Live conversation intelligence, developed from the existing TikTok Community
 Manager. The wider product connects collection, searchable evidence,
 investigations, reporting and ALFRED through one scoped service interface.
 
-The current draft adds eight pinned upstream source repositories and a runnable
-intelligence API pilot. It persists session events and attribution history,
-searches captured evidence, assembles cases and exports source-linked reports.
-The existing desktop application remains available below.
+The private operator release includes an authenticated browser console, durable
+evidence/cases/reports, explicit desktop archiving and a bounded recorder with
+verified media replay and restart recovery. Eight pinned upstream repositories
+remain research sources. Existing community/CRM workflows remain available.
+See [first-release setup and validation](docs/livelens/FIRST_RELEASE.md).
+Run `npm run console:fixture` for the labelled local fixture application; this
+does not connect a real LIVE or enable paid operation.
 
 - [Platform vision and build sequence](docs/livelens/PLATFORM.md)
 - [Full app blueprint, design and consolidated plans](docs/livelens/APP_BLUEPRINT.md)

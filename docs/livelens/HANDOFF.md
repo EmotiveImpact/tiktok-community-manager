@@ -1,5 +1,37 @@
 # LiveLens development handoff
 
+## First application release, 10 October 2026
+
+Continuation branch: `feat/livelens-first-release-2026-10-10`, based on exact
+foundation `14df1ae5d42e38e9dbcf4a974c8d161814a141f5`. See
+[FIRST_RELEASE.md](FIRST_RELEASE.md) for complete reproduction and configuration.
+The historical foundation receipt below is retained as history.
+
+Implemented: graphite browser console; real workspace-bound overview, session
+library, literal account/evidence search, context, investigations and exports;
+same-origin scoped operator login/CSRF; explicit Electron main-process archiving
+with stable boundaries and receipts; one durable Linux/Python/FFmpeg recorder;
+segmented verified media, manifests/hashes, bounded retries/deadlines, stop and
+restart recovery; authenticated replay/ranges and media-linked case reports.
+
+Tests distinguish actual fixture media from a real LIVE. The recording demo
+kills the service abruptly, restarts it, retains gaps/partial tails and reopens
+media and a case report after another restart. Desktop/phone browser acceptance
+is recorded in VALIDATION.md. Native Electron window startup is still unverified;
+the archive-to-HTTP path, conflicts and broadcast separation are tested.
+
+C02 runtime/licence selection is recorded in the reuse register and 64-package
+runtime inventory. No research submodule is adopted. Its real provider criterion
+remains blocked: no selected accessible LIVE/media URL was supplied. C03 is the
+bounded fixture/operator-configured-source recorder, not automatic discovery or
+multi-stream monitoring. A01/C04/U01/I01/I02/P01/R01/G01/G02/S01/S02 remain planned.
+
+Git reads verified the foundation and PR #1 head. GitHub API/CI inspection was
+blocked by an HTTP CONNECT 403 from the managed proxy for `api.github.com`; no CI
+failure cause is inferred. That required domain was added to the environment
+draft, which still needs user review/save to affect runtime access. Publishing
+code is not deployment, merging or validation of customer capacity.
+
 Checkpoint: 10 October 2026. Repository: `EmotiveImpact/tiktok-community-manager`.
 Expanded draft: PR #1, branch `feat/livelens-evidence-timeline-2026-10-10`.
 Base: `redesign`. Previous head: `8731d5bdd4ec932c6bfe3c50bf02ace154aa616e`.

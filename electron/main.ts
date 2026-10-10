@@ -18,6 +18,8 @@ import { startRollingBuffer, stopRollingBuffer, captureClip, isFfmpegAvailable, 
 import { setupLikerIpc, closeLikerWindow } from './liker';
 import { checkForUpdatesOnStartup, checkForUpdatesManual } from './updater';
 import * as fans from './fans';
+import { randomUUID } from 'node:crypto';
+import { archiveRecord, archiveStatus } from './livelens-archive';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -258,6 +260,7 @@ function makeSessionCallbacks(username: string): {
   onEvent: (evt: NormalizedEvent) => void;
   onHealth: (detail: ConnectionDetail) => void;
 } {
+  const captureBoundary = `capture-${randomUUID()}`;
   return {
     onStatus: (status, error) => broadcast('tt:status', { status, error }),
     // Rich connection-health detail → drives the ConnectionHealth pill. Kept on
@@ -266,7 +269,7 @@ function makeSessionCallbacks(username: string): {
     onEvent: (evt) => {
       try {
         if (evt.type === 'roomInfo') {
-          currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title);
+          currentSessionId = sessions.start(evt.info.hostUniqueId, evt.info.hostNickname, evt.info.title, evt.info.broadcastId ?? captureBoundary);
           startLog(evt.info.hostUniqueId);
           if (evt.info.hlsUrl) startRollingBuffer(evt.info.hlsUrl);
           // If the connected host IS the creator's own account, capture their
@@ -413,6 +416,31 @@ ipcMain.handle('multi:disconnectAll', async () => {
 });
 
 ipcMain.handle('sessions:list', () => sessions.list());
+ipcMain.handle('livelens:openConsole', async (event) => {
+  if (event.sender !== mainWindow?.webContents) return { ok: false, error: 'Main window required' };
+  const address = process.env.LIVELENS_CONSOLE_ORIGIN ?? process.env.LIVELENS_DESKTOP_URL;
+  if (!address) return { ok: false, error: 'Configure the service console address in the main-process environment' };
+  try {
+    const url = new URL(address);
+    if (url.username || url.password || url.search || url.hash || url.pathname !== '/' || (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)))) return { ok: false, error: 'Invalid service console address' };
+    await shell.openExternal(url.origin + '/app/'); return { ok: true };
+  } catch { return { ok: false, error: 'Service console unavailable' }; }
+});
+ipcMain.handle('livelens:archive', async (event, id?: string) => {
+  if (event.sender !== mainWindow?.webContents) return { state: 'failed', error: 'Main window required' };
+  const selected = id ?? currentSessionId;
+  if (!selected || !/^[A-Za-z0-9_-]{1,96}$/.test(selected)) return { state: 'unavailable', error: 'No captured session selected' };
+  sessions.flushActive();
+  const record = sessions.get(selected);
+  return record ? archiveRecord(structuredClone(record)) : { state: 'unavailable', error: 'Session unavailable' };
+});
+ipcMain.handle('livelens:archiveStatus', (event, id?: string) => {
+  if (event.sender !== mainWindow?.webContents) return { state: 'failed', error: 'Main window required' };
+  const selected = id ?? currentSessionId;
+  if (!selected || !/^[A-Za-z0-9_-]{1,96}$/.test(selected)) return { state: 'unavailable', error: 'No captured session selected' };
+  const record = sessions.get(selected);
+  return record ? archiveStatus(record) : { state: 'unavailable', error: 'Session unavailable' };
+});
 ipcMain.handle('sessions:get', (_e, id: string) => sessions.get(id));
 ipcMain.handle('sessions:delete', (_e, id: string) => {
   sessions.remove(id);

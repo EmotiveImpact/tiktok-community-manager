@@ -3,11 +3,15 @@ name: LiveLens branch checks
 on:
   push:
     branches:
-      - feat/livelens-evidence-timeline-2026-10-10
+      - 'feat/livelens-*'
   pull_request:
     paths:
       - 'src/lib/livelens/**'
       - 'src/components/LiveLensPanel.tsx'
+      - 'src/pages/LiveLensConsole.tsx'
+      - 'src/pages/livelens.css'
+      - 'src/main.tsx'
+      - 'electron/**'
       - 'src/App.tsx'
       - 'src/state/ui.ts'
       - 'test/livelens.test.ts'
@@ -29,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Application regression tests
@@ -51,7 +55,14 @@ jobs:
           python-version: '3.12'
       - name: Verify committed source pins without executing upstream code
         run: node scripts/research/verify-upstreams.mjs
+      - name: Install verified distro FFmpeg for fixture recording
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version
       - name: Durable service and real HTTP client checks
         run: npm --prefix services/intelligence test
       - name: Restart and evidence export demonstration
         run: npm --prefix services/intelligence run demo
+      - name: Actual recording, abrupt interruption, restart and replay
+        run: npm --prefix services/intelligence run demo:recording

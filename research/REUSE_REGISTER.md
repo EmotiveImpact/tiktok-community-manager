@@ -35,3 +35,44 @@ choice and does not itself settle licence obligations.
 
 The first two worker choices to resolve are the Node event connector route and
 FFmpeg media capture. Speech processing can then be benchmarked independently.
+
+## First-release runtime decision
+
+The recorder and browser gateway are original LiveLens code. No files or runtime
+imports were copied from the eight research repositories; their pins, licences
+and research-only states are unchanged. The worker uses Node 24 built-in
+HTTP/SQLite/crypto/fs/child_process, Python 3.12 standard-library `ctypes` only for
+Linux parent-death handling, and an explicitly configured FFmpeg executable.
+
+The desktop stays on npm `tiktok-live-connector` **2.1.0**, resolved and integrity-
+pinned by the existing `package-lock.json`. Its installed distribution includes
+the MIT licence (copyright zerodytrash 2022), retained at
+`runtime-licences/tiktok-live-connector-2.1.0.txt`. This is a different artifact
+from the researched newer AGPL/additional-terms Git commit; that research source
+is not substituted or adopted. `@eulerstream/euler-api-sdk` **0.1.5** is already
+transitive. Provider signing/room-info access and terms remain separate; no
+hosted commercial clearance is inferred from a source licence.
+
+Fixture recording uses existing `ffmpeg-static` **5.3.0**, which downloads FFmpeg
+**7.0.2-static**, a GPL/version3-enabled build. Package and binary licences are
+retained in `runtime-licences`. It runs as a separate executable; that boundary
+does not remove GPL distribution obligations. Do not ship a combined paid binary
+without satisfying corresponding-source/notices obligations and reviewing the
+chosen build/provider terms. Server operators may configure a trusted system
+FFmpeg instead; validation records the executable actually used. No new npm
+package or research application has been installed for this worker.
+
+`runtime-lock.json` records **64** exact resolved npm packages in the connector
+and ffmpeg-static dependency closures, integrity values, licence metadata and
+the package-lock digest. It is an inventory, not a claim that metadata alone
+clears every future distribution/model/provider arrangement. It includes direct
+and transitive runtime routes; the full original package lock remains authority.
+
+Media route: available HTTPS HLS/MP4 supplied by the existing desktop connector /
+EulerStream metadata path, or an explicit generated file fixture. Only service-
+configured sources can be recorded. Signed URLs stay private; remote TLS stays
+verified. Failure produces bounded attempts, persisted gaps and unavailable
+tails. Tests exercise actual written media, stop, abrupt death, restart,
+workspace denial and damage refusal. Real provider discovery/recording is
+unverified without an accessible selected LIVE. Disable recorder source
+configuration to roll back recording while preserving retained evidence/API.

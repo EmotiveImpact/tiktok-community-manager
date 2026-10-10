@@ -74,9 +74,10 @@ export class EvidenceStore {
     });
   }
 
-  listSessions(workspace, limit = 100) {
+  listSessions(workspace, limit = 100, offset = 0) {
     ident(workspace); limit = pageLimit(limit);
-    return this.db.prepare('SELECT id FROM sessions WHERE workspace=? ORDER BY started_at DESC,id LIMIT ?').all(workspace, limit)
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new Fault('invalid_cursor');
+    return this.db.prepare('SELECT id FROM sessions WHERE workspace=? ORDER BY started_at DESC,id LIMIT ? OFFSET ?').all(workspace, limit, offset)
       .map(row => this.session(workspace, row.id));
   }
 
@@ -172,6 +173,20 @@ export class EvidenceStore {
     return { id: row.id, title: row.title, question: row.question, createdBy: row.created_by, createdAtMs: row.created_at };
   }
 
+  listCases(workspace, limit = 100, offset = 0) {
+    ident(workspace); limit = pageLimit(limit);
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new Fault('invalid_cursor');
+    return this.db.prepare('SELECT id FROM cases WHERE workspace=? ORDER BY created_at DESC,id LIMIT ? OFFSET ?').all(workspace, limit, offset)
+      .map(row => this.case(workspace, row.id));
+  }
+
+  context(workspace, id, limit = 25) {
+    const event = this.evidence(workspace, id); limit = pageLimit(limit);
+    const before = this.db.prepare('SELECT * FROM events WHERE workspace=? AND session_id=? AND seq<? ORDER BY seq DESC LIMIT ?').all(workspace, event.sessionId, event.sequence, limit).reverse();
+    const after = this.db.prepare('SELECT * FROM events WHERE workspace=? AND session_id=? AND seq>? ORDER BY seq LIMIT ?').all(workspace, event.sessionId, event.sequence, limit);
+    return { event, session: this.session(workspace, event.sessionId), before: before.map(row => this.project(row)), after: after.map(row => this.project(row)), relationship: 'temporal-only' };
+  }
+
   createCase(workspace, value, reviewer) {
     ident(workspace); object(value, ['id', 'title', 'question']); text(reviewer, 100);
     const id = value.id === undefined ? randomUUID() : ident(value.id);
@@ -228,7 +243,7 @@ export class EvidenceStore {
         'Account handles identify observed accounts, not verified real-world people. Speaker IDs are anonymous tracks.',
         'Temporal proximity does not prove a reply, coordination or intent. Collection gaps remain possible.',
         'A local hash chain detects changes against retained hashes; it is not an external signature or a trusted timestamp.',
-        'Live capture, independent transcription, semantic analysis and ALFRED registration are not enabled by this service.',
+        'Independent transcription, semantic analysis and ALFRED registration are not enabled by this service. Media coverage is limited to retained recorder segments when supplied.',
       ] };
     return { ...report, reportSha256: digest(report) };
   }
@@ -243,6 +258,10 @@ export function reportMarkdown(report) {
   if (!report.evidence.length) lines.push('', 'No evidence has been linked to this case.');
   lines.push('', '## Collection sources');
   for (const session of report.sessions) lines.push('- ' + markdownText(session.sourceUrl));
+  if (report.media) {
+    lines.push('', '## Retained media');
+    for (const job of report.media) for (const segment of job.segments) lines.push(`- Session ${markdownText(job.sessionId)} | job ${markdownText(job.id)} | segment ${markdownText(segment.id)} | collector-media start ${segment.startedAtMs} | duration ${segment.durationMs}ms | SHA-256 ${segment.sha256} | replay /v1/media/${job.id}/${segment.id}`);
+  }
   lines.push('', '## Scope');
   for (const item of report.limitations) lines.push('- ' + item);
   return lines.join('\n') + '\n';

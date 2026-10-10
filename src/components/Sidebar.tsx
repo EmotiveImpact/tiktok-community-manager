@@ -131,6 +131,8 @@ export function Sidebar() {
       <div className="titlebar-drag h-9 flex-none" />
 
       <LogoMark />
+      <a href="?view=overview" className="mb-3 rounded-lg border border-zinc-600 px-3 py-2 text-sm text-zinc-200">← LiveLens workspace</a>
+      {typeof window.tiktok?.livelensArchive !== 'function' && <span className="mb-3 text-xs text-zinc-400">Browser CRM · demo fixtures</span>}
 
       {/* The sidebar "flips" between the main app nav and the live toolset. */}
       <div

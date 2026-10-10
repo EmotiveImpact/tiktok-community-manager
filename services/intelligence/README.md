@@ -2,7 +2,9 @@
 
 A runnable first backend for session evidence, search, investigations and agent
 queries. Node 24 or later, no third-party runtime packages. SQLite is the pilot
-store. The existing desktop UI continues to run separately.
+store. The first release adds the same-origin operator console and an optional
+Linux/Python/FFmpeg recorder. See [first-release instructions](../../docs/livelens/FIRST_RELEASE.md)
+for authentication, source configuration, desktop archiving and browser/recording reproduction.
 
 Implemented: workspace-bound API keys and scopes; persistent sessions and original
 events; content-sensitive idempotent ingestion; source/collector/receipt clocks;
@@ -53,8 +55,9 @@ a named volume. The container scaffold has not been built or deployed here.
 ## API
 
 Use `Authorization: Bearer <token>` and JSON request bodies. The token establishes
-the workspace; body fields cannot select a different one. Browser-origin requests
-are refused until an explicit desktop/browser transport is added.
+the workspace; body fields cannot select a different one. Browser bearer requests
+remain refused. The configured same-origin console uses a separate scoped cookie
+session and CSRF protection; broad API keys remain outside the browser.
 
 | Method and path | Scope | Result |
 |---|---|---|
@@ -100,11 +103,19 @@ integrity information. They do not perform semantic AI reasoning.
 
 ## Practical limits
 
+Additional bounded routes: GET `/v1/overview`, GET `/v1/cases`, GET `/v1/cases/:id`,
+GET `/v1/evidence/:id/context`, GET `/v1/sources`, GET/POST `/v1/jobs`,
+GET `/v1/jobs/:id`, POST `/v1/jobs/:id/stop`, GET `/v1/sessions/:id/media`,
+and GET `/v1/media/:job/:segment`. Session/case lists accept bounded `offset` and
+`limit`. Recorder routes use `recordings:read` / `recordings:write`; media never
+leaves the authenticated workspace. Existing bearer/SDK routes are unchanged.
+
 SQLite and synchronous bounded API operations are suitable for this pilot, not a
 proven high-volume commercial service. Case exports are capped at 1,000 linked
 events; searches/pages at 200. There is no billing, case-level ACL, encryption,
-deletion/retention lifecycle, media store, durable recording scheduler or local
-speech model yet. A database administrator can rewrite an entire local chain;
+deletion/retention lifecycle, distributed scheduling or local speech model yet.
+The optional recorder stores local media and durable bounded jobs; it is not a
+multi-stream scheduler. A database administrator can rewrite an entire local chain;
 external signing, retained checkpoints and trusted timestamps are future work.
 
 The SDK has been exercised against the actual HTTP service with synthetic data.
