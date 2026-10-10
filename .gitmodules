@@ -1,0 +1,39 @@
+[submodule "research/upstream/xploitvoid-tiktok-live-recorder"]
+	path = research/upstream/xploitvoid-tiktok-live-recorder
+	url = https://github.com/XploitVoid/tiktok-live-recorder.git
+	update = checkout
+
+[submodule "research/upstream/pieter-tiktoklive-monitor"]
+	path = research/upstream/pieter-tiktoklive-monitor
+	url = https://github.com/PieterVanBoheemen/tiktoklive_monitor.git
+	update = checkout
+
+[submodule "research/upstream/michele-tiktok-live-recorder"]
+	path = research/upstream/michele-tiktok-live-recorder
+	url = https://github.com/Michele0303/tiktok-live-recorder.git
+	update = checkout
+
+[submodule "research/upstream/tiktoklive-python"]
+	path = research/upstream/tiktoklive-python
+	url = https://github.com/isaackogan/TikTokLive.git
+	update = checkout
+
+[submodule "research/upstream/whisperlivekit"]
+	path = research/upstream/whisperlivekit
+	url = https://github.com/QuentinFuxa/WhisperLiveKit.git
+	update = checkout
+
+[submodule "research/upstream/detoxify"]
+	path = research/upstream/detoxify
+	url = https://github.com/unitaryai/detoxify.git
+	update = checkout
+
+[submodule "research/upstream/tiktok-live-connector"]
+	path = research/upstream/tiktok-live-connector
+	url = https://github.com/zerodytrash/TikTok-Live-Connector.git
+	update = checkout
+
+[submodule "research/upstream/pyannote-audio"]
+	path = research/upstream/pyannote-audio
+	url = https://github.com/pyannote/pyannote-audio.git
+	update = checkout
