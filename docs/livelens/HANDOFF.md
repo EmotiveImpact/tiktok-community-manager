@@ -5,6 +5,12 @@ Expanded draft: PR #1, branch `feat/livelens-evidence-timeline-2026-10-10`.
 Base: `redesign`. Previous head: `8731d5bdd4ec932c6bfe3c50bf02ace154aa616e`.
 Do not treat this checkpoint as a merge, deployment or live collection receipt.
 
+For a new cloud coding task, use [CLOUD_HANDOFF.md](CLOUD_HANDOFF.md). It contains
+the product vision, verified starting branch, cloud setup guidance and a
+paste-ready C01/C02/C03 continuation prompt. The foundation code checkpoint is
+`48deedee8f39b31b3f21414720cdf6f3007abfaa`; read the latest branch head, including
+later handoff changes, instead of resetting to that historical commit.
+
 ## Read in this order
 
 1. `AGENTS.md`

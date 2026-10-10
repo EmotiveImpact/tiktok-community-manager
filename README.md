@@ -11,6 +11,7 @@ The existing desktop application remains available below.
 
 - [Platform vision and build sequence](docs/livelens/PLATFORM.md)
 - [Current implementation and handoff](docs/livelens/HANDOFF.md)
+- [Cloud build handoff and continuation prompt](docs/livelens/CLOUD_HANDOFF.md)
 - [Source library and reuse decisions](research/REUSE_REGISTER.md)
 - [Intelligence service: demo, API and tests](services/intelligence/README.md)
 - [ALFRED integration contract](docs/livelens/ALFRED_INTEGRATION.md)
