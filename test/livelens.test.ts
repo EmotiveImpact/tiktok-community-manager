@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { LiveEvent } from '../src/types';
 import {
   buildTimeline, createEvidenceReport, nearbyChat, normaliseHandle,
   reportMarkdown, searchEvidence, type FeedItem,
@@ -14,7 +13,6 @@ const caption = (id: string, offset: number, text: string, definite = true) =>
     id, ts: base + offset, type: 'caption', lang: 'en', sentenceId: id,
     text, definite, durationMs: 4000,
   }) as FeedItem;
-void (null as unknown as LiveEvent);
 
 describe('LiveLens evidence timeline', () => {
   it('normalises a handle without inventing another identity', () => {
