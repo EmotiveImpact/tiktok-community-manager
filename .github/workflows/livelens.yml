@@ -1,0 +1,33 @@
+name: LiveLens branch checks
+
+on:
+  push:
+    branches:
+      - feat/livelens-evidence-timeline-2026-10-10
+  pull_request:
+    paths:
+      - 'src/lib/livelens/**'
+      - 'src/components/LiveLensPanel.tsx'
+      - 'src/App.tsx'
+      - 'src/state/ui.ts'
+      - 'test/livelens.test.ts'
+      - '.github/workflows/livelens.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  unit-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Focused LiveLens tests
+        run: npx vitest run test/livelens.test.ts
+      - name: Type-check and bundle
+        run: npm run build
