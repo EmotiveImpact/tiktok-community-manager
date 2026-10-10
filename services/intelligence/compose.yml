@@ -1,0 +1,12 @@
+services:
+  intelligence:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4318:4318"
+    environment:
+      LIVELENS_API_KEYS: ${LIVELENS_API_KEYS:?Set workspace-scoped API keys first}
+    volumes:
+      - evidence:/app/data
+volumes:
+  evidence:

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "livelens-evidence-http",
+  "status": "client implemented; ALFRED registration planned",
+  "readOnly": true,
+  "credentials": "caller-owned private runtime API token",
+  "requiredScopes": ["sessions:read", "evidence:read", "cases:read"],
+  "operations": ["capabilities", "sessions", "search", "report"],
+  "originEffects": [],
+  "modelEgress": false,
+  "alfredReference": {
+    "repository": "EmotiveImpact/Alfred",
+    "commit": "75947b8dd59a3161c862d2533850a032994778e2",
+    "observedInterface": "alfred/connectors.py supports owner-selected local ICS/VCF exports only"
+  }
+}

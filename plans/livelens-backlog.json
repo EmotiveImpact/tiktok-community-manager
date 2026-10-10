@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "product": "LiveLens",
+  "updated": "2026-10-10",
+  "baseline": {
+    "repository": "EmotiveImpact/tiktok-community-manager",
+    "branch": "feat/livelens-evidence-timeline-2026-10-10",
+    "priorHead": "8731d5bdd4ec932c6bfe3c50bf02ace154aa616e"
+  },
+  "milestones": [
+    {
+      "id": "F01",
+      "title": "Pinned upstream source library",
+      "status": "implemented",
+      "evidence": [
+        "research/upstream-lock.json",
+        "scripts/research/verify-upstreams.mjs"
+      ],
+      "acceptance": [
+        "Eight Git submodule commits agree with the lock and actual checkouts",
+        "Original upstream licences retained; adoption states explicit"
+      ]
+    },
+    {
+      "id": "F02",
+      "title": "Desktop evidence timeline",
+      "status": "implemented",
+      "evidence": [
+        "src/lib/livelens/engine.ts",
+        "src/components/LiveLensPanel.tsx",
+        "test/livelens.test.ts"
+      ],
+      "acceptance": [
+        "Searchable chat/caption timeline and source-linked exports",
+        "Operator attribution never presented as automatic identification"
+      ]
+    },
+    {
+      "id": "F03",
+      "title": "Durable intelligence API pilot",
+      "status": "implemented",
+      "evidence": [
+        "services/intelligence/src/store.mjs",
+        "services/intelligence/src/server.mjs",
+        "services/intelligence/test/service.test.mjs"
+      ],
+      "acceptance": [
+        "Evidence, cases and assertions survive restart",
+        "Atomic idempotency, workspace isolation and damage refusal pass real HTTP/database tests"
+      ]
+    },
+    {
+      "id": "F04",
+      "title": "Agent client transport",
+      "status": "implemented",
+      "evidence": [
+        "services/intelligence/src/client.mjs",
+        "integrations/alfred/livelens_client.py"
+      ],
+      "acceptance": [
+        "JavaScript and Python clients query the real scoped API on synthetic evidence",
+        "No ALFRED registration or memory-write claim"
+      ]
+    },
+    {
+      "id": "C01",
+      "title": "Desktop-to-service evidence bridge",
+      "status": "planned",
+      "dependsOn": [
+        "F03"
+      ],
+      "acceptance": [
+        "Explicit operator action archives a real captured timeline",
+        "Source versus receipt timestamp basis retained; session IDs do not mix broadcasts",
+        "Renderer never holds broad operator credentials"
+      ]
+    },
+    {
+      "id": "C02",
+      "title": "Recorder source and licence selection",
+      "status": "planned",
+      "dependsOn": [
+        "F01"
+      ],
+      "acceptance": [
+        "Exact event connector and all direct/transitive runtime licence routes recorded",
+        "One selected accessible media source produces available stream URLs without bypassing access controls"
+      ]
+    },
+    {
+      "id": "C03",
+      "title": "Durable recorder worker",
+      "status": "planned",
+      "dependsOn": [
+        "F03",
+        "C02"
+      ],
+      "acceptance": [
+        "One session has segmented media plus chat and gap records",
+        "Durable jobs, stop/retry and restart recovery; recording-active requires written media"
+      ]
+    },
+    {
+      "id": "A01",
+      "title": "Independent transcription and diarisation",
+      "status": "planned",
+      "dependsOn": [
+        "C03"
+      ],
+      "acceptance": [
+        "Known-audio evaluation measures text errors, speaker overlap and latency",
+        "Speech segments reference media ranges; unidentified tracks remain unknown"
+      ]
+    },
+    {
+      "id": "C04",
+      "title": "Multi-stream scheduler",
+      "status": "planned",
+      "dependsOn": [
+        "C03"
+      ],
+      "acceptance": [
+        "Two independent sessions collected concurrently without event/identity mixing",
+        "Live-status polling, leases, backoff, quotas and durable restart handling"
+      ]
+    },
+    {
+      "id": "U01",
+      "title": "Intelligence operating console",
+      "status": "planned",
+      "dependsOn": [
+        "C01",
+        "C03"
+      ],
+      "acceptance": [
+        "Sessions, worker health, media replay, account activity, evidence and cases use the real API",
+        "Desktop and phone browser acceptance; no decorative controls implying unavailable collection"
+      ]
+    },
+    {
+      "id": "I01",
+      "title": "Context intelligence and findings",
+      "status": "planned",
+      "dependsOn": [
+        "A01",
+        "F03"
+      ],
+      "acceptance": [
+        "Topics, claims, possible incidents and counterevidence reference exact evidence",
+        "Human review status preserved; adversarial transcript instructions cannot dispatch tools"
+      ]
+    },
+    {
+      "id": "I02",
+      "title": "Source-supported relationship graph",
+      "status": "planned",
+      "dependsOn": [
+        "I01"
+      ],
+      "acceptance": [
+        "Observed, operator-reviewed and inferred links remain distinguishable",
+        "Account identity, speaker track and real-world person are distinct objects"
+      ]
+    },
+    {
+      "id": "P01",
+      "title": "Protection missions and alerts",
+      "status": "planned",
+      "dependsOn": [
+        "C04",
+        "I01"
+      ],
+      "acceptance": [
+        "Protected account, selected sources, rules and delivery preferences belong to one workspace",
+        "Reviewed/uncertain alerts show source context and capture gaps"
+      ]
+    },
+    {
+      "id": "R01",
+      "title": "Reviewed reports and evidence packs",
+      "status": "planned",
+      "dependsOn": [
+        "I01",
+        "U01"
+      ],
+      "acceptance": [
+        "Report editor, redaction, PDF/JSON evidence bundle and retained source manifests",
+        "Every material finding has sources and review history"
+      ]
+    },
+    {
+      "id": "G01",
+      "title": "Registered ALFRED read interface",
+      "status": "planned",
+      "dependsOn": [
+        "F04"
+      ],
+      "acceptance": [
+        "Dedicated ALFRED HTTP adapter respects source/model grants and workspace binding",
+        "Revocation, unavailable service, token rotation and untrusted content acceptance tests"
+      ]
+    },
+    {
+      "id": "G02",
+      "title": "ALFRED collection controls",
+      "status": "planned",
+      "dependsOn": [
+        "G01",
+        "C04"
+      ],
+      "acceptance": [
+        "Explicit bounded job parameters and independent dispatch policy",
+        "Traceable job receipt; memory acceptance never automatic"
+      ]
+    },
+    {
+      "id": "S01",
+      "title": "Paid pilot infrastructure",
+      "status": "planned",
+      "dependsOn": [
+        "C04",
+        "U01",
+        "R01"
+      ],
+      "acceptance": [
+        "PostgreSQL/object storage/queue deployment validated",
+        "Case permissions, encryption, retention/deletion, metering, billing and backup recovery",
+        "Measured capacity and failure budget before customer rollout"
+      ]
+    },
+    {
+      "id": "S02",
+      "title": "Additional source platforms",
+      "status": "planned",
+      "dependsOn": [
+        "C04",
+        "I01"
+      ],
+      "acceptance": [
+        "A second permitted platform uses the same event/media contracts",
+        "Independent provider failures and credentials isolated"
+      ]
+    }
+  ]
+}

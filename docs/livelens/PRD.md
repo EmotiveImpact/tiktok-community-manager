@@ -1,6 +1,8 @@
 # LiveLens: product requirements and architecture
 
-Status: Product direction v0.1 / implementation slice in draft branch
+Status: Original desktop timeline requirements. For the current wider platform,
+read PLATFORM.md, HANDOFF.md and plans/livelens-backlog.json. A separate durable
+intelligence service and pinned source library have now been added to this draft.
 Date: 10 October 2026
 Working name: LiveLens
 

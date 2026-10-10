@@ -11,6 +11,11 @@ on:
       - 'src/App.tsx'
       - 'src/state/ui.ts'
       - 'test/livelens.test.ts'
+      - 'services/intelligence/**'
+      - 'integrations/alfred/**'
+      - 'scripts/research/**'
+      - 'research/upstream-lock.json'
+      - '.gitmodules'
       - '.github/workflows/livelens.yml'
 
 permissions:
@@ -26,8 +31,27 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
-      - name: Focused LiveLens tests
-        run: npx vitest run test/livelens.test.ts
+      - run: npm ci --ignore-scripts
+      - name: Application regression tests
+        run: npm test
       - name: Type-check and bundle
         run: npm run build
+  intelligence-and-source-pins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify committed source pins without executing upstream code
+        run: node scripts/research/verify-upstreams.mjs
+      - name: Durable service and real HTTP client checks
+        run: npm --prefix services/intelligence test
+      - name: Restart and evidence export demonstration
+        run: npm --prefix services/intelligence run demo
