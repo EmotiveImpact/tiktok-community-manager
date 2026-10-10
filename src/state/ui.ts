@@ -17,12 +17,12 @@ export type LiveTool =
   | 'feed'
   | 'tracked' | 'notes' | 'room' | 'leaderboard' | 'watchlist'
   | 'alerts' | 'mod' | 'transcript' | 'highlights' | 'liker'
-  | 'insights' | 'analytics' | 'compare' | 'history' | 'multiroom';
+  | 'insights' | 'analytics' | 'compare' | 'history' | 'multiroom' | 'livelens';
 
 const LIVE_TOOLS: LiveTool[] = [
   'feed', 'tracked', 'notes', 'room', 'leaderboard', 'watchlist',
   'alerts', 'mod', 'transcript', 'highlights', 'liker',
-  'insights', 'analytics', 'compare', 'history', 'multiroom',
+  'insights', 'analytics', 'compare', 'history', 'multiroom', 'livelens',
 ];
 export type FeedFilter = 'all' | 'followers' | 'subs' | 'mods' | 'gifters';
 
