@@ -1,5 +1,25 @@
 # LiveLens design QA
 
+## Current recording workspace refinement — 11 October 2026
+
+[Implemented design and actual captures](docs/livelens/STUDIO_REFINEMENT.md).
+Shiro fix mode follows the previous audit's evidence: six primary destinations,
+specialist navigation behind More tools, a useful recording library, video beside
+the timeline, recording maintenance in a disclosure and a review-first inbox.
+Final renderer: `index-DvisZsW-.js`; stylesheet: `index-BAyBVht6.css`.
+
+The desktop player and timeline both begin at 258px in the actual fixture.
+The full-width timeline search was corrected after visual inspection. Desktop and
+390px phone captures have no horizontal overflow or page errors. The build and
+all 95 application tests pass. All five final browser journeys pass with zero
+uncaught page errors. Browser results are in
+[VALIDATION.md](docs/livelens/VALIDATION.md).
+
+Ship call: ready for owner review as a working design iteration. Keep the quiet
+shared palette and explicit capture controls. User testing, broader accessibility,
+guided private ALFRED connection and external provider acceptance remain open.
+Historical audits below retain their original revision's claims.
+
 ## Current eight-step product audit — 11 October 2026
 
 [Read the complete audit](docs/livelens/PRODUCT_AUDIT.md) for eight numbered steps,

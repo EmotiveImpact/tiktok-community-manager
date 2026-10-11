@@ -1,0 +1,21 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "desktop1440AndPhone390": true,
+  "sourceSelectionAndCounterevidence": true,
+  "sourceResetAfterFindingRevisionRefresh": true,
+  "actualPreviewPlaybackAndSeek": true,
+  "exactOriginalContextNavigation": true,
+  "correctInvestigationDeepLinkAndReload": true,
+  "investigationLibrarySelectionBackAndReload": true,
+  "signalAcknowledgementPersisted": true,
+  "acknowledgementReceiptBoundToSelectedItem": true,
+  "boundedScheduleWithoutHiddenCapture": true,
+  "collectionDisclosureQuietWhenIdleAndOpensForActualSchedule": true,
+  "phoneSelectionBackAndKeyboardFocus": true,
+  "readOnlyScopeFilteredResources": true,
+  "actualReadOnlyWriteDenied": true,
+  "serviceRestartReopen": true,
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-studio-polish-final-review"
+}

@@ -1,5 +1,35 @@
 # Validation receipt
 
+## Recording workspace refinement — 11 October 2026
+
+The [implemented refinement](STUDIO_REFINEMENT.md) gives the actual application six
+primary destinations, a recording library with receipt-backed metadata, a shared
+video/timeline workspace and quieter recording/review disclosures. Final renderer:
+`index-DvisZsW-.js`; stylesheet: `index-BAyBVht6.css`.
+
+| Check | Result |
+|---|---|
+| Application regression and final build | [95 tests pass in 12 files](studio-refinement-build-validation.json); TypeScript, renderer and Electron build pass. Four new library cases cover saved-capture selection, interruption, duplicate segments and duration formatting. |
+| Monitor browser journey | [Pass](studio-refinement-monitor-validation.json): six visible destinations, keyboard-operated More tools, specialist deep links and existing bounded capture, exact-job replay, source-switch, phone-focus and permission checks. |
+| Original browser journey | [Pass](studio-refinement-original-validation.json): existing original-source, media and investigation workflow assertions retained. |
+| Full application browser journey | [Pass](studio-refinement-full-validation.json): actual selected-segment SHA matches its HTTP receipt, recording tools open by keyboard, saved duration matches retained segments, video filter/search/reset/reopening work, and existing export/PDF/restart assertions pass. |
+| Review browser journey | [Pass](studio-refinement-review-validation.json): idle and stopped schedules remain collapsed, a newly discovered bounded schedule opens the disclosure, actual HTTP/UI states agree, and source context, permissions, stop/deadline/no-hidden-job and restart checks pass. |
+| Onboarding browser journey | [Pass](studio-refinement-onboarding-validation.json): existing invitation, real-cookie, role/revocation/recovery and restart assertions retained. |
+| Actual desktop and phone captures | [Pass](studio-refinement-layout-validation.json): video and timeline align at 258px on desktop; no horizontal overflow at 1440px or 390px. Main gallery uses actual generated monochrome media. |
+
+All five browser journeys ran on the final bundle with zero uncaught page errors.
+An initial new review assertion compared a pre-poll `scheduled` snapshot with the
+already-updated `discovered` interface. The harness now waits, within ten seconds,
+for the actual fixture poll receipt before comparing the two. No renderer change
+or weakening of schedule, permission or capture assertions was needed. The
+successful rerun is the linked review receipt.
+
+Backend/runtime contracts and ALFRED source are unchanged. Their earlier complete
+service and ALFRED suites below were not rerun locally for this UI pass. Hosted
+checks belong to the exact published commit. These fixture checks establish the
+exercised behavior, not external LIVE access, production readiness or final owner
+design acceptance.
+
 ## Eight-step product audit and fixes — 11 October 2026
 
 The [fresh product audit](PRODUCT_AUDIT.md) records before/after evidence from eight

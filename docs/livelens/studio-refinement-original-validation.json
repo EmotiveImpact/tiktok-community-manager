@@ -1,0 +1,11 @@
+{
+  "fixture": true,
+  "desktopAndPhone": true,
+  "keyboardNavigation": true,
+  "recordingPlaybackAndSeek": true,
+  "accountSearch": true,
+  "caseAndBothExports": true,
+  "serviceRestartReopen": true,
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-studio-polish-final-original"
+}

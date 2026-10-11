@@ -1,5 +1,10 @@
 # LiveLens product audit — 11 October 2026
 
+Follow-up: [the recording workspace refinement](STUDIO_REFINEMENT.md) implements
+the navigation disclosure, real library media summaries, playback/timeline layout
+and secondary recording/schedule controls identified here. This document preserves
+the preceding audit's findings and evidence at its original revision.
+
 **Verdict: useful and working, but not yet a polished final product.** The monitor
 now has a coherent recording workspace. The wider application still exposes too
 much of its internal structure. Real workflow and accessibility checks found two

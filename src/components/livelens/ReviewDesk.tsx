@@ -612,6 +612,18 @@ export default function ReviewDesk({
   };
   const needsReview = queue.items.filter((item) => item.needsReview).length;
   const recent = filterDeskItems(queue.items, "evidence").length;
+  const runningSchedules = (schedules.data?.schedules ?? []).filter(
+    (schedule) => !["completed", "failed", "stopped"].includes(schedule.state),
+  );
+  const runningScheduleKey = runningSchedules
+    .map((schedule) => schedule.id)
+    .sort()
+    .join("|");
+  const [scheduleExpanded, setScheduleExpanded] = useState(false);
+  useEffect(() => setScheduleExpanded(false), [identityKey]);
+  useEffect(() => {
+    if (runningScheduleKey) setScheduleExpanded(true);
+  }, [identityKey, runningScheduleKey]);
   const activeSchedules = [...(schedules.data?.schedules ?? [])]
     .sort(
       (a, b) =>
@@ -620,6 +632,20 @@ export default function ReviewDesk({
         a.endAtMs - b.endAtMs,
     )
     .slice(0, 2);
+  const nextWindowClose = runningSchedules.length
+    ? Math.min(...runningSchedules.map((schedule) => schedule.endAtMs))
+    : null;
+  const scheduleContext = schedules.error
+    ? `Schedules unavailable${runningSchedules.length ? ` · ${runningSchedules.length} active in the last loaded records` : ""}`
+    : runningSchedules.length
+      ? `${runningSchedules.length} active window${runningSchedules.length === 1 ? "" : "s"} · next closes ${date(nextWindowClose)}`
+      : schedules.loading
+        ? "Loading schedules…"
+        : !has("recordings:read")
+          ? "Schedule access unavailable"
+          : !enabled("bounded-source-schedules")
+            ? "Schedules not configured"
+            : `${sources.length} selected source${sources.length === 1 ? "" : "s"} · no active window loaded`;
   const clockRows = exactEvent
     ? ([
         ["Provider time", exactEvent.sourceTimestampMs],
@@ -642,6 +668,17 @@ export default function ReviewDesk({
     >
       <div className="ll-desk-body">
         <section className="ll-desk-inbox" aria-label="Review inbox">
+          <details
+            className="ll-desk-collection"
+            open={scheduleExpanded}
+            onToggle={(event) => setScheduleExpanded(event.currentTarget.open)}
+          >
+            <summary>
+              <CalendarClock size={16} aria-hidden />
+              <span className="ll-desk-collection-title">Collection schedule</span>
+              <span className="ll-desk-collection-context">{scheduleContext}</span>
+              <ChevronRight size={15} aria-hidden />
+            </summary>
           <section
             className="ll-desk-schedule-strip"
             aria-label="Selected source schedules"
@@ -735,6 +772,7 @@ export default function ReviewDesk({
               </button>
             </div>
           </section>
+          </details>
           <div className="ll-desk-heading ll-desk-inbox-head">
             <div>
               <h2>{tab === "review" ? "Needs your review" : tab === "evidence" ? "Recent evidence" : "Review inbox"}</h2>

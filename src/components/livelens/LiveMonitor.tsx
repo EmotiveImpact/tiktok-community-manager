@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Circle, Clock3, MessageSquare, Plus, Radio, Square, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, Circle, Clock3, MessageSquare, Play, Plus, Radio, Square, Video } from "lucide-react";
 import { api, type Evidence, type Session } from "../../lib/livelens/api";
 import "./live-monitor.css";
 
@@ -13,6 +13,7 @@ const dateTime = (value: number) => new Date(value).toLocaleString([], { month: 
 const duration = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 const bytes = (value: number) => value >= 1024 * 1024 ? `${(value / 1024 / 1024).toFixed(1)} MB` : `${Math.round(value / 1024)} KB`;
 const sourceName = (source: Source) => source.account ? `@${source.account}` : source.label;
+const sourceMark = (source: Source | undefined) => source?.kind === "tiktok-public" && source.account ? source.account.replace(/^@/, "").slice(0, 2).toUpperCase() : <Video size={17} />;
 const errorText = (error: unknown) => error instanceof Error ? error.message.replaceAll("_", " ") : "Service unavailable";
 
 export default function LiveMonitor({ scopes, enabled, revision, sessions, onRefresh, onOpenSession, onOpenEvidence, onSources, renderMedia }: {
@@ -163,22 +164,22 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
       <div className="lm-layout">
         <aside className="lm-watchlist" aria-label="Selected account watchlist" data-source-count={snapshot.sources.length}>
           <div className="lm-section-header"><h2>Accounts</h2><span>{snapshot.sources.length}</span></div>
+          {snapshot.sources.map((source) => <button key={source.id} className={`lm-source-row ${source.id === selectedId ? "selected" : ""}`} aria-pressed={source.id === selectedId} onClick={() => select(source)}>
+            <span className="lm-source-avatar" aria-hidden="true">{sourceMark(source)}</span>
+            <span className="lm-source-meta"><strong>{sourceName(source)}</strong><small>{source.kind === "file" || source.fixture ? "Synthetic fixture" : source.kind === "tiktok-public" ? "TikTok" : "Permitted media"}</small><span className="lm-status" data-state={status(source).toLowerCase()}>{status(source)}</span></span>
+          </button>)}
+          {!snapshot.sources.length && <div className="lm-empty"><p>No accounts yet.</p><small>{canAdd ? "Add an account below. Checking and recording begin only when you choose." : "A workspace administrator can configure sources for this workspace."}</small></div>}
           {canAdd && <form className="lm-add-form" onSubmit={add}>
             <label className="sr-only" htmlFor="lm-account">TikTok account to add</label>
             <input id="lm-account" name="account" placeholder="@account" required maxLength={64} pattern="@?[A-Za-z0-9_.]+" autoComplete="off" />
             <button disabled={busy}><Plus size={14} />Add account</button>
           </form>}
-          {snapshot.sources.map((source) => <button key={source.id} className={`lm-source-row ${source.id === selectedId ? "selected" : ""}`} aria-pressed={source.id === selectedId} onClick={() => select(source)}>
-            <span className="lm-source-avatar"><Radio size={17} /></span>
-            <span className="lm-source-meta"><strong>{sourceName(source)}</strong><small>{source.kind === "file" || source.fixture ? "Synthetic fixture" : source.kind === "tiktok-public" ? "TikTok" : "Permitted media"}</small><span className="lm-status" data-state={status(source).toLowerCase()}>{status(source)}</span></span>
-          </button>)}
-          {!snapshot.sources.length && <div className="lm-empty"><p>No accounts yet.</p><small>Add a TikTok account above to get started.</small></div>}
           <button className="lm-manage" onClick={onSources}>Manage accounts <ArrowRight size={14} /></button>
         </aside>
         <section className="lm-stage" aria-label="Selected source monitor">
           <div className="lm-stage-header">
-            <div><h2 ref={stageHeading} tabIndex={-1}>{replayId ? previewSession?.account ? `@${previewSession.account}` : previewSession?.title ?? "Saved recording" : selected ? sourceName(selected) : "Select an account"}</h2>
-              <p>{replayId ? `Saved recording${mediaJob ? ` · ${dateTime(mediaJob.createdAtMs)}` : ""}` : selected ? status(selected) : "Add an account to check and record its broadcasts."}{selectedSchedule?.lastCheckedAtMs && !replayId ? ` · checked ${time(selectedSchedule.lastCheckedAtMs)}` : ""}</p></div>
+            <div className="lm-stage-identity"><span className="lm-stage-avatar" aria-hidden="true">{replayId ? <Play size={17} /> : sourceMark(selected)}</span><div><h2 ref={stageHeading} tabIndex={-1}>{replayId ? previewSession?.account ? `@${previewSession.account}` : previewSession?.title ?? "Saved recording" : selected ? sourceName(selected) : "Select an account"}</h2>
+              <p>{!replayId && selected && <span className="lm-status-dot" data-state={status(selected).toLowerCase()} aria-hidden="true" />}{replayId ? `Saved recording${mediaJob ? ` · ${dateTime(mediaJob.createdAtMs)}` : ""}` : selected ? status(selected) : "Add an account to check and record its broadcasts."}{selectedSchedule?.lastCheckedAtMs && !replayId ? ` · checked ${time(selectedSchedule.lastCheckedAtMs)}` : ""}</p></div></div>
             {replayId ? <button onClick={returnToMonitor}><ArrowLeft size={14} />Back to monitor</button> : selected && <div className="lm-control-actions">
               {scheduling && <button disabled={!writable || busy || selectedWatches.length > 0 || !validLimit} onClick={() => watch(false, true)}><Radio size={14} />{selected.kind === "tiktok-public" ? "Check LIVE" : "Check source"}</button>}
               {scheduling && <button disabled={!writable || busy || selectedWatches.length > 0 || !validWindow || !validLimit} onClick={() => watch(false)}><Clock3 size={14} />Watch only</button>}
@@ -190,7 +191,7 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
             <div className="lm-media-column">
             <div className="lm-player">
               <div className="lm-player-label"><Video size={14} /><span>{replayId ? "Saved recording" : "Recording preview"}</span><small>{previewSource?.kind === "file" || previewSource?.fixture || previewSession?.platform === "fixture" ? "Synthetic media" : "Saved segments · preview is delayed"}</small></div>
-              {previewId && mediaJob ? renderMedia(previewId, selectedEvidence, refreshKey, preferredJobId) : <div className="lm-player-empty"><span className="lm-empty-camera"><Video size={28} /></span><h3>{selectedJob ? "Saving the first segment" : "Your recording starts here"}</h3><p>{selectedJob ? "Verified video will appear as capture progresses." : selected ? selected.sessionId ? "Choose Record now to capture this source." : "Choose Record when LIVE to watch and capture." : "Select an account to get started."}</p><small>Preview uses saved video and is delayed.</small></div>}
+              {previewId && mediaJob ? renderMedia(previewId, selectedEvidence, refreshKey, preferredJobId) : <div className="lm-player-empty"><span className="lm-empty-camera"><Video size={26} /></span><h3>{replayId ? "No verified video available" : selectedJob ? "Waiting for saved video" : !selected ? "Start with an account" : !writable ? "No saved video for this source" : "Your recording starts here"}</h3><p>{replayId ? "Open the conversation for retained statements and capture details." : selectedJob ? "Video appears after a segment is saved and verified." : selected ? !writable ? "Saved video appears here when it is available." : selected.sessionId ? "Choose Record now to capture this source." : "Choose Record when LIVE for a bounded watch and capture." : "Select a source from Accounts to open its recording workspace."}</p><small>Saved video · delayed preview</small></div>}
             </div>
           {(selected || replayId) && <div className="lm-controls">
             {!replayId && <>
@@ -208,7 +209,7 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
             <aside className="lm-chat" aria-label="Captured conversation feed">
               {previewSession && <div className="lm-chat-session"><strong>Saved conversation</strong><small>Session started {dateTime(previewSession.startedAtMs)}</small></div>}
               <div className="lm-chat-tabs" role="group" aria-label="Conversation feed filter">{[["chat", "Chat"], ["speech", "Transcript"], ["all", "All events"]].map(([value, label]) => <button key={value} aria-pressed={tab === value} onClick={() => setTab(value)}>{label}</button>)}</div>
-              <div className="lm-chat-list">{displayedEvents.map((event) => <button className={`lm-message ${event.id === selectedEvidence?.id ? "selected" : ""}`} key={event.id} onClick={() => setSelectedEvidence(event)}>
+              <div className="lm-chat-list">{displayedEvents.map((event) => <button className={`lm-message ${event.id === selectedEvidence?.id ? "selected" : ""}`} key={event.id} aria-pressed={event.id === selectedEvidence?.id} onClick={() => setSelectedEvidence(event)}>
                 <span><strong>{event.attribution.account ? `@${event.attribution.account}` : event.kind === "gap" ? "Capture gap" : event.kind === "caption" ? "Source caption" : event.kind === "transcript" ? "Unattributed speech" : "Unattributed account"}</strong><time>{time(event.sourceTimestampMs ?? event.capturedAtMs ?? event.receivedAtMs)}</time></span><p>{event.text || "No text"}</p><small>{event.kind} · {event.sourceTimestampMs === null ? "Capture / receipt time" : "Source time"}</small>
               </button>)}{!displayedEvents.length && <div className="lm-empty"><MessageSquare size={24} /><p>{previewId ? "No captured events in this view." : "Captured chat appears here."}</p><small>{tab === "speech" ? "Captions and independent transcripts keep their own labels." : "Only messages actually received from the selected session are shown."}</small></div>}</div>
               {eventsError && <p className="lm-error" role="alert">{eventsError}</p>}
@@ -230,9 +231,9 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
         </div>)}
       </section>
       <section aria-label="Recent recordings"><div className="lm-section-header"><h2>Recent recordings</h2><button onClick={onSources}>All capture receipts <ArrowRight size={14} /></button></div>
-        <div className="lm-recordings">{recent.map((job) => <button className="lm-recording" key={job.id} onClick={() => replay(job)} aria-label={`Replay recording ${job.id}`}>
-          <span className="lm-recording-icon"><Video size={21} /></span><span><strong>{sessions.find((session) => session.id === job.sessionId)?.title ?? "Saved recording"}</strong><small>{dateTime(job.createdAtMs)} · {duration(job.segments.reduce((sum, segment) => sum + segment.durationMs, 0) / 1000)} · {bytes(job.segments.reduce((sum, segment) => sum + segment.bytes, 0))}</small><span className="lm-status" data-state={job.state}>{job.state} · {job.segments.length} saved segments</span>{job.error && <small className="lm-error">{job.error.replaceAll("_", " ")}</small>}</span><ArrowRight size={15} />
-        </button>)}</div>{!recent.length && <div className="lm-empty">Your saved recordings will appear here. Interrupted captures remain available when verified media was retained.</div>}
+        <div className="lm-recordings">{recent.map((job) => <button className={`lm-recording ${replayJobId === job.id ? "selected" : ""}`} key={job.id} onClick={() => replay(job)} aria-label={`Replay recording ${job.id}`} aria-pressed={replayJobId === job.id}>
+          <span className="lm-recording-icon" aria-hidden="true"><Play size={17} /></span><span><strong>{sessions.find((session) => session.id === job.sessionId)?.title ?? "Saved recording"}</strong><small><time dateTime={new Date(job.createdAtMs).toISOString()}>{dateTime(job.createdAtMs)}</time> · {duration(job.segments.reduce((sum, segment) => sum + segment.durationMs, 0) / 1000)} saved · {bytes(job.segments.reduce((sum, segment) => sum + segment.bytes, 0))}</small><span className="lm-status" data-state={job.state}>{job.state.replaceAll("_", " ")} · {job.segments.length} saved segments</span>{job.error && <small className="lm-error">{job.error.replaceAll("_", " ")}</small>}</span><ArrowRight size={15} />
+        </button>)}</div>{!recent.length && <div className="lm-recordings-empty"><span className="lm-recording-icon" aria-hidden="true"><Video size={19} /></span><div><strong>No saved recordings yet</strong><p>{writable ? "Choose an account and start a bounded recording. Verified captures will be ready to replay here." : "Verified recordings will appear here when a collector retains video."}</p><small>Interrupted captures remain available when verified media was retained.</small></div></div>}
       </section>
     </>}
   </div>;

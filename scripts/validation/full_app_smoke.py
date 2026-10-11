@@ -13,8 +13,10 @@ import sys
 import tempfile
 import time
 from urllib.request import urlopen
+from urllib.parse import urlsplit
 
 from playwright.sync_api import expect, sync_playwright
+from browser_navigation import navigate
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -72,10 +74,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
             page.on("pageerror", lambda error: errors.append(str(error)))
 
             def nav(label):
-                navigation = page.get_by_role("navigation", name="LiveLens navigation")
-                if page.viewport_size["width"] < 800:
-                    page.get_by_role("button", name="Toggle navigation", exact=True).click()
-                navigation.get_by_role("button", name=label, exact=True).click()
+                navigate(page, label)
 
             def login():
                 page.goto(BASE + "/app/", wait_until="networkidle")
@@ -134,6 +133,33 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_role("button", name="Replay conversation", exact=True).click()
                 page.locator("video").wait_for()
                 page.wait_for_function('() => document.querySelector("video").readyState >= 1')
+                # Hash/archive/transcription tools belong below the working
+                # conversation, and their disclosure must not hide playback.
+                recording_tools = page.locator("details.ll-recording-tools")
+                tools_summary = recording_tools.locator("summary").filter(has_text=re.compile(r"^Recording details & tools$"))
+                expect(tools_summary).to_be_visible()
+                assert not recording_tools.evaluate("element => element.open"), "Recording tools must start collapsed"
+                expect(recording_tools.locator("video")).to_have_count(0)
+                expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
+                expect(page.locator("video")).to_be_visible()
+                media_path = page.locator("video").get_attribute("src")
+                assert media_path.startswith("/v1/media/")
+                recording_id, segment_id = media_path.removeprefix("/v1/media/").split("/")
+                retained_job = page.request.get(BASE + "/v1/jobs/" + recording_id)
+                assert retained_job.status == 200
+                retained_segment = next(item for item in retained_job.json()["segments"] if item["id"] == segment_id)
+                displayed_hash = recording_tools.get_by_text("Segment SHA-256: " + retained_segment["sha256"], exact=True)
+                expect(displayed_hash).not_to_be_visible()
+                tools_summary.focus()
+                page.keyboard.press("Enter")
+                expect(displayed_hash).to_be_visible()
+                expect(recording_tools.get_by_role("region", name="Verified media archive", exact=True)).to_be_visible()
+                expect(recording_tools.get_by_role("region", name="Independent transcription", exact=True)).to_be_visible()
+                tools_summary.focus()
+                page.keyboard.press("Enter")
+                expect(displayed_hash).not_to_be_visible()
+                expect(page.locator("video")).to_be_visible()
+                expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
                 for _ in range(20):
                     page.get_by_role("button", name="Refresh records", exact=True).click()
                     if page.get_by_role("button", name=re.compile("Synthetic fixture marker")).count():
@@ -159,6 +185,42 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_role("button", name="Link evidence", exact=True).click()
                 page.get_by_text("Original evidence linked to case.", exact=True).wait_for()
                 capture("02-desktop-conversation.png")
+
+                # The library's saved duration describes retained media, not
+                # the wall-clock length of the imported conversation.
+                with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/jobs" and response.request.method == "GET" and "limit=200" in urlsplit(response.url).query) as library_receipts:
+                    nav("Session library")
+                assert library_receipts.value.status == 200
+                library_job = next(item for item in library_receipts.value.json()["jobs"] if item["id"] == recording_id)
+                assert library_job["segments"] and library_job["sessionId"] == "fixture-conversation"
+                library = page.get_by_role("region", name="Conversation and recording library", exact=True)
+                saved_row = library.locator(".rl-row").filter(has=page.locator("strong", has_text=re.compile("^Fictional fixture")))
+                video_filter = library.get_by_role("button", name=re.compile("^With video"))
+                expect(video_filter).to_be_enabled()
+                shown_duration = saved_row.locator(".rl-duration").inner_text()
+                duration_parts = re.fullmatch(r"(\d+):(\d{2})\s+saved", shown_duration)
+                assert duration_parts, "Short saved footage must show a readable minutes:seconds duration"
+                shown_seconds = int(duration_parts[1]) * 60 + int(duration_parts[2])
+                actual_seconds = sum(item["durationMs"] for item in library_job["segments"]) / 1000
+                assert abs(shown_seconds - actual_seconds) <= 1, "Library duration must reflect this job's actual saved segments"
+                expect(saved_row.locator(".rl-state")).to_have_attribute("data-state", library_job["state"])
+                video_filter.focus()
+                page.keyboard.press("Enter")
+                expect(video_filter).to_have_attribute("aria-pressed", "true")
+                expect(library.locator(".rl-row")).to_have_count(1)
+                expect(saved_row).to_be_visible()
+                expect(library.locator(".rl-row").filter(has=page.locator("strong", has_text=re.compile("^Reference fixture")))).to_have_count(0)
+                capture("02a-desktop-recording-library.png")
+                library.get_by_role("button", name=re.compile("^All conversations")).click()
+                expect(library.locator(".rl-row")).to_have_count(2)
+                library.get_by_label("Filter session library", exact=True).fill("Reference fixture")
+                expect(library.locator(".rl-row")).to_have_count(1)
+                expect(library.locator(".rl-row strong")).to_contain_text("Reference fixture")
+                library.get_by_role("button", name="Clear library filter", exact=True).click()
+                expect(library.locator(".rl-row")).to_have_count(2)
+                saved_row.focus()
+                page.keyboard.press("Enter")
+                page.get_by_role("heading", name="Captured timeline", exact=True).wait_for()
 
                 open_investigation()
                 page.get_by_label(re.compile("Select evidence: Synthetic fixture marker")).first.check()
@@ -457,6 +519,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                     "desktopAndPhone": True,
                     "keyboardNavigation": True,
                     "actualMediaPlaybackAndSeek": True,
+                    "recordingToolsDisclosurePreservesTimelineAndVerifiedReceipt": True,
+                    "sessionLibrarySavedDurationAndWithVideoFilter": True,
                     "sourceLinkedNoteAndReviewedFinding": True,
                     "counterevidenceRetained": True,
                     "bookmarkSaved": True,

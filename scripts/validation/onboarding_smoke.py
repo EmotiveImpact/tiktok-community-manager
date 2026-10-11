@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
+from browser_navigation import navigate
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -180,9 +181,7 @@ def login(page, subject, password, workspace=None, expected_status=200):
 
 
 def nav(page, label):
-    if page.viewport_size["width"] < 800:
-        page.get_by_role("button", name="Toggle navigation", exact=True).click()
-    page.get_by_role("navigation", name="LiveLens navigation").get_by_role("button", name=label, exact=True).click()
+    navigate(page, label)
 
 
 def capture(page, name):

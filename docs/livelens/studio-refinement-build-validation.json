@@ -1,0 +1,32 @@
+{
+  "renderer": "index-DvisZsW-.js",
+  "stylesheet": "index-BAyBVht6.css",
+  "applicationTests": {
+    "command": "npm test",
+    "passed": 95,
+    "filesPassed": 12
+  },
+  "build": {
+    "command": "npm run build",
+    "passed": true,
+    "targets": [
+      "TypeScript",
+      "renderer",
+      "Electron main",
+      "Electron preload"
+    ]
+  },
+  "sourceSha256": {
+    "src/pages/LiveLensConsole.tsx": "30c5aa0e338947774c7e0c82c39942d4cd7ad02c7a841c88dadf5693caf707b2",
+    "src/pages/livelens-shell.css": "43f6cfa8860a83e229c49dae0bd98921b914d7617c64b6a049b2cd67799c0328",
+    "src/pages/livelens-conversation.css": "8fa3378a8eec152a2884d580033dcacfe9cfa033106c4c2755db86e07b5031c6",
+    "src/components/livelens/LiveMonitor.tsx": "282b4918c84631737af34d9972756fd77fbacd9493ca4672817519b0c871c622",
+    "src/components/livelens/live-monitor.css": "6648a78609d8eebc2ad6b3b400444802ba3e9b6768943e9c2f71836638350df6",
+    "src/components/livelens/RecordingLibrary.tsx": "d37bb0352602847fcb038b3ebfedfdd0ed19ed7481b71781f428f43f4f96edc2",
+    "src/components/livelens/recording-library-model.ts": "daee752ba31e24981077cc2b86651429742b9ebf7603c62d0202330572d35990",
+    "src/components/livelens/recording-library.css": "dcecf1d41403a2eb56a74fef0321a78b0bc137d580fa6009ee2c1187d6827882",
+    "src/components/livelens/ReviewDesk.tsx": "17b684d7d92f472aff90315d889247eb454c8aa3f5c20f010771c3d53d0b3409",
+    "src/components/livelens/review-desk.css": "0113a1d92223bc3836fbe4666af0423fca0f839dd40e58a9bcd84a05c6920976",
+    "test/livelens-recording-library.test.ts": "5d6ddb8e38bff5930c4bcdd34a21389a01ddc49e639501e3cff0a16615924439"
+  }
+}

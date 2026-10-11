@@ -1,0 +1,39 @@
+{
+  "geometry": [
+    {
+      "class": "ll-conversation-player",
+      "top": 258.421875,
+      "left": 208,
+      "width": 643.03125
+    },
+    {
+      "class": "ll-conversation-timeline",
+      "top": 258.421875,
+      "left": 871.03125,
+      "width": 544.96875
+    },
+    {
+      "class": "",
+      "top": 382.765625,
+      "left": 920.03125,
+      "width": 467.96875
+    }
+  ],
+  "uncaughtPageErrors": [],
+  "fixture": true,
+  "externalLiveValidated": false,
+  "renderer": "index-DvisZsW-.js",
+  "stylesheet": "index-BAyBVht6.css",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1024
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "allCapturedScreensNoHorizontalOverflow": true,
+  "sourceMedia": "Generated monochrome FFmpeg test pattern, actual bounded six-second capture"
+}

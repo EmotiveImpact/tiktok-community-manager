@@ -1,6 +1,26 @@
 # LiveLens — actual application screenshots
 
-## Current product audit — 11 October 2026
+## Current recording workspace refinement — 11 October 2026
+
+The [implemented design pass](STUDIO_REFINEMENT.md) simplifies navigation, gives the
+library real saved-capture metadata, places video beside a searchable timeline and
+keeps recording maintenance and idle schedules in disclosures. Final renderer:
+`index-DvisZsW-.js`; stylesheet: `index-BAyBVht6.css`.
+
+![Current recording workspace](screenshots/studio-refinement/04-conversation-desktop.png)
+
+[Monitor](screenshots/studio-refinement/01-monitor-desktop.png) ·
+[Library](screenshots/studio-refinement/02-library-desktop.png) ·
+[Review desk](screenshots/studio-refinement/06-review-desktop.png) ·
+[Phone library](screenshots/studio-refinement/08-library-phone.png) ·
+[Phone monitor](screenshots/studio-refinement/10-monitor-phone.png).
+
+These are actual authenticated fixture screens. The monochrome pattern is a real
+generated test recording; no screenshot or customer video has been recoloured.
+All evidence/accounts are fictional. Full captures and measured limits are linked
+from the refinement document; earlier screenshots remain historical evidence.
+
+## Earlier product audit — 11 October 2026
 
 [The eight-step audit](PRODUCT_AUDIT.md) contains the current assessment, before/after
 captures and remaining design work. These actual authenticated screens use
@@ -21,7 +41,7 @@ saved-replay mode, phone drawer and ALFRED setup hierarchy are implemented.
 All five final browser journeys pass. The product still needs navigation and
 conversation hierarchy work; these screenshots do not establish final design acceptance.
 
-## Current monitor redesign — 11 October 2026
+## Earlier monitor redesign — 11 October 2026
 
 Actual authenticated application captures from renderer `index-BQzEr-5F.js` and
 stylesheet `index-gnFuFJ2Q.css`. The palette uses neutral charcoal and warm white;

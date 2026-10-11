@@ -12,6 +12,10 @@ Record actions sit beside the selected source. Recording and watch limits appear
 below the player; chat sits alongside it on desktop and follows those controls on
 phone. Saved recordings appear as compact rows below the workspace.
 
+Six everyday destinations remain visible in navigation. **More tools** opens
+source management, observed accounts, graph, missions, alerts, access and settings.
+Direct links to these destinations open the relevant navigation group.
+
 The monitor and other authenticated destinations share the same application frame.
 On phones, opening navigation focuses the current destination and keeps keyboard
 focus within the drawer. Escape returns to the menu toggle; choosing a destination
@@ -103,6 +107,26 @@ resolved, focuses the recording heading and hides source check/watch/record cont
 and limits. **Back to monitor** restores controls for that source. Source-specific
 receipts and errors are hidden during replay; independently labelled active jobs
 keep their stop controls. Recording dates distinguish captures from different days.
+
+## Library and recorded conversation
+
+**Session library** lists retained conversations and, where loaded recording
+receipts provide it, the duration/state of their latest saved capture. **With video**
+filters the current page. Up to 200 recent recording receipts are read together;
+absence from that snapshot stays unknown. Open a conversation for its retained
+history. The duration is saved-segment time, not an inferred session length.
+
+In a recorded conversation, desktop playback sits beside the searchable timeline.
+Phones stack playback before the timeline. **Recording details & tools** reveals
+the selected segment hash, archival and independent transcription controls.
+Selecting a timeline statement seeks covered media; **View selected context**
+reaches its original clocks, surrounding evidence and investigation actions below.
+
+The secondary Review desk keeps its collection schedule summary compact while
+idle. A newly active window opens the disclosure; loaded status remains visible
+in its summary. Source scheduling and stop controls remain in source management.
+
+See [the actual desktop/phone refinement](STUDIO_REFINEMENT.md) for captures.
 
 ## Configuration and measured boundaries
 

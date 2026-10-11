@@ -52,8 +52,10 @@ import AdvancedWorkspace, {
 import ReviewDesk from "../components/livelens/ReviewDesk";
 import LiveMonitor from "../components/livelens/LiveMonitor";
 import InvitationAcceptance from "../components/livelens/InvitationAcceptance";
+import RecordingLibrary from "../components/livelens/RecordingLibrary";
 import "./livelens.css";
 import "./livelens-shell.css";
+import "./livelens-conversation.css";
 
 type View =
   | "overview"
@@ -84,6 +86,7 @@ const nav = [
   ["workspace", "Workspace & access", Users, "MANAGE"],
   ["settings", "Workspace settings", Settings, "MANAGE"],
 ] as const;
+const primaryDestinations: View[] = ["overview", "sessions", "review", "investigations", "cases", "agent"];
 const descriptions: Record<View, string> = {
   overview: "Choose accounts. Record their broadcasts. Follow video and chat in one place.",
   review: "Review what was captured. Keep the original context close.",
@@ -213,6 +216,7 @@ function OperatorConsole() {
   const [sessionId, setSessionId] = useState<string | null>(
     new URLSearchParams(location.search).get("session"),
   );
+  const [toolsOpen, setToolsOpen] = useState(!primaryDestinations.includes(view));
   const [evidenceId, setEvidenceId] = useState<string | null>(
     new URLSearchParams(location.search).get("evidence"),
   );
@@ -279,7 +283,8 @@ function OperatorConsole() {
     if (work) work.inert = true;
     if (skip) skip.inert = true;
     document.body.style.overflow = "hidden";
-    drawer.querySelector<HTMLElement>('[aria-current="page"]')?.focus();
+    const currentDestination = drawer.querySelector<HTMLElement>('[aria-current="page"]');
+    (currentDestination?.getClientRects().length ? currentDestination : drawer.querySelector<HTMLElement>(".ll-tools-toggle"))?.focus();
     function trapFocus(event: KeyboardEvent) {
       if (event.key !== "Tab") return;
       const controls = Array.from(drawer.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], [tabindex="0"]')).filter((element) => element.getClientRects().length > 0);
@@ -401,6 +406,7 @@ function OperatorConsole() {
   }, [identity, view, jobs.data]);
   function go(next: View) {
     setView(next);
+    if (!primaryDestinations.includes(next)) setToolsOpen(true);
     setLibraryOffset(0);
     setSessionId(null);
     setEvidenceId(null);
@@ -653,12 +659,6 @@ function OperatorConsole() {
           .toLowerCase()
           .includes(timelineQuery.toLowerCase()),
     ) ?? [];
-  const visibleSessions =
-    sessions.data?.sessions.filter((captured) =>
-      `${captured.title} ${captured.account ?? ""} ${captured.platform}`
-        .toLowerCase()
-        .includes(libraryQuery.toLowerCase()),
-    ) ?? [];
   const evidenceList = (items: Evidence[]) => (
     <div className="ll-evidence-list">
       {items.map((e) => (
@@ -733,12 +733,9 @@ function OperatorConsole() {
           <ShieldCheck size={14} />
         </div>
         <nav aria-label="LiveLens navigation">
-          {nav.map(([id, label, Icon, group], index) => (
-            <div key={id}>
-              {index > 0 && group !== nav[index - 1][3] && (
-                <p className="ll-nav-group">{group}</p>
-              )}
+          {nav.filter(([id]) => primaryDestinations.includes(id)).map(([id, label, Icon]) => (
               <button
+                key={id}
                 aria-current={view === id ? "page" : undefined}
                 aria-label={id === "cases" ? "Cases & reports" : undefined}
                 onClick={() => go(id)}
@@ -751,8 +748,17 @@ function OperatorConsole() {
                   </small>
                 )}
               </button>
-            </div>
           ))}
+          <button className="ll-tools-toggle" aria-expanded={toolsOpen} aria-controls="ll-specialist-navigation" onClick={() => setToolsOpen((value) => !value)}>
+            <Layers3 size={17} /><span>More tools</span><ChevronDown size={14} />
+          </button>
+          <div id="ll-specialist-navigation" className="ll-specialist-navigation" hidden={!toolsOpen}>
+            {nav.filter(([id]) => !primaryDestinations.includes(id)).map(([id, label, Icon]) => (
+              <button key={id} aria-current={view === id ? "page" : undefined} onClick={() => go(id)}>
+                <Icon size={16} /><span>{label}</span>
+              </button>
+            ))}
+          </div>
         </nav>
         <div className="ll-nav-bottom">
           <a href="?page=dashboard">
@@ -824,7 +830,7 @@ function OperatorConsole() {
             <input
               ref={headerSearch}
               aria-label="Search all captured evidence"
-                    placeholder="Search captured statements"
+              placeholder="Search captured statements"
               value={globalQuery}
               onChange={(event) => setGlobalQuery(event.target.value)}
               maxLength={512}
@@ -1144,24 +1150,6 @@ function OperatorConsole() {
           )}
           {view === "sessions" && !sessionId && (
             <>
-              <div className="ll-library-toolbar">
-                <span>
-                  <Layers3 size={17} />
-                  <strong>All conversations</strong>
-                  <small>
-                    {sessions.data?.sessions.length ?? 0} on this page
-                  </small>
-                </span>
-                <label>
-                  <Search size={15} />
-                  <input
-                    aria-label="Filter session library"
-                    placeholder="Filter by title or account…"
-                    value={libraryQuery}
-                    onChange={(e) => setLibraryQuery(e.target.value)}
-                  />
-                </label>
-              </div>
               {libraryOffset > 0 && (
                 <button
                   onClick={() => setLibraryOffset((n) => Math.max(0, n - 200))}
@@ -1170,14 +1158,14 @@ function OperatorConsole() {
                 </button>
               )}
               <Status {...sessions} />
-              {libraryQuery && !visibleSessions.length && !sessions.loading ? (
-                <Empty title="No conversations match this filter">
-                  Try another title or account. This filter searches the current
-                  library page.
-                </Empty>
-              ) : (
-                <SessionList sessions={visibleSessions} open={openSession} />
-              )}
+              {sessions.data && <RecordingLibrary
+                sessions={sessions.data?.sessions ?? []}
+                revision={revision}
+                scopes={capabilities.data?.scopes ?? []}
+                query={libraryQuery}
+                onQueryChange={setLibraryQuery}
+                onOpenSession={openSession}
+              />}
               {sessions.data?.sessions.length === 200 && (
                 <button onClick={() => setLibraryOffset((n) => n + 200)}>
                   Next 200 sessions
@@ -1213,8 +1201,8 @@ function OperatorConsole() {
                   </a>
                 </div>
               )}
-              <div className="ll-conversation">
-                <div>
+              <div className="ll-conversation ll-playback-workspace">
+                <div className="ll-conversation-player">
                   <MediaReplay
                     key={sessionId}
                     sessionId={sessionId}
@@ -1230,15 +1218,17 @@ function OperatorConsole() {
                     }
                     mutate={mutate}
                     busy={busy}
+                    tools={<SpeechProcessing
+                      key={`speech-${sessionId}`}
+                      sessionId={sessionId}
+                      revision={revision}
+                      mutate={mutate}
+                      busy={busy}
+                      refresh={() => setRevision((r) => r + 1)}
+                    />}
                   />
-                  <SpeechProcessing
-                    key={`speech-${sessionId}`}
-                    sessionId={sessionId}
-                    revision={revision}
-                    mutate={mutate}
-                    busy={busy}
-                    refresh={() => setRevision((r) => r + 1)}
-                  />
+                </div>
+                <section className="ll-conversation-timeline" aria-label="Captured timeline">
                   <div className="ll-section-head">
                     <div>
                       <h2>Captured timeline</h2>
@@ -1247,7 +1237,10 @@ function OperatorConsole() {
                         original clocks preserved
                       </p>
                     </div>
-                    <span className="ll-tag">Source-linked</span>
+                    {evidenceId && <button className="ll-context-link" onClick={() => {
+                      contextPanel.current?.scrollIntoView({ block: "start" });
+                      contextPanel.current?.focus({ preventScroll: true });
+                    }}>View selected context <ArrowRight size={14} /></button>}
                   </div>
                   <div className="ll-timeline-toolbar">
                     <div
@@ -1279,6 +1272,7 @@ function OperatorConsole() {
                       />
                     </label>
                   </div>
+                  <div className="ll-timeline-records">
                   {events.data?.events.length ? (
                     visibleEvents.length ? (
                       evidenceList(visibleEvents)
@@ -1297,6 +1291,7 @@ function OperatorConsole() {
                       </Empty>
                     )
                   )}
+                  </div>
                   {events.data?.events.length === 100 && (
                     <button onClick={() => setCursor(events.data!.nextAfter!)}>
                       Next 100 events
@@ -1307,8 +1302,8 @@ function OperatorConsole() {
                       Return to first events
                     </button>
                   )}
-                </div>
-                <aside className="ll-context" ref={contextPanel}>
+                </section>
+                <aside className={`ll-context ${evidenceId ? "has-selection" : ""}`} ref={contextPanel} tabIndex={-1}>
                   <div className="ll-context-title">
                     <ShieldCheck size={17} />
                     <h2>Evidence & context</h2>
@@ -1816,57 +1811,6 @@ function OperatorConsole() {
   );
 }
 
-function SessionList({
-  sessions,
-  open,
-}: {
-  sessions: Session[];
-  open: (id: string) => void;
-}) {
-  return sessions.length ? (
-    <div className="ll-sessions">
-      <div className="ll-session-table-head" aria-hidden>
-        <span>CONVERSATION</span>
-        <span>SOURCE</span>
-        <span>CAPTURED</span>
-      </div>
-      {sessions.map((s) => (
-        <button key={s.id} onClick={() => open(s.id)}>
-          <span className="ll-session-icon">
-            <Layers3 size={19} />
-          </span>
-          <span className="ll-session-title">
-            <strong>{s.title}</strong>
-            <small>
-              {s.platform === "fixture"
-                ? "Labelled demo conversation"
-                : "Retained conversation"}
-            </small>
-          </span>
-          <span
-            className={`ll-session-source ${s.platform === "fixture" ? "ll-session-fixture" : ""}`}
-          >
-            {s.account ? "@" + s.account : "Account unavailable"}
-            <small>
-              {s.platform === "fixture" ? "Synthetic fixture" : s.platform}
-            </small>
-          </span>
-          <span className="ll-session-date">
-            {shortDate(s.startedAtMs)}
-            <small>{clockTime(s.startedAtMs)}</small>
-          </span>
-          <ChevronRight size={17} />
-        </button>
-      ))}
-    </div>
-  ) : (
-    <Empty title="Your captured conversations belong here">
-      Start a capture from a selected source, or archive a session from the
-      desktop community manager. Your recordings and evidence will appear here.
-    </Empty>
-  );
-}
-
 type Mutation = (
   operation: () => Promise<unknown>,
   success: string,
@@ -2347,6 +2291,7 @@ function MediaReplay({
   busy,
   compact = false,
   preferredJobId,
+  tools,
 }: {
   sessionId: string;
   evidence?: Evidence;
@@ -2358,6 +2303,7 @@ function MediaReplay({
   busy: boolean;
   compact?: boolean;
   preferredJobId?: string;
+  tools?: ReactNode;
 }) {
   const resource = useResource<{
     jobs: {
@@ -2496,7 +2442,6 @@ function MediaReplay({
             </p>
           )}
           {playbackError && <p role="alert">{playbackError}</p>}
-          {!compact && <small className="ll-id">Segment SHA-256: {current.sha256}</small>}
         </>
       ) : resource.loading ? (
         <p role="status" className="ll-status">Loading retained media…</p>
@@ -2540,7 +2485,11 @@ function MediaReplay({
             Stop recording
           </button>
         ))}
-      {!compact && <MediaArchiveControls
+      {!compact && <details className="ll-recording-tools">
+        <summary><Settings size={15} /><span>Recording details & tools</span><ChevronDown size={14} /></summary>
+        <div className="ll-recording-tools-body">
+        {current && <p className="ll-segment-integrity"><ShieldCheck size={15} /><small className="ll-id">Segment SHA-256: {current.sha256}</small></p>}
+        <MediaArchiveControls
         configuration={archiveConfiguration}
         recordingJobId={current?.jobId}
         recordingJobIds={resource.data?.jobs.map((job) => job.id) ?? []}
@@ -2560,7 +2509,10 @@ function MediaReplay({
             video.current?.load();
           }
         }}
-      />}
+      />
+      {tools}
+      </div>
+      </details>}
     </section>
   );
 }

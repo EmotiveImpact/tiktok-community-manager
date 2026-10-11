@@ -7,6 +7,12 @@ Current continuation is the capture-first LIVE monitor on
 `feat/livelens-live-studio-2026-10-11`, following invited workspace onboarding.
 Preserve later commits and user changes. This continuation does not deploy the application.
 
+The latest [recording workspace refinement](STUDIO_REFINEMENT.md) simplifies the
+primary navigation and library and places playback beside the searchable timeline.
+More tools preserves specialist destinations and deep links. Recording maintenance
+and idle collection schedules use explicit disclosures. Consult the latest
+validation/screenshot sections before relying on an earlier audit's remaining-work list.
+
 Read [FULL_APPLICATION.md](FULL_APPLICATION.md) for the product and remaining gates,
 [VALIDATION.md](VALIDATION.md) for executed receipts,
 [RUNTIME_CONFIGURATION.md](RUNTIME_CONFIGURATION.md) for configuration, and

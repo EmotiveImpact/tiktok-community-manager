@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
+from browser_navigation import navigate
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -129,9 +130,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
                     page.get_by_role("button", name="Open workspace", exact=True).click()
                 assert authenticated.value.status == 200
                 page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
-                if page.viewport_size["width"] < 800:
-                    page.get_by_role("button", name="Toggle navigation", exact=True).click()
-                page.get_by_role("navigation", name="LiveLens navigation").get_by_role("button", name="Review desk", exact=True).click()
+                navigate(page, "Review desk")
                 page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
                 return authenticated.value.json()["csrf"]
 
@@ -148,9 +147,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
                 return response.json()
 
             def nav(label):
-                if page.viewport_size["width"] < 800:
-                    page.get_by_role("button", name="Toggle navigation", exact=True).click()
-                page.get_by_role("navigation", name="LiveLens navigation").get_by_role("button", name=label, exact=True).click()
+                navigate(page, label)
 
             def capture(name):
                 page.evaluate("window.scrollTo(0, 0)")
@@ -346,6 +343,13 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
 
             # Explicit discovery without auto-recording cannot create hidden captures.
             nav("Review desk")
+            collection = page.locator("details.ll-desk-collection")
+            collection_summary = collection.locator("summary")
+            expect(collection_summary).to_contain_text("Collection schedule")
+            assert not collection.evaluate("element => element.open"), "Idle review must keep collection details collapsed"
+            expect(collection.get_by_role("button", name="View schedules", exact=True)).not_to_be_visible()
+            collection_summary.focus()
+            page.keyboard.press("Enter")
             page.get_by_role("button", name="View schedules", exact=True).click()
             page.get_by_label("Selected source", exact=True).select_option("fixture-media")
             page.get_by_label("Watch window (minutes)", exact=True).fill("1")
@@ -358,12 +362,42 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             schedule = created_schedule.value.json()
             assert schedule["sourceId"] == "fixture-media" and schedule["autoRecord"] is False
             assert schedule["maxDurationSeconds"] == 8 and 0 < schedule["endAtMs"] - schedule["startAtMs"] <= 61000
+            # Creation precedes the local worker's first discovery. Wait for
+            # that actual receipt so an older scheduled snapshot cannot be
+            # compared with the desk's newer discovered state.
+            discovery_deadline = time.monotonic() + 10
+            while time.monotonic() < discovery_deadline:
+                discovered_schedule = next(item for item in read("/v1/schedules")["schedules"] if item["id"] == schedule["id"])
+                if discovered_schedule["pollCount"] >= 1 and discovered_schedule["lastCheckedAtMs"] is not None:
+                    break
+                page.wait_for_timeout(100)
+            assert discovered_schedule["status"] == "available" and discovered_schedule["state"] == "discovered"
+            assert discovered_schedule["jobId"] is None and discovered_schedule["autoRecord"] is False
+            with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/schedules" and response.request.method == "GET") as desk_schedules:
+                nav("Review desk")
+            assert desk_schedules.value.status == 200
+            displayed_schedule = next(item for item in desk_schedules.value.json()["schedules"] if item["id"] == schedule["id"])
+            assert displayed_schedule["state"] == discovered_schedule["state"]
+            assert displayed_schedule["state"] not in {"stopped", "completed", "failed"}
+            expect(collection).to_have_attribute("open", "")
+            expect(collection.get_by_role("region", name="Selected source schedules")).to_contain_text(displayed_schedule["state"] + " · closes")
+            expect(collection.get_by_role("button", name="Stop schedule", exact=True)).to_have_count(0)
+            collection.get_by_role("button", name="View schedules", exact=True).click()
             page.get_by_role("button", name="Stop schedule", exact=True).click()
             page.get_by_text("Source schedule stopped.", exact=True).wait_for()
             assert next(item for item in read("/v1/schedules")["schedules"] if item["id"] == schedule["id"])["state"] == "stopped"
             assert [item["id"] for item in read("/v1/jobs")["jobs"]] == prior_jobs
             nav("Review desk")
+            expect(collection_summary).to_be_visible()
+            stopped_receipt = page.get_by_role("region", name="Selected source schedules", include_hidden=True).get_by_text(re.compile("stopped · closes"))
+            expect(stopped_receipt).to_have_count(1)
+            assert not collection.evaluate("element => element.open"), "Stopped collection must remain quiet on a fresh review desk"
+            expect(stopped_receipt).not_to_be_visible()
+            collection_summary.focus()
+            page.keyboard.press("Enter")
             expect(page.get_by_role("region", name="Selected source schedules").get_by_text(re.compile("stopped · closes"))).to_be_visible()
+            collection_summary.focus()
+            page.keyboard.press("Enter")
 
             # Phone selection moves focus to a real detail; back restores its row.
             page.set_viewport_size({"width": 390, "height": 844})
@@ -422,7 +456,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             assert denied.status == 403 and denied.json()["error"] == "scope_denied"
             capture("06-desktop-read-only-desk.png")
             assert not errors, errors
-            receipt = {"fixture": True, "externalLiveValidated": False, "desktop1440AndPhone390": True, "sourceSelectionAndCounterevidence": True, "sourceResetAfterFindingRevisionRefresh": True, "actualPreviewPlaybackAndSeek": True, "exactOriginalContextNavigation": True, "correctInvestigationDeepLinkAndReload": True, "investigationLibrarySelectionBackAndReload": True, "signalAcknowledgementPersisted": True, "acknowledgementReceiptBoundToSelectedItem": True, "boundedScheduleWithoutHiddenCapture": True, "phoneSelectionBackAndKeyboardFocus": True, "readOnlyScopeFilteredResources": True, "actualReadOnlyWriteDenied": True, "serviceRestartReopen": True, "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS)}
+            receipt = {"fixture": True, "externalLiveValidated": False, "desktop1440AndPhone390": True, "sourceSelectionAndCounterevidence": True, "sourceResetAfterFindingRevisionRefresh": True, "actualPreviewPlaybackAndSeek": True, "exactOriginalContextNavigation": True, "correctInvestigationDeepLinkAndReload": True, "investigationLibrarySelectionBackAndReload": True, "signalAcknowledgementPersisted": True, "acknowledgementReceiptBoundToSelectedItem": True, "boundedScheduleWithoutHiddenCapture": True, "collectionDisclosureQuietWhenIdleAndOpensForActualSchedule": True, "phoneSelectionBackAndKeyboardFocus": True, "readOnlyScopeFilteredResources": True, "actualReadOnlyWriteDenied": True, "serviceRestartReopen": True, "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS)}
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))
             print(json.dumps(receipt))
             browser.close()

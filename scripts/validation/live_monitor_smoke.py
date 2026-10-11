@@ -13,10 +13,11 @@ import socket
 import subprocess
 import tempfile
 import time
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
+from browser_navigation import navigate
 
 ROOT = Path(__file__).resolve().parents[2]
 PORT = int(os.environ.get("LIVELENS_MONITOR_TEST_PORT", "4479"))
@@ -172,9 +173,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 return next(item for item in read(page, "/v1/schedules")["schedules"] if item["id"] == schedule_id)
 
             def monitor():
-                if page.viewport_size["width"] < 800:
-                    page.get_by_role("button", name="Toggle navigation", exact=True).click()
-                page.get_by_role("navigation", name="LiveLens navigation").get_by_role("button", name="Live monitor", exact=True).click()
+                navigate(page, "Live monitor")
                 page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
                 source_row("Synthetic colour bars & tone (fixture)").wait_for()
 
@@ -189,6 +188,34 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 expect(stage.get_by_label("Watch window (minutes)", exact=True)).to_have_count(0)
                 expect(stage.get_by_role("button", name="Back to monitor", exact=True)).to_be_visible()
                 page.wait_for_function("id => document.querySelector('video')?.getAttribute('src')?.startsWith('/v1/media/' + id + '/')", arg=replay_id)
+
+            # The everyday destinations remain immediately available. Extra
+            # tools are deliberately disclosed, including after a deep link.
+            navigation = page.get_by_role("navigation", name="LiveLens navigation")
+            more_tools = navigation.get_by_role("button", name="More tools", exact=True)
+            primary = ["Live monitor", "Session library", "Review desk", "Investigations", "Cases & reports", "Agent connection"]
+            specialists = ["Observed accounts", "Context graph", "Missions", "Sources & captures", "Protection & alerts", "Workspace & access", "Workspace settings"]
+            for label in primary:
+                expect(navigation.get_by_role("button", name=label, exact=True)).to_be_visible()
+            expect(more_tools).to_have_attribute("aria-expanded", "false")
+            for label in specialists:
+                expect(navigation.get_by_role("button", name=label, exact=True)).not_to_be_visible()
+            more_tools.focus()
+            page.keyboard.press("Enter")
+            expect(more_tools).to_have_attribute("aria-expanded", "true")
+            for label in specialists:
+                expect(navigation.get_by_role("button", name=label, exact=True)).to_be_visible()
+            navigate(page, "Context graph", keyboard=True)
+            page.get_by_role("heading", name="Context graph", exact=True, level=1).wait_for()
+            assert parse_qs(urlsplit(page.url).query).get("view") == ["graph"]
+            page.reload(wait_until="networkidle")
+            page.get_by_role("heading", name="Context graph", exact=True, level=1).wait_for()
+            expect(more_tools).to_have_attribute("aria-expanded", "true")
+            expect(navigation.get_by_role("button", name="Context graph", exact=True)).to_have_attribute("aria-current", "page")
+            navigate(page, "Live monitor", keyboard=True)
+            page.reload(wait_until="networkidle")
+            page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
+            expect(more_tools).to_have_attribute("aria-expanded", "false")
 
             initial_sources = read(page, "/v1/sources")["sources"]
             fixture = next(source for source in initial_sources if source["id"] == "fixture-media")
@@ -485,6 +512,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             receipt = {
                 "fixture": True, "externalLiveValidated": False,
                 "captureFirstDefaultHome": True, "publicTikTokConfiguredOnlyNoPolling": True,
+                "primaryNavigationAndCollapsedSpecialistTools": True,
+                "specialistUrlReloadAutomaticallyExpandsNavigation": True,
                 "boundedFixtureCheckWithoutRecording": True, "boundedWatchWithoutHiddenCapture": True,
                 "delayedCheckReceiptDoesNotLeakToAnotherAccount": True,
                 "actualFixtureCaptureAndVerifiedMediaHashRange": True,

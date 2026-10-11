@@ -11,6 +11,7 @@ import traceback
 from contextlib import contextmanager
 from urllib.request import urlopen
 from playwright.sync_api import sync_playwright
+from browser_navigation import navigate
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as sock:
@@ -112,14 +113,13 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             page.get_by_role('link', name='Skip to content').focus()
             page.keyboard.press('Enter')
             assert page.evaluate('document.activeElement.id === "ll-main"')
-            page.get_by_role('button', name='Cases & reports', exact=True).focus()
-            page.keyboard.press('Enter')
+            navigate(page, 'Cases & reports', keyboard=True)
             page.get_by_label('Case title').fill('Fixture browser investigation')
             page.get_by_label('Question to investigate').fill('Can the retained source be replayed after restart?')
             page.get_by_role('button', name='Create case', exact=True).click()
             page.get_by_text('Investigation created.', exact=True).wait_for()
 
-            page.get_by_role('button', name='Sources & captures', exact=True).click()
+            navigate(page, 'Sources & captures')
             page.get_by_label('Maximum capture seconds').fill('8')
             page.get_by_role('button', name='Start bounded capture', exact=True).click()
             page.get_by_text('Capture queued.', exact=False).wait_for()
@@ -148,12 +148,12 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             page.get_by_text('Original evidence linked to case.', exact=True).wait_for()
             page.screenshot(path=str(SCREENSHOTS / 'desktop-replay.png'), full_page=True)
 
-            page.get_by_role('button', name='Observed accounts', exact=True).click()
+            navigate(page, 'Observed accounts')
             page.get_by_label('Statement or phrase').fill('Synthetic fixture marker')
             page.get_by_label('Observed account').fill('fictional_viewer')
             page.get_by_role('button', name='Search captures', exact=True).click()
             page.get_by_role('button', name='Synthetic fixture marker', exact=False).first.wait_for()
-            page.get_by_role('button', name='Cases & reports', exact=True).click()
+            navigate(page, 'Cases & reports')
             page.get_by_role('button', name='Fixture browser investigation', exact=False).click()
             page.get_by_role('button', name='Original evidence', exact=True).click()
             with page.expect_download() as download:
@@ -165,8 +165,7 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
                 page.get_by_role('button', name='Export Markdown', exact=True).click()
 
             page.set_viewport_size({'width': 390, 'height': 844})
-            page.get_by_role('button', name='Toggle navigation', exact=True).click()
-            page.get_by_role('button', name='Session library', exact=True).click()
+            navigate(page, 'Session library')
             page.get_by_role('button', name='Fictional fixture', exact=False).click()
             page.get_by_role('heading', name='Captured timeline', exact=True).wait_for()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Phone overflow'
@@ -176,7 +175,7 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             server = launch(directory)
             page.set_viewport_size({'width': 1440, 'height': 960})
             login()
-            page.get_by_role('button', name='Cases & reports', exact=True).click()
+            navigate(page, 'Cases & reports')
             page.get_by_role('button', name='Fixture browser investigation', exact=False).click()
             page.get_by_role('button', name='Original evidence', exact=True).click()
             page.get_by_role('button', name='Synthetic fixture marker', exact=False).click()
