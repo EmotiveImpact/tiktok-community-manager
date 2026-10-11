@@ -34,6 +34,16 @@ async function until(predicate, timeout = 20_000) {
   }
   throw new Error("Recorder readiness timeout");
 }
+async function tickUntil(worker, predicate, timeout = 20_000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    await worker.tick();
+    const value = predicate();
+    if (value) return value;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  throw new Error("Recorder tick readiness timeout");
+}
 function fixture(t, { corrupt = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "livelens-recorder-"));
   const input = join(dir, "fixture.mp4"),
@@ -260,6 +270,188 @@ test("unavailable input has bounded retries and honest gaps, never recording suc
     3,
   );
 });
+test("a reached recording deadline promptly finalises real FFmpeg media without relaxing the wall-clock bound", async (t) => {
+  const f = fixture(t);
+  f.worker.create("alpha", {
+    id: "deadline",
+    sessionId: "session",
+    sourceId: "source",
+    maxDurationSeconds: 20,
+    segmentSeconds: 2,
+  });
+  await tickUntil(
+    f.worker,
+    () => f.worker.job("alpha", "deadline").segments.length > 0,
+  );
+  const active = f.worker.activeJobs.get("alpha:deadline");
+  assert.equal(active.done, false);
+  // Advance the persisted wall-clock bound while FFmpeg's longer -t is still running.
+  // This deterministically exercises the same deadline path as a five-second capture.
+  f.store.db
+    .prepare("UPDATE recording_jobs SET deadline=? WHERE workspace=? AND id=?")
+    .run(Date.now() - 1, "alpha", "deadline");
+  await tickUntil(f.worker, () =>
+    ["completed", "stopped", "failed"].includes(
+      f.worker.job("alpha", "deadline").state,
+    ),
+  );
+  const job = f.worker.job("alpha", "deadline");
+  assert.equal(active.signalReason, "deadline");
+  assert.equal(active.stopCommand, "quit");
+  assert.equal(active.stopCommandSent, true);
+  assert.equal(active.code, 0);
+  assert.equal(active.exitSignal, null);
+  assert.equal(active.forcedKill, undefined);
+  assert.equal(job.state, "completed");
+  assert.equal(job.error, null);
+  assert.equal(job.attempts, 1);
+  assert.ok(job.segments.length > 0);
+  assert.ok(job.segments.every((segment) => segment.attempt === 1));
+  for (const segment of job.segments)
+    assert.equal(
+      await hashFile(
+        (await f.worker.media("alpha", "deadline", segment.id)).path,
+      ),
+      segment.sha256,
+    );
+  assert.equal(
+    f.store.search("alpha", { query: "media unavailable" }).length,
+    0,
+  );
+  const manifest = JSON.parse(
+    readFileSync(
+      join(
+        f.config.mediaRoot,
+        "alpha",
+        "deadline",
+        "attempt-1",
+        "manifest.json",
+      ),
+    ),
+  );
+  assert.equal(manifest.state, "completed");
+  await f.restart();
+  assert.equal(f.worker.job("alpha", "deadline").state, "completed");
+});
+
+test("natural five-second captures consistently complete with verified replay media", async (t) => {
+  const f = fixture(t);
+  f.worker.start();
+  for (let i = 0; i < 3; i++) {
+    const id = `natural-${i}`;
+    f.worker.create("alpha", {
+      id,
+      sessionId: "session",
+      sourceId: "source",
+      maxDurationSeconds: 5,
+      segmentSeconds: 2,
+    });
+    await until(
+      () =>
+        ["completed", "stopped", "failed"].includes(
+          f.worker.job("alpha", id).state,
+        ),
+      10_000,
+    );
+    const job = f.worker.job("alpha", id);
+    assert.equal(job.state, "completed");
+    assert.equal(job.error, null);
+    assert.equal(job.attempts, 1);
+    assert.ok(job.segments.length > 0);
+    for (const segment of job.segments)
+      assert.equal(
+        await hashFile((await f.worker.media("alpha", id, segment.id)).path),
+        segment.sha256,
+      );
+  }
+  assert.equal(
+    f.store.search("alpha", { query: "media unavailable" }).length,
+    0,
+  );
+});
+
+test("a deadline cannot report success when a stalled FFmpeg needs forced termination", async (t) => {
+  const f = fixture(t);
+  f.worker.create("alpha", {
+    id: "stalled",
+    sessionId: "session",
+    sourceId: "source",
+    maxDurationSeconds: 20,
+    segmentSeconds: 2,
+  });
+  await tickUntil(
+    f.worker,
+    () => f.worker.job("alpha", "stalled").segments.length > 0,
+  );
+  const active = f.worker.activeJobs.get("alpha:stalled");
+  assert.equal(active.child.kill("SIGSTOP"), true);
+  f.store.db
+    .prepare("UPDATE recording_jobs SET deadline=? WHERE workspace=? AND id=?")
+    .run(Date.now() - 1, "alpha", "stalled");
+  const started = Date.now();
+  await tickUntil(
+    f.worker,
+    () => f.worker.job("alpha", "stalled").state === "failed",
+    8000,
+  );
+  assert.ok(Date.now() - started < 6000);
+  assert.equal(active.signalReason, "deadline");
+  assert.equal(active.forcedKill, true);
+  assert.equal(active.exitSignal, "SIGKILL");
+  const job = f.worker.job("alpha", "stalled");
+  assert.equal(job.error, "media_unavailable");
+  assert.ok(job.segments.length > 0);
+  const retained = job.segments[0];
+  assert.equal(
+    await hashFile(
+      (await f.worker.media("alpha", "stalled", retained.id)).path,
+    ),
+    retained.sha256,
+  );
+});
+
+test("an unsolicited graceful FFmpeg exit remains a failure even if the deadline expires before polling", async (t) => {
+  const f = fixture(t);
+  f.worker.create("alpha", {
+    id: "unsolicited",
+    sessionId: "session",
+    sourceId: "source",
+    maxDurationSeconds: 20,
+    segmentSeconds: 2,
+  });
+  await tickUntil(
+    f.worker,
+    () => f.worker.job("alpha", "unsolicited").segments.length > 0,
+  );
+  const active = f.worker.activeJobs.get("alpha:unsolicited");
+  const closed = once(active.child, "close");
+  assert.equal(active.child.kill("SIGINT"), true);
+  await closed;
+  assert.equal(active.code, 255);
+  assert.equal(active.exitSignal, null);
+  // An exit observed during collect must never gain a retrospective deadline reason.
+  f.store.db
+    .prepare("UPDATE recording_jobs SET deadline=? WHERE workspace=? AND id=?")
+    .run(Date.now() - 1, "alpha", "unsolicited");
+  await f.worker.tick();
+  const job = f.worker.job("alpha", "unsolicited");
+  assert.equal(active.signalReason, undefined);
+  assert.equal(active.signalSent, undefined);
+  assert.equal(active.signalled, false);
+  assert.equal(job.state, "failed");
+  assert.equal(job.error, "media_unavailable");
+  assert.equal(job.attempts, 1);
+  assert.ok(job.segments.length > 0);
+  assert.ok(f.store.search("alpha", { query: "media unavailable" }).length > 0);
+  const retained = job.segments[0];
+  assert.equal(
+    await hashFile(
+      (await f.worker.media("alpha", "unsolicited", retained.id)).path,
+    ),
+    retained.sha256,
+  );
+});
+
 test("stop finalises real media and an interrupted partial tail remains unavailable", async (t) => {
   const f = fixture(t);
   f.worker.create("alpha", {

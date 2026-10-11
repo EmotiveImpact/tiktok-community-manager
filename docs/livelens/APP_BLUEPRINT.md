@@ -55,6 +55,10 @@ avoid filling navigation with convincing but non-functional screens.
 
 - A restrained operational interface: dark graphite surfaces, clear contrast,
   refined typography, purposeful spacing and colour for state or emphasis.
+- Owner refinement, 11 October 2026: use the review inbox/detail structure from
+  the selected Mission Inbox concept. Replace bright lime/neon accents with warm
+  charcoal, off-white actions and subdued slate selection states. The owner
+  deferred Pinterest research after cloud network access was blocked.
 - One clear navigation system with a workspace header, contextual search and
   consistent detail views. Give an operator a useful next action on every screen.
 - Dense enough for investigation without making every page a wall of cards.

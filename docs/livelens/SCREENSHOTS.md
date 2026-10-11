@@ -1,14 +1,28 @@
 # LiveLens — actual application screenshots
 
-These captures show the redesigned running application, not mock-ups. Desktop
+These captures show the running application, not mock-ups. Desktop
 views use 1440-pixel width; phone views use 390-pixel width. All accounts,
 statements and media are labelled fictional fixtures. The colour bars and tone
 are actual FFmpeg media used for playback, seek, archival and recovery checks.
-The [browser receipt](browser-validation.json) records the exercised journeys.
+The [current full browser receipt](refined-app-browser-validation.json),
+[original journey receipt](refined-original-browser-validation.json) and
+[review desk receipt](review-desk-validation.json) record the exercised journeys.
+The separate [archive receipt](browser-validation.json) preserves its earlier
+recovery validation. Design references are in [DESIGN_CONCEPTS.md](DESIGN_CONCEPTS.md).
 
-## Operations
+## Review desk — selected C layout with a restrained dark palette
 
-![LiveLens overview](screenshots/overview.png)
+This is the actual 1440 × 1024 desktop viewport, with a draft finding selected,
+its exact supporting source, verified playback and the investigation action.
+
+![LiveLens review desk](screenshots/review-desk.png)
+
+Phone views provide a selectable inbox and a source preview with a keyboard
+accessible Back to inbox action.
+
+| Phone inbox | Selected original source |
+|---|---|
+| ![Phone review desk](screenshots/phone-review-desk.png) | ![Phone original source](screenshots/phone-review-source.png) |
 
 ## Conversation and original evidence
 
@@ -51,6 +65,8 @@ media segment. A manually declared person reference remains explicitly unverifie
 
 This separate browser check archived verified media, removed one local segment,
 restored it through the interface, compared its SHA-256 and reopened video playback.
+These two archive captures retain the earlier visual theme and are historical
+recovery evidence; the current console palette is shown above.
 
 ![Verified archive and restored original media](screenshots/desktop-archive-restored.png)
 

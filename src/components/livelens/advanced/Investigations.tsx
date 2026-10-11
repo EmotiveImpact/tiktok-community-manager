@@ -107,17 +107,28 @@ export function ReviewedReport({
 
 export default function Investigations({
   onOpenEvidence,
+  initialCaseId,
+  onSelectCase,
 }: {
   onOpenEvidence: OpenEvidence;
+  initialCaseId?: string | null;
+  onSelectCase?: (caseId: string | null) => void;
 }) {
   const resource = useResource<unknown>("/v1/cases?limit=200");
-  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [currentId, setCurrentId] = useState<string | null>(initialCaseId ?? null);
+  useEffect(() => {
+    setCurrentId(initialCaseId ?? null);
+  }, [initialCaseId]);
   const [editor, setEditor] = useState(false);
   const [title, setTitle] = useState("");
   const [question, setQuestion] = useState("");
   const [tab, setTab] = useState("cases");
   const action = useAction();
   const items = collection<Case>(resource.data, "cases");
+  const selectCase = (caseId: string | null) => {
+    setCurrentId(caseId);
+    onSelectCase?.(caseId);
+  };
   const create = async (event: FormEvent) => {
     event.preventDefault();
     let newId = "";
@@ -134,15 +145,16 @@ export default function Investigations({
       setEditor(false);
       setTitle("");
       setQuestion("");
-      setCurrentId(newId);
+      selectCase(newId);
     }
   };
   if (currentId)
     return (
       <InvestigationDetail
+        key={currentId}
         caseId={currentId}
         onOpenEvidence={onOpenEvidence}
-        onBack={() => setCurrentId(null)}
+        onBack={() => selectCase(null)}
       />
     );
   return (
@@ -231,7 +243,7 @@ export default function Investigations({
                   <button
                     className="aw-select-row"
                     key={item.id}
-                    onClick={() => setCurrentId(item.id)}
+                    onClick={() => selectCase(item.id)}
                   >
                     <span className="aw-list-symbol">
                       <FileText size={18} />

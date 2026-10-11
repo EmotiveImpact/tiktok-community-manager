@@ -48,6 +48,7 @@ import {
 import AdvancedWorkspace, {
   ReviewedReport,
 } from "../components/livelens/AdvancedWorkspace";
+import ReviewDesk from "../components/livelens/ReviewDesk";
 import "./livelens.css";
 
 type View =
@@ -64,12 +65,12 @@ type View =
   | "workspace"
   | "agent";
 const nav = [
-  ["overview", "Overview", Activity, "WORKSPACE"],
+  ["overview", "Review desk", Activity, "WORKSPACE"],
+  ["sessions", "Session library", Layers3, "WORKSPACE"],
+  ["investigations", "Investigations", FolderOpen, "WORKSPACE"],
   ["missions", "Missions", Compass, "COLLECT"],
   ["sources", "Sources & captures", Radio, "COLLECT"],
-  ["sessions", "Session library", Layers3, "COLLECT"],
   ["search", "Observed accounts", Users, "INVESTIGATE"],
-  ["investigations", "Investigations", FolderOpen, "INVESTIGATE"],
   ["graph", "Context graph", Network, "INVESTIGATE"],
   ["cases", "Reports", FileText, "INVESTIGATE"],
   ["alerts", "Protection & alerts", Shield, "MANAGE"],
@@ -78,7 +79,7 @@ const nav = [
   ["settings", "Workspace settings", Settings, "MANAGE"],
 ] as const;
 const descriptions: Record<View, string> = {
-  overview: "Your conversations, evidence and work in one place.",
+  overview: "Review what was captured. Keep the original context close.",
   sources: "Choose a source. Set a limit. Keep a reliable record.",
   sessions: "Reopen a conversation and follow the original evidence.",
   search: "Find captured statements and follow an account’s observed activity.",
@@ -190,6 +191,9 @@ export function LiveLensConsole() {
   const [caseId, setCaseId] = useState<string | null>(null),
     [menu, setMenu] = useState(false),
     [revision, setRevision] = useState(0);
+  const [investigationId, setInvestigationId] = useState<string | null>(
+    new URLSearchParams(location.search).get("case"),
+  );
   const [query, setQuery] = useState(""),
     [account, setAccount] = useState(""),
     [searchPath, setSearchPath] = useState("/v1/evidence/search?limit=100");
@@ -334,6 +338,7 @@ export function LiveLensConsole() {
     setSessionId(null);
     setEvidenceId(null);
     setCaseId(null);
+    setInvestigationId(null);
     setMenu(false);
     setNotice("");
     history.replaceState(null, "", `?view=${next}`);
@@ -347,6 +352,21 @@ export function LiveLensConsole() {
     setTimelineKind("all");
     setView("sessions");
     history.replaceState(null, "", `?view=sessions&session=${id}`);
+  }
+  function openInvestigation(id: string) {
+    go("investigations");
+    selectInvestigation(id);
+  }
+  function selectInvestigation(id: string | null) {
+    setInvestigationId(id);
+    history.replaceState(
+      null,
+      "",
+      id
+        ? `?view=investigations&case=${encodeURIComponent(id)}`
+        : "?view=investigations",
+    );
+    main.current?.focus();
   }
   function openEvidence(e: Evidence) {
     setEvidenceId(e.id);
@@ -616,7 +636,7 @@ export function LiveLensConsole() {
     </div>
   );
   return (
-    <div className="ll-app">
+    <div className={`ll-app ${view === "overview" ? "ll-review-home" : ""}`}>
       <a className="ll-skip" href="#ll-main">
         Skip to content
       </a>
@@ -727,7 +747,7 @@ export function LiveLensConsole() {
             <input
               ref={headerSearch}
               aria-label="Search all captured evidence"
-              placeholder="Search your evidence"
+              placeholder="Search conversations or evidence"
               value={globalQuery}
               onChange={(event) => setGlobalQuery(event.target.value)}
               maxLength={512}
@@ -766,14 +786,21 @@ export function LiveLensConsole() {
                 {sessionId
                   ? "CONVERSATION / ORIGINAL SOURCE"
                   : view === "overview"
-                    ? "YOUR OPERATIONS"
+                    ? "YOUR WORKSPACE"
                     : "LIVELENS / " + nav.find(([id]) => id === view)?.[3]}
               </p>
-              <h1>{session.data?.title ?? title}</h1>
+              <h1>{view === "overview" ? "Your review desk" : session.data?.title ?? title}</h1>
               <p>
                 {sessionId
                   ? "The recording, its words and the source behind each moment."
-                  : descriptions[view]}
+                  : view === "overview"
+                    ? new Date().toLocaleDateString(undefined, {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : descriptions[view]}
               </p>
             </div>
             <button
@@ -795,219 +822,36 @@ export function LiveLensConsole() {
           )}
           {view === "overview" && (
             <>
-              <Status loading={overview.loading} error={overview.error} />
-              <section className="ll-overview-intro">
-                <div>
-                  <span className="ll-intro-symbol">
-                    <Radio size={25} />
-                  </span>
-                  <div>
-                    <p className="ll-eyebrow">FROM CONVERSATION TO CLARITY</p>
-                    <h2>Keep what matters. See the whole story.</h2>
-                    <p>
-                      Capture a source, follow its evidence and build an
-                      investigation.
-                    </p>
-                  </div>
-                </div>
-                <button className="ll-primary" onClick={() => go("sources")}>
-                  <Radio size={16} />
-                  Start a capture
-                  <ArrowRight size={15} />
-                </button>
-              </section>
-              <div className="ll-stats">
-                <button onClick={() => go("sessions")}>
-                  <span>
-                    <Layers3 size={15} />
-                    Retained sessions
-                  </span>
-                  <strong>{overview.data?.sessions ?? "—"}</strong>
-                  <small>
-                    Open library <ArrowUpRight size={13} />
-                  </small>
-                </button>
-                <button onClick={() => runSearch("")}>
-                  <span>
-                    <Archive size={15} />
-                    Captured evidence
-                  </span>
-                  <strong>{overview.data?.evidence ?? "—"}</strong>
-                  <small>
-                    Search retained records <ArrowUpRight size={13} />
-                  </small>
-                </button>
-                <button onClick={() => go("investigations")}>
-                  <span>
-                    <FolderOpen size={15} />
-                    Investigations
-                  </span>
-                  <strong>{overview.data?.cases ?? "—"}</strong>
-                  <small>
-                    Continue your review <ArrowUpRight size={13} />
-                  </small>
-                </button>
-                <div>
-                  <span>
-                    <Activity size={15} />
-                    Capture gaps
-                  </span>
-                  <strong>{overview.data?.gaps ?? "—"}</strong>
-                  <small>Interruptions remain in the record</small>
-                </div>
-              </div>
-              <div className="ll-overview-grid">
-                <section className="ll-overview-library">
-                  <div className="ll-section-head">
-                    <div>
-                      <h2>Recent conversations</h2>
-                      <p>Your retained source library</p>
-                    </div>
-                    <button onClick={() => go("sessions")}>
-                      View all <ArrowRight size={14} />
-                    </button>
-                  </div>
-                  <Status {...sessions} />
-                  <SessionList
-                    sessions={sessions.data?.sessions.slice(0, 6) ?? []}
-                    open={openSession}
+              <Status
+                loading={overview.loading || sessions.loading || cases.loading}
+                error={overview.error || sessions.error || cases.error}
+              />
+              <ReviewDesk
+                identity={identity}
+                sessions={sessions.data?.sessions ?? []}
+                cases={cases.data?.cases ?? []}
+                sources={sources.data?.sources ?? []}
+                revision={revision}
+                capabilities={capabilities.data ?? undefined}
+                onNavigate={go}
+                onOpenSession={openSession}
+                onOpenEvidence={openEvidenceById}
+                onOpenInvestigation={openInvestigation}
+                renderMedia={(selectedSessionId, selectedEvidence) => (
+                  <MediaReplay
+                    key={selectedSessionId}
+                    sessionId={selectedSessionId}
+                    evidence={selectedEvidence ?? undefined}
+                    revision={revision}
+                    openSources={() => go("sources")}
+                    archiveConfiguration={capabilities.data?.workers?.mediaArchive}
+                    archiveWrite={false}
+                    mutate={mutate}
+                    busy={busy}
+                    compact
                   />
-                  <div className="ll-section-head ll-investigation-head">
-                    <div>
-                      <h2>Open an investigation</h2>
-                      <p>A question and the evidence behind it</p>
-                    </div>
-                    <button onClick={() => go("investigations")}>
-                      Open workspace
-                      <ArrowRight size={14} />
-                    </button>
-                  </div>
-                  {cases.data?.cases.length ? (
-                    <div className="ll-overview-cases">
-                      {cases.data.cases.slice(0, 3).map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => {
-                            go("cases");
-                            setCaseId(c.id);
-                          }}
-                        >
-                          <span className="ll-case-symbol">
-                            <FolderOpen size={16} />
-                          </span>
-                          <span>
-                            <strong>{c.title}</strong>
-                            <small>{c.question}</small>
-                          </span>
-                          <ArrowUpRight size={16} />
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="ll-inline-empty">
-                      <FolderOpen size={20} />
-                      <span>
-                        Start with a question you want the evidence to answer.
-                      </span>
-                      <button onClick={() => go("investigations")}>
-                        New investigation
-                        <ArrowRight size={14} />
-                      </button>
-                    </div>
-                  )}
-                </section>
-                <aside className="ll-overview-aside">
-                  <section className="ll-operation-panel">
-                    <div className="ll-section-head">
-                      <h2>Capture activity</h2>
-                      <Radio size={16} />
-                    </div>
-                    <Status {...jobs} />
-                    {jobs.data?.jobs.length ? (
-                      jobs.data.jobs.slice(0, 4).map((job) => (
-                        <button
-                          className="ll-operation-row"
-                          key={job.id}
-                          onClick={() => go("sources")}
-                        >
-                          <span className={`ll-state-dot ${job.state}`} />
-                          <span>
-                            <strong>
-                              {sessions.data?.sessions.find(
-                                (s) => s.id === job.sessionId,
-                              )?.title ?? "Capture job"}
-                            </strong>
-                            <small>
-                              {job.segments.length} verified segments ·{" "}
-                              {job.state}
-                            </small>
-                          </span>
-                          <ChevronRight size={14} />
-                        </button>
-                      ))
-                    ) : (
-                      <div className="ll-operation-idle">
-                        <span className="ll-idle-icon">
-                          <Radio size={22} />
-                        </span>
-                        <h3>Ready when you are</h3>
-                        <p>
-                          No capture jobs in this workspace. Choose a configured
-                          source to get started.
-                        </p>
-                        <button onClick={() => go("sources")}>
-                          View sources
-                          <ArrowRight size={14} />
-                        </button>
-                      </div>
-                    )}
-                    <div className="ll-worker-receipt">
-                      <span className="ll-state-dot" />
-                      <span>
-                        {sources.error
-                          ? "Source connection unavailable"
-                          : sources.data?.worker?.error
-                            ? "Recorder needs attention"
-                            : sources.data?.worker
-                              ? "Recorder configured"
-                              : "Recorder not configured"}
-                      </span>
-                    </div>
-                  </section>
-                  <section className="ll-shortcuts">
-                    <p className="ll-eyebrow">YOUR NEXT STEP</p>
-                    <button onClick={() => go("missions")}>
-                      <Compass size={19} />
-                      <span>
-                        <strong>Set a mission</strong>
-                        <small>Give your collection a purpose</small>
-                      </span>
-                      <ArrowUpRight size={15} />
-                    </button>
-                    <button onClick={() => go("search")}>
-                      <Search size={19} />
-                      <span>
-                        <strong>Follow a statement</strong>
-                        <small>Find its source and surrounding context</small>
-                      </span>
-                      <ArrowUpRight size={15} />
-                    </button>
-                    <button onClick={() => go("alerts")}>
-                      <Shield size={19} />
-                      <span>
-                        <strong>Review protection signals</strong>
-                        <small>Context first, then a decision</small>
-                      </span>
-                      <ArrowUpRight size={15} />
-                    </button>
-                  </section>
-                  <p className="ll-provenance-note">
-                    <ShieldCheck size={14} />
-                    Original sources stay attached. Speaker identity and
-                    operator interpretation remain separate.
-                  </p>
-                </aside>
-              </div>
+                )}
+              />
             </>
           )}
           {view === "sources" && (
@@ -1844,7 +1688,12 @@ export function LiveLensConsole() {
             "workspace",
             "agent",
           ].includes(view) && (
-            <AdvancedWorkspace view={view} onOpenEvidence={openEvidenceById} />
+            <AdvancedWorkspace
+              view={view}
+              onOpenEvidence={openEvidenceById}
+              initialCaseId={investigationId}
+              onSelectCase={selectInvestigation}
+            />
           )}
         </main>
         <footer className="ll-footer">
@@ -2168,7 +2017,7 @@ function CaptureScheduler({
           <div className="ll-schedule-fields">
             <label>
               Selected source
-              <select name="source" required>
+              <select name="source" aria-label="Selected source" required>
                 {sources.map((source) => (
                   <option value={source.id} key={source.id}>
                     {source.label}
@@ -2390,6 +2239,7 @@ function MediaReplay({
   archiveWrite,
   mutate,
   busy,
+  compact = false,
 }: {
   sessionId: string;
   evidence?: Evidence;
@@ -2399,6 +2249,7 @@ function MediaReplay({
   archiveWrite: boolean;
   mutate: Mutation;
   busy: boolean;
+  compact?: boolean;
 }) {
   const resource = useResource<{
     jobs: {
@@ -2453,8 +2304,11 @@ function MediaReplay({
         evidenceTime < s.startedAtMs + s.durationMs,
     );
   return (
-    <section className="ll-media" id="ll-media-replay">
-      <div className="ll-section-head">
+    <section
+      className={`ll-media ${compact ? "ll-media-compact" : ""}`}
+      id={compact ? "ll-desk-media-replay" : "ll-media-replay"}
+    >
+      {!compact && <div className="ll-section-head">
         <h2>
           <Video size={17} />
           Retained media
@@ -2463,7 +2317,7 @@ function MediaReplay({
           {resource.data?.jobs.find((job) => job.id === current?.jobId)
             ?.state ?? "Unavailable"}
         </span>
-      </div>
+      </div>}
       {current ? (
         <>
           <video
@@ -2512,9 +2366,10 @@ function MediaReplay({
             }}
             aria-label="Captured conversation video"
           />
-          <label>
+          {(!compact || segments.length > 1) && <label>
             Media segment
             <select
+              aria-label="Media segment"
               value={current.key}
               onChange={(e) => setSelected(e.target.value)}
             >
@@ -2524,15 +2379,17 @@ function MediaReplay({
                 </option>
               ))}
             </select>
-          </label>
+          </label>}
           {!covered && (
             <p role="status">
               No retained segment covers this evidence timestamp.
             </p>
           )}
           {playbackError && <p role="alert">{playbackError}</p>}
-          <small className="ll-id">Segment SHA-256: {current.sha256}</small>
+          {!compact && <small className="ll-id">Segment SHA-256: {current.sha256}</small>}
         </>
+      ) : resource.loading ? (
+        <p role="status" className="ll-status">Loading retained media…</p>
       ) : (
         <div className="ll-media-empty">
           <Video size={30} />
@@ -2550,7 +2407,7 @@ function MediaReplay({
       {resource.error && (
         <p className="ll-muted">Media service unavailable: {resource.error}</p>
       )}
-      {resource.data?.jobs
+      {!compact && resource.data?.jobs
         .filter((j) =>
           [
             "queued",
@@ -2573,7 +2430,7 @@ function MediaReplay({
             Stop recording
           </button>
         ))}
-      <MediaArchiveControls
+      {!compact && <MediaArchiveControls
         configuration={archiveConfiguration}
         recordingJobId={current?.jobId}
         recordingJobIds={resource.data?.jobs.map((job) => job.id) ?? []}
@@ -2593,7 +2450,7 @@ function MediaReplay({
             video.current?.load();
           }
         }}
-      />
+      />}
     </section>
   );
 }

@@ -1,5 +1,37 @@
 # Validation receipt
 
+## Selected C review desk — 11 October 2026
+
+The owner selected the Mission Inbox structure and requested a restrained dark
+palette without neon. The implemented desk uses bounded, authenticated workspace
+records with exact source replay, draft findings, protection signals and source
+schedules. [Actual screenshots](SCREENSHOTS.md), [design QA](../../design-qa.md)
+and [the desk receipt](review-desk-validation.json) document this revision.
+
+| Check | Result | Scope |
+|---|---|---|
+| App regression | 91 passed, 11 files | Original 84 tests plus seven review-desk source/state/bounds regressions. |
+| TypeScript and renderer/Electron build | Passed | Final desk and investigation navigation changes included. |
+| Dedicated desk browser journey | Passed | Actual support/counter selection and finding revision refresh, decoded playback/seek, exact original context, case A/library/case B/reload/back URL consistency, acknowledgement history and selection-bound receipts, bounded schedules, phone/keyboard, restart and a separate real read-only server. Zero page errors or overflow. |
+| Original browser journey | Passed | Actual playback/seek, source/account search, export and restart with the updated palette. |
+| Full app browser journey | Passed | Reviewed findings, comparisons/graph, contextual signals, redacted JSON/Markdown/HTML/actual PDF, roles/audit, phone and restart. |
+| Affected collector/archive/backend tests | 31 passed | Four new deadline/interruption regressions plus recorder, scheduler, archive and HTTP checks; actual FFmpeg, hashes and restart. |
+| Abrupt recording recovery demo | Passed | Three verified segments, restart gap, retained report and authenticated range replay. |
+
+Browser acceptance exposed an existing natural-deadline race: FFmpeg could
+finalise media after SIGINT with exit255 or stall until forced termination, which
+correctly prevented success. Deadline shutdown now sends FFmpeg's fixed quit
+command through a private parent pipe, retaining the existing three-second kill
+bound. Completion still requires exit0 and verified current-attempt media.
+Deterministic deadline and three actual five-second captures passed; forced
+termination and unsolicited interruption remain failures with earlier verified
+segments replayable. External LIVE behavior is not established by these fixtures.
+
+The review desk journey is included in the hosted browser workflow. Local passes
+do not establish that hosted checks on the new commit have completed. Fixture
+recordings remain distinct from real LIVE/provider acceptance. The owner deferred
+Pinterest research; no Pinterest pins were inspected or claimed as references.
+
 ## Expanded operator application — 11 October 2026
 
 The current continuation follows the first application slice on

@@ -83,7 +83,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_label("Password", exact=True).fill("fixture-operator-only")
                 with page.expect_response(lambda response: response.url.endswith("/console/login") and response.request.method == "POST") as authenticated:
                     page.get_by_role("button", name="Open workspace", exact=True).click()
-                page.get_by_role("heading", name="Overview", exact=True).wait_for()
+                page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
                 assert authenticated.value.status == 200, "Fixture browser login must succeed"
                 return authenticated.value.json()["csrf"]
 
@@ -211,7 +211,6 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 assert Path(pdf.value.path()).read_bytes().startswith(b"%PDF-"), "PDF must be an actual PDF, not text renamed .pdf"
                 capture("04-desktop-reviewed-report.png")
 
-                nav("Investigations")
                 page.get_by_role("button", name="All investigations", exact=True).click()
                 page.get_by_role("button", name="Bookmarks", exact=True).click()
                 saved_marker = page.locator(".aw-bookmark").filter(has_text=marker_text).first
@@ -300,7 +299,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 assert not any(node["kind"] == "person" for node in graph_before["nodes"]), "Captured speech must not create a person reference"
                 assert not identity_links(graph_before), "Anonymous tracks must not acquire automatic account or person links"
                 source_track = next(track for track in tracks if graph_evidence[0]["id"] in track["evidenceIds"])
-                nav("Overview")
+                nav("Review desk")
                 nav("Context graph")
                 anonymous_nodes = page.get_by_role("button", name="Anonymous speaker track: Anonymous speaker shared_fixture_track; inspect connected evidence", exact=True)
                 anonymous_nodes.first.wait_for()

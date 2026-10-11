@@ -458,7 +458,7 @@ export class Recorder {
         const active = this.activeJobs.get(this.key(row));
         if (active) {
           active.quotaError = row.quotaExceeded;
-          if (!active.signalled) this.signal(active);
+          if (!active.signalled) this.signal(active, "quota-limit");
         }
         break;
       }
@@ -615,7 +615,7 @@ export class Recorder {
     const fail = () => {
       this.workerError = "worker_failure";
       for (const active of this.activeJobs.values()) {
-        this.signal(active);
+        this.signal(active, "worker-failure");
         this.db
           .prepare(
             "UPDATE recording_jobs SET error='worker_failure' WHERE workspace=? AND id=?",
@@ -644,7 +644,7 @@ export class Recorder {
       )
       .get(a.row.workspace, a.row.id);
     if (lease?.owner !== this.owner) {
-      if (!a.signalled) this.signal(a);
+      if (!a.signalled) this.signal(a, "lease-lost");
       if (a.done) {
         clearTimeout(a.killTimer);
         this.activeJobs.delete(this.key(a.row));
@@ -664,7 +664,14 @@ export class Recorder {
       (row.stop_requested || Date.now() >= row.deadline || storageExceeded) &&
       !a.signalled
     )
-      this.signal(a);
+      this.signal(
+        a,
+        row.stop_requested
+          ? "stop"
+          : storageExceeded
+            ? "storage-limit"
+            : "deadline",
+      );
     if (!a.done) return;
     clearTimeout(a.killTimer);
     await this.collect(row, true);
@@ -682,7 +689,11 @@ export class Recorder {
           "UPDATE recording_jobs SET state='stopped',error=NULL WHERE workspace=? AND id=?",
         )
         .run(row.workspace, row.id);
-    else if (a.code === 0 && segments.some((s) => s.attempt === row.attempts))
+    else if (
+      !a.processError &&
+      a.code === 0 &&
+      segments.some((s) => s.attempt === row.attempts)
+    )
       this.db
         .prepare(
           "UPDATE recording_jobs SET state='completed',error=NULL WHERE workspace=? AND id=?",
@@ -822,7 +833,7 @@ export class Recorder {
       "-hide_banner",
       "-loglevel",
       "error",
-      "-nostdin",
+      "-stdin",
       ...input,
       "-map",
       "0:v:0?",
@@ -866,25 +877,77 @@ export class Recorder {
         this.ffmpeg,
         ...args,
       ],
-      { stdio: ["ignore", "ignore", "ignore"], shell: false },
+      { stdio: ["pipe", "ignore", "ignore"], shell: false },
     );
-    const active = { row, child, done: false, code: null, signalled: false };
+    const active = {
+      row,
+      child,
+      done: false,
+      code: null,
+      exitSignal: null,
+      signalled: false,
+    };
+    // Only the parent writes the fixed quit command; a closed pipe is handled by signal().
+    child.stdin.on("error", () => {});
     child.once("error", () => {
       active.done = true;
       active.code = -1;
+      active.processError = true;
     });
-    child.once("close", (code) => {
+    child.once("close", (code, signal) => {
       active.done = true;
       active.code = code;
+      active.exitSignal = signal;
     });
     this.activeJobs.set(this.key(row), active);
   }
-  signal(active) {
+  signal(active, reason = "interrupt") {
+    // collect() awaits decoding: a child can exit before the deadline check resumes.
+    // Do not assign controller intent to an already-exited process or replace a prior reason.
+    if (
+      active.signalled ||
+      active.done ||
+      active.child.exitCode != null ||
+      active.child.signalCode != null
+    )
+      return false;
     active.signalled = true;
-    active.child.kill("SIGINT");
+    if (reason === "deadline") {
+      // This FFmpeg build can defer SIGINT until input EOF. Its quit command
+      // promptly stops capture and finalises the segment without a nonzero exit.
+      active.signalReason = reason;
+      active.stopCommand = "quit";
+      const written = (error) => {
+        if (!error) active.stopCommandSent = true;
+        else {
+          active.stopCommandError = true;
+          if (
+            !active.done &&
+            active.child.exitCode == null &&
+            active.child.signalCode == null
+          )
+            active.signalSent = active.child.kill("SIGINT");
+        }
+      };
+      try {
+        active.child.stdin.write("q\n", written);
+      } catch (error) {
+        written(error);
+      }
+    } else {
+      if (!active.child.kill("SIGINT")) return false;
+      active.signalSent = true;
+      active.signalReason = reason;
+    }
     active.killTimer = setTimeout(() => {
-      if (!active.done) active.child.kill("SIGKILL");
+      if (
+        !active.done &&
+        active.child.exitCode == null &&
+        active.child.signalCode == null
+      )
+        active.forcedKill = active.child.kill("SIGKILL");
     }, 3000);
+    return true;
   }
   async close() {
     if (this.closed) return;
@@ -894,7 +957,7 @@ export class Recorder {
     while (this.busy) await new Promise((r) => setTimeout(r, 20));
     await Promise.all(
       [...this.activeJobs.values()].map(async (a) => {
-        if (!a.signalled) this.signal(a);
+        if (!a.signalled) this.signal(a, "service-restart");
         while (!a.done) await new Promise((r) => setTimeout(r, 20));
         clearTimeout(a.killTimer);
         const row = this.db

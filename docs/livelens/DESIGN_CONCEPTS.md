@@ -26,5 +26,17 @@ schedules and source context beside the selected item.
 
 ![Mission Inbox](design-concepts/mission-inbox.png)
 
-These directions are pending owner selection; publishing them does not change
-the application or its accepted capability boundaries.
+These images document the original visual exploration. The owner's selection
+and refinement are recorded below; current behavior is described in
+[REVIEW_DESK.md](REVIEW_DESK.md).
+
+## Selected layout and visual revision
+
+The owner selected the third direction's inbox/detail structure and rejected
+the neon accents. The revised target uses warm charcoal, off-white actions and
+subdued slate selection states. It is a design reference, not an application
+screenshot. The owner subsequently requested, then deferred, Pinterest research
+after the cloud network blocked access. No Pinterest pins were viewed or used
+as a claimed reference for this implementation.
+
+![Refined Mission Inbox](design-concepts/mission-inbox-refined.png)
