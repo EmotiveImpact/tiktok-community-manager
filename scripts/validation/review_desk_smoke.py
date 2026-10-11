@@ -128,6 +128,10 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
                 with page.expect_response(lambda response: response.url.endswith("/console/login") and response.request.method == "POST") as authenticated:
                     page.get_by_role("button", name="Open workspace", exact=True).click()
                 assert authenticated.value.status == 200
+                page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
+                if page.viewport_size["width"] < 800:
+                    page.get_by_role("button", name="Toggle navigation", exact=True).click()
+                page.get_by_role("navigation", name="LiveLens navigation").get_by_role("button", name="Review desk", exact=True).click()
                 page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
                 return authenticated.value.json()["csrf"]
 

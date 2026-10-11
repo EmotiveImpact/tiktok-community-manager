@@ -120,3 +120,23 @@ runtime configuration. Optional model analysis uses an administrator-configured
 OpenAI-compatible HTTPS endpoint and separately granted egress; no external model
 was invoked or evaluated here. Provider credentials/terms and deployment cost are
 separate operational decisions. Fixtures never imply commercial clearance.
+
+## Capture-first monitor source inspection — 11 October 2026
+
+The owner requested a recognisable monitor/recorder as the default console,
+with the review desk secondary. The original LiveLens frontend follows the
+account-check/watchlist, explicit recording, active jobs and saved-recordings
+hierarchy observed in XploitVoid's pinned `client/src/pages/HomePage.tsx`,
+`lib/watcher.js`, `lib/recorder.js` and `server.js` at
+`148c1d91b091be7052367480104f032d751d6068`. Pieter's
+`monitor/stream_monitor.py` and `recording/stream_recorder.py` at
+`51aba4d5dfcdda190db1827000487d6f28661e04` remain lifecycle references for selected
+polling, stability/concurrency, disconnect handling and explicit shutdown.
+
+These exact raw source files were read without executing upstream code. Git
+blob hashes for the previously audited Xploit server/recorder and Pieter monitor
+match `upstream-lock.json`. No Gitlink was refreshed and no upstream application
+was installed or copied into the runtime. Xploit's MIT root licence and Pieter's
+unresolved repository licence remain distinct. Xploit includes direct live
+streaming, but LiveLens's monitor plays retained verified media and makes no
+direct live-preview claim. See [the operating guide](../docs/livelens/LIVE_MONITOR.md).

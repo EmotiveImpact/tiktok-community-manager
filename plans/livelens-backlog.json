@@ -208,13 +208,18 @@
       "acceptance": [
         "Sessions, worker health, media replay, account activity, evidence and cases use the real API",
         "Desktop and phone browser acceptance; no decorative controls implying unavailable collection",
-        "Full application map and design in APP_BLUEPRINT.md: conversation seek/context, evidence bookmarks, account activity, case notes/corrections and consistent navigation"
+        "Full application map and design in APP_BLUEPRINT.md: conversation seek/context, evidence bookmarks, account activity, case notes/corrections and consistent navigation",
+        "Capture-first default home: selected accounts, explicit bounded discovery/watch, Record/Stop, recording-specific verified replay, rolling captured chat and recent plus older active receipts; review desk remains secondary"
       ],
       "evidence": [
         "src/pages/LiveLensConsole.tsx",
         "src/components/livelens/AdvancedWorkspace.tsx",
         "scripts/validation/full_app_smoke.py",
-        "docs/livelens/FULL_APPLICATION.md"
+        "docs/livelens/FULL_APPLICATION.md",
+        "src/components/livelens/LiveMonitor.tsx",
+        "scripts/validation/live_monitor_smoke.py",
+        "services/intelligence/test/recording-list.test.mjs",
+        "docs/livelens/LIVE_MONITOR.md"
       ]
     },
     {
@@ -303,7 +308,7 @@
     {
       "id": "G01",
       "title": "Registered ALFRED read interface",
-      "status": "partial",
+      "status": "implemented",
       "dependsOn": [
         "F04"
       ],
@@ -315,16 +320,19 @@
         "integrations/alfred/livelens_gateway.py",
         "integrations/alfred/policy-tool-manifest.json",
         "integrations/alfred/GATEWAY.md",
-        "services/intelligence/test/governance.test.mjs"
+        "services/intelligence/test/governance.test.mjs",
+        "docs/livelens/ALFRED_INTEGRATION.md",
+        "https://github.com/EmotiveImpact/Alfred/pull/20"
       ],
-      "remaining": [
-        "Standalone policy gateway and real HTTP acceptance implemented; registration in the separate ALFRED application remains outstanding and that repository has not been changed."
+      "limitations": [
+        "Actual optional ALFRED authenticated HTTP/CLI tools are implemented/tested on branch feat/livelens-tools-2026-10-11, commit 5b37ba41353cfcd0cae4243482520e25175e21d9, draft PR #20; unmerged and undeployed. Explicit private installation and current grants are required; publishing code does not connect a user host.",
+        "Configured fixture proof: 36/36 actual HTTP/CLI transport checks, six-second generated capture with three hashed/independently decoded segments; 1128 ALFRED backend tests and 58 browser checks pass locally. Hosted CI was pending at publication; no external LIVE, NLP automatic tool invocation, tool-board UI, model call or automatic memory acceptance is claimed."
       ]
     },
     {
       "id": "G02",
       "title": "ALFRED collection controls",
-      "status": "partial",
+      "status": "implemented",
       "dependsOn": [
         "G01",
         "C04"
@@ -336,10 +344,13 @@
       "evidence": [
         "integrations/alfred/livelens_gateway.py",
         "integrations/alfred/GATEWAY.md",
-        "services/intelligence/test/governance.test.mjs"
+        "services/intelligence/test/governance.test.mjs",
+        "docs/livelens/ALFRED_INTEGRATION.md",
+        "https://github.com/EmotiveImpact/Alfred/pull/20"
       ],
-      "remaining": [
-        "Bounded start/stop with independent dispatch grants and rechecked policy implemented in the standalone gateway; separate ALFRED registration remains outstanding. No automatic memory acceptance."
+      "limitations": [
+        "Actual optional ALFRED authenticated HTTP/CLI tools are implemented/tested on branch feat/livelens-tools-2026-10-11, commit 5b37ba41353cfcd0cae4243482520e25175e21d9, draft PR #20; unmerged and undeployed. Explicit private installation and current grants are required; publishing code does not connect a user host.",
+        "Configured fixture proof: 36/36 actual HTTP/CLI transport checks, six-second generated capture with three hashed/independently decoded segments; 1128 ALFRED backend tests and 58 browser checks pass locally. Hosted CI was pending at publication; no external LIVE, NLP automatic tool invocation, tool-board UI, model call or automatic memory acceptance is claimed."
       ]
     },
     {
@@ -399,7 +410,7 @@
     }
   ],
   "productTarget": {
-    "application": "Complete browser-capable operator app with a substantial design overhaul; preserve useful existing desktop/community workflows",
+    "application": "Capture-first browser LIVE monitor: selected accounts, bounded checks/watch schedules, explicit Record/Stop, retained video with chat and recent recordings; review/investigation secondary, existing desktop/community workflows preserved",
     "growth": "Private operator app, invited customer pilot, then measured server operation towards hundreds of users",
     "capacityStatus": "local-pilot-measured; customer-capacity-unvalidated",
     "firstBuild": [
@@ -409,7 +420,10 @@
       "C03"
     ],
     "blueprint": "docs/livelens/APP_BLUEPRINT.md",
-    "firstBuildStatus": "complete-private-operator-app; provider-validation-pending",
-    "expandedBuildStatus": "operator-workflows-implemented; speech-model-agent-and-commercial-gates-partial"
+    "firstBuildStatus": "private-operator-workflows-implemented; provider-validation-pending",
+    "expandedBuildStatus": "capture-and-configured-ALFRED-workflows-implemented; speech-model-and-commercial-gates-partial",
+    "currentOperatingGuide": "docs/livelens/LIVE_MONITOR.md",
+    "designAcceptance": "Capture-first monitor replaces review-first home at owner request; prior functional receipts do not establish final visual acceptance",
+    "communityBoundary": "Native Electron CRM preserved with local fan records; browser page bridge is a development demo, not shared-server CRM"
   }
 }

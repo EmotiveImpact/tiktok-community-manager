@@ -1,5 +1,15 @@
 # Review desk design QA
 
+## Current direction supersedes the reference comparison
+
+The owner rejected the review-first home and requested a capture-first
+[LIVE monitor](docs/livelens/LIVE_MONITOR.md). The desk remains secondary. The
+historical record below describes a comparison against the generated C reference
+and exercised functions. It is not objective proof of a polished console or
+final owner design acceptance. Capture-monitor validation needs its own receipt.
+
+## Historical review desk receipt
+
 Result: passed. Inspected on 11 October 2026.
 
 ## Reference and implemented state

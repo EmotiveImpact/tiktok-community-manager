@@ -83,7 +83,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_label("Password", exact=True).fill("fixture-operator-only")
                 with page.expect_response(lambda response: response.url.endswith("/console/login") and response.request.method == "POST") as authenticated:
                     page.get_by_role("button", name="Open workspace", exact=True).click()
-                page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
+                page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
                 assert authenticated.value.status == 200, "Fixture browser login must succeed"
                 return authenticated.value.json()["csrf"]
 

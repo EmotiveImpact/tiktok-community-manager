@@ -11,6 +11,13 @@ Python and FFmpeg processes; speech, model analysis, PDF rendering, PostgreSQL a
 object archiving are optional. Installing or configuring a source does not start
 network polling. Operators explicitly create bounded schedules or recording jobs.
 
+The console's current direction is a capture-first account monitor with explicit
+checks/watch schedules, Record/Stop, retained video/chat and recent recordings.
+The [LIVE monitor operating guide](../../docs/livelens/LIVE_MONITOR.md) distinguishes
+discovery, recording jobs and verified replay. A last observed LIVE status is not
+a direct live-video feed. Existing fixture tests do not validate an external LIVE
+or establish final visual acceptance.
+
 ## Run locally
 
 From the repository root, the generated-media console is:
@@ -100,7 +107,7 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | GET `/v1/cases/:id/report?format=markdown` | cases:read, evidence:read | Original JSON/Markdown evidence export |
 | GET `/v1/sources` | recordings:read | Configured source descriptors; no private media URLs |
 | POST `/v1/sources` | workspace:admin, recordings:write | Persist selected public TikTok account or HTTPS media source |
-| GET/POST `/v1/jobs` | recordings:read / recordings:write | Recorder receipts / explicit bounded capture |
+| GET/POST `/v1/jobs` | recordings:read / recordings:write | Recorder receipts (`active=true` filters nonterminal jobs) / explicit bounded capture |
 | GET `/v1/jobs/:id` | recordings:read | Recording progress, gaps and verified segments |
 | POST `/v1/jobs/:id/stop` | recordings:write | Persist stop request |
 | GET `/v1/sessions/:id/media` | recordings:read, sessions:read | Retained recording receipts |
@@ -174,6 +181,12 @@ Speech carries no inferred account identity. An operator assertion is a separate
 labelled revision, not a rewrite of the original evidence.
 
 Recording creation is `{id?,sessionId,sourceId,maxDurationSeconds?,segmentSeconds?}`.
+Recorder listings accept `limit` up to 200 and an optional exact boolean query
+`active=true` or `active=false`. The active filter excludes completed, stopped
+and failed jobs before applying the page limit, keeping older active captures
+visible even when newer terminal jobs fill a recent page. It remains bound to
+the authenticated workspace.
+
 Only a configured source ID selects media. Default recording duration is 60 seconds;
 segments are 2–30 seconds and jobs are capped at one hour. The Linux recorder
 uses job leases, bounded retries, byte reservations, workspace limits and a
@@ -211,6 +224,14 @@ unreviewed suggestions. Captured text cannot invoke tools, grant access or becom
 accepted agent memory. [The ALFRED gateway](../../integrations/alfred/GATEWAY.md)
 rechecks source-read, collection-control and model-egress permissions separately;
 it does not register tools in the separate ALFRED repository.
+
+Actual optional ALFRED HTTP/CLI tools are implemented in
+[ALFRED draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20), separately
+installed with private configuration and current grants. The
+[integration guide](../../docs/livelens/ALFRED_INTEGRATION.md) records its exact
+tested revision and fixture transport/capture receipts. LiveLens's `/v1/agent`
+does not infer that another host is configured; the installed ALFRED runtime's
+authenticated `/desk/livelens` discovery supplies that registration truth.
 
 ## Operational boundaries
 

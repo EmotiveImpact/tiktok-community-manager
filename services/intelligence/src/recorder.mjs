@@ -243,21 +243,19 @@ export class Recorder {
         })),
     };
   }
-  list(workspace, { sessionId, limit = 100 } = {}) {
+  list(workspace, { sessionId, limit = 100, active = false } = {}) {
     ident(workspace);
     limit = pageLimit(limit);
+    if (typeof active !== "boolean") throw new Fault("invalid_active_filter");
     if (sessionId) this.store.session(workspace, sessionId);
-    const rows = sessionId
-      ? this.db
-          .prepare(
-            "SELECT id FROM recording_jobs WHERE workspace=? AND session_id=? ORDER BY created_at DESC LIMIT ?",
-          )
-          .all(workspace, sessionId, limit)
-      : this.db
-          .prepare(
-            "SELECT id FROM recording_jobs WHERE workspace=? ORDER BY created_at DESC LIMIT ?",
-          )
-          .all(workspace, limit);
+    const query =
+      "SELECT id FROM recording_jobs WHERE workspace=?" +
+      (sessionId ? " AND session_id=?" : "") +
+      (active ? " AND state NOT IN ('completed','stopped','failed')" : "") +
+      " ORDER BY created_at DESC LIMIT ?";
+    const rows = this.db
+      .prepare(query)
+      .all(workspace, ...(sessionId ? [sessionId] : []), limit);
     return rows.map((row) => this.job(workspace, row.id));
   }
   create(workspace, value) {

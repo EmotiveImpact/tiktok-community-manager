@@ -49,11 +49,13 @@ import AdvancedWorkspace, {
   ReviewedReport,
 } from "../components/livelens/AdvancedWorkspace";
 import ReviewDesk from "../components/livelens/ReviewDesk";
+import LiveMonitor from "../components/livelens/LiveMonitor";
 import InvitationAcceptance from "../components/livelens/InvitationAcceptance";
 import "./livelens.css";
 
 type View =
   | "overview"
+  | "review"
   | "sources"
   | "sessions"
   | "search"
@@ -66,21 +68,23 @@ type View =
   | "workspace"
   | "agent";
 const nav = [
-  ["overview", "Review desk", Activity, "WORKSPACE"],
+  ["overview", "Live monitor", Radio, "WORKSPACE"],
   ["sessions", "Session library", Layers3, "WORKSPACE"],
-  ["investigations", "Investigations", FolderOpen, "WORKSPACE"],
-  ["missions", "Missions", Compass, "COLLECT"],
-  ["sources", "Sources & captures", Radio, "COLLECT"],
+  ["review", "Review desk", Activity, "INVESTIGATE"],
+  ["investigations", "Investigations", FolderOpen, "INVESTIGATE"],
   ["search", "Observed accounts", Users, "INVESTIGATE"],
   ["graph", "Context graph", Network, "INVESTIGATE"],
   ["cases", "Reports", FileText, "INVESTIGATE"],
+  ["missions", "Missions", Compass, "COLLECT"],
+  ["sources", "Sources & captures", Radio, "COLLECT"],
   ["alerts", "Protection & alerts", Shield, "MANAGE"],
   ["agent", "Agent connection", Bot, "MANAGE"],
   ["workspace", "Workspace & access", Users, "MANAGE"],
   ["settings", "Workspace settings", Settings, "MANAGE"],
 ] as const;
 const descriptions: Record<View, string> = {
-  overview: "Review what was captured. Keep the original context close.",
+  overview: "Choose accounts. Record their broadcasts. Follow video and chat in one place.",
+  review: "Review what was captured. Keep the original context close.",
   sources: "Choose a source. Set a limit. Keep a reliable record.",
   sessions: "Reopen a conversation and follow the original evidence.",
   search: "Find captured statements and follow an account’s observed activity.",
@@ -285,7 +289,7 @@ function OperatorConsole() {
       segments: unknown[];
     }[];
   }>(
-    identity && (view === "sources" || view === "overview") ? "/v1/jobs" : null,
+    identity && view === "sources" ? "/v1/jobs" : null,
     revision,
   );
   const sessions = useResource<{ sessions: Session[] }>(
@@ -346,7 +350,7 @@ function OperatorConsole() {
     workers?: { mediaArchive?: MediaArchiveConfiguration };
   }>(identity ? "/v1/capabilities" : null, revision);
   useEffect(() => {
-    if (!identity || (view !== "sources" && view !== "overview")) return;
+    if (!identity || view !== "sources") return;
     const active = jobs.data?.jobs.some(
       (job) => !["completed", "stopped", "failed"].includes(job.state),
     );
@@ -483,15 +487,15 @@ function OperatorConsole() {
             LiveLens
           </div>
           <div className="ll-login-intro">
-            <p className="ll-eyebrow">CONVERSATION INTELLIGENCE</p>
+            <p className="ll-eyebrow">LIVE RECORDING & CONVERSATION TOOLS</p>
             <h1>
-              Every conversation.
+              Record the broadcast.
               <br />
-              <span>A clearer picture.</span>
+              <span>Keep the conversation.</span>
             </h1>
             <p>
-              Keep the source. Understand the context. Turn what you capture
-              into work that matters.
+              Monitor selected accounts, record bounded sessions and reopen
+              video, chat and transcripts together.
             </p>
             <div className="ll-login-journey">
               <div>
@@ -524,7 +528,7 @@ function OperatorConsole() {
           </div>
           <p className="ll-eyebrow">YOUR WORKSPACE</p>
           <h2>Welcome back.</h2>
-          <p>Sign in to your conversations, investigations and reports.</p>
+          <p>Sign in to your accounts, recordings and workspace.</p>
           {checking ? (
             <p role="status">Checking your session…</p>
           ) : location.protocol === "file:" ? (
@@ -665,7 +669,7 @@ function OperatorConsole() {
     </div>
   );
   return (
-    <div className={`ll-app ${view === "overview" ? "ll-review-home" : ""}`}>
+    <div className={`ll-app ${view === "overview" ? "ll-monitor-home" : view === "review" ? "ll-review-home" : ""}`}>
       <a className="ll-skip" href="#ll-main">
         Skip to content
       </a>
@@ -815,14 +819,14 @@ function OperatorConsole() {
                 {sessionId
                   ? "CONVERSATION / ORIGINAL SOURCE"
                   : view === "overview"
-                    ? "YOUR WORKSPACE"
+                    ? "COLLECTION / LIVE MONITOR"
                     : "LIVELENS / " + nav.find(([id]) => id === view)?.[3]}
               </p>
-              <h1>{view === "overview" ? "Your review desk" : session.data?.title ?? title}</h1>
+              <h1>{view === "overview" ? "Live monitor" : view === "review" ? "Your review desk" : session.data?.title ?? title}</h1>
               <p>
                 {sessionId
                   ? "The recording, its words and the source behind each moment."
-                  : view === "overview"
+                  : view === "review"
                     ? new Date().toLocaleDateString(undefined, {
                         weekday: "long",
                         day: "numeric",
@@ -850,6 +854,32 @@ function OperatorConsole() {
             </p>
           )}
           {view === "overview" && (
+            <LiveMonitor
+              scopes={capabilities.data?.scopes ?? []}
+              enabled={capabilities.data?.enabled ?? []}
+              revision={revision}
+              sessions={sessions.data?.sessions ?? []}
+              onRefresh={() => setRevision((value) => value + 1)}
+              onOpenSession={openSession}
+              onOpenEvidence={openEvidenceById}
+              onSources={() => go("sources")}
+              renderMedia={(selectedSessionId, selectedEvidence, monitorRevision, selectedJobId) => (
+                <MediaReplay
+                  key={selectedSessionId}
+                  sessionId={selectedSessionId}
+                  evidence={selectedEvidence}
+                  revision={monitorRevision}
+                  preferredJobId={selectedJobId}
+                  openSources={() => go("sources")}
+                  archiveWrite={false}
+                  mutate={mutate}
+                  busy={busy}
+                  compact
+                />
+              )}
+            />
+          )}
+          {view === "review" && (
             <>
               <Status
                 loading={overview.loading || sessions.loading || cases.loading}
@@ -2270,6 +2300,7 @@ function MediaReplay({
   mutate,
   busy,
   compact = false,
+  preferredJobId,
 }: {
   sessionId: string;
   evidence?: Evidence;
@@ -2280,6 +2311,7 @@ function MediaReplay({
   mutate: Mutation;
   busy: boolean;
   compact?: boolean;
+  preferredJobId?: string;
 }) {
   const resource = useResource<{
     jobs: {
@@ -2300,13 +2332,15 @@ function MediaReplay({
   const continuePlayback = useRef(false);
   const segments =
     resource.data?.jobs
+      .filter((job) => !preferredJobId || job.id === preferredJobId)
       .flatMap((j) =>
         j.segments.map((s) => ({ ...s, jobId: j.id, key: `${j.id}/${s.id}` })),
       )
       .sort(
         (a, b) => a.startedAtMs - b.startedAtMs || a.key.localeCompare(b.key),
       ) ?? [];
-  const current = segments.find((s) => s.key === selected) ?? segments[0];
+  const current = segments.find((s) => s.key === selected) ?? segments.find((s) => s.jobId === preferredJobId) ?? segments[0];
+  useEffect(() => { setSelected(null); }, [preferredJobId]);
   useEffect(() => {
     if (!evidence || appliedSeek.current === evidence.id) return;
     const t =

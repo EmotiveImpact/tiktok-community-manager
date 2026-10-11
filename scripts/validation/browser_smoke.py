@@ -106,7 +106,7 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
                 page.get_by_label('Operator name').fill('fixture')
                 page.get_by_label('Password', exact=True).fill('fixture-operator-only')
                 page.get_by_role('button', name='Open workspace', exact=True).click()
-                page.get_by_role('heading', name='Your review desk', exact=True).wait_for()
+                page.get_by_role('heading', name='Live monitor', exact=True).wait_for()
 
             login()
             page.get_by_role('link', name='Skip to content').focus()

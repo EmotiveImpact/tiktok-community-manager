@@ -3,9 +3,9 @@
 PRs #1, #2 and #3 were merged into `redesign` on 11 October 2026 at the
 owner's request. Merged baseline `aacfb18` has the same tree as `53267ed`,
 which passed both hosted application/service/browser runs and source inventory.
-Current continuation is invited workspace onboarding on
-`feat/livelens-workspace-onboarding-2026-10-11`. Preserve later commits and
-user changes. This continuation does not deploy the application.
+Current continuation is the capture-first LIVE monitor on
+`feat/livelens-live-studio-2026-10-11`, following invited workspace onboarding.
+Preserve later commits and user changes. This continuation does not deploy the application.
 
 Read [FULL_APPLICATION.md](FULL_APPLICATION.md) for the product and remaining gates,
 [VALIDATION.md](VALIDATION.md) for executed receipts,
@@ -14,21 +14,31 @@ Read [FULL_APPLICATION.md](FULL_APPLICATION.md) for the product and remaining ga
 APP_BLUEPRINT.md, PLATFORM.md, the backlog, reuse register, service README and
 ALFRED integration notes before extending contracts.
 
-Implemented: the complete console; same-origin scoped authentication; Electron
+Implemented: the operator console and retained-data workflows; same-origin
+scoped authentication; Electron
 archive bridge; concurrent bounded recording and selected-source scheduling;
 optional media-linked speech; reviewed investigations, counterevidence/comparisons;
 provenance graph; contextual in-app protection signals/reviews; redacted reports
 and configured PDF; workspace roles/case grants/quotas/audit/explicit retention;
 optional PostgreSQL pilot-schema storage; encrypted verified media archive/restore;
-encrypted SQLite backup recovery; and a standalone ALFRED policy gateway.
+encrypted SQLite backup recovery; a standalone ALFRED policy gateway; and actual
+optional ALFRED authenticated tools/CLI on a separately published branch.
 
 Actual desktop/phone/keyboard browser acceptance reopens evidence, reviewed findings
 and the same report after restart. Tests distinguish generated media, fictional
 evidence, reference speech, local HTTP provider fixtures and actual PostgreSQL
 from external-provider and production acceptance.
 
+Community/CRM remains the native Electron application with its existing local
+fan storage. The browser `?page=` bridge is a development demo; it is not a
+shared-server CRM or evidence of unified customer fan records.
+
 Partial gates remain explicit: real selected LIVE, speech diarisation/overlap,
-external-model semantic quality and separate ALFRED registration are unvalidated.
+external-model semantic quality and production ALFRED installation are unvalidated.
+Actual configured-fixture ALFRED integration passed on
+[draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20), commit
+`5b37ba41353cfcd0cae4243482520e25175e21d9`; it remains unmerged/undeployed.
+See [ALFRED_INTEGRATION.md](ALFRED_INTEGRATION.md) for exact runtime receipts.
 PostgreSQL uses the pilot schema, not the separately scaffolded production RLS/
 queue target. Payments, public self-service signup, production rollout and
 representative capacity/cost remain outstanding. Native Electron GUI startup is
@@ -36,6 +46,25 @@ unverified. Optional persisted accounts support administrator-issued invitations
 password reset links and immediate session revocation; see
 [WORKSPACE_ONBOARDING.md](WORKSPACE_ONBOARDING.md). All eight research imports remain pinned/research-only; adopted
 optional runtimes have separate licence inventories.
+
+## Current direction: capture before review
+
+The owner rejected the review-first home as the main product experience. The
+default entry point is a recognisable LIVE monitor: selected `@account` sources,
+bounded availability checks/watch schedules, explicit Record/Stop, a large
+retained-recording preview beside captured chat, and recent recordings.
+The review desk remains a secondary workflow for retained evidence and findings.
+Read [LIVE_MONITOR.md](LIVE_MONITOR.md) for the operating guide and inspected
+XploitVoid recorder/Pieter monitor references. Their pinned sources are design
+references; they are not installed applications or runtime imports.
+
+Prior browser passes establish the exercised workflows and access boundaries.
+They do not establish that the owner accepted the design or that the console is
+visually finished. Keep capture-monitor receipts separate from those historical
+checks. Real external LIVE discovery/capture remains unvalidated; retained-media
+replay must not be called a direct live-video preview. Actual ALFRED integration
+has its own configured-fixture receipt; it does not establish a user's production
+connection or external LIVE capture.
 
 Use the existing isolated checkout in cloud tasks; create no worktree unless
 requested. Restart processes after environment restoration. Saved startup

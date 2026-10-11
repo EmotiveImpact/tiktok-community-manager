@@ -1,5 +1,71 @@
 # Validation receipt
 
+## Capture-first LIVE monitor — 11 October 2026
+
+The owner requested a recognisable account monitor/recorder as the default home,
+with the review desk secondary. The final renderer is `index-hYmzztav.js`.
+[The operating guide](LIVE_MONITOR.md),
+[actual monitor screenshots](SCREENSHOTS.md),
+[browser receipt](live-monitor-validation.json) and
+[recording receipt](live-monitor-recording-validation.json) document this change.
+The [complete service receipt](live-monitor-service-validation.json) records the
+final source/test hashes and optional runtime checks.
+These are generated-media and explicitly fictional source/evidence checks. They
+do not establish real external LIVE access or final owner design acceptance.
+
+| Check | Result | Executed scope |
+|---|---|---|
+| Application regression | 91 passed, 11 files | Existing community, evidence and review-desk regressions on the final source. |
+| Complete optional-backend suite | 120 passed; zero failed/skipped | Actual PostgreSQL 17.6, offline Chromium PDF, pinned PocketSphinx, FFmpeg recording/recovery and all authenticated service contracts; 58.513 seconds. |
+| TypeScript/renderer/Electron build | Passed | Final capture-first monitor and recording-specific media preview; renderer `index-hYmzztav.js`. |
+| Capture-first browser journey | Passed | Configured public account starts no polling; actual bounded discovery-only check/watch; FFmpeg capture with hash/range verification, decoded playback/seek and source-linked chat; stop watch keeps a separately requested capture; explicit recording stop; keyboard replay; 1440-pixel desktop/390-pixel phone and actual viewer writes denied with HTTP 403. Zero uncaught page errors or overflow. |
+| Source and recording selection regressions | Passed | Delayed check receipt cannot appear under another selected account; two recordings in the same session replay only their selected job; 125 fictional records appended through actual HTTP advance the rolling window of 100 loaded events and reopen exact late-message context. |
+| Active-job HTTP projection | 2 passed | Active jobs remain returned beyond 100 newer terminal receipts; workspace/read-scope boundaries, session filter, limits and strict boolean validation. The monitor merges 100 recent with up to 200 active receipts and deduplicates job IDs. |
+| Actual PostgreSQL active projection | Passed | 115 terminal receipts plus six older active jobs; recent page remains 100 and active selection preserves all six, with session/workspace/filter/page-bound checks. Metadata fixture spawns no FFmpeg and its temporary schema is removed. |
+| Original/full/onboarding/secondary-review browser journeys | Passed | Actual replay/seek/restart, findings/counterevidence/comparison/graph, contextual reviews, redacted exports/offline PDF, persistent invited credentials, role/revocation/reset, exact source selection and deep links remain working with the capture-first entry point. |
+| Pinned source inspection | 8 Gitlinks unchanged | Exact XploitVoid/Pieter recorder/monitor source patterns read without executing upstream applications; previously audited Git blob hashes match the lock. Runtime imports remain separately inventoried. |
+
+The monitor reports availability **at last check**, with its clock; unavailable
+provider results remain distinct from offline. Preview consists of saved verified
+segments and is delayed. It implements no direct live-video feed. Stop watch
+requests a stop for its linked capture, while independent jobs keep their own
+limits. Recording-specific replay cannot continue into another job's media.
+
+Earlier validation sections below are historical receipts. Their design-reference
+comparisons do not override the owner's later direction or establish a polished
+final product. The actual ALFRED continuation has a separate application/runtime
+receipt; the standalone gateway is not evidence of registration by itself.
+No external TikTok collection, model call, email, billing change or deployment
+was performed by the monitor browser checks.
+
+## Actual optional ALFRED tools — 11 October 2026
+
+[ALFRED draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20) publishes
+branch `feat/livelens-tools-2026-10-11`, commit
+`5b37ba41353cfcd0cae4243482520e25175e21d9`. Its first-party provider is installed
+explicitly, loaded by the actual Desk runtime, and callable through authenticated
+HTTP or the ordinary operator CLI. This is not inferred from LiveLens's standalone
+manifest. See [ALFRED_INTEGRATION.md](ALFRED_INTEGRATION.md) and the immutable
+[redacted actual-transport receipt](https://github.com/EmotiveImpact/Alfred/blob/5b37ba41353cfcd0cae4243482520e25175e21d9/docs/evidence/livelens-2026-10-11/http-receipt.json).
+
+| Check | Result | Executed scope |
+|---|---|---|
+| Full ALFRED backend | 1,128 passed; zero skipped | Includes 15 focused LiveLens tool/approval/policy/token/placement/reconciliation cases; existing source, lifecycle and identity contracts remain covered. |
+| Actual ALFRED HTTP/CLI transport | 36/36 passed | Authenticated discovery/source reads, independent grants and actual denials, exact capture proposal/approval/dispatch, installed operator CLI and secret-free receipts. |
+| Actual capture through ALFRED | Passed | One explicitly approved six-second generated capture, three hashed segments, strict independent FFmpeg decoding totaling 6,000 ms. Dispatch acceptance and recording completion are separately checked. |
+| ALFRED browser regression | 58 checks passed | 33 Desk and 25 Knowledge Chromium checks. |
+| Hosted ALFRED CI | Pending at publication | Six checks started; local receipts are not hosted success. |
+
+G01/G02 are implemented for this optional configured runtime: source/workspace
+binding, current read/model separation, exact independently granted bounded
+collection, revocation, token rotation, timeout/reconciliation and untrusted-source
+boundaries are tested. Fourteen of nineteen milestones are implemented and five
+remain partial. The ALFRED branch is unmerged/undeployed; production configuration,
+external LIVE access and customer-scale operation remain separate gates. No NLP
+tool auto-selection, automatic memory acceptance, tool-board UI, model request,
+email or external TikTok capture is claimed. Historical registration-outstanding
+receipts below describe their earlier revisions and remain intact.
+
 ## Invited workspace continuation and merged baseline — 11 October 2026
 
 PRs #1, #2 and #3 are merged into `redesign` at `aacfb18`. Its tree matches

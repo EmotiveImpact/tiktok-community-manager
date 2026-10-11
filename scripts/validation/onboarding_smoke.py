@@ -171,11 +171,11 @@ def login(page, subject, password, workspace=None, expected_status=200):
     if expected_status != 200:
         assert authenticated.value.json()["error"] == "unauthorised"
         expect(page.get_by_role("alert")).to_be_visible()
-        expect(page.get_by_role("heading", name="Your review desk", exact=True)).to_have_count(0)
+        expect(page.get_by_role("heading", name="Live monitor", exact=True)).to_have_count(0)
         page.get_by_label("Password", exact=True).fill("")
         return None
     csrf = identity(authenticated.value, subject)
-    page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
+    page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
     return csrf
 
 
@@ -212,7 +212,7 @@ def redeem(page, subject, password, reset=False):
     with page.expect_response(lambda response: response.url.endswith("/console/invitations/redeem") and response.request.method == "POST") as redeemed:
         page.get_by_role("button", name="Save password and sign in" if reset else "Join workspace", exact=True).click()
     csrf = identity(redeemed.value, subject)
-    page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
+    page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
     assert not urlsplit(page.url).fragment, "Consumed invitation fragment must be removed from the browser location"
     return csrf
 
@@ -417,7 +417,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-onboarding-data-") as director
             assert request(recovered_page, "/v1/cases", {"title": "Revoked stale cookie", "question": "Must be denied"}, recovered_csrf).status == 401
             recovered_page.reload(wait_until="networkidle")
             expect(recovered_page.get_by_label("Operator name", exact=True)).to_be_visible()
-            expect(recovered_page.get_by_role("heading", name="Your review desk", exact=True)).to_have_count(0)
+            expect(recovered_page.get_by_role("heading", name="Live monitor", exact=True)).to_have_count(0)
 
             revoked_link = create_invitation(owner_page, "fixture-revoked-invite", "viewer")
             owner_page.get_by_role("button", name="Revoke invitation for fixture-revoked-invite", exact=True).click()

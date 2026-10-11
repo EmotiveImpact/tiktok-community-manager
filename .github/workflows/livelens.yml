@@ -131,6 +131,10 @@ jobs:
         run: python scripts/validation/onboarding_smoke.py
         env:
           LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/onboarding
+      - name: Capture-first monitor, bounded fixture recording, chat and exact-job replay
+        run: python scripts/validation/live_monitor_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/live-monitor
       - uses: actions/upload-artifact@v4
         if: always()
         with:

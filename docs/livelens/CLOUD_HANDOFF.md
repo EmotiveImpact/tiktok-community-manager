@@ -1,5 +1,25 @@
 # LiveLens cloud build handoff
 
+## Current continuation: capture-first LIVE monitor
+
+Continue from the latest `feat/livelens-live-studio-2026-10-11` checkout and
+[HANDOFF.md](HANDOFF.md). The owner rejected the review-first home and now wants
+a recognisable account monitor/recorder: selected `@account` sources, bounded
+checks/watch schedules, explicit Record/Stop, retained video beside captured chat
+and recent recordings. The review desk remains secondary. See
+[LIVE_MONITOR.md](LIVE_MONITOR.md) and the pinned recorder/monitor attribution
+there. Preserve the historical brief and receipts below; their test passes do
+not establish final visual acceptance. Real external LIVE and direct live-video
+preview retain their separate validation/implementation boundaries.
+
+Actual ALFRED integration is a separate explicitly requested continuation.
+It is now published/tested in [draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20),
+commit `5b37ba41353cfcd0cae4243482520e25175e21d9`, unmerged/undeployed. Read
+[ALFRED_INTEGRATION.md](ALFRED_INTEGRATION.md) for actual HTTP/CLI fixture proof
+and explicit private installation. Do not infer a user's configured connection
+from the standalone gateway or claim NLP auto-tools, hosted CI success or
+external LIVE access from those receipts.
+
 The first slice and expanded operator application are now implemented on
 `feat/livelens-first-release-2026-10-10` (draft PR #3). Read the latest HEAD,
 [HANDOFF.md](HANDOFF.md), [FULL_APPLICATION.md](FULL_APPLICATION.md),

@@ -714,11 +714,11 @@ export function AgentConnection() {
                 <Bot size={28} />
               </div>
               <div className="aw-grow">
-                <span className="aw-eyebrow">LIVELENS GATEWAY</span>
-                <h2>One evidence engine. Scoped agent access.</h2>
+                <span className="aw-eyebrow">ALFRED / LIVELENS TOOLS</span>
+                <h2>Connect ALFRED to your recordings.</h2>
                 <p>
-                  An authorised agent can query the same originals and receipts
-                  you can inspect here.
+                  ALFRED can search captured conversations, reopen evidence and
+                  request bounded recordings through its authenticated tools.
                 </p>
               </div>
               <Status
@@ -730,7 +730,7 @@ export function AgentConnection() {
               >
                 {manifest.registered || manifest.registeredInAlfred
                   ? "Registered"
-                  : "Adapter ready"}
+                  : "Connection not checked"}
               </Status>
             </div>
             <div className="aw-info-grid">
@@ -753,7 +753,7 @@ export function AgentConnection() {
                     <dd>
                       {manifest.registered || manifest.registeredInAlfred
                         ? "Registered by the operator"
-                        : "Requires registration in ALFRED"}
+                        : "Configure and check from ALFRED"}
                     </dd>
                   </div>
                 </dl>
@@ -790,10 +790,13 @@ export function AgentConnection() {
             >
               <ToolList tools={manifest.controlTools ?? []} />
             </Section>
-            <p className="aw-help">
-              An available gateway does not mean the separate ALFRED application
-              is installed or has accepted memory.
-            </p>
+            <Section title="Set up the connection" description="Install the LiveLens tool provider in ALFRED and select the workspace and sources it may use.">
+              <div className="aw-detail-content">
+                <p>Use ALFRED’s LiveLens setup command with a private service credential. Then run tool discovery to check access. Reads use source grants; recording controls also require an explicit collection grant and approval of the exact request.</p>
+                <p>This console shows the tools its service exposes. Check connection status in ALFRED, where the credential and source grants are held.</p>
+                <a className="aw-secondary" href="https://github.com/EmotiveImpact/Alfred/blob/feat/livelens-tools-2026-10-11/docs/LIVELENS_INTEGRATION.md" target="_blank" rel="noopener noreferrer">Open ALFRED connection guide</a>
+              </div>
+            </Section>
           </>
         )
       )}

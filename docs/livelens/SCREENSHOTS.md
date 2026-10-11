@@ -1,5 +1,34 @@
 # LiveLens — actual application screenshots
 
+## Current capture-first LIVE monitor
+
+The default home now shows selected accounts, bounded checks/watch schedules,
+Record/Stop and a large retained video/chat workspace. These are actual browser
+captures from final bundle `index-hYmzztav.js`, not generated design references.
+All accounts/evidence are fictional fixtures. Video is actual FFmpeg colour bars
+and tone; no external LIVE or direct live-video preview is claimed.
+[Browser receipt](live-monitor-validation.json),
+[recording receipt](live-monitor-recording-validation.json) and
+[operating guide](LIVE_MONITOR.md) explain the exercised controls and limits.
+
+![Capture-first monitor with actual generated recording and captured chat](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/04-desktop-actual-fixture-recording.png)
+
+| Capture | Actual state |
+|---|---|
+| [01 — Desktop monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/01-desktop-live-monitor-ready.png) | Configured source, no automatic collection. |
+| [02 — Saved account](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/02-desktop-configured-account-unchecked.png) | Fictional TikTok account remains unchecked; no provider is contacted. |
+| [03 — Source check](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/03-desktop-fixture-check-without-recording.png) | Bounded generated-file discovery check with recording off. |
+| [04 — Recording and chat](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/04-desktop-actual-fixture-recording.png) | Verified saved video beside source-linked fictional chat; explicit stop controls. |
+| [05 — Stopped recording](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/05-desktop-stopped-recording-replay.png) | Retained media stays replayable after explicit stop. |
+| [06 — Chat beyond 100 events](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/06-desktop-late-chat-after-100-events.png) | Rolling loaded-event window advances to actual later journal records. |
+| [07 — Phone monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/07-phone-live-monitor.png) | Actual 390-pixel layout with no horizontal overflow. |
+| [08 — Read-only monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/08-desktop-read-only-live-monitor.png) | Viewer sees permitted retained data; actual write attempts return HTTP 403. |
+
+These screenshots establish the shown running states. Functional checks and
+reference comparisons do not establish final owner design acceptance.
+
+## Earlier operator and review-desk captures
+
 These captures show the running application, not mock-ups. Desktop
 views use 1440-pixel width; phone views use 390-pixel width. All accounts,
 statements and media are labelled fictional fixtures. The colour bars and tone

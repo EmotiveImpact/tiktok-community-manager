@@ -105,7 +105,12 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
       }
       if (url.pathname === '/v1/jobs') {
         if (!recorder) throw new Fault('recorder_unavailable', 503);
-        if (request.method === 'GET') { requireScope('recordings:read'); return send(response, 200, { jobs: recorder.list(workspace, { limit: url.searchParams.get('limit') ?? 100 }) }); }
+        if (request.method === 'GET') {
+          requireScope('recordings:read');
+          const values = url.searchParams.getAll('active');
+          if (values.length > 1 || (values.length === 1 && !['true', 'false'].includes(values[0]))) throw new Fault('invalid_active_filter');
+          return send(response, 200, { jobs: recorder.list(workspace, { limit: url.searchParams.get('limit') ?? 100, active: values[0] === 'true' }) });
+        }
         if (request.method === 'POST') { requireScope('recordings:write'); const value = object(await readBody(request)); const requestId = value.id == null ? null : ident(value.id); const existing = requestId && store.db.prepare('SELECT 1 FROM recording_jobs WHERE workspace=? AND id=?').get(workspace, requestId); if (!existing) governance?.checkQuota(workspace, { recordingSeconds: value.maxDurationSeconds ?? 60, pendingJobs: 1 }); const job = recorder.create(workspace, value); governance?.recordAudit(workspace, 'capture.created', job.id, principal.subject, { sourceId: job.sourceId, maxDurationSeconds: job.maxDurationSeconds }); return send(response, 201, job); }
       }
       if ((route = match(/^\/v1\/jobs\/([A-Za-z0-9_-]+)(\/stop)?$/))) {

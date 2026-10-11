@@ -13,11 +13,21 @@ The latest requirement is a complete application and a substantial design
 overhaul, with eventual server operation for hundreds of users as a measured
 target. Read [APP_BLUEPRINT.md](APP_BLUEPRINT.md) for the full navigation/screen
 map, design direction, earlier-plan consolidation and commercial growth gates.
+The current entry point is a capture-first LIVE monitor; see
+[LIVE_MONITOR.md](LIVE_MONITOR.md). Selected accounts, bounded checking/watching,
+Record/Stop, retained video with chat and recent recordings make collection the
+first task. Review, investigations and reports follow the captured conversation.
 U00 introduces a real operator app over the existing API alongside C01; U01
 later completes media replay and worker operations. Backend-only progress does
 not satisfy the full app brief.
 
 ## The product question
+
+Owner direction, 11 October 2026: a working monitor and recorder must be
+recognisable on opening the app. The review-inbox home is secondary. Earlier
+test and screenshot receipts prove particular functions, not final design
+acceptance. The restrained charcoal/slate palette remains useful; the page
+hierarchy now prioritises accounts, capture controls and a large media workspace.
 
 With the existing application and all eight source repositories available, what
 should we build that none of them supplies together?
@@ -44,7 +54,7 @@ claims. They do not assign a universal judgement about a person.
 | Investigations | Questions, evidence, counterevidence, notes, reviewer decisions and timelines | Notes, support/counterevidence, findings and immutable review workspace implemented |
 | Reporting | Evidence exports, reviewed findings, redaction and shareable briefs | Reviewed redacted JSON/Markdown/HTML/PDF implemented; external model quality unmeasured |
 | Protection missions | Named protected account, selected sources, detection rules and reviewed alerts | Explicit retained-session contextual rules and in-app review implemented |
-| Agent gateway | Scoped queries and later bounded collection/report jobs from ALFRED | Read/control policy gateway and HTTP clients tested; separate ALFRED registration outstanding |
+| Agent gateway | Scoped queries and explicitly approved bounded collection from ALFRED | Actual optional authenticated ALFRED HTTP/CLI tools tested in draft PR #20; private installation is explicit, branch unmerged/undeployed |
 | Commercial operation | Workspaces, access controls, quotas, subscription metering and retention | Roles/case ACL/quotas/audit/retention and optional PG/archive implemented; payment/customer rollout partial |
 
 ## Shared architecture
@@ -85,12 +95,14 @@ Examples of the intended interaction:
 - "Create a collection job for these sources with a two-hour cap."
 - "Tell me when a reviewed rule is triggered in this protection mission."
 
-The first two query capabilities can use the current client once its service is
-configured. Collection jobs, semantic comparisons, alerts and memory import are
-future work. ALFRED's inspected `alfred/connectors.py` at
-`75947b8dd59a3161c862d2533850a032994778e2` only registers local ICS/VCF exports.
-The included client is not installed or silently registered in that repository.
-Read `ALFRED_INTEGRATION.md` for the concrete integration sequence.
+Actual optional ALFRED source reads and exact approved bounded recording controls
+are implemented in [draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20),
+commit `5b37ba41353cfcd0cae4243482520e25175e21d9`. They use authenticated Desk
+HTTP tools or the owner operator CLI, after explicit private installation and
+grants. The local ICS/VCF registry remains unchanged. The conversation model does
+not automatically invoke those tools; semantic quality, automatic memory import
+and production connection are not claimed. Read [ALFRED_INTEGRATION.md](ALFRED_INTEGRATION.md)
+for the exact operating guide and configured-fixture receipts.
 
 ## Build sequence and release gates
 
