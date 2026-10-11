@@ -1,5 +1,20 @@
 # LiveLens design QA
 
+## Current eight-step product audit — 11 October 2026
+
+[Read the complete audit](docs/livelens/PRODUCT_AUDIT.md) for eight numbered steps,
+actual before/after screenshots, two fixed high-priority usability defects and
+remaining work. The verdict is working but not yet a polished final product.
+Final renderer: `index-Ch5jfvlq.js`; stylesheet: `index-CepzgEEN.css`.
+
+Saved replay now has source-bound selection, no source collection controls and
+Back to monitor. The phone drawer traps keyboard focus and restores it correctly.
+The authenticated app shares one charcoal shell; account entry, saved conversation
+context, inbox labels and ALFRED setup hierarchy are clearer. All five final browser
+journeys pass with zero page errors. Navigation density, recorded-conversation
+hierarchy, library media summaries and guided ALFRED connection remain priorities.
+Historical audits below preserve their earlier evidence, not current acceptance.
+
 ## Current monitor audit and refinement — 11 October 2026
 
 The owner rejected the monitor design. This audit starts with actual before-change

@@ -178,6 +178,18 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
                 source_row("Synthetic colour bars & tone (fixture)").wait_for()
 
+            def replay_is_read_only(replay_id):
+                # Saved media belongs to its recording source, even when an
+                # unrelated configured-only account was selected beforehand.
+                expect(stage.locator(".lm-stage-header p")).to_have_text(re.compile(r"^Saved recording · .+$"))
+                expect(source_row(fixture["label"])).to_have_attribute("aria-pressed", "true")
+                expect(source_row("@" + account)).to_have_attribute("aria-pressed", "false")
+                expect(stage.get_by_role("button", name=re.compile(r"^(Check source|Check LIVE|Watch only|Record now|Record when LIVE|Stop watch|Stop recording)$"))).to_have_count(0)
+                expect(stage.get_by_label("Recording limit (seconds)", exact=True)).to_have_count(0)
+                expect(stage.get_by_label("Watch window (minutes)", exact=True)).to_have_count(0)
+                expect(stage.get_by_role("button", name="Back to monitor", exact=True)).to_be_visible()
+                page.wait_for_function("id => document.querySelector('video')?.getAttribute('src')?.startsWith('/v1/media/' + id + '/')", arg=replay_id)
+
             initial_sources = read(page, "/v1/sources")["sources"]
             fixture = next(source for source in initial_sources if source["id"] == "fixture-media")
             assert fixture["fixture"] is True and fixture["providerValidated"] is False
@@ -295,14 +307,31 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             recent = page.get_by_role("region", name="Recent recordings")
             replay = recent.get_by_role("button", name=f"Replay recording {job_id}", exact=True)
             expect(replay).to_contain_text("stopped")
+            source_row("@" + account).click()
+            expect(source_row("@" + account)).to_have_attribute("aria-pressed", "true")
+            expect(stage.get_by_role("button", name="Check LIVE", exact=True)).to_be_enabled()
             replay.focus()
             page.keyboard.press("Enter")
-            expect(stage.locator(".lm-stage-header p")).to_have_text("Saved recording")
+            replay_is_read_only(job_id)
             playback(page)
             feed.locator(".lm-message").filter(has_text=marker["text"]).first.click()
             offset = (marker["capturedAtMs"] - segment["startedAtMs"]) / 1000
             page.wait_for_function("offset => Math.abs(document.querySelector('video').currentTime - offset) < .25 && !document.querySelector('video').seeking", arg=offset)
             capture(page, "05-desktop-stopped-recording-replay.png", viewport=True)
+            stage.get_by_role("button", name="Back to monitor", exact=True).focus()
+            page.keyboard.press("Enter")
+            expect(source_row(fixture["label"])).to_have_attribute("aria-pressed", "true")
+            for action in ["Check source", "Watch only", "Record now"]:
+                expect(stage.get_by_role("button", name=action, exact=True)).to_be_enabled()
+            expect(stage.get_by_role("button", name="Check LIVE", exact=True)).to_have_count(0)
+            expect(stage.get_by_label("Recording limit (seconds)", exact=True)).to_be_visible()
+            expect(stage.get_by_label("Watch window (minutes)", exact=True)).to_be_visible()
+            assert len(read(page, "/v1/jobs")["jobs"]) == 1
+            assert all(item["sourceId"] == fixture["id"] for item in read(page, "/v1/schedules")["schedules"])
+            replay.focus()
+            page.keyboard.press("Enter")
+            replay_is_read_only(job_id)
+            feed.locator(".lm-message").filter(has_text=marker["text"]).first.click()
             feed.get_by_role("button", name="Open original context", exact=True).click()
             expect(page.locator(".ll-context .ll-id")).to_have_text(marker["id"])
             expect(page.locator(".ll-context blockquote")).to_have_text(marker["text"])
@@ -320,8 +349,11 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             assert second_job["sessionId"] == stopped_job["sessionId"] and second_job["maxDurationSeconds"] == 4
             page.get_by_role("button", name="Refresh records", exact=True).click()
             for replay_id in [second_id, job_id]:
-                recent.get_by_role("button", name=f"Replay recording {replay_id}", exact=True).click()
-                page.wait_for_function("id => document.querySelector('video')?.getAttribute('src')?.startsWith('/v1/media/' + id + '/')", arg=replay_id)
+                source_row("@" + account).click()
+                expect(source_row("@" + account)).to_have_attribute("aria-pressed", "true")
+                recent.get_by_role("button", name=f"Replay recording {replay_id}", exact=True).focus()
+                page.keyboard.press("Enter")
+                replay_is_read_only(replay_id)
                 playback(page)
                 replay_job = second_job if replay_id == second_id else stopped_job
                 options = [replay_id + "/" + item["id"] for item in replay_job["segments"]]
@@ -369,6 +401,43 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             expect(page.locator(".ll-context blockquote")).to_have_text(last_event["text"])
             monitor()
             page.set_viewport_size({"width": 390, "height": 844})
+            # The phone drawer is a modal keyboard surface. Background search
+            # and evidence controls must never receive focus while it is open.
+            toggle = page.get_by_role("button", name="Toggle navigation", exact=True)
+            sidebar = page.locator(".ll-sidebar")
+            toggle.focus()
+            page.keyboard.press("Enter")
+            expect(sidebar).to_have_attribute("role", "dialog")
+            expect(sidebar).to_have_attribute("aria-modal", "true")
+            expect(sidebar.get_by_role("button", name="Live monitor", exact=True)).to_be_focused()
+            for _ in range(2):
+                page.keyboard.press("Tab")
+                assert sidebar.evaluate("element => element.contains(document.activeElement)"), "Phone navigation must keep keyboard focus inside the open drawer"
+            close_navigation = sidebar.get_by_role("button", name="Close navigation", exact=True)
+            sign_out = sidebar.get_by_role("button", name=re.compile(r"Sign out"))
+            sign_out.focus()
+            page.keyboard.press("Tab")
+            expect(close_navigation).to_be_focused()
+            page.keyboard.press("Shift+Tab")
+            expect(sign_out).to_be_focused()
+            page.keyboard.press("Escape")
+            expect(sidebar).not_to_be_visible()
+            expect(toggle).to_be_focused()
+            page.keyboard.press("Enter")
+            expect(sidebar.get_by_role("button", name="Live monitor", exact=True)).to_be_focused()
+            sidebar.get_by_role("button", name="Session library", exact=True).focus()
+            page.keyboard.press("Enter")
+            page.get_by_role("heading", name="Session library", exact=True).wait_for()
+            expect(sidebar).not_to_be_visible()
+            expect(page.locator("#ll-main")).to_be_focused()
+            toggle.focus()
+            page.keyboard.press("Enter")
+            expect(sidebar.get_by_role("button", name="Session library", exact=True)).to_be_focused()
+            sidebar.get_by_role("button", name="Live monitor", exact=True).focus()
+            page.keyboard.press("Enter")
+            page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
+            expect(sidebar).not_to_be_visible()
+            expect(page.locator("#ll-main")).to_be_focused()
             source_row(fixture["label"]).focus()
             page.keyboard.press("Enter")
             expect(source_row(fixture["label"])).to_have_attribute("aria-pressed", "true")
@@ -422,9 +491,12 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 "actualVideoPlaybackAndSeek": True, "capturedChatAndSeparateClocks": True,
                 "stopWatchKeepsIndependentCapture": True, "explicitRecordingStop": True,
                 "recentRecordingKeyboardReplay": True, "originalContextReopened": True,
+                "replayBindsRecordingSourceAndHidesCollectionControls": True,
+                "keyboardBackToMonitorRestoresRecordingSourceControls": True,
                 "twoSameSessionRecordingsReplayExactJobAndDoNotCross": True,
                 "realFixtureChatBeyond100DisplayedAndOriginalContextOpened": True,
                 "desktop1440AndPhone390": True, "readOnlyUiAndActualWriteDenied403": True,
+                "phoneNavigationFocusTrapEscapeAndDestinationFocus": True,
                 "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS),
             }
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))

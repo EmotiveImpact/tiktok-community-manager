@@ -1,5 +1,27 @@
 # Validation receipt
 
+## Eight-step product audit and fixes — 11 October 2026
+
+The [fresh product audit](PRODUCT_AUDIT.md) records before/after evidence from eight
+actual steps. Final renderer: `index-Ch5jfvlq.js`; stylesheet: `index-CepzgEEN.css`.
+This pass fixes saved-replay actions targeting the previously selected account,
+phone navigation focus escaping behind its overlay, inconsistent application
+frames, buried ALFRED setup and misleading conversation/settings labels.
+
+| Check | Result |
+|---|---|
+| Application regression and final build | 91 tests pass in 11 files; TypeScript/renderer/Electron build passes. |
+| Final monitor browser journey | [Pass](product-audit-monitor-validation.json), including new wrong-account replay/Back and drawer keyboard/focus regressions; existing capture/media/permission assertions retained. |
+| Final original and full journeys | [Original](product-audit-original-validation.json) and [full](product-audit-full-validation.json) pass, including actual PDF and restart. |
+| Final review and onboarding journeys | [Review](product-audit-review-validation.json) and [onboarding](product-audit-onboarding-validation.json) pass, including source reset, contextual review, real cookies, permission changes, revocation and restart. |
+| Focused shell/setup checks | [Pass](product-audit-layout-validation.json): 184px sidebar/56px header across library, review and ALFRED; 176px desktop account input; setup remains available on actual intercepted HTTP 503; settings link reaches setup. |
+
+All five journeys ran against the final bundle with zero uncaught page errors.
+No assertions were weakened. Backend/runtime contracts are unchanged; earlier
+optional-service and ALFRED receipts below were not rerun locally for this UI pass.
+Hosted checks belong to their exact published head on PR #5. Remaining product,
+accessibility and provider acceptance work is explicitly listed in the audit.
+
 ## Monitor layout refinement — 11 October 2026
 
 The owner rejected the crowded monitor. The revised actual app places account

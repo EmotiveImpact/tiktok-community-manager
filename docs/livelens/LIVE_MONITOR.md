@@ -12,6 +12,11 @@ Record actions sit beside the selected source. Recording and watch limits appear
 below the player; chat sits alongside it on desktop and follows those controls on
 phone. Saved recordings appear as compact rows below the workspace.
 
+The monitor and other authenticated destinations share the same application frame.
+On phones, opening navigation focuses the current destination and keeps keyboard
+focus within the drawer. Escape returns to the menu toggle; choosing a destination
+focuses its main content.
+
 ## Choose and check a source
 
 Workspace administrators with source-management permission can enter `@account` and select
@@ -74,6 +79,9 @@ and receipt clocks. Select a statement to seek covered media, then use
 **Open original context** to inspect its exact evidence and surrounding records.
 **Open conversation** provides the full retained workspace.
 
+The feed is labelled **Saved conversation** with its session start date. That date
+does not imply that the conversation or selected source is currently LIVE.
+
 The feed retains the latest 100 loaded events and advances its journal cursor
 as active capture/watch receipts refresh. **Load newer events** advances another
 bounded page when one is available; **Open full conversation** reopens the
@@ -89,6 +97,12 @@ therefore retain their Stop controls even when they fall outside the recent page
 The recorder's maximum configured outstanding-job bound is 100 per workspace;
 the active page covers that bound. Recent lists describe the returned selection,
 not every historical capture.
+
+Saved replay selects the recording's originating configured source when it can be
+resolved, focuses the recording heading and hides source check/watch/record controls
+and limits. **Back to monitor** restores controls for that source. Source-specific
+receipts and errors are hidden during replay; independently labelled active jobs
+keep their stop controls. Recording dates distinguish captures from different days.
 
 ## Configuration and measured boundaries
 

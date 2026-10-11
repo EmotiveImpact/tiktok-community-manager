@@ -737,7 +737,7 @@ export default function ReviewDesk({
           </section>
           <div className="ll-desk-heading ll-desk-inbox-head">
             <div>
-              <h2>Needs your review</h2>
+              <h2>{tab === "review" ? "Needs your review" : tab === "evidence" ? "Recent evidence" : "Review inbox"}</h2>
               <p>Captured sources, signals and draft interpretations</p>
             </div>
             <div
@@ -971,7 +971,7 @@ export default function ReviewDesk({
                   </div>
                 )}
               {previewSession?.platform === "fixture" && (
-                <p className="ll-desk-provenance">Labelled demo recording</p>
+                <p className="ll-desk-provenance">Labelled demo conversation</p>
               )}
               {exactEvent ? (
                 <>

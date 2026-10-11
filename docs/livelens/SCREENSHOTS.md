@@ -1,5 +1,26 @@
 # LiveLens — actual application screenshots
 
+## Current product audit — 11 October 2026
+
+[The eight-step audit](PRODUCT_AUDIT.md) contains the current assessment, before/after
+captures and remaining design work. These actual authenticated screens use
+`index-Ch5jfvlq.js` and `index-CepzgEEN.css`; all accounts and evidence are fictional.
+The colour bars are generated recording content. The common app shell, distinct
+saved-replay mode, phone drawer and ALFRED setup hierarchy are implemented.
+
+![Current actual LiveLens monitor](screenshots/product-audit/after-01-monitor.png)
+
+[Phone](screenshots/product-audit/after-02-phone.png) ·
+[Saved replay](screenshots/product-audit/after-03-replay.png) ·
+[Library](screenshots/product-audit/after-04-library.png) ·
+[Conversation](screenshots/product-audit/after-05-conversation.png) ·
+[Review](screenshots/product-audit/after-06-review.png) ·
+[ALFRED setup](screenshots/product-audit/after-07-alfred.png) ·
+[Settings](screenshots/product-audit/after-08-settings.png).
+
+All five final browser journeys pass. The product still needs navigation and
+conversation hierarchy work; these screenshots do not establish final design acceptance.
+
 ## Current monitor redesign — 11 October 2026
 
 Actual authenticated application captures from renderer `index-BQzEr-5F.js` and

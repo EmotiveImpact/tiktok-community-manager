@@ -34,6 +34,7 @@ import {
   Bot,
   Users,
   Video,
+  X,
 } from "lucide-react";
 import {
   api,
@@ -52,6 +53,7 @@ import ReviewDesk from "../components/livelens/ReviewDesk";
 import LiveMonitor from "../components/livelens/LiveMonitor";
 import InvitationAcceptance from "../components/livelens/InvitationAcceptance";
 import "./livelens.css";
+import "./livelens-shell.css";
 
 type View =
   | "overview"
@@ -238,6 +240,8 @@ function OperatorConsole() {
   const main = useRef<HTMLElement>(null);
   const contextPanel = useRef<HTMLElement>(null);
   const headerSearch = useRef<HTMLInputElement>(null);
+  const navigation = useRef<HTMLElement>(null);
+  const menuToggle = useRef<HTMLButtonElement>(null);
   const signedIn = (value: Identity | null) => {
     setIdentity(value);
     updateIdentity(value);
@@ -252,6 +256,7 @@ function OperatorConsole() {
     function shortcut(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setMenu(false);
         setGlobalSearchOpen(true);
         requestAnimationFrame(() => headerSearch.current?.focus());
       }
@@ -263,6 +268,42 @@ function OperatorConsole() {
     document.addEventListener("keydown", shortcut);
     return () => document.removeEventListener("keydown", shortcut);
   }, []);
+  useEffect(() => {
+    if (!menu || !navigation.current) return;
+    const drawer = navigation.current;
+    const work = main.current?.closest<HTMLElement>(".ll-work");
+    const skip = drawer.parentElement?.querySelector<HTMLElement>(".ll-skip");
+    const oldOverflow = document.body.style.overflow;
+    const wasWorkInert = work?.inert ?? false;
+    const wasSkipInert = skip?.inert ?? false;
+    if (work) work.inert = true;
+    if (skip) skip.inert = true;
+    document.body.style.overflow = "hidden";
+    drawer.querySelector<HTMLElement>('[aria-current="page"]')?.focus();
+    function trapFocus(event: KeyboardEvent) {
+      if (event.key !== "Tab") return;
+      const controls = Array.from(drawer.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], [tabindex="0"]')).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (!first || !last) return;
+      if (!drawer.contains(document.activeElement) || (event.shiftKey && document.activeElement === first)) {
+        event.preventDefault(); (event.shiftKey ? last : first).focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    }
+    const desktop = matchMedia("(min-width: 761px)");
+    const closeOnDesktop = () => { if (desktop.matches) setMenu(false); };
+    document.addEventListener("keydown", trapFocus);
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      document.removeEventListener("keydown", trapFocus);
+      desktop.removeEventListener("change", closeOnDesktop);
+      if (work) work.inert = wasWorkInert;
+      if (skip) skip.inert = wasSkipInert;
+      document.body.style.overflow = oldOverflow;
+      if (drawer.contains(document.activeElement) || document.activeElement === document.body) menuToggle.current?.focus();
+    };
+  }, [menu]);
   const [libraryOffset, setLibraryOffset] = useState(0);
   const overview = useResource<{
     sessions: number;
@@ -368,7 +409,7 @@ function OperatorConsole() {
     setMenu(false);
     setNotice("");
     history.replaceState(null, "", `?view=${next}`);
-    main.current?.focus();
+    requestAnimationFrame(() => main.current?.focus());
   }
   function openSession(id: string) {
     setSessionId(id);
@@ -669,11 +710,12 @@ function OperatorConsole() {
     </div>
   );
   return (
-    <div className={`ll-app ${view === "overview" ? "ll-monitor-home" : view === "review" ? "ll-review-home" : ""}`}>
+    <div className={`ll-app ll-product-shell ${view === "overview" ? "ll-monitor-home" : view === "review" ? "ll-review-home" : ""}`}>
       <a className="ll-skip" href="#ll-main">
         Skip to content
       </a>
-      <aside className={`ll-sidebar ${menu ? "open" : ""}`}>
+      <aside ref={navigation} className={`ll-sidebar ${menu ? "open" : ""}`} role={menu ? "dialog" : undefined} aria-modal={menu || undefined} aria-label={menu ? "Navigation" : undefined}>
+        <button className="ll-nav-close" aria-label="Close navigation" onClick={() => setMenu(false)}><X size={18} /></button>
         <div className="ll-brand">
           <span className="ll-mark">
             <Radio size={21} />
@@ -741,7 +783,8 @@ function OperatorConsole() {
       {menu && (
         <button
           className="ll-nav-backdrop"
-          aria-label="Close navigation"
+          aria-hidden="true"
+          tabIndex={-1}
           onClick={() => setMenu(false)}
         />
       )}
@@ -749,6 +792,7 @@ function OperatorConsole() {
         <header className="ll-top">
           <button
             className="ll-mobile-menu"
+            ref={menuToggle}
             aria-label="Toggle navigation"
             aria-expanded={menu}
             onClick={() => setMenu(!menu)}
@@ -780,7 +824,7 @@ function OperatorConsole() {
             <input
               ref={headerSearch}
               aria-label="Search all captured evidence"
-              placeholder="Search conversations or evidence"
+                    placeholder="Search captured statements"
               value={globalQuery}
               onChange={(event) => setGlobalQuery(event.target.value)}
               maxLength={512}
@@ -1716,7 +1760,7 @@ function OperatorConsole() {
                 </section>
                 <section className="ll-form-card">
                   <h2>Next capabilities</h2>
-                  {capabilities.data?.planned.map((c) => (
+                  {capabilities.data?.planned.filter((c) => c !== "alfred-registration").map((c) => (
                     <p key={c}>
                       <span className="ll-tag">Planned</span>
                       {c.replaceAll("-", " ")}
@@ -1724,9 +1768,13 @@ function OperatorConsole() {
                   ))}
                   <h3>ALFRED</h3>
                   <p>
-                    Scoped JavaScript and Python clients are available.
-                    Registered ALFRED tools are planned.
+                    The optional LiveLens provider is available in ALFRED.
+                    Set up its workspace and source access, then verify the
+                    connection from ALFRED.
                   </p>
+                  <button onClick={() => go("agent")}>
+                    <Bot size={16} />Set up ALFRED<ArrowRight size={16} />
+                  </button>
                   <h3>Private pilot</h3>
                   <p>
                     Workspace access and retention controls run on this service.
@@ -1785,13 +1833,13 @@ function SessionList({
       {sessions.map((s) => (
         <button key={s.id} onClick={() => open(s.id)}>
           <span className="ll-session-icon">
-            <Video size={19} />
+            <Layers3 size={19} />
           </span>
           <span className="ll-session-title">
             <strong>{s.title}</strong>
             <small>
               {s.platform === "fixture"
-                ? "Labelled demo recording"
+                ? "Labelled demo conversation"
                 : "Retained conversation"}
             </small>
           </span>

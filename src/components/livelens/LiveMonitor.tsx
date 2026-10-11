@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowRight, Circle, Clock3, MessageSquare, Plus, Radio, Square, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, Circle, Clock3, MessageSquare, Plus, Radio, Square, Video } from "lucide-react";
 import { api, type Evidence, type Session } from "../../lib/livelens/api";
 import "./live-monitor.css";
 
@@ -9,6 +9,7 @@ type Schedule = { id: string; sourceId: string; state: string; status: string; c
 type Snapshot = { sources: Source[]; jobs: Job[]; schedules: Schedule[] };
 const terminal = (state: string) => ["completed", "stopped", "failed"].includes(state);
 const time = (value: number) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const dateTime = (value: number) => new Date(value).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 const duration = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 const bytes = (value: number) => value >= 1024 * 1024 ? `${(value / 1024 / 1024).toFixed(1)} MB` : `${Math.round(value / 1024)} KB`;
 const sourceName = (source: Source) => source.account ? `@${source.account}` : source.label;
@@ -30,6 +31,7 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
   const eventCursor = useRef(0);
   const [tab, setTab] = useState("chat"), [selectedEvidence, setSelectedEvidence] = useState<Evidence>();
   const requestGeneration = useRef(0);
+  const stageHeading = useRef<HTMLHeadingElement>(null);
   const readable = scopes.includes("recordings:read");
   const writable = scopes.includes("recordings:write");
   const canAdd = writable && scopes.includes("workspace:admin");
@@ -78,6 +80,11 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
   const previewSession = sessions.find((session) => session.id === previewId);
   const preferredJobId = replayJobId ?? selectedJob?.id ?? selectedJobs[0]?.id;
   const mediaJob = snapshot.jobs.find((job) => job.sessionId === previewId && (!preferredJobId || job.id === preferredJobId) && job.segments.length > 0);
+  const replaySource = replayJobId ? snapshot.sources.find((source) => sourceJobs(source).some((job) => job.id === replayJobId)) : undefined;
+  const previewSource = replayId ? replaySource : selected;
+  useEffect(() => {
+    if (replayJobId) stageHeading.current?.focus();
+  }, [replayJobId]);
   useEffect(() => {
     eventCursor.current = 0;
     setSelectedEvidence(undefined); setEvents([]); setEventsError(""); setMoreEvents(false);
@@ -102,6 +109,16 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
     finally { setBusy(false); }
   }
   function select(source: Source) { ++requestGeneration.current; setSelectedId(source.id); setReplayId(null); setReplayJobId(undefined); setSelectedEvidence(undefined); setNotice(""); setError(""); }
+  function replay(job: Job) {
+    ++requestGeneration.current;
+    const source = snapshot.sources.find((candidate) => sourceJobs(candidate).some((value) => value.id === job.id));
+    setSelectedId(source?.id ?? null);
+    setReplayId(job.sessionId); setReplayJobId(job.id); setSelectedEvidence(undefined); setNotice(""); setError("");
+  }
+  function returnToMonitor() {
+    ++requestGeneration.current;
+    setReplayId(null); setReplayJobId(undefined); setSelectedEvidence(undefined); setNotice(""); setError("");
+  }
   function watch(autoRecord: boolean, checkOnly = false) {
     if (!selected) return;
     const startAtMs = Date.now();
@@ -160,9 +177,9 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
         </aside>
         <section className="lm-stage" aria-label="Selected source monitor">
           <div className="lm-stage-header">
-            <div><h2>{replayId ? previewSession?.account ? `@${previewSession.account}` : previewSession?.title ?? "Saved recording" : selected ? sourceName(selected) : "Select an account"}</h2>
-              <p>{replayId ? "Saved recording" : selected ? status(selected) : "Add an account to check and record its broadcasts."}{selectedSchedule?.lastCheckedAtMs && !replayId ? ` · checked ${time(selectedSchedule.lastCheckedAtMs)}` : ""}</p></div>
-            {selected && <div className="lm-control-actions">
+            <div><h2 ref={stageHeading} tabIndex={-1}>{replayId ? previewSession?.account ? `@${previewSession.account}` : previewSession?.title ?? "Saved recording" : selected ? sourceName(selected) : "Select an account"}</h2>
+              <p>{replayId ? `Saved recording${mediaJob ? ` · ${dateTime(mediaJob.createdAtMs)}` : ""}` : selected ? status(selected) : "Add an account to check and record its broadcasts."}{selectedSchedule?.lastCheckedAtMs && !replayId ? ` · checked ${time(selectedSchedule.lastCheckedAtMs)}` : ""}</p></div>
+            {replayId ? <button onClick={returnToMonitor}><ArrowLeft size={14} />Back to monitor</button> : selected && <div className="lm-control-actions">
               {scheduling && <button disabled={!writable || busy || selectedWatches.length > 0 || !validLimit} onClick={() => watch(false, true)}><Radio size={14} />{selected.kind === "tiktok-public" ? "Check LIVE" : "Check source"}</button>}
               {scheduling && <button disabled={!writable || busy || selectedWatches.length > 0 || !validWindow || !validLimit} onClick={() => watch(false)}><Clock3 size={14} />Watch only</button>}
               {selectedJob ? <button className="ll-primary" disabled={!writable || busy || selectedJob.stopRequested} onClick={() => run(() => api(`/v1/jobs/${selectedJob.id}/stop`, {}), "Recording stop requested. Saved segments remain replayable.")}><Square size={13} />{selectedJob.stopRequested ? "Stopping…" : "Stop recording"}</button>
@@ -172,19 +189,24 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
           <div className="lm-stage-body">
             <div className="lm-media-column">
             <div className="lm-player">
-              <div className="lm-player-label"><Video size={14} /><span>{replayId ? "Saved recording" : "Recording preview"}</span><small>{selected?.kind === "file" ? "Synthetic media" : "Saved segments · preview is delayed"}</small></div>
+              <div className="lm-player-label"><Video size={14} /><span>{replayId ? "Saved recording" : "Recording preview"}</span><small>{previewSource?.kind === "file" || previewSource?.fixture || previewSession?.platform === "fixture" ? "Synthetic media" : "Saved segments · preview is delayed"}</small></div>
               {previewId && mediaJob ? renderMedia(previewId, selectedEvidence, refreshKey, preferredJobId) : <div className="lm-player-empty"><span className="lm-empty-camera"><Video size={28} /></span><h3>{selectedJob ? "Saving the first segment" : "Your recording starts here"}</h3><p>{selectedJob ? "Verified video will appear as capture progresses." : selected ? selected.sessionId ? "Choose Record now to capture this source." : "Choose Record when LIVE to watch and capture." : "Select an account to get started."}</p><small>Preview uses saved video and is delayed.</small></div>}
             </div>
-          {selected && <div className="lm-controls">
+          {(selected || replayId) && <div className="lm-controls">
+            {!replayId && <>
             <label>Recording limit <input type="number" aria-label="Recording limit (seconds)" min={2} max={3600} required value={limit} onChange={(event) => setLimit(Number(event.target.value))} /><span>sec</span></label>
             {scheduling && <label>Watch window <input type="number" aria-label="Watch window (minutes)" min={1} max={1440} required value={windowMinutes} onChange={(event) => setWindowMinutes(Number(event.target.value))} /><span>min</span></label>}
+            </>}
             {previewId && <button className="lm-open-conversation" onClick={() => onOpenSession(previewId)}>Open conversation <ArrowRight size={14} /></button>}
+            {!replayId && <>
             {selectedWatches.map((schedule) => <div className="lm-watch-receipt" key={schedule.id}><span>{schedule.autoRecord ? "Watching & recording when available" : "Watching only"} · ends {time(schedule.endAtMs)}</span><button disabled={!writable || busy} onClick={() => run(() => api(`/v1/schedules/${schedule.id}/stop`, {}), schedule.jobId ? "Watch stopped and its linked recording stop requested. Saved segments remain replayable." : "Watch stopped. Recordings started separately keep their own limit and Stop recording control.")}>Stop watch</button></div>)}
             {selectedSchedule?.error && <p className="lm-error" role="alert">Source check: {selectedSchedule.error.replaceAll("_", " ")}</p>}
             {selectedJobs[0]?.error && <p className="lm-error" role="alert">Last recording: {selectedJobs[0].state} · {selectedJobs[0].error.replaceAll("_", " ")}. Previously saved segments remain available.</p>}
+            </>}
           </div>}
             </div>
             <aside className="lm-chat" aria-label="Captured conversation feed">
+              {previewSession && <div className="lm-chat-session"><strong>Saved conversation</strong><small>Session started {dateTime(previewSession.startedAtMs)}</small></div>}
               <div className="lm-chat-tabs" role="group" aria-label="Conversation feed filter">{[["chat", "Chat"], ["speech", "Transcript"], ["all", "All events"]].map(([value, label]) => <button key={value} aria-pressed={tab === value} onClick={() => setTab(value)}>{label}</button>)}</div>
               <div className="lm-chat-list">{displayedEvents.map((event) => <button className={`lm-message ${event.id === selectedEvidence?.id ? "selected" : ""}`} key={event.id} onClick={() => setSelectedEvidence(event)}>
                 <span><strong>{event.attribution.account ? `@${event.attribution.account}` : event.kind === "gap" ? "Capture gap" : event.kind === "caption" ? "Source caption" : event.kind === "transcript" ? "Unattributed speech" : "Unattributed account"}</strong><time>{time(event.sourceTimestampMs ?? event.capturedAtMs ?? event.receivedAtMs)}</time></span><p>{event.text || "No text"}</p><small>{event.kind} · {event.sourceTimestampMs === null ? "Capture / receipt time" : "Source time"}</small>
@@ -208,8 +230,8 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
         </div>)}
       </section>
       <section aria-label="Recent recordings"><div className="lm-section-header"><h2>Recent recordings</h2><button onClick={onSources}>All capture receipts <ArrowRight size={14} /></button></div>
-        <div className="lm-recordings">{recent.map((job) => <button className="lm-recording" key={job.id} onClick={() => { setReplayId(job.sessionId); setReplayJobId(job.id); setSelectedEvidence(undefined); }} aria-label={`Replay recording ${job.id}`}>
-          <span className="lm-recording-icon"><Video size={21} /></span><span><strong>{sessions.find((session) => session.id === job.sessionId)?.title ?? "Saved recording"}</strong><small>{time(job.createdAtMs)} · {duration(job.segments.reduce((sum, segment) => sum + segment.durationMs, 0) / 1000)} · {bytes(job.segments.reduce((sum, segment) => sum + segment.bytes, 0))}</small><span className="lm-status" data-state={job.state}>{job.state} · {job.segments.length} saved segments</span>{job.error && <small className="lm-error">{job.error.replaceAll("_", " ")}</small>}</span><ArrowRight size={15} />
+        <div className="lm-recordings">{recent.map((job) => <button className="lm-recording" key={job.id} onClick={() => replay(job)} aria-label={`Replay recording ${job.id}`}>
+          <span className="lm-recording-icon"><Video size={21} /></span><span><strong>{sessions.find((session) => session.id === job.sessionId)?.title ?? "Saved recording"}</strong><small>{dateTime(job.createdAtMs)} · {duration(job.segments.reduce((sum, segment) => sum + segment.durationMs, 0) / 1000)} · {bytes(job.segments.reduce((sum, segment) => sum + segment.bytes, 0))}</small><span className="lm-status" data-state={job.state}>{job.state} · {job.segments.length} saved segments</span>{job.error && <small className="lm-error">{job.error.replaceAll("_", " ")}</small>}</span><ArrowRight size={15} />
         </button>)}</div>{!recent.length && <div className="lm-empty">Your saved recordings will appear here. Interrupted captures remain available when verified media was retained.</div>}
       </section>
     </>}

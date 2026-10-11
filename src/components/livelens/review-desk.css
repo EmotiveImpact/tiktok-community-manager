@@ -78,10 +78,10 @@
   justify-content: center;
   flex: 0 0 36px;
   height: 36px;
-  border: 1px solid #3a404a;
+  border: 1px solid var(--ll-line, #3a404a);
   border-radius: 50%;
-  color: #c3cad3;
-  background: #2a2e35;
+  color: var(--ll-text-soft, #c3cad3);
+  background: var(--ll-selected, #2a2e35);
 }
 .ll-app .ll-desk-source-main {
   flex: 1;
@@ -105,7 +105,7 @@
   justify-content: flex-end;
   gap: 6px;
   max-width: 38%;
-  color: #bdc3cc;
+  color: var(--ll-text-soft, #bdc3cc);
   font-size: 11px;
   text-align: right;
   overflow-wrap: anywhere;
@@ -149,7 +149,7 @@
   gap: 2px;
   border: 1px solid var(--ll-line);
   border-radius: 6px;
-  background: #15171a;
+  background: var(--ll-bg, #15171a);
 }
 .ll-app .ll-desk-tabs > button {
   min-height: 32px;
@@ -158,17 +158,17 @@
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: #afb6c0;
+  color: var(--ll-muted, #afb6c0);
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
 }
 .ll-app .ll-desk-tabs > button:hover {
-  background: #242931;
+  background: var(--ll-surface-raised, #242931);
   color: var(--ll-text);
 }
 .ll-app .ll-desk-tabs > button[aria-selected="true"] {
-  background: #35404e;
+  background: var(--ll-selected, #35404e);
   color: var(--ll-text);
 }
 .ll-app .ll-desk-tabs > button > span {
@@ -196,7 +196,7 @@
   text-align: left;
 }
 .ll-app .ll-desk-item:hover {
-  background: #23272d;
+  background: var(--ll-surface-raised, #23272d);
   border-color: var(--ll-line);
 }
 .ll-app .ll-desk-item.is-selected,
@@ -216,10 +216,10 @@
   justify-content: center;
   flex: 0 0 76px;
   height: 72px;
-  border: 1px solid #3b424c;
+  border: 1px solid var(--ll-line-strong, #3b424c);
   border-radius: 5px;
-  background: #252b33;
-  color: #aebdd0;
+  background: var(--ll-surface-raised, #252b33);
+  color: var(--ll-accent, #aebdd0);
 }
 .ll-app .ll-desk-item-visual small {
   display: none;
@@ -253,7 +253,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  color: #bcc2cb;
+  color: var(--ll-text-soft, #bcc2cb);
   font-size: 13px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -271,7 +271,7 @@
   justify-content: flex-start;
   gap: 5px;
   flex: 0 0 83px;
-  color: #b4bcc8;
+  color: var(--ll-muted, #b4bcc8);
   font-size: 11px;
   line-height: 1.45;
 }
@@ -279,7 +279,7 @@
   color: var(--ll-warning);
 }
 .ll-app .ll-desk-item > svg:last-child {
-  color: #b3bac4;
+  color: var(--ll-muted, #b3bac4);
   flex-shrink: 0;
 }
 .ll-app .ll-desk-partial {
@@ -298,7 +298,7 @@
   min-height: 32px;
   padding: 5px 2px;
   border-radius: 3px;
-  color: #b8bec8;
+  color: var(--ll-muted, #b8bec8);
   font-size: 12px;
   line-height: 1.75;
   cursor: pointer;
@@ -327,7 +327,7 @@
   max-height: calc(100dvh - 116px);
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: #46515e transparent;
+  scrollbar-color: var(--ll-line-strong, #46515e) transparent;
   padding: 20px;
   border: 1px solid var(--ll-line);
   border-radius: 8px;
@@ -336,7 +336,7 @@
 }
 .ll-app .ll-desk-inspector-head {
   margin-bottom: 12px;
-  color: #c1c6cf;
+  color: var(--ll-text-soft, #c1c6cf);
   font-size: 13px;
 }
 .ll-app .ll-desk-inspector > h2 {
@@ -354,8 +354,8 @@
   min-width: 0;
 }
 .ll-app .ll-desk-media .ll-media {
-  border-color: #3a4049;
-  background: #181a1d;
+  border-color: var(--ll-line, #3a4049);
+  background: var(--ll-bg, #181a1d);
   overflow: hidden;
 }
 .ll-app .ll-desk-media .ll-media.ll-media-compact {
@@ -389,7 +389,7 @@
   overflow-wrap: anywhere;
 }
 .ll-app .ll-desk-attribution {
-  color: #bac1cc;
+  color: var(--ll-muted, #bac1cc);
   font-size: 12px;
   margin: 10px 0 14px;
   overflow-wrap: anywhere;
@@ -413,7 +413,7 @@
 }
 .ll-app .ll-desk-clocks dd {
   margin: 0;
-  color: #c0c7d1;
+  color: var(--ll-text-soft, #c0c7d1);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
@@ -437,12 +437,12 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
-  color: #e3e5e9;
+  color: var(--ll-text, #e3e5e9);
   font-size: 13px;
   font-weight: 500;
 }
 .ll-app .ll-desk-context > p {
-  color: #b5bdc8;
+  color: var(--ll-muted, #b5bdc8);
   font-size: 13px;
 }
 .ll-app .ll-desk-context > p.ll-desk-provenance {
@@ -462,13 +462,13 @@
   background: transparent;
   text-align: left;
   align-items: start;
-  color: #bac1cc;
+  color: var(--ll-muted, #bac1cc);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.55;
 }
 .ll-app .ll-desk-context-row:hover {
-  background: #272d35;
+  background: var(--ll-surface-raised, #272d35);
   border-color: var(--ll-line);
 }
 .ll-app .ll-desk-context-row > span:first-child {
@@ -486,7 +486,7 @@
 }
 .ll-app .ll-desk-context-row strong {
   margin-bottom: 4px;
-  color: #d3d8df;
+  color: var(--ll-text-soft, #d3d8df);
   font-size: 11px;
   font-weight: 500;
 }
@@ -495,10 +495,10 @@
 }
 .ll-app .ll-desk-interpretation > p {
   padding: 12px;
-  background: #1a1d22;
+  background: var(--ll-surface, #1a1d22);
   border: 1px solid var(--ll-line);
   border-radius: 5px;
-  color: #c8ced7;
+  color: var(--ll-text-soft, #c8ced7);
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
@@ -529,8 +529,8 @@
   font-weight: 600;
 }
 .ll-app .ll-desk-actions > .ll-primary:hover:not(:disabled) {
-  background: #f1f0ed;
-  border-color: #f1f0ed;
+  background: var(--ll-text, #f1f0ed);
+  border-color: var(--ll-text, #f1f0ed);
 }
 .ll-app .ll-desk-source-select {
   margin: 14px 0;
@@ -547,10 +547,10 @@
   gap: 8px;
   margin: 12px 0;
   padding: 11px 12px;
-  background: #272d35;
-  border: 1px solid #3b4553;
+  background: var(--ll-surface-raised, #272d35);
+  border: 1px solid var(--ll-line-strong, #3b4553);
   border-radius: 5px;
-  color: #bfc9d6;
+  color: var(--ll-text-soft, #bfc9d6);
   font-size: 12px;
   line-height: 1.6;
   overflow-wrap: anywhere;
