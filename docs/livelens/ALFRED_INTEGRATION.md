@@ -1,5 +1,22 @@
 # ALFRED integration contract
 
+## Guided connection builder
+
+The LiveLens Agent connection screen now prepares the real pinned ALFRED config
+and CLI installation recipe. Choose exact session IDs (up to 200 recent sessions
+are offered), supply an existing scope/private directory and download the files.
+Read-only is the default; bounded collection requests a separate grant. No token
+enters this UI, no supplied endpoint is contacted and nothing is installed by
+exporting files. See [Aperture workflows](APERTURE_WORKFLOWS.md) for actual screens.
+
+The builder's 23 tests cover invalid origins/paths, explicit source/session IDs,
+private-file paths, bounded durations and literal shell quoting. Generated read-only
+and collection configurations were also accepted by the pinned ALFRED's actual
+in-memory LiveLensTools/LiveLensClient/LiveLensGateway validators without transport
+requests. This does not establish private filesystem placement or a customer's
+connection. The full ALFRED suite below belongs to its prior exact commit and was
+not rerun for the LiveLens UI changes.
+
 ## Actual ALFRED integration — 11 October 2026
 
 The optional first-party tools are implemented in

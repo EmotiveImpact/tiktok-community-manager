@@ -57,6 +57,8 @@ import LiveMonitor from "../components/livelens/LiveMonitor";
 import InvitationAcceptance from "../components/livelens/InvitationAcceptance";
 import RecordingLibrary from "../components/livelens/RecordingLibrary";
 import SavedMoments from "../components/livelens/SavedMoments";
+import RecordingTransport from "../components/livelens/RecordingTransport";
+import { buildRecordingTimelines } from "../components/livelens/recording-transport-model";
 import "./livelens.css";
 import "./livelens-shell.css";
 import "./livelens-conversation.css";
@@ -168,7 +170,19 @@ function useResource<T>(path: string | null, revision = 0) {
       active = false;
     };
   }, [path, revision]);
-  return state;
+  // Do not expose the preceding path's rows during the render before its effect
+  // clears state. A changed search/session must never flash stale results.
+  const current = previousPath.current === path;
+  return { data: current ? state.data : null, loading: !!path && (!current || state.loading), error: current ? state.error : "" };
+}
+function useSearchQuery(value: string) {
+  const [settled, setSettled] = useState(value.trim());
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [value]);
+  // Clearing a search should restore the unfiltered view immediately.
+  return value.trim() ? settled : "";
 }
 function Status({ loading, error }: { loading: boolean; error: string }) {
   return (
@@ -238,6 +252,11 @@ function OperatorConsole() {
     [libraryQuery, setLibraryQuery] = useState("");
   const [timelineQuery, setTimelineQuery] = useState(""),
     [timelineKind, setTimelineKind] = useState("all");
+  const librarySearch = useSearchQuery(libraryQuery);
+  const timelineSearch = useSearchQuery(timelineQuery);
+  const librarySearchPending = libraryQuery.trim() !== librarySearch;
+  const timelineSearchPending = timelineQuery.trim() !== timelineSearch;
+  const [timelineCursors, setTimelineCursors] = useState<number[]>([]);
   const [choosingBookmark, setChoosingBookmark] = useState(false);
   const [seekRevision, setSeekRevision] = useState(0);
   const [playbackMedia, setPlaybackMedia] = useState<{ sessionId: string; segments: PlaybackSegment[] }>({ sessionId: "", segments: [] });
@@ -361,7 +380,7 @@ function OperatorConsole() {
     revision,
   );
   const sessions = useResource<{ sessions: Session[] }>(
-    identity ? `/v1/sessions?limit=200&offset=${libraryOffset}` : null,
+    identity ? `/v1/sessions?${new URLSearchParams({ limit: "200", offset: String(libraryOffset), q: view === "sessions" && !sessionId ? librarySearch : "" })}` : null,
     revision,
   );
   const cases = useResource<{ cases: Case[] }>(
@@ -394,7 +413,7 @@ function OperatorConsole() {
   const [cursor, setCursor] = useState(0);
   const events = useResource<{ events: Evidence[]; nextAfter: number | null }>(
     identity && sessionId
-      ? `/v1/sessions/${sessionId}/events?limit=100&after=${cursor}`
+      ? `/v1/sessions/${encodeURIComponent(sessionId)}/events?${new URLSearchParams({ limit: "100", after: String(cursor), q: timelineSearch, kind: timelineKind })}`
       : null,
     revision,
   );
@@ -444,6 +463,7 @@ function OperatorConsole() {
     setSessionId(id);
     setEvidenceId(null);
     setCursor(0);
+    setTimelineCursors([]);
     setTimelineQuery("");
     setTimelineKind("all");
     setChoosingBookmark(false);
@@ -466,6 +486,12 @@ function OperatorConsole() {
     main.current?.focus();
   }
   function openEvidence(e: Evidence) {
+    if (e.sessionId !== sessionId) {
+      setTimelineQuery("");
+      setTimelineKind("all");
+      setCursor(0);
+      setTimelineCursors([]);
+    }
     setSeekRevision((value) => value + 1);
     setEvidenceId(e.id);
     setSessionId(e.sessionId);
@@ -500,6 +526,8 @@ function OperatorConsole() {
     setChoosingBookmark(true);
     setTimelineKind("all");
     setTimelineQuery("");
+    setCursor(0);
+    setTimelineCursors([]);
     requestAnimationFrame(() => {
       timelinePanel.current?.scrollIntoView({ block: "nearest" });
       (timelinePanel.current?.querySelector<HTMLButtonElement>(".ll-evidence") ?? timelinePanel.current)?.focus({ preventScroll: true });
@@ -510,6 +538,10 @@ function OperatorConsole() {
     setSessionId(session);
     setEvidenceId(evidence);
     setCursor(0);
+    setTimelineCursors([]);
+    setTimelineQuery("");
+    setTimelineKind("all");
+    setChoosingBookmark(false);
     setView("sessions");
     setMenu(false);
     history.replaceState(
@@ -699,14 +731,8 @@ function OperatorConsole() {
     : (nav.find((n) => n[0] === view)?.[1] ?? "Overview");
   const selectedEvidence = context.data?.event.id === evidenceId && context.data.event.sessionId === sessionId ? context.data.event : undefined;
   const conversationSegments = capabilities.data?.scopes.includes("recordings:read") && playbackMedia.sessionId === sessionId ? playbackMedia.segments : [];
-  const visibleEvents =
-    events.data?.events.filter(
-      (event) =>
-        (timelineKind === "all" || event.kind === timelineKind) &&
-        `${event.text} ${event.attribution.account ?? ""}`
-          .toLowerCase()
-          .includes(timelineQuery.toLowerCase()),
-    ) ?? [];
+  const visibleEvents = timelineSearchPending ? [] : events.data?.events ?? [];
+  const timelineLoading = events.loading || timelineSearchPending;
   const evidenceList = (items: Evidence[]) => (
     <div className="ll-evidence-list">
       {items.map((e) => (
@@ -1215,34 +1241,28 @@ function OperatorConsole() {
           )}
           {view === "sessions" && !sessionId && (
             <>
-              {libraryOffset > 0 && (
-                <button
-                  onClick={() => setLibraryOffset((n) => Math.max(0, n - 200))}
-                >
-                  Previous sessions
-                </button>
-              )}
-              <Status {...sessions} />
-              {sessions.data && <RecordingLibrary
-                sessions={sessions.data?.sessions ?? []}
+              <RecordingLibrary
+                sessions={librarySearchPending ? [] : sessions.data?.sessions ?? []}
+                loading={sessions.loading || librarySearchPending}
+                error={sessions.error}
                 revision={revision}
                 scopes={capabilities.data?.scopes ?? []}
                 query={libraryQuery}
-                onQueryChange={setLibraryQuery}
+                onQueryChange={(value) => { setLibraryQuery(value); setLibraryOffset(0); }}
                 onOpenSession={openSession}
-              />}
-              {sessions.data?.sessions.length === 200 && (
-                <button onClick={() => setLibraryOffset((n) => n + 200)}>
-                  Next 200 sessions
-                </button>
-              )}
+              />
+              {(libraryOffset > 0 || sessions.data?.sessions.length === 200) && <nav className="ll-result-pages" aria-label="Session library pages">
+                <button disabled={libraryOffset === 0 || sessions.loading || librarySearchPending} onClick={() => setLibraryOffset((n) => Math.max(0, n - 200))}><ArrowLeft size={14} />Previous sessions</button>
+                <span>Page {Math.floor(libraryOffset / 200) + 1}</span>
+                <button disabled={sessions.data?.sessions.length !== 200 || sessions.loading || librarySearchPending} onClick={() => setLibraryOffset((n) => n + 200)}>Next 200 sessions<ArrowRight size={14} /></button>
+              </nav>}
             </>
           )}
           {view === "sessions" && sessionId && (
             <>
               <Status
-                loading={session.loading || events.loading}
-                error={session.error || events.error}
+                loading={session.loading}
+                error={session.error}
               />
               <div className="ll-conversation ll-playback-workspace">
                 <div className="ll-conversation-player">
@@ -1300,10 +1320,12 @@ function OperatorConsole() {
                       <Search size={16} />
                       <input
                         aria-label="Filter captured timeline"
-                        placeholder="Find a moment in this recording…"
+                        placeholder="Search the whole conversation…"
                         value={timelineQuery}
-                        onChange={(e) => setTimelineQuery(e.target.value)}
+                        maxLength={512}
+                        onChange={(e) => { setTimelineQuery(e.target.value); setCursor(0); setTimelineCursors([]); }}
                       />
+                      {timelineQuery && <button className="ll-clear-timeline" aria-label="Clear conversation search" onClick={() => { setTimelineQuery(""); setCursor(0); setTimelineCursors([]); }}><X size={14} /></button>}
                     </label>
                     <div
                       className="ll-segmented"
@@ -1318,48 +1340,33 @@ function OperatorConsole() {
                         <button
                           key={kind}
                           aria-pressed={timelineKind === kind}
-                          onClick={() => setTimelineKind(kind)}
+                          onClick={() => { setTimelineKind(kind); setCursor(0); setTimelineCursors([]); }}
                         >
                           {label}
                         </button>
                       ))}
                     </div>
                   </div>
+                  {(timelineQuery.trim() || timelineKind !== "all" || cursor > 0) && <p className="ll-search-summary" role="status">
+                    {timelineLoading ? "Searching the whole conversation…" : events.error ? "Search unavailable" : `${visibleEvents.length} ${visibleEvents.length === 1 ? "record" : "records"} on page ${timelineCursors.length + 1} · whole conversation`}
+                  </p>}
                   {choosingBookmark && <div className="ll-bookmark-prompt" role="status"><Bookmark size={15} /><span>Choose a statement to bookmark.</span><button onClick={() => setChoosingBookmark(false)} aria-label="Cancel bookmark"><X size={15} /></button></div>}
                   <div className="ll-timeline-records">
-                  {events.data?.events.length ? (
-                    visibleEvents.length ? (
-                      evidenceList(visibleEvents)
-                    ) : (
-                      <Empty title="No records match this filter">
-                        Choose another event type or try a different phrase.
-                        This filter searches the current page of captured
-                        evidence.
+                    {timelineLoading ? <p className="ll-status" role="status">Loading conversation…</p> : events.error ? <Status loading={false} error={events.error} /> : visibleEvents.length ? evidenceList(visibleEvents) : (
+                      <Empty title={cursor > 0 ? "End of these results" : timelineQuery.trim() || timelineKind !== "all" ? "No records match this filter" : "No captured evidence yet"}>
+                        {cursor > 0 ? "There are no later matching records. You can return to the previous page." : timelineQuery.trim() || timelineKind !== "all" ? "No retained statements match across this conversation. Try another phrase or event type." : "Captured statements and chat will appear here with their original clocks."}
                       </Empty>
-                    )
-                  ) : (
-                    !events.loading && (
-                      <Empty title="No captured evidence yet">
-                        Archive a selected desktop session or capture events
-                        with the scoped API.
-                      </Empty>
-                    )
-                  )}
+                    )}
                   </div>
                   {evidenceId && <button className="ll-context-link" onClick={() => {
                     contextPanel.current?.scrollIntoView({ block: "start" });
                     contextPanel.current?.focus({ preventScroll: true });
                   }}>View selected context <ArrowRight size={14} /></button>}
-                  {events.data?.events.length === 100 && (
-                    <button onClick={() => setCursor(events.data!.nextAfter!)}>
-                      Next 100 events
-                    </button>
-                  )}
-                  {cursor > 0 && (
-                    <button onClick={() => setCursor(0)}>
-                      Return to first events
-                    </button>
-                  )}
+                  {(cursor > 0 || visibleEvents.length === 100) && <nav className="ll-result-pages ll-timeline-pages" aria-label="Conversation pages">
+                    <button disabled={!timelineCursors.length || timelineLoading} onClick={() => { setCursor(timelineCursors[timelineCursors.length - 1] ?? 0); setTimelineCursors((values) => values.slice(0, -1)); }}><ArrowLeft size={14} />Previous events</button>
+                    <button disabled={visibleEvents.length !== 100 || events.data?.nextAfter == null || timelineLoading} onClick={() => { setTimelineCursors((values) => [...values, cursor]); setCursor(events.data!.nextAfter!); }}>Next 100 events<ArrowRight size={14} /></button>
+                  </nav>}
+                  {cursor > 0 && <button className="ll-first-events" onClick={() => { setCursor(0); setTimelineCursors([]); }}>Return to first events</button>}
                 </section>
                 <aside className={`ll-context ${evidenceId ? "has-selection" : ""}`} ref={contextPanel} tabIndex={-1}>
                   <div className="ll-context-title">
@@ -2385,9 +2392,7 @@ function MediaReplay({
   const [selected, setSelected] = useState<string | null>(null),
     [playbackError, setPlaybackError] = useState("");
   const video = useRef<HTMLVideoElement>(null);
-  const appliedSeek = useRef<string | null>(null);
-  const continuePlayback = useRef(false);
-  const segments =
+  const rawSegments =
     resource.data?.jobs
       .filter((job) => !preferredJobId || job.id === preferredJobId)
       .flatMap((j) =>
@@ -2396,37 +2401,10 @@ function MediaReplay({
       .sort(
         (a, b) => a.startedAtMs - b.startedAtMs || a.key.localeCompare(b.key),
       ) ?? [];
-  const current = segments.find((s) => s.key === selected) ?? segments.find((s) => s.jobId === preferredJobId) ?? segments[0];
+  const segments = buildRecordingTimelines(rawSegments).flatMap((timeline) => timeline.entries);
+  const current = segments.find((segment) => segment.key === selected) ?? segments[0];
   useEffect(() => { onSegmentsChange?.(segments); }, [resource.data, preferredJobId]);
   useEffect(() => { setSelected(null); }, [preferredJobId]);
-  useEffect(() => {
-    if (!evidence) { appliedSeek.current = null; return; }
-    const intent = `${evidence.id}/${seekRevision}`;
-    if (appliedSeek.current === intent) return;
-    const t =
-      evidence.capturedAtMs ??
-      evidence.sourceTimestampMs ??
-      evidence.receivedAtMs;
-    const s = segments.find(
-      (s) => t >= s.startedAtMs && t < s.startedAtMs + s.durationMs,
-    );
-    if (s) {
-      appliedSeek.current = intent;
-      setSelected(s.key);
-      if (video.current) video.current.currentTime = (t - s.startedAtMs) / 1000;
-    } else appliedSeek.current = null;
-  }, [evidence?.id, seekRevision, resource.data]);
-  const evidenceTime =
-    evidence?.capturedAtMs ??
-    evidence?.sourceTimestampMs ??
-    evidence?.receivedAtMs;
-  const covered =
-    evidenceTime == null ||
-    segments.some(
-      (s) =>
-        evidenceTime >= s.startedAtMs &&
-        evidenceTime < s.startedAtMs + s.durationMs,
-    );
   return (
     <section
       className={`ll-media ${compact ? "ll-media-compact" : ""}`}
@@ -2443,74 +2421,16 @@ function MediaReplay({
         </span>
       </div>}
       {current ? (
-        <>
-          <video
-            ref={video}
-            controls
-            preload="metadata"
-            src={`/v1/media/${current.jobId}/${current.id}`}
-            onEnded={() => {
-              const index = segments.findIndex(
-                (segment) => segment.key === current.key,
-              );
-              const next = segments[index + 1];
-              if (next) {
-                continuePlayback.current = true;
-                setSelected(next.key);
-              }
-            }}
-            onError={() =>
-              setPlaybackError(
-                "Retained segment could not be played. Check media integrity and availability.",
-              )
-            }
-            onLoadedMetadata={() => {
-              setPlaybackError("");
-              const t =
-                evidence?.capturedAtMs ??
-                evidence?.sourceTimestampMs ??
-                evidence?.receivedAtMs;
-              if (
-                t != null &&
-                video.current &&
-                t >= current.startedAtMs &&
-                t < current.startedAtMs + current.durationMs
-              )
-                video.current.currentTime = (t - current.startedAtMs) / 1000;
-              if (continuePlayback.current && video.current) {
-                continuePlayback.current = false;
-                video.current
-                  .play()
-                  .catch(() =>
-                    setPlaybackError(
-                      "Press play to continue with the next retained segment.",
-                    ),
-                  );
-              }
-            }}
-            aria-label="Captured conversation video"
-          />
-          {(!compact || segments.length > 1) && <label>
-            Media segment
-            <select
-              aria-label="Media segment"
-              value={current.key}
-              onChange={(e) => setSelected(e.target.value)}
-            >
-              {segments.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {stamp(s.startedAtMs)} · {(s.durationMs / 1000).toFixed(1)}s
-                </option>
-              ))}
-            </select>
-          </label>}
-          {!covered && (
-            <p role="status">
-              No retained segment covers this evidence timestamp.
-            </p>
-          )}
-          {playbackError && <p role="alert">{playbackError}</p>}
-        </>
+        <RecordingTransport
+          segments={segments}
+          selectedKey={selected}
+          onSelectSegment={setSelected}
+          evidence={evidence}
+          seekRevision={seekRevision}
+          compact={compact}
+          videoRef={video}
+          onError={setPlaybackError}
+        />
       ) : resource.loading ? (
         <p role="status" className="ll-status">Loading retained media…</p>
       ) : (
@@ -2527,6 +2447,7 @@ function MediaReplay({
           </button>
         </div>
       )}
+      {playbackError && <p role="alert">{playbackError}</p>}
       {resource.error && (
         <p className="ll-muted">Media service unavailable: {resource.error}</p>
       )}

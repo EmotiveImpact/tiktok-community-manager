@@ -1,5 +1,21 @@
 """Use the console's visible navigation, including its specialist disclosure."""
+import hashlib
 from playwright.sync_api import expect
+
+
+def renderer_assets(page):
+    """Record the actual authenticated JavaScript/CSS bytes used by a journey."""
+    urls = page.evaluate("""() => [...new Set([
+        ...[...document.querySelectorAll('script[src]')].map(element => element.src),
+        ...[...document.querySelectorAll('link[rel="stylesheet"]')].map(element => element.href)
+    ])].sort()""")
+    assert urls, "The browser must load actual application assets"
+    receipts = []
+    for url in urls:
+        response = page.request.get(url)
+        assert response.status == 200, "The journey's renderer assets must remain available"
+        receipts.append({"url": url, "sha256": hashlib.sha256(response.body()).hexdigest()})
+    return receipts
 
 
 def navigate(page, label, *, keyboard=False):

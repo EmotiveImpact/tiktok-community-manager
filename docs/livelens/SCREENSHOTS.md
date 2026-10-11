@@ -4,7 +4,29 @@ The owner selected **Aperture Studio** from the
 [visual concept gallery](design-concepts/visual-exploration-2026-10-11/README.md).
 The screenshots below show that language implemented in the actual app.
 
-## Aperture Studio — 11 October 2026
+## Current Aperture workflows — 11 October 2026
+
+![Current working recording workspace](screenshots/operator-workflow/01-conversation-desktop.png)
+
+[Full-size conversation](screenshots/operator-workflow/01-conversation-full.png) ·
+[Phone](screenshots/operator-workflow/04-conversation-phone.png) ·
+[Monitor](screenshots/operator-workflow/02-monitor-desktop.png) ·
+[Library](screenshots/operator-workflow/03-library-desktop.png) ·
+[ALFRED access](screenshots/operator-workflow/07-alfred-access-desktop.png) ·
+[ALFRED private host](screenshots/operator-workflow/08-alfred-host-desktop.png) ·
+[ALFRED recipe](screenshots/operator-workflow/09-alfred-recipe-desktop.png) ·
+[ALFRED phone](screenshots/operator-workflow/11-alfred-host-phone.png).
+
+These actual browser screens add retained-time recording transport, whole-session
+and library search, stable saved evidence and a private ALFRED setup builder.
+Renderer `index-DmrWQN-8.js`; stylesheet `index-BUy4-zTR.css`.
+[Full gallery and operating details](APERTURE_WORKFLOWS.md).
+
+The isolated visual fixture records a generated portrait with tone through FFmpeg;
+its captions are illustrative API input, not recognised speech or LIVE. ALFRED
+host fields contain fictional example values; no connection was installed.
+
+## Earlier Aperture Studio implementation — 11 October 2026
 
 ![Actual Aperture Studio conversation](screenshots/aperture-studio/01-conversation-desktop.png)
 

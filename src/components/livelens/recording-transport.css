@@ -1,0 +1,54 @@
+.ll-app .ll-recording-transport { min-width: 0; }
+.ll-app .ll-recording-transport .ll-transport-controls { padding-top: 12px; }
+.ll-app .ll-recording-transport .ll-transport-clock { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ll-muted); font-size: 11px; }
+.ll-app .ll-recording-transport .ll-transport-clock output { flex-shrink: 0; color: var(--ll-text); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ll-app .ll-recording-transport .ll-transport-clock output span { color: var(--ll-muted); }
+.ll-app .ll-recording-transport .ll-transport-track { position: relative; height: 28px; }
+.ll-app .ll-recording-transport .ll-transport-track input { display: block; width: 100%; height: 28px; margin: 0; padding: 0; appearance: none; background: transparent; border: 0; cursor: pointer; accent-color: var(--ll-accent, #f0e9dc); }
+.ll-app .ll-recording-transport .ll-transport-track input::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: linear-gradient(to right, var(--ll-accent, #f0e9dc) var(--ll-transport-progress), var(--ll-line, #343b3f) var(--ll-transport-progress)); }
+.ll-app .ll-recording-transport .ll-transport-track input::-webkit-slider-thumb { appearance: none; width: 11px; height: 11px; margin-top: -4px; border: 0; border-radius: 50%; background: var(--ll-accent, #f0e9dc); }
+.ll-app .ll-recording-transport .ll-transport-track input::-moz-range-track { height: 3px; background: var(--ll-line, #343b3f); }
+.ll-app .ll-recording-transport .ll-transport-track input::-moz-range-progress { height: 3px; background: var(--ll-accent, #f0e9dc); }
+.ll-app .ll-recording-transport .ll-transport-track input::-moz-range-thumb { width: 11px; height: 11px; border: 0; border-radius: 50%; background: var(--ll-accent, #f0e9dc); }
+.ll-app .ll-recording-transport .ll-transport-track input:focus-visible { outline: 2px solid var(--ll-focus); outline-offset: 1px; border-radius: 3px; }
+.ll-app .ll-recording-transport .ll-transport-boundaries { pointer-events: none; position: absolute; inset: 0 6px; }
+.ll-app .ll-recording-transport .ll-transport-boundaries > span { position: absolute; top: 12px; width: 1px; height: 4px; background: var(--ll-bg, #101315); }
+.ll-app .ll-recording-transport .ll-transport-boundaries > .ll-transport-boundary-gap { top: 10px; height: 8px; width: 2px; background: #a89b83; }
+.ll-app .ll-recording-transport .ll-transport-boundaries > .ll-transport-boundary-overlap { top: 10px; height: 8px; width: 2px; background: #8e9d9e; }
+.ll-app .ll-recording-transport .ll-transport-actions { display: flex; align-items: center; gap: 15px; min-width: 0; }
+.ll-app .ll-recording-transport .ll-transport-skips { display: flex; gap: 3px; flex-shrink: 0; }
+.ll-app .ll-recording-transport .ll-transport-skips button { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 38px; min-height: 32px; padding: 4px 7px; color: var(--ll-text); background: transparent; border: 1px solid transparent; border-radius: 4px; font-size: 11px; }
+.ll-app .ll-recording-transport .ll-transport-skips button:hover:not(:disabled) { background: var(--ll-surface-raised, #20272b); border-color: var(--ll-line); }
+.ll-app .ll-recording-transport .ll-transport-skips button:disabled { opacity: .4; cursor: default; }
+.ll-app .ll-recording-transport label { display: flex; align-items: center; gap: 8px; margin: 0; min-width: 0; font-size: 11px; color: var(--ll-muted); }
+.ll-app .ll-recording-transport label > span { flex-shrink: 0; }
+.ll-app .ll-recording-transport label select { width: auto; min-width: 0; min-height: 32px; height: 32px; padding: 3px 23px 3px 8px; color: var(--ll-text); background-color: var(--ll-surface, #171c1f); border: 1px solid var(--ll-line); border-radius: 4px; font-size: 11px; }
+.ll-app .ll-recording-transport .ll-transport-speed { margin-left: auto; }
+.ll-app .ll-recording-transport .ll-transport-segment { flex: 0 1 300px; }
+.ll-app .ll-recording-transport .ll-transport-segment select { flex: 1; width: 1px; }
+.ll-app .ll-recording-transport .ll-transport-recording { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--ll-line); }
+.ll-app .ll-recording-transport .ll-transport-recording select { flex: 1; max-width: 100%; }
+.ll-app .ll-recording-transport .ll-transport-gaps { margin-top: 10px; padding-top: 7px; border-top: 1px solid var(--ll-line); color: var(--ll-muted); font-size: 11px; }
+.ll-app .ll-recording-transport .ll-transport-gaps summary { min-height: 27px; cursor: pointer; line-height: 27px; }
+.ll-app .ll-recording-transport .ll-transport-gaps summary span { margin-left: 5px; }
+.ll-app .ll-recording-transport .ll-transport-gaps p { margin: 5px 0 8px; }
+.ll-app .ll-recording-transport .ll-transport-gaps ul { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.ll-app .ll-recording-transport .ll-transport-gaps li { display: flex; gap: 12px; }
+.ll-app .ll-recording-transport .ll-transport-gaps time { color: var(--ll-text); font-variant-numeric: tabular-nums; }
+.ll-app .ll-recording-transport .ll-transport-gaps small { font-size: inherit; }
+.ll-app .ll-recording-transport .ll-transport-alignment { margin: 10px 0 0; color: var(--ll-muted); font-size: 12px; line-height: 1.5; }
+.ll-app .ll-recording-transport button:focus-visible,
+.ll-app .ll-recording-transport select:focus-visible,
+.ll-app .ll-recording-transport summary:focus-visible { outline: 2px solid var(--ll-focus); outline-offset: 2px; }
+@media (max-width: 600px) {
+  .ll-app .ll-recording-transport .ll-transport-actions { flex-wrap: wrap; gap: 7px 12px; }
+  .ll-app .ll-recording-transport .ll-transport-skips button { min-width: 44px; min-height: 44px; }
+  .ll-app .ll-recording-transport label select { min-height: 44px; height: 44px; }
+  .ll-app .ll-recording-transport .ll-transport-segment { flex: 1 0 100%; }
+  .ll-app .ll-recording-transport .ll-transport-track,
+  .ll-app .ll-recording-transport .ll-transport-track input { height: 44px; }
+  .ll-app .ll-recording-transport .ll-transport-boundaries > span { top: 20px; }
+  .ll-app .ll-recording-transport .ll-transport-boundaries > .ll-transport-boundary-gap,
+  .ll-app .ll-recording-transport .ll-transport-boundaries > .ll-transport-boundary-overlap { top: 18px; }
+  .ll-app .ll-recording-transport .ll-transport-gaps summary { min-height: 44px; line-height: 44px; }
+}

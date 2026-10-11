@@ -16,6 +16,14 @@ use disclosures. Consult the latest validation/screenshots before relying on an
 earlier audit's remaining-work list. The design selection is approved; acceptance
 of the implementation and external-provider/production gates remain separate.
 
+The [current workflow pass](APERTURE_WORKFLOWS.md) adds a per-recording retained-time
+scrubber, speed/skip controls, collector-only evidence seeks and explicit gaps;
+server-side whole-session/library search before pagination; off-page saved-original
+hydration; and a three-step private ALFRED recipe builder. Keep With video and the
+ALFRED 200-recent-session picker bounds explicit. Generating files does not install
+or verify a private ALFRED runtime. See the latest receipts for actual optional
+PostgreSQL/PDF/speech checks and browser behavior.
+
 Read [FULL_APPLICATION.md](FULL_APPLICATION.md) for the product and remaining gates,
 [VALIDATION.md](VALIDATION.md) for executed receipts,
 [RUNTIME_CONFIGURATION.md](RUNTIME_CONFIGURATION.md) for configuration, and

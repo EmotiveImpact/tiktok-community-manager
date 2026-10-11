@@ -1,0 +1,21 @@
+{
+  "fixture": true,
+  "desktopAndPhone": true,
+  "keyboardNavigation": true,
+  "recordingPlaybackAndSeek": true,
+  "accountSearch": true,
+  "caseAndBothExports": true,
+  "serviceRestartReopen": true,
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-operator-final-original",
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:41909/app/assets/index-BUy4-zTR.css",
+      "sha256": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe"
+    },
+    {
+      "url": "http://127.0.0.1:41909/app/assets/index-DmrWQN-8.js",
+      "sha256": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+    }
+  ]
+}

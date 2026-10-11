@@ -1,5 +1,43 @@
 # LiveLens design QA
 
+## Aperture workflows — 11 October 2026
+
+Visual result: passed for the inspected desktop and phone surfaces.
+
+This continuation keeps the owner-selected Aperture Studio language and adds
+working recording transport, complete retained search and guided ALFRED setup.
+[Actual desktop conversation](docs/livelens/screenshots/operator-workflow/01-conversation-desktop.png)
+uses the same 1487 × 1058 viewport as the selected reference. Its 869px player and
+470px conversation still align at 205px. The truthful recording controls increase
+player height; saved moments and recording tools remain directly below it.
+[Measured geometry and screenshot hashes](docs/livelens/operator-workflow-layout-validation.json).
+
+The initial ALFRED capture exposed shared workspace CSS overriding its intended
+heading sizes, horizontal selection rows, field spacing and monospace output.
+The guide link also squeezed the phone introduction. Component-specific selectors
+now win over those resets; the phone introduction uses a two-column grid with the
+guide on its own row. Actual recaptures were opened and inspected:
+[desktop access](docs/livelens/screenshots/operator-workflow/07-alfred-access-desktop.png),
+[desktop recipe](docs/livelens/screenshots/operator-workflow/09-alfred-recipe-desktop.png),
+[phone host](docs/livelens/screenshots/operator-workflow/11-alfred-host-phone.png),
+[phone recipe](docs/livelens/screenshots/operator-workflow/10-alfred-recipe-phone.png).
+These P2 layout defects are resolved. Long monitor handles now truncate visually
+with the full label retained for accessibility and hover, avoiding orphan letters.
+
+Warm charcoal, off-white actions, self-hosted Inter, the 72px rail and thin dividers
+are preserved. The scrubber represents actual retained duration, with explicit
+segment boundaries and gaps rather than an invented waveform. Exact collector
+alignment, original source clocks and an unverified ALFRED host remain explicit.
+Phone controls remain usable at 390px with no horizontal page overflow. The
+read-only recipe textarea scrolls internally for long private paths.
+
+Final assets are `index-DmrWQN-8.js` and `index-BUy4-zTR.css`. No uncaught page
+errors appeared in the 12 final visual captures. [Current validation](docs/livelens/VALIDATION.md)
+records the unit/service/browser results separately. The studio media and captions
+remain explicitly synthetic; screenshots do not establish LIVE or private-host
+installation. Further representative long-recording and assistive-technology
+acceptance remains open; the selected design is not a claim of final owner approval.
+
 ## Aperture Studio implementation — 11 October 2026
 
 final result: passed

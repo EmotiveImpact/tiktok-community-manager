@@ -28,13 +28,15 @@ export type SavedMomentsProps = {
   canWrite: boolean;
 };
 type Frame = { key: string; path: string; offsetSeconds: number };
+type MomentEvidence = Pick<Evidence, "id" | "sessionId" | "text" |
+  "sourceTimestampMs" | "capturedAtMs" | "receivedAtMs">;
 
 function validTime(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value) &&
     Math.abs(value) <= 8_640_000_000_000_000;
 }
 
-function clock(event: Evidence | undefined) {
+function clock(event: MomentEvidence | undefined) {
   if (!event) return null;
   if (validTime(event.sourceTimestampMs))
     return { atMs: event.sourceTimestampMs, label: "Source time" };
@@ -45,7 +47,7 @@ function clock(event: Evidence | undefined) {
   return null;
 }
 
-function frameFor(event: Evidence | undefined, segments: Segment[]): Frame | null {
+function frameFor(event: MomentEvidence | undefined, segments: Segment[]): Frame | null {
   if (!event) return null;
   // Media is on the collector's clock. A source or receipt time that happens
   // to fit a segment does not prove alignment with that collector clock.
@@ -63,6 +65,43 @@ function frameFor(event: Evidence | undefined, segments: Segment[]): Frame | nul
     path: `/v1/media/${encodeURIComponent(segment.jobId)}/${encodeURIComponent(segment.id)}`,
     offsetSeconds,
   };
+}
+
+function momentEvidence(event: MomentEvidence): MomentEvidence {
+  return {
+    id: event.id, sessionId: event.sessionId, text: event.text,
+    sourceTimestampMs: event.sourceTimestampMs,
+    capturedAtMs: event.capturedAtMs, receivedAtMs: event.receivedAtMs,
+  };
+}
+
+async function readMomentEvidence(
+  id: string, sessionId: string, signal: AbortSignal,
+): Promise<MomentEvidence | null> {
+  if (signal.aborted) return null;
+  const controller = new AbortController();
+  const cancelled = () => controller.abort();
+  signal.addEventListener("abort", cancelled, { once: true });
+  const timer = window.setTimeout(cancelled, 10_000);
+  try {
+    // A direct GET permits cancellation when the visible rows or read scope
+    // change. Use the same cookie-only, same-origin transport as the API helper.
+    const response = await fetch(`/v1/evidence/${encodeURIComponent(id)}`, {
+      credentials: "same-origin", redirect: "error", signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const event: Partial<MomentEvidence> | null = await response.json();
+    if (!event || event.id !== id || event.sessionId !== sessionId ||
+      typeof event.text !== "string" ||
+      !(event.sourceTimestampMs === null || validTime(event.sourceTimestampMs)) ||
+      !(event.capturedAtMs === null || validTime(event.capturedAtMs)) ||
+      !validTime(event.receivedAtMs)) return null;
+    return momentEvidence(event as MomentEvidence);
+  } catch { return null; }
+  finally {
+    window.clearTimeout(timer);
+    signal.removeEventListener("abort", cancelled);
+  }
 }
 
 function readFrame(frame: Frame, signal: AbortSignal): Promise<string | null> {
@@ -143,6 +182,8 @@ function MomentsContent(props: SavedMomentsProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(6);
+  const [resolvedEvidence, setResolvedEvidence] = useState<Record<string, MomentEvidence | null>>({});
+  const evidenceCache = useRef(new Map<string, MomentEvidence | null>());
   const [frames, setFrames] = useState<Record<string, string | null>>({});
   const frameCache = useRef(new Map<string, string | null>());
 
@@ -168,10 +209,52 @@ function MomentsContent(props: SavedMomentsProps) {
     return () => { current = false; };
   }, [sessionId, revision]);
 
-  const evidence = useMemo(() => new Map(events
+  const suppliedEvidence = useMemo(() => new Map(events
     .filter((event) => event.sessionId === sessionId)
     .map((event) => [event.id, event] as const)), [events, sessionId]);
   const visible = (moments ?? []).slice(0, visibleCount);
+  // Only values used by visible rows enter this key. Polling, filtering or a
+  // recreated parent array must not continually restart the same evidence GET.
+  const evidenceSignature = JSON.stringify([...new Set(visible.map((moment) => moment.evidenceId))]
+    .map((id) => {
+      const event = suppliedEvidence.get(id);
+      return { id, supplied: event ? momentEvidence(event) : null };
+    }));
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const requested: Array<{ id: string; supplied: MomentEvidence | null }> = JSON.parse(evidenceSignature);
+    const wanted = new Set(requested.map((item) => item.id));
+    for (const id of evidenceCache.current.keys()) {
+      if (!wanted.has(id)) evidenceCache.current.delete(id);
+    }
+    for (const item of requested) {
+      if (item.supplied) evidenceCache.current.set(item.id, item.supplied);
+    }
+    setResolvedEvidence(Object.fromEntries(evidenceCache.current));
+    const queue = requested.filter((item) => !evidenceCache.current.has(item.id));
+    let cursor = 0;
+    async function worker() {
+      while (!controller.signal.aborted && cursor < queue.length) {
+        const { id } = queue[cursor++];
+        const event = await readMomentEvidence(id, sessionId, controller.signal);
+        if (controller.signal.aborted) return;
+        // Cache failed reads too: unavailable evidence keeps its honest context
+        // fallback instead of retrying on every timeline or bookmark refresh.
+        evidenceCache.current.set(id, event);
+        setResolvedEvidence(Object.fromEntries(evidenceCache.current));
+      }
+    }
+    for (let index = 0; index < Math.min(6, queue.length); index++) void worker();
+    return () => { controller.abort(); };
+  }, [sessionId, evidenceSignature]);
+
+  const evidence = new Map<string, MomentEvidence>();
+  for (const [id, event] of Object.entries(resolvedEvidence)) {
+    if (event?.sessionId === sessionId) evidence.set(id, event);
+  }
+  // The current source event takes precedence over its bounded cached copy.
+  for (const [id, event] of suppliedEvidence) evidence.set(id, event);
   const descriptors = visible.map((moment) => frameFor(evidence.get(moment.evidenceId), segments));
   const frameSignature = JSON.stringify(descriptors.filter((frame): frame is Frame => frame !== null));
 

@@ -17,7 +17,7 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
-from browser_navigation import navigate
+from browser_navigation import navigate, renderer_assets
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -488,6 +488,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-onboarding-data-") as director
                 "serviceRestartCredentialsPersist": True, "bootstrapPasswordNotRestored": True,
                 "ambiguousUsernameDenied401": True, "explicitWorkspaceBrowserLoginBound": True,
                 "accountMetadataAuditAndDatabaseOmitRawSecrets": True,
+                "rendererAssets": renderer_assets(restarted_owner_page),
                 "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS),
             }
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))

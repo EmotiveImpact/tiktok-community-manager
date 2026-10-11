@@ -138,7 +138,7 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
         createReadStream(media.path, { start, end }).on('error', () => response.destroy()).pipe(response); return;
       }
       if (url.pathname === '/v1/sessions') {
-        if (request.method === 'GET') { requireScope('sessions:read'); return send(response, 200, { sessions: store.listSessions(workspace, url.searchParams.get('limit') ?? 100, Number(url.searchParams.get('offset') ?? 0)) }); }
+        if (request.method === 'GET') { requireScope('sessions:read'); return send(response, 200, { sessions: store.listSessions(workspace, url.searchParams.get('limit') ?? 100, Number(url.searchParams.get('offset') ?? 0), { query: url.searchParams.get('q') ?? '' }) }); }
         if (request.method === 'POST') { requireScope('sessions:write'); return send(response, 201, store.createSession(workspace, await readBody(request))); }
       }
       if ((route = match(/^\/v1\/sessions\/([A-Za-z0-9_-]+)$/)) && request.method === 'GET') {
@@ -146,7 +146,7 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
       }
       if ((route = match(/^\/v1\/sessions\/([A-Za-z0-9_-]+)\/events$/))) {
         if (request.method === 'GET') {
-          requireScope('evidence:read'); const events = store.events(workspace, route[1], { after: Number(url.searchParams.get('after') ?? 0), limit: url.searchParams.get('limit') ?? 100 });
+          requireScope('evidence:read'); const events = store.events(workspace, route[1], { after: Number(url.searchParams.get('after') ?? 0), limit: url.searchParams.get('limit') ?? 100, query: url.searchParams.get('q') ?? '', kind: url.searchParams.get('kind') ?? 'all' });
           return send(response, 200, { events, nextAfter: events.at(-1)?.sequence ?? null });
         }
         if (request.method === 'POST') {

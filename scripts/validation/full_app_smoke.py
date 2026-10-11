@@ -16,7 +16,7 @@ from urllib.request import urlopen
 from urllib.parse import urlsplit
 
 from playwright.sync_api import expect, sync_playwright
-from browser_navigation import navigate
+from browser_navigation import navigate, renderer_assets
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -25,6 +25,116 @@ with socket.socket() as reservation:
 BASE = f"http://127.0.0.1:{PORT}"
 SCREENSHOTS = Path(os.environ.get("LIVELENS_SCREENSHOTS_DIR") or tempfile.mkdtemp(prefix="livelens-full-app-"))
 SCREENSHOTS.mkdir(parents=True, exist_ok=True)
+
+
+def private_alfred_setup(page, capture):
+    """Generate real setup artifacts without claiming a private-host connection."""
+    requests = []
+    page.on("request", lambda request: requests.append((request.method, request.url)))
+    before_jobs = page.request.get(BASE + "/v1/jobs").json()["jobs"]
+    navigate(page, "Agent connection", keyboard=True)
+    readiness = page.get_by_text("Connection not checked · verify on your private host", exact=True)
+    expect(readiness).to_be_visible()
+    session_choices = page.get_by_role("group", name="Sessions available to ALFRED", exact=True)
+    expect(session_choices.get_by_role("checkbox")).to_have_count(2)
+    assert not session_choices.locator("input:checked").count(), "ALFRED access must not select sessions automatically"
+    collection = page.get_by_role("checkbox", name=re.compile("^Include bounded recording controls"))
+    expect(collection).not_to_be_checked()
+    expect(page.locator(".ac-setup input[type=password]")).to_have_count(0)
+    page.get_by_role("button", name="Continue to private host", exact=True).focus()
+    page.keyboard.press("Enter")
+    expect(session_choices).to_have_attribute("aria-invalid", "true")
+    expect(session_choices).to_be_focused()
+    session_choices.get_by_role("checkbox", name=re.compile("^Fictional fixture")).check()
+    page.get_by_role("button", name="Continue to private host", exact=True).click()
+    expect(page.get_by_role("heading", name="Point to your private host.", exact=True)).to_be_focused()
+    values = {
+        "LiveLens API origin": "https://livelens.example.com",
+        "Existing ALFRED scope ID": "fictional_operator_scope",
+        "Private setup directory": "/tmp/fictional-private-livelens",
+        "Existing ALFRED data directory": "/tmp/fictional-alfred-data",
+    }
+    for label, value in values.items():
+        page.get_by_label(label, exact=True).fill(value)
+    origin = page.get_by_label("LiveLens API origin", exact=True)
+    origin.fill("https://livelens.example.com/private-path?fixture=query")
+    page.get_by_role("button", name="Generate setup recipe", exact=True).click()
+    expect(origin).to_have_attribute("aria-invalid", "true")
+    expect(origin).to_be_focused()
+    expect(page.get_by_role("heading", name="Your setup recipe is ready.", exact=True)).to_have_count(0)
+    origin.fill(values["LiveLens API origin"])
+    page.get_by_role("button", name="Generate setup recipe", exact=True).focus()
+    page.keyboard.press("Enter")
+    expect(page.get_by_role("heading", name="Your setup recipe is ready.", exact=True)).to_be_focused()
+    expect(page.get_by_text("Read access only", exact=True)).to_be_visible()
+    expect(page.get_by_text("Not installed", exact=True)).to_be_visible()
+    config = json.loads(page.get_by_label("livelens-connection.json", exact=True).input_value())
+    assert config["workspace"] == "fixture_workspace" and config["scope"] == values["Existing ALFRED scope ID"]
+    assert config["baseUrl"] == values["LiveLens API origin"] and config["tokenFile"] == values["Private setup directory"] + "/livelens.token"
+    assert config["sources"] == [{"id": "livelens-recordings", "sessionIds": ["fixture-conversation"]}]
+    assert "token" not in config and "password" not in config
+    with page.expect_download() as config_download:
+        page.get_by_role("button", name="Download file", exact=True).click()
+    assert config_download.value.suggested_filename == "livelens-connection.json"
+    assert json.loads(Path(config_download.value.path()).read_text()) == config
+    # The tab sequence is operable without a pointer and keeps truthful local
+    # discovery distinct from the explicit read that contacts LiveLens.
+    page.get_by_role("tab", name="Connection JSON", exact=True).focus()
+    page.keyboard.press("ArrowRight")
+    expect(page.get_by_role("tab", name="Test read JSON", exact=True)).to_be_focused()
+    expect(page.get_by_role("tab", name="Test read JSON", exact=True)).to_have_attribute("aria-selected", "true")
+    assert json.loads(page.get_by_label("livelens-read.json", exact=True).input_value()) == {"operation": "sessions", "parameters": {"sourceId": "livelens-recordings"}}
+    page.keyboard.press("ArrowRight")
+    expect(page.get_by_role("tab", name="Host commands", exact=True)).to_be_focused()
+    commands = page.get_by_label("livelens-setup.sh", exact=True).input_value()
+    assert "--tool discover" in commands and "--tool read --tool-input" in commands
+    assert "--allow-livelens-collection" not in commands and "chmod 600" in commands
+    assert "--data-dir '/tmp/fictional-alfred-data'" in commands
+    with page.expect_download() as recipe_download:
+        page.get_by_role("button", name="Download complete recipe", exact=True).click()
+    assert recipe_download.value.suggested_filename == "livelens-alfred-setup.md"
+    recipe = Path(recipe_download.value.path()).read_text()
+    assert "no installation or network verification has run" in recipe
+    assert "read-only installation" in recipe and values["Private setup directory"] in recipe
+    expect(readiness).to_be_visible()
+    capture("12-desktop-private-alfred-recipe.png")
+
+    # Collection changes require a separate explicit choice and a real
+    # configured source; generating those instructions still starts no job.
+    page.get_by_role("button", name="Back", exact=True).click()
+    page.get_by_role("button", name="Back", exact=True).click()
+    collection.check()
+    recorder_source = page.get_by_role("combobox", name="Configured recorder source", exact=True)
+    expect(recorder_source).to_be_enabled()
+    recorder_source.select_option("fixture-media")
+    page.get_by_label("Maximum recording seconds", exact=True).fill("7")
+    page.set_viewport_size({"width": 390, "height": 844})
+    capture("13-phone-private-alfred-access.png")
+    page.get_by_role("button", name="Continue to private host", exact=True).click()
+    page.get_by_role("button", name="Generate setup recipe", exact=True).click()
+    page.get_by_role("tab", name="Connection JSON", exact=True).click()
+    bounded = json.loads(page.get_by_label("livelens-connection.json", exact=True).input_value())
+    assert bounded["sources"][0]["recorderSourceId"] == "fixture-media" and bounded["maxDurationSeconds"] == 7
+    page.get_by_role("tab", name="Host commands", exact=True).click()
+    assert "--allow-livelens-collection" in page.get_by_label("livelens-setup.sh", exact=True).input_value()
+    expect(page.get_by_text("Separate collection grant requested", exact=True)).to_be_visible()
+    expect(readiness).to_be_visible()
+    assert page.request.get(BASE + "/v1/jobs").json()["jobs"] == before_jobs
+    stored = page.evaluate("JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } })")
+    assert all(value not in stored and value not in page.url for value in values.values()), "Private setup inputs must not persist in browser storage or URL"
+    assert all(method == "GET" for method, _ in requests), "Recipe generation must make no installation, credential or collection writes"
+    assert all(urlsplit(url).netloc == urlsplit(BASE).netloc for _, url in requests), "The entered private service endpoint must not be fetched from the browser"
+    page.reload(wait_until="networkidle")
+    expect(session_choices.get_by_role("checkbox")).to_have_count(2)
+    assert not session_choices.locator("input:checked").count()
+    expect(collection).not_to_be_checked()
+    expect(readiness).to_be_visible()
+    page.set_viewport_size({"width": 1440, "height": 1000})
+    return {"privateAlfredRecipeUsesExactSelectedSessionAndReadOnlyDefault": True,
+            "privateAlfredRecipeActualDownloadsAndKeyboardTabs": True,
+            "privateAlfredRecipeExplicitSourceAndBoundedCollectionOption": True,
+            "privateAlfredRecipeNeverInstallsCallsEndpointOrClaimsConnection": True,
+            "privateAlfredSetupInputsNotStoredOrPutInUrl": True}
 
 
 def launch(directory):
@@ -599,6 +709,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 expect(page.locator(".ll-context .ll-id")).to_have_text(MARKER_ID)
                 expect(page.locator(".ll-context blockquote")).to_have_text(marker_text)
                 page.wait_for_function('offset => { const video = document.querySelector("video"); return !video.seeking && video.readyState >= 2 && Math.abs(video.currentTime - offset) < .1; }', arg=marker_offset)
+                alfred_receipt = private_alfred_setup(page, capture)
                 assert not errors, errors
                 receipt = {
                     "fixture": True,
@@ -631,6 +742,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                     "jsonMarkdownHtmlAndActualPdf": True,
                     "workspaceMembersAndAudit": True,
                     "serviceRestartReopen": True,
+                    **alfred_receipt,
+                    "rendererAssets": renderer_assets(page),
                     "uncaughtPageErrors": len(errors),
                     "screenshots": str(SCREENSHOTS),
                 }

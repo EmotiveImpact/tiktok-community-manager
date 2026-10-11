@@ -1,0 +1,51 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "captureFirstDefaultHome": true,
+  "publicTikTokConfiguredOnlyNoPolling": true,
+  "primaryNavigationAndCollapsedSpecialistTools": true,
+  "specialistDeepLinkAndKeyboardPopoverReopen": true,
+  "specialistPopoverClosesOnSelectionEscapeAndOutsideClick": true,
+  "boundedFixtureCheckWithoutRecording": true,
+  "boundedWatchWithoutHiddenCapture": true,
+  "delayedCheckReceiptDoesNotLeakToAnotherAccount": true,
+  "actualFixtureCaptureAndVerifiedMediaHashRange": true,
+  "actualVideoPlaybackAndSeek": true,
+  "capturedChatAndSeparateClocks": true,
+  "stopWatchKeepsIndependentCapture": true,
+  "explicitRecordingStop": true,
+  "recentRecordingKeyboardReplay": true,
+  "originalContextReopened": true,
+  "replayBindsRecordingSourceAndHidesCollectionControls": true,
+  "keyboardBackToMonitorRestoresRecordingSourceControls": true,
+  "twoSameSessionRecordingsReplayExactJobAndDoNotCross": true,
+  "realFixtureChatBeyond100DisplayedAndOriginalContextOpened": true,
+  "desktop1440AndPhone390": true,
+  "readOnlyUiAndActualWriteDenied403": true,
+  "phoneNavigationFocusTrapEscapeAndDestinationFocus": true,
+  "readOnlySavedMomentsOriginalReopenAndWriteDenied403": true,
+  "wholeRecordingKeyboardRangeCrossesActualSegments": true,
+  "recordingTransportSkipBoundsAndRatePreserved": true,
+  "recordingTransportContinuesOnlyWithinSelectedJob": true,
+  "providerOnlyTimestampNeverSeeksMedia": true,
+  "observedBetweenRecordingGapRemainsUncovered": true,
+  "wholeSessionSearchBeyond100AndExactContext": true,
+  "queryAndKindPreservedAcrossForwardBackwardPages": true,
+  "kindChangeResetsCursor": true,
+  "lateSearchResponseCannotReplaceCurrentQuery": true,
+  "offPageSavedMomentKeepsOriginalClockDecodedFrameWithoutRepeatedReads": true,
+  "exact100EventAnd200SessionTerminalPagesPreserveEarlierMatches": true,
+  "wholeLibrarySearchBeyond200AndExactSession": true,
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:4479/app/assets/index-BUy4-zTR.css",
+      "sha256": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe"
+    },
+    {
+      "url": "http://127.0.0.1:4479/app/assets/index-DmrWQN-8.js",
+      "sha256": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+    }
+  ],
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-operator-final-monitor"
+}

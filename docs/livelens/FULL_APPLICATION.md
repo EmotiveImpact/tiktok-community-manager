@@ -36,7 +36,8 @@ from the standalone gateway and needs its own actual application receipt.
 | Live monitor | Default selected-account/source watchlist; explicit bounded Check/Watch and Record/Stop; availability at last check; delayed verified recording preview with captured chat, active-job controls and recent recordings. |
 | Review desk | Secondary retained-evidence, pending-signal and draft-finding inbox with exact support/counterevidence context, scoped acknowledgement and source replay. |
 | Sources/capture | Selected public TikTok accounts or permitted HTTPS media, explicit bounded schedules, two concurrent recorder slots, start/stop, leases, retries, quota admission and capture gaps. Configuring a source alone starts no polling. |
-| Replay | Verified segments, continuous playback, evidence seek/context, chat/captions/transcripts, coverage labels, bookmarks and attribution corrections/history. Refresh preserves playback. |
+| Replay | Verified segments, per-recording retained-time scrubber, speed/skip controls and continuous playback within the selected job; collector-only evidence seek with gap/overlap labels. Whole-conversation server search/kind filters with forward/back pages, stable saved originals/thumbnails, attribution corrections/history. Refresh preserves playback. |
+| Session library | Whole-workspace title/account search before pagination; With video remains explicitly bounded to loaded receipts/current page. |
 | Media archive | Explicit verified-segment snapshots, encrypted configured storage, manifest/hash readback, durable retries and exact-original restoration. Missing/damaged media refuses replay until restoration verifies it. |
 | Accounts | Literal observed/asserted account search and captured cross-session activity with source links. No universal guest locator is claimed. |
 | Investigations | Source-linked notes, support/counterevidence, findings, immutable review history, stale-edit refusal and literal cross-session comparisons. |
@@ -44,7 +45,7 @@ from the standalone gateway and needs its own actual application receipt.
 | Protection | Workspace missions select a protected account, retained sessions (with selected-source references) and contextual literal rules; explicit idempotent runs create in-app signals with surrounding context/gaps and retained reviews. |
 | Reports | Editable brief, dependent-text redaction, JSON/Markdown/HTML and actual offline PDF when configured; originals and hash/source/media receipts are preserved. |
 | Workspace | Optional persisted accounts, expiring single-use invitations, password reset/revocation; independently enforced scopes/roles/case grants, revocation, usage/reservations/limits, explicit retention preview/apply and hash-chained audit. |
-| Agent | Standalone gateway plus actual optional ALFRED authenticated tools/CLI in draft PR #20; separately granted reads, exact approved bounded collection and independent model-egress policy. Fixture integration is tested; production installation and automatic memory acceptance are not claimed. |
+| Agent | Guided private setup: explicit session IDs, read-only default, bounded collection opt-in, validated JSON/quoted commands/downloads. Service availability is separate from private runtime registration. Standalone gateway plus actual optional ALFRED authenticated tools/CLI in draft PR #20; separately granted reads, exact approved bounded collection and independent model-egress policy. Fixture integration is tested; production installation and automatic memory acceptance are not claimed. |
 
 ## Optional engines and storage
 

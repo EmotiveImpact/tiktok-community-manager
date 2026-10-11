@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-11",
+  "suite": "All intelligence service test files",
+  "result": "passed",
+  "tests": 130,
+  "passed": 130,
+  "failed": 0,
+  "skipped": 0,
+  "cancelled": 0,
+  "durationMs": 58667.941181,
+  "optionalEngines": {
+    "postgresql": "Actual local PostgreSQL 17.6, cached postgres:17.6-bookworm, loopback tmpfs fixture",
+    "pdf": "Actual Chromium offline PDF via /workspace/.venv-speech/bin/python and /usr/bin/chromium",
+    "speech": "Actual pinned PocketSphinx CPU reference recognition",
+    "media": "Actual FFmpeg fixture recording and verified segments"
+  },
+  "sourceHashes": {
+    "services/intelligence/src/store.mjs": "5106601ccb873c5510437be76eb8e47795a86cabb800ab5119ef9c5c40d7a4c1",
+    "services/intelligence/src/server.mjs": "c8e1e11f5fe524cc2bdae912f60b47274c4c1ba1af7f58afd8a40e1007f3834f",
+    "services/intelligence/test/session-search.test.mjs": "b98f77ee52641897cbc8152686eb4eeded5f3bd75355417139f82f820a099dce"
+  },
+  "logSha256": "77a93d3d706143a84c85c29d89761d5d48ef770ff667c1539c18529f9643aee9",
+  "command": "LIVELENS_TEST_PDF_PYTHON=/workspace/.venv-speech/bin/python LIVELENS_TEST_PDF_CHROMIUM=/usr/bin/chromium LIVELENS_SPEECH_PYTHON=/workspace/.venv-speech/bin/python [private PostgreSQL test URL injected] node --test services/intelligence/test/*.test.mjs",
+  "fixtureCleanup": "Dedicated PostgreSQL container stopped; private credential file removed. Other fixtures preserved.",
+  "limits": [
+    "No external LIVE or customer credentials",
+    "PostgreSQL pilot schema, not production RLS/distributed queues",
+    "Full ALFRED suite not rerun for this LiveLens change"
+  ]
+}

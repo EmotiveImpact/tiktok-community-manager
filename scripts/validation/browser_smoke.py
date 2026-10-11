@@ -11,7 +11,7 @@ import traceback
 from contextlib import contextmanager
 from urllib.request import urlopen
 from playwright.sync_api import sync_playwright
-from browser_navigation import navigate
+from browser_navigation import navigate, renderer_assets
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as sock:
@@ -182,8 +182,10 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             page.locator('video').wait_for()
             page.wait_for_function('() => document.querySelector("video").readyState >= 1')
             assert not errors, errors
+            assets = renderer_assets(page)
             browser.close()
             receipt = {'fixture': True, 'desktopAndPhone': True, 'keyboardNavigation': True, 'recordingPlaybackAndSeek': True, 'accountSearch': True, 'caseAndBothExports': True, 'serviceRestartReopen': True, 'uncaughtPageErrors': len(errors), 'screenshots': str(SCREENSHOTS)}
+            receipt['rendererAssets'] = assets
             (SCREENSHOTS / 'receipt.json').write_text(json.dumps(receipt, indent=2))
             print(json.dumps(receipt))
     except Exception as error:

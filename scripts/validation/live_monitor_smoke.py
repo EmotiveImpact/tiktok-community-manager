@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
-from browser_navigation import navigate
+from browser_navigation import navigate, renderer_assets
 
 ROOT = Path(__file__).resolve().parents[2]
 PORT = int(os.environ.get("LIVELENS_MONITOR_TEST_PORT", "4479"))
@@ -125,6 +125,314 @@ def playback(page):
     page.locator("video").evaluate("async video => { await video.play(); }")
     page.wait_for_function("() => document.querySelector('video').currentTime > .8")
     page.locator("video").evaluate("video => video.pause()")
+
+
+def recording_transport(page, csrf, first_job, second_job):
+    """Operate the whole-recording controls over actual retained MP4 segments."""
+    page.set_viewport_size({"width": 1440, "height": 1024})
+    navigate(page, "Session library")
+    page.get_by_role("region", name="Conversation and recording library", exact=True).get_by_role("button", name=re.compile("^Fictional fixture")).click()
+    page.get_by_role("heading", name="Captured timeline", exact=True).wait_for()
+    recording = page.get_by_label("Recording", exact=True)
+    expect(recording).to_be_visible()
+    assert set(recording.locator("option").evaluate_all("options => options.map(option => option.value)")) == {first_job["id"], second_job["id"]}
+    recording.select_option(second_job["id"])
+    video = page.locator("video")
+    position = page.get_by_role("slider", name="Recording position", exact=True)
+    speed = page.get_by_label("Playback speed", exact=True)
+    segments = sorted(second_job["segments"], key=lambda segment: (segment["startedAtMs"], segment["id"]))
+    assert len(segments) >= 2, "The actual four-second recording must contain multiple verified segments"
+    total_ms = sum(segment["durationMs"] for segment in segments)
+    expect(position).to_have_attribute("min", "0")
+    expect(position).to_have_attribute("max", str(total_ms))
+    expect(page.get_by_text("Retained time · gaps excluded", exact=True)).to_be_visible()
+    segment_select = page.get_by_label("Media segment", exact=True)
+    assert set(segment_select.locator("option").evaluate_all("options => options.map(option => option.value)")) == {second_job["id"] + "/" + segment["id"] for segment in segments}
+
+    # Native range keyboard events must cross segment boundaries and seek the
+    # exact retained offset, rather than reset time to the selected file.
+    position.focus()
+    page.keyboard.press("End")
+    target_ms = float(position.input_value())
+    preceding_ms = sum(segment["durationMs"] for segment in segments[:-1])
+    assert preceding_ms < target_ms <= total_ms
+    expected_offset = (target_ms - preceding_ms) / 1000
+    last_path = "/v1/media/" + second_job["id"] + "/" + segments[-1]["id"]
+    page.wait_for_function("""target => { const video = document.querySelector('video'); return video?.getAttribute('src') === target.path && video.readyState >= 2 && !video.seeking && Math.abs(video.currentTime - target.offset) < .15; }""", arg={"path": last_path, "offset": expected_offset})
+    speed.select_option("1.5")
+    assert video.evaluate("video => video.playbackRate") == 1.5
+    page.get_by_role("button", name="Back 15 seconds", exact=True).focus()
+    page.keyboard.press("Enter")
+    first_path = "/v1/media/" + second_job["id"] + "/" + segments[0]["id"]
+    page.wait_for_function("""path => { const video = document.querySelector('video'); return video?.getAttribute('src') === path && video.readyState >= 2 && !video.seeking && video.currentTime < .15 && video.playbackRate === 1.5; }""", arg=first_path)
+    assert float(position.input_value()) < 150
+    page.get_by_role("button", name="Forward 15 seconds", exact=True).click()
+    page.wait_for_function("""path => { const video = document.querySelector('video'); return video?.getAttribute('src') === path && video.readyState >= 2 && !video.seeking && video.currentTime >= video.duration - .25; }""", arg=last_path)
+    assert total_ms - float(position.input_value()) < 250
+    assert recording.input_value() == second_job["id"]
+
+    # Automatic continuation stays in this selected recording and preserves
+    # rate. End-of-recording does not silently enter another same-session job.
+    segment_select.select_option(second_job["id"] + "/" + segments[0]["id"])
+    page.wait_for_function("path => document.querySelector('video')?.getAttribute('src') === path && document.querySelector('video').readyState >= 2", arg=first_path)
+    video.evaluate("async video => { video.muted = true; video.currentTime = Math.max(0, video.duration - .15); await video.play(); }")
+    second_path = "/v1/media/" + second_job["id"] + "/" + segments[1]["id"]
+    page.wait_for_function("path => { const video = document.querySelector('video'); return video?.getAttribute('src') === path && video.readyState >= 2 && video.currentTime > .05 && !video.paused && video.playbackRate === 1.5; }", arg=second_path)
+    video.evaluate("video => video.pause()")
+    segment_select.select_option(second_job["id"] + "/" + segments[-1]["id"])
+    page.wait_for_function("path => document.querySelector('video')?.getAttribute('src') === path && document.querySelector('video').readyState >= 2", arg=last_path)
+    video.evaluate("async video => { video.currentTime = Math.max(0, video.duration - .15); await video.play(); }")
+    page.wait_for_function("() => document.querySelector('video').ended")
+    assert video.get_attribute("src") == last_path and recording.input_value() == second_job["id"]
+    speed.select_option("1")
+
+    # A provider timestamp inside a retained interval is not a collector/media
+    # alignment. A real wall-clock gap between jobs must also stay uncovered.
+    first_end = max(segment["startedAtMs"] + segment["durationMs"] for segment in first_job["segments"])
+    second_start = segments[0]["startedAtMs"]
+    assert second_start > first_end, "The separately requested fixture recordings must have an observed wall-clock gap"
+    seeded = request(page, f"/v1/sessions/{second_job['sessionId']}/events", {"events": [
+        {"source": {"adapter": "operator-transport-fixture", "eventId": "provider-only"}, "kind": "chat", "text": "Provider clock only: no collector media alignment.", "sourceTimestampMs": segments[0]["startedAtMs"] + 700, "raw": {"fixture": True}},
+        {"source": {"adapter": "operator-transport-fixture", "eventId": "between-recordings"}, "kind": "gap", "text": "Observed gap between separately retained recordings.", "capturedAtMs": first_end + (second_start - first_end) // 2, "raw": {"fixture": True}},
+    ]}, csrf)
+    assert seeded.status == 200
+    source_only, gap = [result["evidence"] for result in seeded.json()["results"]]
+    assert source_only["capturedAtMs"] is None and source_only["sourceTimestampMs"] is not None
+    timeline = page.get_by_role("region", name="Captured timeline", exact=True)
+    query = timeline.get_by_label("Filter captured timeline", exact=True)
+    position.focus()
+    page.keyboard.press("Home")
+    page.wait_for_function("path => document.querySelector('video')?.getAttribute('src') === path && !document.querySelector('video').seeking && document.querySelector('video').currentTime < .1", arg=first_path)
+    for evidence, warning in [
+        (source_only, "This evidence has no collector timestamp for media alignment."),
+        (gap, "No retained segment covers this evidence's collector timestamp."),
+    ]:
+        query.fill(evidence["text"])
+        row = timeline.locator(".ll-evidence").filter(has_text=evidence["text"])
+        expect(row).to_have_count(1)
+        row.focus()
+        page.keyboard.press("Enter")
+        expect(page.locator(".ll-context .ll-id")).to_have_text(evidence["id"])
+        expect(page.get_by_text(warning, exact=True)).to_be_visible()
+        assert video.get_attribute("src") == first_path and video.evaluate("video => video.currentTime") < .1
+    capture(page, "09a-desktop-recording-transport.png", viewport=True)
+    return {"wholeRecordingKeyboardRangeCrossesActualSegments": True,
+            "recordingTransportSkipBoundsAndRatePreserved": True,
+            "recordingTransportContinuesOnlyWithinSelectedJob": True,
+            "providerOnlyTimestampNeverSeeksMedia": True,
+            "observedBetweenRecordingGapRemainsUncovered": True}
+
+
+def whole_session_search(page, csrf, segment, last_event, marker):
+    """Search actual retained data beyond loaded pages, without response mocks."""
+    session_id = last_event["sessionId"]
+    event_path = f"/v1/sessions/{session_id}/events"
+    caption_text = "Fictional fixture chat burst caption: this is labelled caption evidence."
+    seeded = request(page, event_path, {"events": [{
+        "source": {"adapter": "operator-search-fixture", "eventId": "caption-match"},
+        "kind": "caption", "text": caption_text,
+        "capturedAtMs": segment["startedAtMs"] + 250,
+        "raw": {"fixture": True},
+    }]}, csrf)
+    assert seeded.status == 200
+    caption = seeded.json()["results"][0]["evidence"]
+    assert caption["sequence"] > 100 and last_event["sequence"] > 100
+    off_page_bookmark = request(page, "/v1/bookmarks", {"evidenceId": last_event["id"], "label": last_event["text"][:120]}, csrf)
+    assert off_page_bookmark.status == 201
+    original_reads = {marker["id"]: [], last_event["id"]: []}
+    def observe_original_read(http_request):
+        for evidence_id, reads in original_reads.items():
+            if urlsplit(http_request.url).path == "/v1/evidence/" + evidence_id and http_request.method == "GET":
+                reads.append(http_request.url)
+    page.on("request", observe_original_read)
+
+    page.set_viewport_size({"width": 1440, "height": 1024})
+    navigate(page, "Session library")
+    library = page.get_by_role("region", name="Conversation and recording library", exact=True)
+    library.get_by_role("button", name=re.compile("^Fictional fixture")).click()
+    timeline = page.get_by_role("region", name="Captured timeline", exact=True)
+    query = timeline.get_by_label("Filter captured timeline", exact=True)
+    rows = timeline.locator(".ll-evidence")
+    # This new bookmark has never been in this panel's initial event page or
+    # selected context. Hydration must read the real scoped original once.
+    off_page_moment = page.get_by_role("region", name="Saved moments", exact=True).locator('.ll-saved-moment[data-evidence-id="' + last_event["id"] + '"]')
+    expect(off_page_moment.get_by_text("Capture time", exact=True)).to_be_visible()
+    expect(off_page_moment.locator("strong")).to_have_text(last_event["text"][:120])
+    expect(off_page_moment.locator("time")).to_have_attribute("datetime", page.evaluate("ms => new Date(ms).toISOString()", last_event["capturedAtMs"]))
+    expect(off_page_moment.locator("img")).to_have_count(1, timeout=10000)
+    page.wait_for_function("""id => { const image = document.querySelector('.ll-saved-moment[data-evidence-id="' + id + '"] img'); return image?.complete && image.naturalWidth > 0; }""", arg=last_event["id"])
+    assert len(original_reads[last_event["id"]]) == 1, "An initially off-page bookmark must hydrate its actual original once"
+
+    def response_for(value, kind=None, after=None):
+        def matches(response):
+            parsed = urlsplit(response.url)
+            params = parse_qs(parsed.query)
+            return parsed.path == event_path and response.request.method == "GET" and params.get("q", [""]) == [value] and (kind is None or params.get("kind", ["all"]) == [kind]) and (after is None or params.get("after", ["0"]) == [str(after)])
+        return matches
+
+    # An exact match retained after sequence 100 must appear without asking the
+    # operator to page through unrelated earlier evidence.
+    with page.expect_response(response_for("Fictional fixture chat burst 124")) as found:
+        query.fill("Fictional fixture chat burst 124")
+    assert found.value.status == 200
+    assert [event["id"] for event in found.value.json()["events"]] == [last_event["id"]]
+    expect(rows).to_have_count(1)
+    rows.first.focus()
+    page.keyboard.press("Enter")
+    expect(page.locator(".ll-context .ll-id")).to_have_text(last_event["id"])
+    expect(page.locator(".ll-context blockquote")).to_have_text(last_event["text"])
+    saved_marker = page.get_by_role("region", name="Saved moments", exact=True).locator('.ll-saved-moment[data-evidence-id="' + marker["id"] + '"]')
+    expect(saved_marker.locator("strong")).to_have_text(marker["text"][:120])
+    expect(saved_marker.get_by_text("Capture time", exact=True)).to_be_visible()
+    expect(saved_marker.locator("time")).to_have_attribute("datetime", page.evaluate("ms => new Date(ms).toISOString()", marker["capturedAtMs"]))
+    expect(saved_marker.locator("img")).to_have_count(1, timeout=10000)
+    page.wait_for_function("""id => { const image = document.querySelector('.ll-saved-moment[data-evidence-id="' + id + '"] img'); return image?.complete && image.naturalWidth > 0; }""", arg=marker["id"])
+
+    timeline.get_by_role("button", name="Chat", exact=True).click()
+    with page.expect_response(response_for("Fictional fixture chat burst", "chat", 0)) as first_page:
+        query.fill("Fictional fixture chat burst")
+    first_events = first_page.value.json()["events"]
+    assert first_page.value.status == 200 and len(first_events) == 100
+    assert all(event["kind"] == "chat" for event in first_events)
+    expect(rows).to_have_count(100)
+    with page.expect_response(response_for("Fictional fixture chat burst", "chat", first_page.value.json()["nextAfter"])) as next_page:
+        timeline.get_by_role("button", name="Next 100 events", exact=True).click()
+    remaining = next_page.value.json()["events"]
+    assert next_page.value.status == 200 and len(remaining) == 25
+    assert remaining[-1]["id"] == last_event["id"]
+    assert not ({event["id"] for event in first_events} & {event["id"] for event in remaining})
+    expect(rows).to_have_count(25)
+    with page.expect_response(response_for("Fictional fixture chat burst", "chat", 0)) as previous_page:
+        timeline.get_by_role("button", name="Previous events", exact=True).click()
+    assert previous_page.value.json()["events"] == first_events
+    expect(rows).to_have_count(100)
+    with page.expect_response(response_for("Fictional fixture chat burst", "caption", 0)) as captions:
+        timeline.get_by_role("button", name="Captions", exact=True).click()
+    assert [event["id"] for event in captions.value.json()["events"]] == [caption["id"]]
+    expect(rows).to_have_count(1)
+    expect(rows.first).to_contain_text(caption_text)
+    expect(timeline.get_by_role("button", name="Previous events", exact=True)).to_have_count(0)
+    expect(timeline.get_by_role("button", name="Next 100 events", exact=True)).to_have_count(0)
+
+    # Exactly one full page still offers a bounded next request. An empty
+    # terminal page must not erase the earlier matches or claim none exist.
+    timeline.get_by_role("button", name="Chat", exact=True).click()
+    with page.expect_response(response_for("Fictional fixture chat burst 0", "chat", 0)) as exact_page:
+        query.fill("Fictional fixture chat burst 0")
+    exact_events = exact_page.value.json()["events"]
+    assert len(exact_events) == 100
+    expect(rows).to_have_count(100)
+    with page.expect_response(response_for("Fictional fixture chat burst 0", "chat", exact_page.value.json()["nextAfter"])) as terminal_page:
+        timeline.get_by_role("button", name="Next 100 events", exact=True).click()
+    assert terminal_page.value.status == 200 and terminal_page.value.json() == {"events": [], "nextAfter": None}
+    expect(rows).to_have_count(0)
+    expect(timeline.get_by_role("heading", name="End of these results", exact=True)).to_be_visible()
+    expect(timeline.get_by_text("There are no later matching records. You can return to the previous page.", exact=True)).to_be_visible()
+    expect(timeline.get_by_role("button", name="Next 100 events", exact=True)).to_be_disabled()
+    with page.expect_response(response_for("Fictional fixture chat burst 0", "chat", 0)) as earlier_results:
+        timeline.get_by_role("button", name="Previous events", exact=True).click()
+    assert earlier_results.value.json()["events"] == exact_events
+    expect(rows).to_have_count(100)
+    with page.expect_response(response_for("Fictional fixture chat burst", "chat", 0)):
+        query.fill("Fictional fixture chat burst")
+    expect(rows).to_have_count(100)
+
+    # Hold one real server response until a newer search has completed. The
+    # late response must never replace the operator's current filtered result.
+    timeline.get_by_role("button", name="Chat", exact=True).click()
+    expect(rows).to_have_count(100)
+    held = []
+    delayed_query = "Fictional fixture chat burst 122"
+    final_query = "Fictional fixture chat burst 123"
+
+    def delay_real_response(route):
+        parsed = urlsplit(route.request.url)
+        if parsed.path == event_path and parse_qs(parsed.query).get("q") == [delayed_query]:
+            held.append((route, route.fetch()))
+        else:
+            route.continue_()
+
+    pattern = "**/v1/sessions/*/events?*"
+    page.route(pattern, delay_real_response)
+    try:
+        query.fill(delayed_query)
+        expect(rows).to_have_count(0)
+        deadline = time.monotonic() + 5
+        while not held and time.monotonic() < deadline:
+            page.wait_for_timeout(50)
+        assert held, "The delayed query must reach the actual server"
+        with page.expect_response(response_for(final_query, "chat", 0)) as latest:
+            query.fill(final_query)
+        assert latest.value.status == 200 and len(latest.value.json()["events"]) == 1
+        expect(rows).to_have_count(1)
+        expect(rows.first).to_contain_text(final_query)
+        with page.expect_response(response_for(delayed_query)):
+            held[0][0].fulfill(response=held[0][1])
+        page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+        expect(query).to_have_value(final_query)
+        expect(rows).to_have_count(1)
+        expect(rows.first).to_contain_text(final_query)
+    finally:
+        for route, response in held[1:]:
+            route.fulfill(response=response)
+        page.unroute(pattern, delay_real_response)
+    expect(saved_marker.get_by_text("Capture time", exact=True)).to_be_visible()
+    expect(saved_marker.locator("img")).to_have_count(1)
+    with page.expect_response(response_for(final_query, "chat", 0)):
+        page.get_by_role("button", name="Refresh records", exact=True).click()
+    expect(rows).to_have_count(1)
+    expect(saved_marker.get_by_text("Capture time", exact=True)).to_be_visible()
+    assert len(original_reads[last_event["id"]]) == 1 and len(original_reads[marker["id"]]) <= 1, "A bookmark outside the event page must not refetch its original on every query or parent refresh"
+    page.remove_listener("request", observe_original_read)
+    capture(page, "09-desktop-whole-session-search.png", viewport=True)
+
+    # Create newer conversations only after the original journey's source and
+    # permissions assertions. Existing reference data now falls off page one.
+    newer_start = int(time.time() * 1000)
+    for index in range(201):
+        created = request(page, "/v1/sessions", {
+            "id": f"operator-search-fixture-{index:03d}", "platform": "fixture",
+            "account": "fictional_search_account", "title": f"Generated search fixture {index:03d}" if index < 200 else "One additional newer fixture conversation",
+            "sourceUrl": "https://example.invalid/search-fixture", "startedAtMs": newer_start + index,
+        }, csrf)
+        assert created.status == 201
+    initial = read(page, "/v1/sessions?limit=200&offset=0")["sessions"]
+    assert len(initial) == 200 and all(item["id"] != "fixture-reference" for item in initial)
+    navigate(page, "Session library")
+    page.get_by_role("button", name="Refresh records", exact=True).click()
+    expect(library.locator(".rl-row")).to_have_count(200)
+    expect(library.locator(".rl-row").filter(has_text="Reference fixture")).to_have_count(0)
+    with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/sessions" and parse_qs(urlsplit(response.url).query).get("q") == ["Generated search fixture"]) as exact_library_page:
+        library.get_by_label("Filter session library", exact=True).fill("Generated search fixture")
+    assert len(exact_library_page.value.json()["sessions"]) == 200
+    expect(library.locator(".rl-row")).to_have_count(200)
+    with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/sessions" and parse_qs(urlsplit(response.url).query).get("q") == ["Generated search fixture"] and parse_qs(urlsplit(response.url).query).get("offset") == ["200"]) as library_terminal:
+        page.get_by_role("button", name="Next 200 sessions", exact=True).click()
+    assert library_terminal.value.status == 200 and library_terminal.value.json()["sessions"] == []
+    expect(library.get_by_role("heading", name="No matches on this page", exact=True)).to_be_visible()
+    expect(library.get_by_text("Try another phrase, or use the page controls to return to earlier matches.", exact=True)).to_be_visible()
+    expect(page.get_by_role("button", name="Previous sessions", exact=True)).to_be_enabled()
+    with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/sessions" and parse_qs(urlsplit(response.url).query).get("q") == ["Generated search fixture"] and parse_qs(urlsplit(response.url).query).get("offset") == ["0"]) as earlier_sessions:
+        page.get_by_role("button", name="Previous sessions", exact=True).click()
+    assert earlier_sessions.value.json() == exact_library_page.value.json()
+    expect(library.locator(".rl-row")).to_have_count(200)
+    with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/sessions" and parse_qs(urlsplit(response.url).query).get("q") == ["Reference fixture"]) as across_library:
+        library.get_by_label("Filter session library", exact=True).fill("Reference fixture")
+    assert across_library.value.status == 200
+    assert [item["id"] for item in across_library.value.json()["sessions"]] == ["fixture-reference"]
+    expect(library.locator(".rl-row")).to_have_count(1)
+    expect(library.locator(".rl-row strong")).to_contain_text("Reference fixture")
+    library.locator(".rl-row").focus()
+    page.keyboard.press("Enter")
+    expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
+    expect(timeline.locator(".ll-evidence")).to_contain_text("A different session can contain context without proving a relationship.")
+    expect(page.locator("video")).to_have_count(0)
+    return {"wholeSessionSearchBeyond100AndExactContext": True,
+            "queryAndKindPreservedAcrossForwardBackwardPages": True,
+            "kindChangeResetsCursor": True, "lateSearchResponseCannotReplaceCurrentQuery": True,
+            "offPageSavedMomentKeepsOriginalClockDecodedFrameWithoutRepeatedReads": True,
+            "exact100EventAnd200SessionTerminalPagesPreserveEarlierMatches": True,
+            "wholeLibrarySearchBeyond200AndExactSession": True}
 
 
 @contextmanager
@@ -540,6 +848,9 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             assert len(schedules) == 2 and all(item["state"] == "stopped" for item in schedules)
             assert not any(item["sourceId"] == public_source["id"] for item in schedules), "The configured public account must never be polled"
             assert len(read(page, "/v1/sources")["sources"]) == 2
+            state["page"] = page
+            transport_receipt = recording_transport(page, csrf, stopped_job, second_job)
+            search_receipt = whole_session_search(page, csrf, segment, last_event, marker)
             assert not errors, "Live monitor must have zero uncaught page errors"
             (SCREENSHOTS / "recording-receipt.json").write_text(json.dumps(stopped_job, indent=2))
             receipt = {
@@ -561,6 +872,9 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 "desktop1440AndPhone390": True, "readOnlyUiAndActualWriteDenied403": True,
                 "phoneNavigationFocusTrapEscapeAndDestinationFocus": True,
                 "readOnlySavedMomentsOriginalReopenAndWriteDenied403": True,
+                **transport_receipt,
+                **search_receipt,
+                "rendererAssets": renderer_assets(page),
                 "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS),
             }
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))

@@ -1,0 +1,97 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "privateAlfredHostInstalledOrConnected": false,
+  "passedJourneys": 5,
+  "failedJourneys": 0,
+  "maxConcurrentBrowserJourneys": 2,
+  "rendererAssets": {
+    "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337",
+    "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe"
+  },
+  "journeys": [
+    {
+      "journey": "monitor",
+      "passed": true,
+      "receipt": "/tmp/livelens-operator-final-monitor/receipt.json",
+      "receiptSha256": "99d8102f6da0804f0bcfa87389f83120689ae5d1c0d8308655b9391ade21bf78",
+      "screenshots": 10,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+      },
+      "publishedReceipt": "operator-workflow-monitor-validation.json"
+    },
+    {
+      "journey": "full",
+      "passed": true,
+      "receipt": "/tmp/livelens-operator-final-full/receipt.json",
+      "receiptSha256": "196a8827bade5567ce1a0badfa2d524fb6800cb0c95a595e49971fd879ebcd32",
+      "screenshots": 16,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+      },
+      "publishedReceipt": "operator-workflow-full-validation.json"
+    },
+    {
+      "journey": "original",
+      "passed": true,
+      "receipt": "/tmp/livelens-operator-final-original/receipt.json",
+      "receiptSha256": "c95d79d252e5f92ee209009977ca412d6cdc3b3d34c4e5541bce915a68a39de7",
+      "screenshots": 2,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+      },
+      "publishedReceipt": "operator-workflow-original-validation.json"
+    },
+    {
+      "journey": "review",
+      "passed": true,
+      "receipt": "/tmp/livelens-operator-final-review/receipt.json",
+      "receiptSha256": "5d60d0da6495a4fa701ffa6c4297ba2627d90eaec59817f5477ae25b1b6214cb",
+      "screenshots": 8,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+      },
+      "publishedReceipt": "operator-workflow-review-validation.json"
+    },
+    {
+      "journey": "onboarding",
+      "passed": true,
+      "receipt": "/tmp/livelens-operator-final-onboarding/receipt.json",
+      "receiptSha256": "46bcc2e8c5e294d77861c857952f72a4ba1b4e16681323e06d0fc1ea119be8c7",
+      "screenshots": 7,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+      },
+      "publishedReceipt": "operator-workflow-onboarding-validation.json"
+    }
+  ],
+  "publishedFunctionalScreenshots": [
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-alfred-phone.png",
+      "sha256": "1cb9162ac5bc6b6278612f0bd1abb79629248ef89f6528c28e00cd250b61458c"
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-alfred-recipe.png",
+      "sha256": "0c3b8e5e9c8e1115a76d144ece42fe158136672205d48e9f6482114c848231ae"
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-recording-transport.png",
+      "sha256": "2ffd891f79df249d74731d2826dce5b167795801e89070d4fdcad271bd4d2249"
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-whole-session-search.png",
+      "sha256": "e0f48310780fd1d67b736096b03ce42832308d2071cd8370a5b6a2d89784de7f"
+    }
+  ]
+}

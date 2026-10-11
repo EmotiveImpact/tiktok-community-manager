@@ -1,5 +1,53 @@
 # Validation receipt
 
+## Aperture workflows — 11 October 2026
+
+The [current application and gallery](APERTURE_WORKFLOWS.md) preserve the approved
+Aperture Studio design while adding per-recording transport, complete retained
+search, stable saved originals and guided private ALFRED setup. Final renderer:
+`index-DmrWQN-8.js`; stylesheet: `index-BUy4-zTR.css`.
+
+| Check | Actual result |
+|---|---|
+| Application tests and production build | [127 tests in 14 files pass](operator-workflow-build-validation.json); TypeScript, renderer, Electron main/preload build. Nine new transport model cases and 23 ALFRED setup cases. Existing Browserslist/chunk-size notices remain. |
+| Full service suite | [130/130 pass, zero skips](operator-workflow-service-validation.json), including actual PostgreSQL 17.6, FFmpeg, offline Chromium PDF and pinned PocketSphinx recognition. No service source changed after this run. |
+| Search contracts | [25 focused checks pass](operator-workflow-search-validation.json): SQLite and actual PostgreSQL, 300-event journals, 225-session libraries, literal metacharacters, current assertions, stable sequence pages, actual HTTP scope/workspace boundaries and older @handle matches. Included in the full service suite, not 25 additional unique tests. |
+| Monitor browser journey | [Pass](operator-workflow-monitor-validation.json): cross-segment range/skip/rate, job isolation and auto-advance, provider-only clocks/gaps, older event/session search, stale-response refusal, off-page original hydration and exact 100/200 terminal-page return. All prior capture/hash/range/stop/read-only/keyboard assertions retained. |
+| Full application journey | [Pass](operator-workflow-full-validation.json): exact ALFRED selected-session/read-only JSON, actual downloads, keyboard tabs, explicit bounded source option, invalid origin focus, no supplied-endpoint call/install/browser storage. Existing bookmarks, original clocks/frames/repeated seeking, review, exports, actual PDF and restart assertions retained. |
+| Original / review / onboarding journeys | [Original](operator-workflow-original-validation.json), [review](operator-workflow-review-validation.json) and [onboarding](operator-workflow-onboarding-validation.json) pass; real cookie/scopes, invites, revocation, schedule bounds and persisted reopen remain intact. |
+| Actual desktop / phone visual inspection | [12 final studio captures and geometry](operator-workflow-layout-validation.json); shared-form CSS conflicts and squeezed phone ALFRED introduction fixed and recaptured. [Design QA](../../design-qa.md) records scope and remaining acceptance. |
+| Pinned source inventory | Eight research gitlinks verify. Nested research checkouts are not present or claimed as executed applications; adoption remains research-only. |
+
+All five final browser journeys ran with at most two concurrent QA browsers,
+generated **43 screenshots**, and reported **zero uncaught page errors or horizontal
+page overflow**. Each receipt hashes the actual authenticated renderer/CSS response
+bytes; the [aggregate receipt](operator-workflow-browser-validation.json) matches
+the final build. Published functional captures include [whole-session search](screenshots/operator-workflow/verification-whole-session-search.png),
+[recording transport](screenshots/operator-workflow/verification-recording-transport.png),
+[ALFRED recipe](screenshots/operator-workflow/verification-alfred-recipe.png) and
+[phone access](screenshots/operator-workflow/verification-alfred-phone.png).
+
+Review caught misleading empty-page copy at exact page boundaries. The final UI
+says the results have ended without denying earlier matches; new browser checks
+exercise Next into an empty page and Previous back to those matches. An initial
+new ALFRED assertion used a label locator that included select option text; the
+harness now uses the actual named combobox role. No access, collection, persistence
+or original workflow assertion was removed or weakened. Earlier browser passes
+were repeated on the final asset hashes after visual/copy corrections.
+
+Generated ALFRED configs also passed its pinned actual in-memory validators
+without transport or installation. ALFRED source is unchanged at `5b37ba4`; its
+full prior backend/HTTP/browser suites were not rerun here. The private placement
+guard remains enforced and private-host installation remains unverified.
+
+The studio gallery's generated still/tone and illustrative captions are explicitly
+synthetic, distinct from the standard colour-bar regression fixture and actual
+PocketSphinx reference checks. These tests establish the exercised implementation,
+not external LIVE, broad speech/semantic quality, customer capacity, native GUI
+startup or production deployment. Hosted CI is checked separately on the pushed
+commit. The dedicated PostgreSQL fixture was stopped and its private credentials
+removed after validation.
+
 ## Aperture Studio implementation — 11 October 2026
 
 The owner selected the Aperture Studio reference. The [implemented app](APERTURE_STUDIO.md)

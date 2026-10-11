@@ -5,7 +5,11 @@ The owner selected **Aperture Studio** on 11 October 2026. The approved
 now guides the real authenticated application: warm charcoal, off-white actions,
 self-hosted Inter, a narrow icon rail, large media and a compact conversation pane.
 
-## Actual application
+The next implemented slice is [Aperture workflows](APERTURE_WORKFLOWS.md): whole-recording
+transport, complete conversation/library search, stable saved originals and guided
+private ALFRED setup. Its screenshots and validation supersede the earlier UI below.
+
+## Initial implementation screenshots
 
 [Open the full-size desktop screenshot](screenshots/aperture-studio/01-conversation-desktop.png).
 

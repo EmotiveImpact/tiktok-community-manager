@@ -84,8 +84,12 @@
         "src/pages/livelens.css",
         "services/intelligence/src/browser.mjs",
         "scripts/validation/browser_smoke.py",
-        "docs/livelens/FIRST_RELEASE.md"
-      ]
+        "docs/livelens/FIRST_RELEASE.md",
+        "docs/livelens/APERTURE_WORKFLOWS.md",
+        "src/components/livelens/RecordingTransport.tsx",
+        "services/intelligence/test/session-search.test.mjs"
+      ],
+      "currentContinuation": "Owner-selected Aperture Studio: per-recording retained-time transport, server-side whole-session/library search before pagination, off-page original bookmark hydration and guided private ALFRED recipe generation. Actual current checks and screenshot artifacts are in VALIDATION.md; external LIVE and production acceptance remain separate."
     },
     {
       "id": "C01",
@@ -322,11 +326,15 @@
         "integrations/alfred/GATEWAY.md",
         "services/intelligence/test/governance.test.mjs",
         "docs/livelens/ALFRED_INTEGRATION.md",
-        "https://github.com/EmotiveImpact/Alfred/pull/20"
+        "https://github.com/EmotiveImpact/Alfred/pull/20",
+        "src/components/livelens/advanced/AgentConnection.tsx",
+        "src/components/livelens/advanced/agent-setup.ts",
+        "test/livelens-agent-setup.test.ts"
       ],
       "limitations": [
         "Actual optional ALFRED authenticated HTTP/CLI tools are implemented/tested on branch feat/livelens-tools-2026-10-11, commit 5b37ba41353cfcd0cae4243482520e25175e21d9, draft PR #20; unmerged and undeployed. Explicit private installation and current grants are required; publishing code does not connect a user host.",
-        "Configured fixture proof: 36/36 actual HTTP/CLI transport checks, six-second generated capture with three hashed/independently decoded segments; 1128 ALFRED backend tests and 58 browser checks pass locally. Hosted CI was pending at publication; no external LIVE, NLP automatic tool invocation, tool-board UI, model call or automatic memory acceptance is claimed."
+        "Configured fixture proof: 36/36 actual HTTP/CLI transport checks, six-second generated capture with three hashed/independently decoded segments; 1128 ALFRED backend tests and 58 browser checks pass locally. Hosted CI was pending at publication; no external LIVE, NLP automatic tool invocation, tool-board UI, model call or automatic memory acceptance is claimed.",
+        "Guided LiveLens setup exports validated config/read JSON and safely quoted host commands for exact selected session IDs. This does not install or verify a private ALFRED host; its picker offers at most 200 recent sessions, without automatic future access."
       ]
     },
     {

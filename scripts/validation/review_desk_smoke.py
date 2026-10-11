@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
-from browser_navigation import navigate
+from browser_navigation import navigate, renderer_assets
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -457,6 +457,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             capture("06-desktop-read-only-desk.png")
             assert not errors, errors
             receipt = {"fixture": True, "externalLiveValidated": False, "desktop1440AndPhone390": True, "sourceSelectionAndCounterevidence": True, "sourceResetAfterFindingRevisionRefresh": True, "actualPreviewPlaybackAndSeek": True, "exactOriginalContextNavigation": True, "correctInvestigationDeepLinkAndReload": True, "investigationLibrarySelectionBackAndReload": True, "signalAcknowledgementPersisted": True, "acknowledgementReceiptBoundToSelectedItem": True, "boundedScheduleWithoutHiddenCapture": True, "collectionDisclosureQuietWhenIdleAndOpensForActualSchedule": True, "phoneSelectionBackAndKeyboardFocus": True, "readOnlyScopeFilteredResources": True, "actualReadOnlyWriteDenied": True, "serviceRestartReopen": True, "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS)}
+            receipt["rendererAssets"] = renderer_assets(page)
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))
             print(json.dumps(receipt))
             browser.close()

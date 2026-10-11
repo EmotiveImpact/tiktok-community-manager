@@ -133,6 +133,14 @@
 .ll-app.ll-aperture .ll-bookmark-prompt button { margin-left: auto; min-height: 30px; padding: 4px; background: transparent; border: 0; }
 .ll-app.ll-aperture .ll-playback-workspace > .ll-context { border-radius: 5px; scroll-margin-top: 90px; }
 .ll-app.ll-aperture .ll-playback-workspace > .ll-context:not(.has-selection) { display: none; }
+.ll-app.ll-aperture .ll-result-pages { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--ll-line); }
+.ll-app.ll-aperture .ll-result-pages > button { min-height: 38px; padding: 8px 10px; font-size: 12px; background: transparent; }
+.ll-app.ll-aperture .ll-result-pages > span { color: var(--ll-muted); font-size: 12px; }
+.ll-app.ll-aperture .ll-timeline-pages { margin: 0; padding: 10px 12px; gap: 8px; }
+.ll-app.ll-aperture .ll-timeline-pages > button { padding-inline: 6px; }
+.ll-app.ll-aperture .ll-clear-timeline { flex-shrink: 0; min-height: 30px; width: 30px; padding: 6px; border: 0; background: transparent; color: var(--ll-muted); }
+.ll-app.ll-aperture .ll-search-summary { padding: 10px 16px; margin: 0; font-size: 11px; color: var(--ll-muted); border-bottom: 1px solid var(--ll-line); }
+.ll-app.ll-aperture .ll-first-events { min-height: 36px; background: transparent; font-size: 12px; }
 
 @media (max-width: 1150px) {
   .ll-app.ll-aperture .ll-top { gap: 20px; }
@@ -196,4 +204,5 @@
   .ll-app.ll-aperture .ll-conversation-player .ll-media > label select { min-height: 44px; }
   .ll-app.ll-aperture .ll-conversation-timeline .ll-segmented button { min-height: 44px; }
   .ll-app.ll-aperture .ll-context-link { min-height: 44px; }
+  .ll-app.ll-aperture .ll-result-pages > button, .ll-app.ll-aperture .ll-clear-timeline, .ll-app.ll-aperture .ll-first-events { min-height: 44px; }
 }

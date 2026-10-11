@@ -143,7 +143,9 @@
   font-size: 13px;
   font-weight: 550;
   line-height: 1.5;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ll-app .lm-source-meta > small { display: block; margin-top: 2px; color: var(--lm-muted); font-size: 11px; }
 .ll-app .lm-source-meta > .lm-status { margin-top: 4px; padding: 0; border: 0; background: transparent; color: var(--ll-text-soft); font-size: 10px; }

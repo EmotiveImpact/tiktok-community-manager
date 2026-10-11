@@ -6,6 +6,8 @@ import "./recording-library.css";
 
 export type RecordingLibraryProps = {
   sessions: Session[];
+  loading?: boolean;
+  error?: string;
   revision: number;
   scopes: string[];
   query: string;
@@ -37,7 +39,7 @@ function MediaStatus({ summary, loading, available, denied }: {
   return <span className="rl-capture rl-capture-unknown"><span>{available ? "Video not shown here" : "Media status unavailable"}</span><small>{available ? "Open conversation to check" : "Conversation remains available"}</small></span>;
 }
 
-export default function RecordingLibrary({ sessions, revision, scopes, query, onQueryChange, onOpenSession }: RecordingLibraryProps) {
+export default function RecordingLibrary({ sessions, loading = false, error = "", revision, scopes, query, onQueryChange, onOpenSession }: RecordingLibraryProps) {
   const canReadMedia = scopes.includes("recordings:read");
   const [receipts, setReceipts] = useState<ReceiptState>({ jobs: [], loading: canReadMedia, loaded: false, error: "" });
   const [receiptRevision, setReceiptRevision] = useState(0);
@@ -68,24 +70,24 @@ export default function RecordingLibrary({ sessions, revision, scopes, query, on
   }, [canReadMedia, relevantActive]);
   const videoCount = sessions.filter((session) => media.get(session.id)?.saved).length;
   const normalizedQuery = query.trim().toLowerCase();
-  const visible = sessions.filter((session) =>
-    `${session.title} ${session.account ? `@${session.account}` : ""} ${session.platform} ${platformName(session.platform)}`.toLowerCase().includes(normalizedQuery) &&
-    (filter === "all" || !!media.get(session.id)?.saved),
-  );
+  // Text search is applied by the service before pagination. Only the explicitly
+  // bounded video-status filter operates on this page's loaded media receipts.
+  const visible = sessions.filter((session) => filter === "all" || !!media.get(session.id)?.saved);
   const clearFilters = () => { onQueryChange(""); setFilter("all"); };
   return <section className="rl-library" aria-label="Conversation and recording library">
     <div className="rl-toolbar">
       <div className="rl-filters" role="group" aria-label="Library view">
-        <button aria-pressed={filter === "all"} onClick={() => setFilter("all")}><Layers3 size={15} aria-hidden />All conversations <span>{sessions.length}</span></button>
-        <button aria-pressed={filter === "video"} onClick={() => setFilter("video")} disabled={!canReadMedia || !receipts.loaded} title={!canReadMedia ? "Recording access is needed to filter saved video" : !receipts.loaded ? "Load recording receipts before filtering video" : undefined}><Video size={15} aria-hidden />With video {receipts.loaded && <span>{videoCount}</span>}</button>
+        <button aria-pressed={filter === "all"} onClick={() => setFilter("all")}><Layers3 size={15} aria-hidden />All conversations <span>{loading ? "…" : sessions.length}</span></button>
+        <button aria-pressed={filter === "video"} onClick={() => setFilter("video")} disabled={loading || !canReadMedia || !receipts.loaded} title={!canReadMedia ? "Recording access is needed to filter saved video" : !receipts.loaded ? "Load recording receipts before filtering video" : "Filter this page using loaded recording receipts"}><Video size={15} aria-hidden />With video {receipts.loaded && <span>{loading ? "…" : videoCount}</span>}</button>
       </div>
-      <label className="rl-search"><Search size={15} aria-hidden /><input aria-label="Filter session library" placeholder="Find a title or account…" value={query} onChange={(event) => onQueryChange(event.target.value)} />{query && <button type="button" aria-label="Clear library filter" onClick={() => onQueryChange("")}><X size={14} /></button>}</label>
+      <label className="rl-search"><Search size={15} aria-hidden /><input aria-label="Filter session library" placeholder="Search all titles or accounts…" value={query} maxLength={512} onChange={(event) => onQueryChange(event.target.value)} />{query && <button type="button" aria-label="Clear library filter" onClick={() => onQueryChange("")}><X size={14} /></button>}</label>
     </div>
-    <div className="rl-result-heading"><span><strong>{visible.length}</strong> {visible.length === 1 ? "conversation" : "conversations"}{normalizedQuery ? " matching your filter" : " on this page"}</span><details className="rl-data-note"><summary>About video status</summary><p>Video details describe the latest saved capture found in up to 200 recent recording receipts. Missing receipts mean media was not loaded here; open a conversation for its retained history. Duration sums saved segments and does not imply uninterrupted coverage. Playback checks the media when opened.</p></details></div>
+    <div className="rl-result-heading"><span role="status">{loading ? "Searching your library…" : error ? "Library unavailable" : <><strong>{visible.length}</strong> {visible.length === 1 ? "conversation" : "conversations"}{normalizedQuery ? " matching on this page · all library titles searched" : " on this page"}{filter === "video" && " · loaded video only"}</>}</span><details className="rl-data-note"><summary>About video status</summary><p>Title and account search covers your whole workspace library. The video filter uses this page and up to 200 recent recording receipts. Missing receipts mean media was not loaded here; open a conversation for its retained history. Duration sums saved segments and does not imply uninterrupted coverage. Playback checks the media when opened.</p></details></div>
+    {error && <p className="rl-notice" role="alert">Conversations could not be loaded. {error}. Use Refresh records to try again.</p>}
     {!canReadMedia && <p className="rl-notice" role="status"><ShieldAlert size={15} aria-hidden />Recording receipts are outside your current access. You can still open permitted conversations.</p>}
     {receipts.error && <div className="rl-notice rl-notice-error" role="alert"><TriangleAlert size={15} aria-hidden /><p>Media status unavailable. {receipts.error} Conversations can still be opened.</p><button onClick={() => setReceiptRevision((value) => value + 1)}>Retry media status</button></div>}
     {receipts.loading && canReadMedia && <p className="rl-loading" role="status">{receipts.loaded ? "Refreshing recording details…" : "Loading recording details…"}</p>}
-    {visible.length ? <div className="rl-record-list">
+    {!loading && !error && (visible.length ? <div className="rl-record-list">
       <div className="rl-column-head" aria-hidden><span className="rl-column-conversation">Conversation</span><span>Latest saved capture</span><span>Session started</span><span /></div>
       {visible.map((session) => {
         const summary = media.get(session.id);
@@ -99,6 +101,6 @@ export default function RecordingLibrary({ sessions, revision, scopes, query, on
           <ChevronRight className="rl-open-arrow" size={17} aria-hidden />
         </button>;
       })}
-    </div> : <div className="rl-empty"><span className="rl-empty-icon">{filter === "video" ? <Film size={27} /> : <Search size={27} />}</span><h2>{normalizedQuery ? "No conversations match" : filter === "video" ? "No video in this view" : "Your conversation library is ready"}</h2><p>{normalizedQuery ? "Try another title or account. This filter searches the current library page." : filter === "video" ? "Open a conversation to check its retained history, or show all conversations. About video status explains which recent captures this view includes." : "Conversations appear here after a source is captured or imported. Their original context stays with them."}</p>{(normalizedQuery || filter !== "all") && <button onClick={clearFilters}>Show all conversations <ArrowRight size={15} /></button>}</div>}
+    </div> : <div className="rl-empty"><span className="rl-empty-icon">{filter === "video" ? <Film size={27} /> : <Search size={27} />}</span><h2>{filter === "video" ? "No video in this view" : normalizedQuery ? "No matches on this page" : "No conversations on this page"}</h2><p>{filter === "video" ? "This page has no matching loaded video receipts. Show all conversations to see matching titles, or use the page controls to continue." : normalizedQuery ? "Try another phrase, or use the page controls to return to earlier matches." : "Use the page controls for earlier conversations. New conversations appear after a source is captured or imported."}</p>{(normalizedQuery || filter !== "all") && <button onClick={clearFilters}>Show all conversations <ArrowRight size={15} /></button>}</div>)}
   </section>;
 }

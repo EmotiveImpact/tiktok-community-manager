@@ -166,7 +166,7 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
           <div className="lm-section-header"><h2>Accounts</h2><span>{snapshot.sources.length}</span></div>
           <div className="lm-source-list">{snapshot.sources.map((source) => <button key={source.id} className={`lm-source-row ${source.id === selectedId ? "selected" : ""}`} aria-pressed={source.id === selectedId} onClick={() => select(source)}>
             <span className="lm-source-avatar" aria-hidden="true">{sourceMark(source)}</span>
-            <span className="lm-source-meta"><strong>{sourceName(source)}</strong><small>{source.kind === "file" || source.fixture ? "Synthetic fixture" : source.kind === "tiktok-public" ? "TikTok" : "Permitted media"}</small><span className="lm-status" data-state={status(source).toLowerCase()}>{status(source)}</span></span>
+            <span className="lm-source-meta"><strong title={sourceName(source)}>{sourceName(source)}</strong><small>{source.kind === "file" || source.fixture ? "Synthetic fixture" : source.kind === "tiktok-public" ? "TikTok" : "Permitted media"}</small><span className="lm-status" data-state={status(source).toLowerCase()}>{status(source)}</span></span>
           </button>)}</div>
           {!snapshot.sources.length && <div className="lm-empty"><p>No accounts yet.</p><small>{canAdd ? "Add an account below. Checking and recording begin only when you choose." : "A workspace administrator can configure sources for this workspace."}</small></div>}
           {canAdd && <form className="lm-add-form" onSubmit={add}>

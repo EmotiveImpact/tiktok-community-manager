@@ -93,9 +93,9 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | Method and path | Required scopes | Result |
 |---|---|---|
 | GET `/v1/overview` | sessions:read, cases:read, evidence:read | Retained counts and recording receipts |
-| GET/POST `/v1/sessions` | sessions:read / sessions:write | List/create session provenance |
+| GET/POST `/v1/sessions` | sessions:read / sessions:write | Literal `q` search with `limit`/`offset` / create session provenance |
 | GET `/v1/sessions/:id` | sessions:read | Session provenance |
-| GET/POST `/v1/sessions/:id/events` | evidence:read / evidence:write | Paginated journal / atomic ingestion |
+| GET/POST `/v1/sessions/:id/events` | evidence:read / evidence:write | Literal `q`, exact `kind`, sequence `after` and `limit` / atomic ingestion |
 | GET `/v1/sessions/:id/integrity` | evidence:read | Local journal verification |
 | GET `/v1/evidence/search?q=&account=&session=&limit=` | evidence:read | Literal text/account search |
 | GET `/v1/evidence/:id` | evidence:read | Original event and current attribution |
@@ -179,6 +179,30 @@ source time remains null. Matching source-event retries return the original
 receipt; conflicting content under the same identity refuses the batch.
 Speech carries no inferred account identity. An operator assertion is a separate
 labelled revision, not a rewrite of the original evidence.
+
+Session event reads accept `q` (up to 512 characters) and `kind` (`chat`, `caption`,
+`transcript`, `observation`, `gap`, or `all`; omitted means `all`). Filtering runs
+over the retained session before the bounded page is selected. The literal query
+matches captured text and the current displayed account attribution, including
+the latest operator assertion; prior assertions and anonymous speaker IDs are not
+account matches. `%`, `_` and backslash are literal characters. Matching folds
+ASCII letter case in both SQLite and PostgreSQL. Source, collector and receipt
+clocks remain untouched.
+
+The response remains `{events,nextAfter}`. Pages follow ascending journal
+sequence, with `after` (default `0`) as an exclusive cursor and `limit` (default
+`100`, maximum `200`). `nextAfter` is the last returned event's actual sequence,
+or `null` for an empty page; it is not a total or a promise of a further match.
+Carry the same `q`/`kind` when continuing; reset `after` when changing either.
+This is a live retained-data query, not a snapshot: later appends can appear on
+subsequent pages and a later attribution correction can change account matches.
+
+Session library reads accept the same literal `q` over title, displayed `@account`
+(both `@handle` and `handle` match) and raw platform identifier before applying
+`limit` (default `100`, maximum `200`) and
+`offset` (default `0`). The response remains `{sessions}`, ordered by newest
+session start, then ID. Reset the offset when changing the query. Offset pages
+can shift when sessions are added or removed; no total or snapshot is implied.
 
 Recording creation is `{id?,sessionId,sourceId,maxDurationSeconds?,segmentSeconds?}`.
 Recorder listings accept `limit` up to 200 and an optional exact boolean query

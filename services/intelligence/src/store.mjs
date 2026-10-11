@@ -2,6 +2,9 @@ import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
 import { canonical, digest, Fault, handle, ident, markdownText, normaliseEvent, object, pageLimit, sourceUrl, text, timestamp } from './validation.mjs';
 
+const eventKinds = new Set(['chat', 'caption', 'transcript', 'observation', 'gap']);
+const literalContains = query => '%' + query.replace(/[\\%_]/g, '\\$&') + '%';
+
 const schema = `
 CREATE TABLE IF NOT EXISTS metadata(version INTEGER NOT NULL);
 INSERT INTO metadata SELECT 1 WHERE NOT EXISTS(SELECT 1 FROM metadata);
@@ -74,10 +77,15 @@ export class EvidenceStore {
     });
   }
 
-  listSessions(workspace, limit = 100, offset = 0) {
-    ident(workspace); limit = pageLimit(limit);
+  listSessions(workspace, limit = 100, offset = 0, { query = '' } = {}) {
+    ident(workspace); limit = pageLimit(limit); text(query, 512, true);
     if (!Number.isSafeInteger(offset) || offset < 0) throw new Fault('invalid_cursor');
-    return this.db.prepare('SELECT id FROM sessions WHERE workspace=? ORDER BY started_at DESC,id LIMIT ? OFFSET ?').all(workspace, limit, offset)
+    const clauses = ['workspace=?'], args = [workspace];
+    if (query) {
+      clauses.push("lower(title || ' ' || coalesce('@' || account,'') || ' ' || platform) LIKE lower(?) ESCAPE '\\'");
+      args.push(literalContains(query));
+    }
+    return this.db.prepare(`SELECT id FROM sessions WHERE ${clauses.join(' AND ')} ORDER BY started_at DESC,id LIMIT ? OFFSET ?`).all(...args, limit, offset)
       .map(row => this.session(workspace, row.id));
   }
 
@@ -125,11 +133,20 @@ export class EvidenceStore {
     return this.project(row);
   }
 
-  events(workspace, sessionId, { after = 0, limit = 100 } = {}) {
-    this.session(workspace, sessionId); limit = pageLimit(limit);
+  events(workspace, sessionId, { after = 0, limit = 100, query = '', kind = 'all' } = {}) {
+    this.session(workspace, sessionId); limit = pageLimit(limit); text(query, 512, true);
     if (!Number.isSafeInteger(after) || after < 0) throw new Fault('invalid_cursor');
-    return this.db.prepare('SELECT * FROM events WHERE workspace=? AND session_id=? AND seq>? ORDER BY seq LIMIT ?')
-      .all(workspace, sessionId, after, limit).map(row => this.project(row));
+    if (kind !== 'all' && !eventKinds.has(kind)) throw new Fault('invalid_event_kind');
+    const clauses = ['e.workspace=?', 'e.session_id=?', 'e.seq>?'], args = [workspace, sessionId, after];
+    if (kind !== 'all') { clauses.push('e.kind=?'); args.push(kind); }
+    if (query) {
+      // Match the displayed current attribution without rewriting original evidence.
+      // Escaping applies to the bound pattern on both SQLite and PostgreSQL.
+      clauses.push("lower(e.text || ' ' || coalesce((SELECT a.account FROM assertions a WHERE a.workspace=e.workspace AND a.event_id=e.id ORDER BY a.seq DESC LIMIT 1),e.account,'')) LIKE lower(?) ESCAPE '\\'");
+      args.push(literalContains(query));
+    }
+    return this.db.prepare(`SELECT e.* FROM events e WHERE ${clauses.join(' AND ')} ORDER BY e.seq LIMIT ?`)
+      .all(...args, limit).map(row => this.project(row));
   }
 
   search(workspace, { query = '', account = null, sessionId = null, limit = 100 } = {}) {

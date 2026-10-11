@@ -1,0 +1,153 @@
+/* Keep the guided connection view independent of shared workspace form defaults. */
+.ll-app .aw-workspace .ac-connection { max-width: 1280px; margin: 0 auto; }
+.ll-app .aw-workspace .ac-connection .ac-intro { display: flex; align-items: center; gap: 18px; margin: 5px 0 27px; }
+.ll-app .aw-workspace .ac-connection .ac-symbol { width: 54px; height: 54px; display: grid; place-items: center; background: var(--ll-surface); border: 1px solid var(--ll-line); border-radius: 5px; flex-shrink: 0; color: var(--ll-action); }
+.ll-app .aw-workspace .ac-connection .ac-intro > div:nth-child(2) { min-width: 0; flex: 1; }
+.ll-app .aw-workspace .ac-connection .ac-intro h2 { font-size: 25px; letter-spacing: -.04em; margin: 3px 0 5px; font-weight: 600; }
+.ll-app .aw-workspace .ac-connection .ac-intro p { color: var(--ll-muted); font-size: 13px; }
+.ll-app .aw-workspace .ac-connection .ac-intro > a { text-decoration: none; white-space: nowrap; }
+.ll-app .aw-workspace .ac-connection .ac-readiness { display: flex; align-items: center; gap: 28px; padding: 18px 0; border-top: 1px solid var(--ll-line); border-bottom: 1px solid var(--ll-line); margin-bottom: 28px; }
+.ll-app .aw-workspace .ac-connection .ac-readiness > div { display: flex; gap: 11px; align-items: center; min-width: 0; }
+.ll-app .aw-workspace .ac-connection .ac-readiness > div > div { display: grid; gap: 3px; }
+.ll-app .aw-workspace .ac-connection .ac-readiness strong { font-size: 12px; font-weight: 600; }
+.ll-app .aw-workspace .ac-connection .ac-readiness span:not(.ac-state-dot) { color: var(--ll-muted); font-size: 12px; overflow-wrap: anywhere; }
+.ll-app .aw-workspace .ac-connection .ac-readiness > button { margin-left: auto; flex-shrink: 0; }
+.ll-app .aw-workspace .ac-connection .ac-state-dot { width: 7px; height: 7px; border: 1px solid var(--ll-muted); border-radius: 50%; flex-shrink: 0; }
+.ll-app .aw-workspace .ac-connection .ac-state-dot.is-ready { background: #b6c5b7; border-color: #b6c5b7; }
+.ll-app .aw-workspace .ac-connection .ac-layout { display: grid; grid-template-columns: minmax(0, 1fr) 262px; gap: 34px; align-items: start; }
+.ll-app .aw-workspace .ac-connection .ac-setup { border: 1px solid var(--ll-line); border-radius: 5px; background: var(--ll-surface); min-width: 0; }
+.ll-app .aw-workspace .ac-connection .ac-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 21px 25px; gap: 15px; border-bottom: 1px solid var(--ll-line); }
+.ll-app .aw-workspace .ac-connection .ac-panel-head h2 { font-size: 19px; margin-top: 3px; }
+.ll-app .aw-workspace .ac-connection .ac-steps { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 20px 25px; border-bottom: 1px solid var(--ll-line); gap: 12px; }
+.ll-app .aw-workspace .ac-connection .ac-steps li { display: flex; align-items: center; gap: 9px; color: var(--ll-muted); font-size: 12px; }
+.ll-app .aw-workspace .ac-connection .ac-steps li > span { width: 23px; height: 23px; border: 1px solid var(--ll-line); border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.ll-app .aw-workspace .ac-connection .ac-steps .is-current { color: var(--ll-text); }
+.ll-app .aw-workspace .ac-connection .ac-steps .is-current > span { color: var(--ll-action-text); background: var(--ll-action); border-color: var(--ll-action); }
+.ll-app .aw-workspace .ac-connection .ac-steps .is-complete > span { color: var(--ll-text); }
+.ll-app .aw-workspace .ac-connection .ac-form { padding: 24px 25px 0; }
+.ll-app .aw-workspace .ac-connection .ac-step-heading { margin-bottom: 24px; }
+.ll-app .aw-workspace .ac-connection .ac-step-heading h3 { font-size: 18px; margin-bottom: 5px; }
+.ll-app .aw-workspace .ac-connection .ac-step-heading h3:focus { outline: none; }
+.ll-app .aw-workspace .ac-connection .ac-step-heading p { color: var(--ll-muted); font-size: 13px; max-width: 75ch; }
+.ll-app .aw-workspace .ac-connection .ac-workspace-line { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 17px; border-bottom: 1px solid var(--ll-line); margin-bottom: 20px; font-size: 12px; }
+.ll-app .aw-workspace .ac-connection .ac-workspace-line span { color: var(--ll-muted); }
+.ll-app .aw-workspace .ac-connection .ac-workspace-line strong { overflow-wrap: anywhere; text-align: right; }
+.ll-app .aw-workspace .ac-connection .ac-field { display: flex; flex-direction: column; align-items: stretch; gap: 7px; margin-bottom: 20px; min-width: 0; }
+.ll-app .aw-workspace .ac-connection .ac-field > span:first-child { font-size: 12px; font-weight: 600; }
+.ll-app .aw-workspace .ac-connection .ac-field input, .ll-app .aw-workspace .ac-connection .ac-field select, .ll-app .aw-workspace .ac-connection .ac-session-search { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--ll-line); border-radius: 4px; background: var(--ll-bg, #101315); color: var(--ll-text); font-size: 13px; min-width: 0; }
+.ll-app .aw-workspace .ac-connection .ac-field input::placeholder, .ll-app .aw-workspace .ac-connection .ac-session-search::placeholder { color: var(--ll-muted); opacity: .8; }
+.ll-app .aw-workspace .ac-connection .ac-field small, .ll-app .aw-workspace .ac-connection .ac-field-hint { font-size: 11px; font-weight: 400; color: var(--ll-muted); line-height: 1.5; }
+.ll-app .aw-workspace .ac-connection .ac-field-error { color: #e0b7ac; font-size: 12px; display: block; margin-top: 4px; }
+.ll-app .aw-workspace .ac-connection .ac-field input[aria-invalid=true], .ll-app .aw-workspace .ac-connection .ac-field select[aria-invalid=true], .ll-app .aw-workspace .ac-connection .ac-session-list[aria-invalid=true] { border-color: #a98277; }
+.ll-app .aw-workspace .ac-connection .ac-sessions { min-width: 0; padding: 0; border: 0; margin: 0 0 24px; }
+.ll-app .aw-workspace .ac-connection .ac-sessions legend { display: flex; justify-content: space-between; align-items: center; gap: 20px; font-size: 12px; font-weight: 600; margin-bottom: 11px; width: 100%; }
+.ll-app .aw-workspace .ac-connection .ac-sessions legend span { color: var(--ll-muted); font-size: 11px; font-weight: 400; }
+.ll-app .aw-workspace .ac-connection .ac-session-search { margin-bottom: 9px; }
+.ll-app .aw-workspace .ac-connection .ac-session-list { max-height: 256px; overflow: auto; border: 1px solid var(--ll-line); border-radius: 4px; margin-bottom: 8px; }
+.ll-app .aw-workspace .ac-connection .ac-session-row { display: flex; flex-direction: row; font-weight: 400; align-items: center; gap: 13px; padding: 12px 13px; border-bottom: 1px solid var(--ll-line); cursor: pointer; }
+.ll-app .aw-workspace .ac-connection .ac-session-row:last-child { border-bottom: 0; }
+.ll-app .aw-workspace .ac-connection .ac-session-row:hover { background: var(--ll-surface-raised); }
+.ll-app .aw-workspace .ac-connection .ac-session-row:has(input:checked) { background: var(--ll-surface-raised); }
+.ll-app .aw-workspace .ac-connection .ac-session-row input, .ll-app .aw-workspace .ac-connection .ac-collection-toggle input { width: 16px; height: 16px; flex: 0 0 16px; accent-color: var(--ll-action); }
+.ll-app .aw-workspace .ac-connection .ac-session-row > span { min-width: 0; }
+.ll-app .aw-workspace .ac-connection .ac-session-row strong { display: block; font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+.ll-app .aw-workspace .ac-connection .ac-session-row small { font-size: 11px; overflow-wrap: anywhere; margin-top: 2px; }
+.ll-app .aw-workspace .ac-connection .ac-list-empty { padding: 18px; font-size: 13px; color: var(--ll-muted); }
+.ll-app .aw-workspace .ac-connection .ac-collection { border-top: 1px solid var(--ll-line); padding-top: 18px; }
+.ll-app .aw-workspace .ac-connection .ac-collection-toggle { display: flex; flex-direction: row; font-weight: 400; gap: 13px; align-items: flex-start; cursor: pointer; }
+.ll-app .aw-workspace .ac-connection .ac-collection-toggle input { margin-top: 3px; }
+.ll-app .aw-workspace .ac-connection .ac-collection-toggle strong { font-size: 12px; font-weight: 600; }
+.ll-app .aw-workspace .ac-connection .ac-collection-toggle small { margin-top: 4px; font-size: 12px; line-height: 1.55; }
+.ll-app .aw-workspace .ac-connection .ac-collection > .ac-field-hint { margin-top: 8px; }
+.ll-app .aw-workspace .ac-connection .ac-collection-fields { margin-top: 19px; }
+.ll-app .aw-workspace .ac-connection .ac-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 19px; }
+.ll-app .aw-workspace .ac-connection .ac-vault { border-top: 1px solid var(--ll-line); padding-top: 13px; margin-bottom: 20px; }
+.ll-app .aw-workspace .ac-connection .ac-vault summary { color: var(--ll-muted); cursor: pointer; font-size: 12px; padding: 6px 0; }
+.ll-app .aw-workspace .ac-connection .ac-vault .ac-field { margin-top: 13px; }
+.ll-app .aw-workspace .ac-connection .ac-private-note { display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; background: var(--ll-surface-raised); border: 1px solid var(--ll-line); border-radius: 4px; }
+.ll-app .aw-workspace .ac-connection .ac-private-note svg { flex-shrink: 0; margin-top: 2px; }
+.ll-app .aw-workspace .ac-connection .ac-private-note p { color: var(--ll-muted); font-size: 12px; }
+.ll-app .aw-workspace .ac-connection .ac-form-footer { border-top: 1px solid var(--ll-line); padding: 19px 0; margin-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.ll-app .aw-workspace .ac-connection .ac-form-footer > span { color: var(--ll-muted); font-size: 11px; }
+.ll-app .aw-workspace .ac-connection .ac-form-footer > div { display: flex; gap: 9px; flex-shrink: 0; }
+.ll-app .aw-workspace .ac-connection .ac-form-footer .aw-primary, .ll-app .aw-workspace .ac-connection .ac-form-footer .aw-secondary { border-radius: 4px; min-height: 40px; }
+.ll-app .aw-workspace .ac-connection .ac-context { color: var(--ll-muted); padding: 12px 0; min-width: 0; }
+.ll-app .aw-workspace .ac-connection .ac-context h3 { color: var(--ll-text); font-size: 15px; margin: 6px 0 12px; }
+.ll-app .aw-workspace .ac-connection .ac-context p { font-size: 12px; line-height: 1.65; margin-bottom: 10px; }
+.ll-app .aw-workspace .ac-connection .ac-benefits { list-style: disc outside; padding-left: 17px; font-size: 13px; margin: 0; }
+.ll-app .aw-workspace .ac-connection .ac-benefits li { margin-bottom: 12px; padding-left: 3px; }
+.ll-app .aw-workspace .ac-connection .ac-context-rule { border-top: 1px solid var(--ll-line); margin-top: 24px; padding-top: 23px; }
+.ll-app .aw-workspace .ac-connection .ac-context-rule > svg { color: var(--ll-action); }
+.ll-app .aw-workspace .ac-connection .ac-catalogue { margin-top: 24px; border-top: 1px solid var(--ll-line); padding-top: 13px; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue summary { font-size: 12px; color: var(--ll-text); cursor: pointer; padding: 9px 0; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue summary span { color: var(--ll-muted); margin-left: 6px; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue > p { margin-top: 8px; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue h3 { margin-top: 20px; font-size: 12px; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue ul { list-style: none; padding: 0; margin: 0; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue li { padding: 10px 0; border-bottom: 1px solid var(--ll-line); }
+.ll-app .aw-workspace .ac-connection .ac-catalogue li strong { font-size: 12px; color: var(--ll-text); font-weight: 500; text-transform: capitalize; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue li p { margin: 3px 0 5px; }
+.ll-app .aw-workspace .ac-connection .ac-catalogue li small { font-size: 10px; overflow-wrap: anywhere; }
+.ll-app .aw-workspace .ac-connection .ac-recipe-summary { display: flex; gap: 9px 18px; flex-wrap: wrap; font-size: 11px; color: var(--ll-muted); margin-bottom: 19px; }
+.ll-app .aw-workspace .ac-connection .ac-recipe-summary strong { color: var(--ll-text); }
+.ll-app .aw-workspace .ac-connection .ac-output-tabs { display: flex; border-bottom: 1px solid var(--ll-line); gap: 16px; }
+.ll-app .aw-workspace .ac-connection .ac-output-tabs button { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ll-muted); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 10px 0; font-size: 11px; min-height: 44px; }
+.ll-app .aw-workspace .ac-connection .ac-output-tabs button[aria-selected=true] { color: var(--ll-text); border-bottom-color: var(--ll-action); }
+.ll-app .aw-workspace .ac-connection .ac-output { border: 1px solid var(--ll-line); border-top: 0; margin-bottom: 18px; background: var(--ll-bg, #101315); }
+.ll-app .aw-workspace .ac-connection .ac-output-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 13px; border-bottom: 1px solid var(--ll-line); }
+.ll-app .aw-workspace .ac-connection .ac-output-header > span { font-size: 10px; color: var(--ll-muted); overflow-wrap: anywhere; }
+.ll-app .aw-workspace .ac-connection .ac-output-header > div { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.ll-app .aw-workspace .ac-connection .ac-output-header .aw-text-button { font-size: 11px !important; }
+.ll-app .aw-workspace .ac-connection .ac-output textarea { display: block; width: 100%; min-height: 310px; resize: vertical; background: transparent; color: var(--ll-text-soft); border: 0; border-radius: 0; padding: 15px; font: 11px/1.7 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre; overflow-wrap: normal; overflow: auto; }
+.ll-app .aw-workspace .ac-connection .ac-install { list-style: decimal outside; padding-left: 21px; font-size: 12px; color: var(--ll-muted); margin: 22px 0 15px; }
+.ll-app .aw-workspace .ac-connection .ac-install li { padding-left: 5px; margin-bottom: 13px; }
+.ll-app .aw-workspace .ac-connection .ac-install strong { color: var(--ll-text); font-weight: 500; }
+.ll-app .aw-workspace .ac-connection .ac-install p { margin-top: 3px; }
+.ll-app .aw-workspace .ac-connection .ac-verification-note { color: var(--ll-muted); font-size: 11px; line-height: 1.6; }
+.ll-app .aw-workspace .ac-connection .ac-unavailable { padding: 34px 25px; display: grid; gap: 12px; justify-items: start; color: var(--ll-muted); font-size: 13px; }
+.ll-app .aw-workspace .ac-connection .ac-unavailable h3 { color: var(--ll-text); }
+@media (max-width: 1120px) {
+  .ll-app .aw-workspace .ac-connection .ac-layout { grid-template-columns: minmax(0, 1fr) 225px; gap: 23px; }
+  .ll-app .aw-workspace .ac-connection .ac-readiness { gap: 20px; flex-wrap: wrap; }
+  .ll-app .aw-workspace .ac-connection .ac-form-footer { align-items: flex-start; flex-direction: column; }
+  .ll-app .aw-workspace .ac-connection .ac-form-footer > div { align-self: flex-end; }
+  .ll-app .aw-workspace .ac-connection .ac-fields-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .ll-app .aw-workspace .ac-connection .ac-layout { grid-template-columns: 1fr; gap: 22px; }
+  .ll-app .aw-workspace .ac-connection .ac-context { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 25px; padding-top: 0; }
+  .ll-app .aw-workspace .ac-connection .ac-context-rule { margin-top: 0; border-top: 0; padding-top: 0; }
+  .ll-app .aw-workspace .ac-connection .ac-catalogue { margin-top: 0; grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .ll-app .aw-workspace .ac-connection .ac-intro { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: 12px; margin-bottom: 19px; }
+  .ll-app .aw-workspace .ac-connection .ac-symbol { width: 44px; height: 44px; }
+  .ll-app .aw-workspace .ac-connection .ac-intro h2 { font-size: 21px; }
+  .ll-app .aw-workspace .ac-connection .ac-intro > a { grid-column: 2; justify-self: start; margin-left: 0; }
+  .ll-app .aw-workspace .ac-connection .ac-intro p { font-size: 12px; }
+  .ll-app .aw-workspace .ac-connection .ac-readiness { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
+  .ll-app .aw-workspace .ac-connection .ac-readiness > button { margin-left: 0; min-height: 44px; }
+  .ll-app .aw-workspace .ac-connection .ac-panel-head { padding: 17px; }
+  .ll-app .aw-workspace .ac-connection .ac-panel-head h2 { font-size: 17px; }
+  .ll-app .aw-workspace .ac-connection .ac-panel-head > .aw-status { font-size: 10px; }
+  .ll-app .aw-workspace .ac-connection .ac-steps { padding: 15px 16px; gap: 7px; }
+  .ll-app .aw-workspace .ac-connection .ac-steps li { flex-direction: column; align-items: flex-start; font-size: 10px; gap: 7px; }
+  .ll-app .aw-workspace .ac-connection .ac-form { padding: 19px 16px 0; }
+  .ll-app .aw-workspace .ac-connection .ac-step-heading h3 { font-size: 17px; }
+  .ll-app .aw-workspace .ac-connection .ac-step-heading p { font-size: 12px; }
+  .ll-app .aw-workspace .ac-connection .ac-field input, .ll-app .aw-workspace .ac-connection .ac-field select, .ll-app .aw-workspace .ac-connection .ac-session-search { min-height: 44px; }
+  .ll-app .aw-workspace .ac-connection .ac-session-list { max-height: 285px; }
+  .ll-app .aw-workspace .ac-connection .ac-session-row { min-height: 57px; padding: 12px 10px; gap: 10px; }
+  .ll-app .aw-workspace .ac-connection .ac-form-footer > div { width: 100%; flex-wrap: wrap; }
+  .ll-app .aw-workspace .ac-connection .ac-form-footer .aw-primary { flex: 1; white-space: normal; }
+  .ll-app .aw-workspace .ac-connection .ac-form-footer .aw-primary, .ll-app .aw-workspace .ac-connection .ac-form-footer .aw-secondary { min-height: 44px; }
+  .ll-app .aw-workspace .ac-connection .ac-output-tabs { gap: 10px; }
+  .ll-app .aw-workspace .ac-connection .ac-output-tabs button { font-size: 10px; flex: 1; }
+  .ll-app .aw-workspace .ac-connection .ac-output-tabs button svg { display: none; }
+  .ll-app .aw-workspace .ac-connection .ac-output-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ll-app .aw-workspace .ac-connection .ac-output-header .aw-text-button { min-height: 44px; }
+  .ll-app .aw-workspace .ac-connection .ac-output textarea { font-size: 10px; padding: 11px; }
+  .ll-app .aw-workspace .ac-connection .ac-context { grid-template-columns: 1fr; gap: 20px; }
+  .ll-app .aw-workspace .ac-connection .ac-context-rule { border-top: 1px solid var(--ll-line); padding-top: 20px; }
+  .ll-app .aw-workspace .ac-connection .ac-vault summary, .ll-app .aw-workspace .ac-connection .ac-catalogue summary { min-height: 44px; }
+}
