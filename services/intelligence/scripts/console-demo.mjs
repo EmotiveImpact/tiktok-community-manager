@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { randomBytes } from "node:crypto";
 import { EvidenceStore } from "../src/store.mjs";
@@ -6,6 +6,14 @@ import { createIntelligenceServer, SCOPES } from "../src/server.mjs";
 import { Recorder } from "../src/recorder.mjs";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
+import { InvestigationEngine } from "../src/investigations.mjs";
+import { Governance } from "../src/governance.mjs";
+import { Scheduler } from "../src/scheduler.mjs";
+import { createSourceAdapters } from "../src/source-adapters.mjs";
+import { SpeechWorker } from "../src/speech.mjs";
+import { SourceCatalog } from "../src/source-catalog.mjs";
+import { MediaArchive } from "../src/media-archive.mjs";
+import { FilesystemObjectStorage, EncryptedObjectStorage } from "../../../deployment/livelens/object-storage.mjs";
 
 // Explicit synthetic development mode, bound to loopback with a public fixture login.
 const dir = resolve(
@@ -49,7 +57,23 @@ store.append("fixture_workspace", session.id, [
     text: "Synthetic example of a capture gap; no speech was inferred.",
     capturedAtMs: session.startedAtMs + 7000,
   },
+  {
+    source: { adapter: "fixture", eventId: "context-target" }, kind: "chat",
+    text: "Please preserve the original context mentioning @fictional_target.",
+    account: "fictional_viewer", capturedAtMs: session.startedAtMs + 6000,
+  },
+  {
+    source: { adapter: "fixture", eventId: "clarification" }, kind: "chat",
+    text: "Clarification: this is a fictional demonstration, not a threat.",
+    account: "fictional_guest", capturedAtMs: session.startedAtMs + 6500,
+  },
 ]);
+let reference;
+try { reference = store.session("fixture_workspace", "fixture-reference"); }
+catch {
+  reference = store.createSession("fixture_workspace", { id: "fixture-reference", platform: "fixture", account: "fictional_guest", sourceUrl: "https://example.invalid/reference", title: "Reference fixture · a different statement", startedAtMs: session.startedAtMs - 3600_000 });
+}
+store.append("fixture_workspace", reference.id, [{ source: { adapter: "fixture", eventId: "reference-comment" }, kind: "chat", text: "A different session can contain context without proving a relationship.", account: "fictional_viewer", capturedAtMs: reference.startedAtMs + 3000 }]);
 const port = Number(process.env.LIVELENS_PORT ?? 4318);
 const ffmpeg = resolve(
   process.env.LIVELENS_FFMPEG_PATH ?? "node_modules/ffmpeg-static/ffmpeg",
@@ -98,9 +122,35 @@ const recorder = new Recorder({
     },
   ],
 });
+const investigation = new InvestigationEngine({ store });
+const governance = new Governance({ store, recorder, members: [
+  { workspace: "fixture_workspace", subject: "fixture", role: "owner" },
+  { workspace: "fixture_workspace", subject: "fixture-collector", role: "owner" },
+] });
+const scheduler = new Scheduler({ store, recorder, adapters: createSourceAdapters([{ id: "fixture-media", workspace: "fixture_workspace", sessionId: session.id, kind: "file", input: media, label: "Synthetic colour bars & tone (fixture)" }]) });
+recorder.admission = (workspace, additions) => governance.checkQuota(workspace, additions);
+const sourceCatalog = new SourceCatalog({ store, scheduler, governance });
+const archiveKeyPath = resolve(dir, 'fixture-object-key');
+if (!existsSync(archiveKeyPath)) writeFileSync(archiveKeyPath, randomBytes(32), { mode: 0o600, flag: 'wx' });
+const mediaArchive = new MediaArchive({ store, recorder, storage: new EncryptedObjectStorage(new FilesystemObjectStorage(resolve(dir, 'objects')), readFileSync(archiveKeyPath)) });
+mediaArchive.encrypted = true;
+mediaArchive.admission = (workspace, additions) => governance.checkQuota(workspace, additions);
+const speechPython = process.env.LIVELENS_SPEECH_PYTHON ?? "/workspace/.venv-speech/bin/python";
+const speech = process.env.LIVELENS_DEMO_SPEECH !== "0" && existsSync(speechPython) ? new SpeechWorker({ store, recorder, recognizer: { command: speechPython, args: [resolve("services/intelligence/speech/pocketsphinx_adapter.py"), "--ffmpeg", ffmpeg], id: "pocketsphinx", language: "en-US", diarization: false } }) : undefined;
+let pdf = process.env.LIVELENS_PDF_RENDERER ? JSON.parse(process.env.LIVELENS_PDF_RENDERER) : undefined;
+try { if (!pdf && existsSync("/usr/bin/chromium") && process.env.LIVELENS_DEMO_PDF !== "0") { execFileSync("python3", ["-c", "import playwright"], { stdio: "ignore" }); pdf = { python: execFileSync("python3", ["-c", "import sys; print(sys.executable)"], { encoding: "utf8" }).trim(), chromium: "/usr/bin/chromium" }; } } catch {}
+try { store.case("fixture_workspace", "fixture-review"); }
+catch {
+  store.createCase("fixture_workspace", { id: "fixture-review", title: "Fictional context review", question: "What does the captured conversation support, and what remains uncertain?" }, "fixture");
+  const evidence = store.events("fixture_workspace", session.id);
+  store.linkEvidence("fixture_workspace", "fixture-review", evidence.map(e => e.id), "fixture");
+  investigation.addNote("fixture_workspace", "fixture-review", { text: "Synthetic demonstration: review the clarification alongside the initial request. The recording is test footage.", evidenceIds: [evidence[0].id, evidence.at(-1).id] }, "fixture");
+  investigation.createFinding("fixture_workspace", "fixture-review", { title: "Context was requested", statement: "The fictional viewer asks to retain context. A later clarification states that this is a demonstration.", supportEvidenceIds: [evidence[0].id], counterEvidenceIds: [evidence.at(-1).id], topic: "context" }, "fixture");
+}
 const server = createIntelligenceServer({
   store,
   recorder,
+  investigation, governance, scheduler, speech, pdf, sourceCatalog, mediaArchive,
   keys: [
     {
       token: randomBytes(32).toString("base64url"),
@@ -117,19 +167,15 @@ const server = createIntelligenceServer({
         username: "fixture",
         password: "fixture-operator-only",
         workspace: "fixture_workspace",
-        scopes: [
-          "sessions:read",
-          "evidence:read",
-          "cases:read",
-          "cases:write",
-          "recordings:read",
-          "recordings:write",
-        ],
+        scopes: SCOPES,
       },
     ],
   },
 });
 recorder.start();
+scheduler.start();
+speech?.start();
+mediaArchive.start();
 // Explicit synthetic markers align evidence seek to real written media.
 // This timer exists only in this fixture launcher, never in the service.
 const markers = setInterval(() => {
@@ -158,6 +204,9 @@ server.listen(port, "127.0.0.1", () =>
 const stop = () => {
   clearInterval(markers);
   server.close(async () => {
+    await scheduler.close();
+    await speech?.close();
+    await mediaArchive.close();
     await recorder.close();
     store.close();
     process.exit(0);
@@ -165,6 +214,9 @@ const stop = () => {
 };
 server.once("error", async () => {
   clearInterval(markers);
+  await scheduler.close();
+  await speech?.close();
+  await mediaArchive.close();
   await recorder.close();
   store.close();
   process.exitCode = 1;

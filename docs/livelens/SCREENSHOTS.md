@@ -1,22 +1,67 @@
-# LiveLens screenshots
+# LiveLens — actual application screenshots
 
-These are actual screenshots of the running private pilot interface, captured
-at a desktop viewport of 1440 × 1040. All displayed content is synthetic fixture
-data. The colour bars and tone are the test recording used to verify replay.
+These captures show the redesigned running application, not mock-ups. Desktop
+views use 1440-pixel width; phone views use 390-pixel width. All accounts,
+statements and media are labelled fictional fixtures. The colour bars and tone
+are actual FFmpeg media used for playback, seek, archival and recovery checks.
+The [browser receipt](browser-validation.json) records the exercised journeys.
 
-## Dashboard
+## Operations
 
-![LiveLens dashboard](screenshots/overview.png)
+![LiveLens overview](screenshots/overview.png)
 
-## Recording replay and evidence
+## Conversation and original evidence
 
-![LiveLens recording replay and evidence](screenshots/replay-evidence.png)
+![Media playback and original context](screenshots/replay-evidence.png)
 
-The selected fixture evidence predates this retained recording. The application
-shows that no retained segment covers its timestamp instead of claiming an
-aligned replay.
+## Reviewed investigation
 
-## Cases and reports
+![Investigation with support, counterevidence and review](screenshots/investigations.png)
 
-![LiveLens cases and reports](screenshots/cases-reports.png)
+## Reviewed report and redaction
 
+![Report editor and downloadable evidence/PDF](screenshots/cases-reports.png)
+
+## Context graph
+
+![Graph with selected source evidence](screenshots/context-graph.png)
+
+The graph keeps anonymous tracks within their original session, speech job and
+media segment. A manually declared person reference remains explicitly unverified.
+
+![Source-scoped tracks and unverified person reference](screenshots/identity-boundaries.png)
+
+## Missions and reviewed protection signals
+
+![Selected-session mission and contextual rule](screenshots/missions.png)
+
+![Reviewed signal with context and gaps](screenshots/reviewed-alert.png)
+
+## Account activity and comparisons
+
+![Observed account activity from retained sources](screenshots/account-activity.png)
+
+![Cross-session literal comparison with quotations](screenshots/comparison.png)
+
+## Workspace audit
+
+![Persisted workspace audit](screenshots/workspace-audit.png)
+
+## Encrypted archive and recovery
+
+This separate browser check archived verified media, removed one local segment,
+restored it through the interface, compared its SHA-256 and reopened video playback.
+
+![Verified archive and restored original media](screenshots/desktop-archive-restored.png)
+
+## Phone
+
+| Investigation | Source-linked graph |
+|---|---|
+| ![Phone investigation](screenshots/phone-investigation.png) | ![Phone graph connections](screenshots/phone-graph.png) |
+
+![Phone archive recovery](screenshots/phone-archive-restored.png)
+
+The [release notes](FULL_APPLICATION.md) distinguish these measured fixture
+workflows from unvalidated real LIVE, diarisation, external model quality,
+ALFRED registration and customer-scale operation.

@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS case_events(
 `;
 
 export class EvidenceStore {
-  constructor(path = ':memory:', { now = Date.now } = {}) {
+  constructor(path = ':memory:', { now = Date.now, database } = {}) {
     this.now = now;
-    this.db = new DatabaseSync(path);
+    this.db = database ?? new DatabaseSync(path);
     this.db.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000;');
     this.db.exec(schema);
     const versions = this.db.prepare('SELECT version FROM metadata').all();
@@ -243,7 +243,7 @@ export class EvidenceStore {
         'Account handles identify observed accounts, not verified real-world people. Speaker IDs are anonymous tracks.',
         'Temporal proximity does not prove a reply, coordination or intent. Collection gaps remain possible.',
         'A local hash chain detects changes against retained hashes; it is not an external signature or a trusted timestamp.',
-        'Independent transcription, semantic analysis and ALFRED registration are not enabled by this service. Media coverage is limited to retained recorder segments when supplied.',
+        'This original evidence export does not establish speech accuracy, semantic facts or registered agent integration. Media coverage is limited to retained recorder segments when supplied.',
       ] };
     return { ...report, reportSha256: digest(report) };
   }

@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "engines": { "node": ">=24" },
+  "optionalDependencies": { "pg-native": "3.9.1", "tiktok-live-connector": "2.1.0" },
+  "overrides": { "libpq": "1.11.0", "@eulerstream/euler-api-sdk": "0.1.5" },
   "scripts": {
     "start": "node src/server.mjs",
     "test": "node --test test/*.test.mjs",

@@ -22,8 +22,10 @@ source-linked reports, workspace boundaries, agent API and operating console are
 the LiveLens product. Imported recorder applications provide useful patterns but
 do not supply this combined system.
 
-The new service has no upstream runtime imports or external AI calls. It uses
-Node's built-in HTTP and SQLite modules. This source import does not change or
+The service imports no research checkout at runtime. Its default evidence store
+uses Node's built-in HTTP/SQLite modules; optional speech, PostgreSQL, selected
+provider adapters and explicitly configured model egress have separate adoption
+records below. This source import does not change or
 clear the original desktop app's existing npm dependencies.
 
 ## Adoption record required for each worker
@@ -76,3 +78,45 @@ tails. Tests exercise actual written media, stop, abrupt death, restart,
 workspace denial and damage refusal. Real provider discovery/recording is
 unverified without an accessible selected LIVE. Disable recorder source
 configuration to roll back recording while preserving retained evidence/API.
+
+
+## Expanded application runtime adoption
+
+Concurrent recording, scheduling, investigations, graph/protection rules, reports,
+roles and archival are original LiveLens code. Research Gitlinks are unchanged;
+none of those applications or nested scripts is executed as runtime setup.
+
+The optional local speech engine is **PocketSphinx 5.1.1** (BSD-2-Clause), chosen
+for an actual bounded CPU implementation without gated diarisation/model downloads.
+Its English acoustic/language models, dependencies, exact hashes and retained
+licences are in `services/intelligence/speech/runtime_inventory.json` and
+`runtime-licences/`; exact Python pins are in `requirements.txt`. Three known-audio
+references are checksum-pinned in `reference_manifest.json`, with actual WER/latency
+in `evaluation.json`. No pyannote/Whisper/Detoxify research runtime is adopted, and
+no overlapping-speaker or broad live accuracy claim follows from this small sample.
+Disable the recognizer configuration to roll back new processing while preserving
+transcript evidence and its engine/media receipts.
+
+Optional PostgreSQL uses **pg-native 3.9.1** and **libpq 1.11.0**, both MIT, through
+an original narrow synchronous pilot-schema adapter. Exact installed closure,
+integrities and licences are recorded in `services/intelligence/runtime-lock.json`,
+`runtime-licences/` and the separate service `package-lock.json`. The selected
+TikTok adapter uses the existing **tiktok-live-connector 2.1.0** distribution with
+Euler SDK **0.1.5**, preserving the previously recorded runtime route. This does
+not substitute the newer researched connector source or clear provider service
+terms. Native driver compilation uses trusted Node/libpq tooling; removing
+`LIVELENS_POSTGRES_URL` selects SQLite for a separately chosen database, not an
+automatic data migration.
+
+PDF rendering uses an explicitly configured Python/Playwright/Chromium executable;
+HTML is escaped, JavaScript disabled and all browser network requests refused.
+The validated environment uses Playwright 1.62.0 and distro Chromium; deployment
+operators must retain the licences and notices of their selected browser build.
+The project does not silently package that browser into the desktop distribution.
+
+Object storage adapters use built-in Node crypto/HTTP and enforce private workspace
+namespaces, bounded reads, Signature V4 and AES-256-GCM. Keys come only from private
+runtime configuration. Optional model analysis uses an administrator-configured
+OpenAI-compatible HTTPS endpoint and separately granted egress; no external model
+was invoked or evaluated here. Provider credentials/terms and deployment cost are
+separate operational decisions. Fixtures never imply commercial clearance.

@@ -11,3 +11,5 @@ release
 *.sqlite-wal
 *.sqlite-shm
 core
+__pycache__/
+*.pyc

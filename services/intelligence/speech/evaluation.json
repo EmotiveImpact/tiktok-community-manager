@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "fixture": "checksum-pinned PocketSphinx single-speaker test corpus excerpts",
+  "mode": "actual independent CPU recognition; no captions or forced text",
+  "samples": [
+    {
+      "referenceId": "goforward",
+      "audioSha256": "97ec638609b9c7eeb616764b4e5713d7ed2d0a8e1a2f8246631d9074d47aaf11",
+      "audioDurationMs": 2786,
+      "latencyMs": 758,
+      "realTimeFactor": 0.2721,
+      "referenceText": "go forward ten meters",
+      "hypothesis": "go forward ten meters",
+      "referenceWords": 4,
+      "wordErrors": 0,
+      "wordErrorRate": 0.0,
+      "transcriptSegments": [
+        {
+          "startMs": 460,
+          "endMs": 2120,
+          "text": "go forward ten meters",
+          "speakerId": null,
+          "confidence": 0.1880746245963654
+        }
+      ],
+      "engine": {
+        "id": "pocketsphinx",
+        "version": "5.1.1",
+        "language": "en-US",
+        "diarization": false
+      }
+    },
+    {
+      "referenceId": "austen-0870",
+      "audioSha256": "b0557cf95c974d930577e58e46b7f068c432a6e3afcc286563d88922b2a5315c",
+      "audioDurationMs": 7100,
+      "latencyMs": 1647,
+      "realTimeFactor": 0.232,
+      "referenceText": "and mister john dashwood had then leisure to consider how much there might be prudently in his power to do for them",
+      "hypothesis": "and mr john guess would have been at leisure to consider how much there might be prickly in his power to do for",
+      "referenceWords": 22,
+      "wordErrors": 8,
+      "wordErrorRate": 0.36363636363636365,
+      "transcriptSegments": [
+        {
+          "startMs": 200,
+          "endMs": 6640,
+          "text": "and mr john guess would have been at leisure to consider how much there might be prickly in his power to do for",
+          "speakerId": null,
+          "confidence": 0.11898075018635294
+        }
+      ],
+      "engine": {
+        "id": "pocketsphinx",
+        "version": "5.1.1",
+        "language": "en-US",
+        "diarization": false
+      }
+    },
+    {
+      "referenceId": "austen-0890",
+      "audioSha256": "5793ffbdee55fb8bfd284943a6866864c832d9d4accf2661cabd39915c84ee10",
+      "audioDurationMs": 5300,
+      "latencyMs": 1490,
+      "realTimeFactor": 0.2811,
+      "referenceText": "unless to be rather cold hearted and rather selfish is to be ill disposed",
+      "hypothesis": "homeless to be rather cold hearted and rather selfish is to the oldest those",
+      "referenceWords": 14,
+      "wordErrors": 4,
+      "wordErrorRate": 0.2857142857142857,
+      "transcriptSegments": [
+        {
+          "startMs": 220,
+          "endMs": 5090,
+          "text": "homeless to be rather cold hearted and rather selfish is to the oldest those",
+          "speakerId": null,
+          "confidence": 0.029395206658516936
+        }
+      ],
+      "engine": {
+        "id": "pocketsphinx",
+        "version": "5.1.1",
+        "language": "en-US",
+        "diarization": false
+      }
+    }
+  ],
+  "aggregateWordErrorRate": 0.3,
+  "totalAudioMs": 15186,
+  "totalLatencyMs": 3895,
+  "speakerOverlapEvaluation": {
+    "status": "unavailable",
+    "reason": "PocketSphinx does not diarise; references have no overlapping speaker truth."
+  },
+  "limitations": [
+    "Three short single-speaker English references are not representative TikTok audio.",
+    "No speaker-overlap reference or real diarisation engine is evaluated."
+  ],
+  "runtime": {
+    "pythonVersion": "3.12.14",
+    "platform": "Linux x86_64",
+    "ffmpegVersion": "ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "runtimeInventorySha256": "d381b53cce77d2d2bd74828c4a2572c74bbe31089eba2430146c8d43a9386a87"
+  }
+}

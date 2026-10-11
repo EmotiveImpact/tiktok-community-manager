@@ -1,5 +1,9 @@
 # First application release
 
+Historical first-slice receipt. The expanded application supersedes the feature
+boundaries below; use [FULL_APPLICATION.md](FULL_APPLICATION.md),
+[RUNTIME_CONFIGURATION.md](RUNTIME_CONFIGURATION.md) and the current backlog.
+
 This is the private operator pilot, built from foundation
 `14df1ae5d42e38e9dbcf4a974c8d161814a141f5`. It is not a deployed paid service.
 

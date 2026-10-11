@@ -14,6 +14,9 @@ import { once } from "node:events";
 import { EvidenceStore } from "../src/store.mjs";
 import { Recorder, hashFile } from "../src/recorder.mjs";
 import { createIntelligenceServer, SCOPES } from "../src/server.mjs";
+import { Scheduler } from "../src/scheduler.mjs";
+import { createSourceAdapters } from "../src/source-adapters.mjs";
+import { Fault } from "../src/validation.mjs";
 
 const locked = resolve(
   import.meta.dirname,
@@ -283,4 +286,313 @@ test("stop finalises real media and an interrupted partial tail remains unavaila
   );
   await f.restart();
   assert.equal(f.worker.job("alpha", "stop").state, "stopped");
+});
+
+test("two actual FFmpeg recordings run concurrently with job-scoped leases and no workspace mixing", async (t) => {
+  const f = fixture(t);
+  const secondStore = new EvidenceStore(f.db);
+  const sibling = new Recorder({
+    store: secondStore,
+    ...f.config,
+    maxConcurrent: 2,
+    maxWorkspaceConcurrent: 1,
+  });
+  t.after(async () => {
+    await sibling.close();
+    secondStore.close();
+  });
+  for (const workspace of ["alpha", "beta"])
+    f.worker.create(workspace, {
+      id: "parallel",
+      sessionId: "session",
+      sourceId: "source",
+      maxDurationSeconds: 15,
+      segmentSeconds: 2,
+    });
+  // Separate service workers compete over one durable database. They must claim different jobs.
+  f.worker.maxWorkspaceConcurrent = 1;
+  const firstRow = f.store.db
+    .prepare(
+      "SELECT * FROM recording_jobs WHERE workspace='alpha' AND id='parallel'",
+    )
+    .get();
+  assert.equal(f.worker.claim(firstRow), true);
+  f.worker.launch(firstRow, f.worker.source("alpha", "source"));
+  await sibling.tick();
+  assert.equal(f.worker.activeJobs.size, 1);
+  assert.equal(sibling.activeJobs.size, 1);
+  f.store.db
+    .prepare("UPDATE recording_job_leases SET expires_at=0 WHERE owner=?")
+    .run(f.worker.owner);
+  assert.equal(sibling.claim(firstRow), false); // A paused living owner cannot be mistaken for an interrupted child.
+  // A sibling cannot recover or terminate either healthy recording.
+  sibling.start();
+  f.worker.start();
+  await until(() =>
+    ["alpha", "beta"].every(
+      (w) => f.worker.job(w, "parallel").state === "recording",
+    ),
+  );
+  const jobs = ["alpha", "beta"].map((w) => f.worker.job(w, "parallel"));
+  assert.equal(jobs[0].attempts, 1);
+  assert.equal(jobs[1].attempts, 1);
+  assert.ok(
+    Math.abs(
+      jobs[0].segments[0].startedAtMs - jobs[1].segments[0].startedAtMs,
+    ) < 1500,
+  );
+  assert.equal(
+    secondStore.db
+      .prepare("SELECT count(*) AS n FROM recording_job_leases")
+      .get().n,
+    2,
+  );
+  assert.equal(
+    secondStore.db
+      .prepare("SELECT count(DISTINCT owner) AS n FROM recording_job_leases")
+      .get().n,
+    2,
+  );
+  assert.equal(
+    secondStore.search("alpha", { query: "worker interrupted" }).length,
+    0,
+  );
+  f.worker.stop("alpha", "parallel");
+  await until(() => f.worker.job("alpha", "parallel").state === "stopped");
+  assert.equal(f.worker.job("beta", "parallel").state, "recording");
+  const betaMedia = await f.worker.media(
+    "beta",
+    "parallel",
+    jobs[1].segments[0].id,
+  );
+  assert.ok(betaMedia.path.includes("/beta/parallel/"));
+  assert.ok(
+    (
+      await f.worker.media("alpha", "parallel", jobs[0].segments[0].id)
+    ).path.includes("/alpha/parallel/"),
+  );
+  f.worker.stop("beta", "parallel");
+  await until(() => f.worker.job("beta", "parallel").state === "stopped");
+});
+
+test("workspace reservations, pending count and duration reject work before FFmpeg spawn", async (t) => {
+  const f = fixture(t);
+  const bounded = new Recorder({
+    store: f.store,
+    ...f.config,
+    maxWorkspacePending: 1,
+    maxWorkspaceBytes: 4096,
+    maxJobBytes: 2048,
+    maxWorkspaceDurationSeconds: 4,
+  });
+  assert.throws(
+    () =>
+      bounded.create("alpha", {
+        id: "overlong",
+        sessionId: "session",
+        sourceId: "source",
+        maxDurationSeconds: 5,
+        segmentSeconds: 2,
+      }),
+    /invalid_recording_bounds/,
+  );
+  const job = bounded.create("alpha", {
+    id: "quota",
+    sessionId: "session",
+    sourceId: "source",
+    maxDurationSeconds: 4,
+    segmentSeconds: 2,
+  });
+  assert.equal(job.quotas.maxJobBytes, 2048);
+  assert.throws(
+    () =>
+      bounded.create("alpha", {
+        id: "another",
+        sessionId: "session",
+        sourceId: "source",
+        maxDurationSeconds: 4,
+        segmentSeconds: 2,
+      }),
+    /workspace_recording_capacity/,
+  );
+  const reserved = new Recorder({
+    store: f.store,
+    ...f.config,
+    maxWorkspaceBytes: 2048,
+    maxJobBytes: 2048,
+  });
+  assert.throws(
+    () =>
+      reserved.create("alpha", {
+        id: "no-space",
+        sessionId: "session",
+        sourceId: "source",
+        maxDurationSeconds: 4,
+        segmentSeconds: 2,
+      }),
+    /workspace_storage_capacity/,
+  );
+  assert.equal(bounded.activeJobs.size, 0);
+  assert.equal(reserved.activeJobs.size, 0);
+  let admissions = 0;
+  bounded.admission = () => {
+    admissions++;
+    throw new Fault("workspace_quota_exceeded", 429);
+  };
+  assert.equal(
+    bounded.create("alpha", {
+      id: "quota",
+      sessionId: "session",
+      sourceId: "source",
+      maxDurationSeconds: 4,
+      segmentSeconds: 2,
+    }).id,
+    "quota",
+  );
+  assert.equal(admissions, 0); // Retries of a retained job do not consume another entitlement.
+  assert.throws(
+    () =>
+      bounded.create("beta", {
+        id: "denied",
+        sessionId: "session",
+        sourceId: "source",
+        maxDurationSeconds: 4,
+        segmentSeconds: 2,
+      }),
+    /workspace_quota_exceeded/,
+  );
+  assert.equal(admissions, 1);
+  await bounded.close();
+  await reserved.close();
+});
+
+test("selected source missions launch two real recordings in one workspace and restore private source receipts", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "livelens-scheduled-recording-")),
+    db = join(dir, "evidence.sqlite");
+  const configurations = ["first", "second"].map((id, i) => {
+    const input = join(dir, id + ".mp4");
+    execFileSync(ffmpeg, [
+      "-v",
+      "error",
+      "-f",
+      "lavfi",
+      "-i",
+      `color=c=${i ? "blue" : "red"}:size=160x90:rate=10`,
+      "-t",
+      "12",
+      "-c:v",
+      "libx264",
+      "-threads",
+      "1",
+      input,
+    ]);
+    return {
+      id,
+      workspace: "alpha",
+      sessionId: id,
+      kind: "file",
+      input,
+      label: "Generated " + id + " fixture",
+    };
+  });
+  let store = new EvidenceStore(db),
+    recorder = new Recorder({ store, mediaRoot: join(dir, "media"), ffmpeg }),
+    scheduler = new Scheduler({
+      store,
+      recorder,
+      adapters: createSourceAdapters(configurations),
+    });
+  t.after(async () => {
+    await scheduler.close();
+    await recorder.close();
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  for (const source of configurations) {
+    store.createSession("alpha", {
+      id: source.sessionId,
+      platform: "fixture",
+      sourceUrl: "https://example.invalid/" + source.id,
+      title: source.label,
+      startedAtMs: Date.now(),
+    });
+    scheduler.create("alpha", {
+      id: source.id,
+      sourceId: source.id,
+      autoRecord: true,
+      endAtMs: Date.now() + 30_000,
+      maxDurationSeconds: 12,
+      segmentSeconds: 2,
+      pollSeconds: 10,
+    });
+  }
+  await scheduler.tick();
+  recorder.start();
+  scheduler.start();
+  const first = scheduler.mission("alpha", "first"),
+    second = scheduler.mission("alpha", "second");
+  await until(() =>
+    [first, second].every(
+      (m) => recorder.job("alpha", m.jobId).state === "recording",
+    ),
+  );
+  assert.equal(recorder.activeJobs.size, 2);
+  assert.equal(recorder.job("alpha", first.jobId).sessionId, "first");
+  assert.equal(recorder.job("alpha", second.jobId).sessionId, "second");
+  const a = recorder.job("alpha", first.jobId).segments[0],
+    b = recorder.job("alpha", second.jobId).segments[0];
+  assert.notEqual(a.sha256, b.sha256); // Different source footage remains separate, rather than copied into both jobs.
+  scheduler.stop("alpha", "first");
+  await until(() => recorder.job("alpha", first.jobId).state === "stopped");
+  assert.equal(recorder.job("alpha", second.jobId).state, "recording");
+  scheduler.stop("alpha", "second");
+  await until(() => recorder.job("alpha", second.jobId).state === "stopped");
+  await scheduler.close();
+  await recorder.close();
+  store.close();
+  store = new EvidenceStore(db);
+  recorder = new Recorder({ store, mediaRoot: join(dir, "media"), ffmpeg });
+  scheduler = new Scheduler({
+    store,
+    recorder,
+    adapters: createSourceAdapters(configurations),
+  });
+  assert.equal(scheduler.mission("alpha", "first").jobId, first.jobId);
+  assert.equal(recorder.sourcesFor("alpha").length, 2);
+  assert.equal(
+    (await recorder.media("alpha", first.jobId, a.id)).sha256,
+    a.sha256,
+  );
+  await scheduler.tick();
+  assert.equal(recorder.list("alpha").length, 2);
+  assert.equal(
+    store.search("alpha", { sessionId: "first", query: "service restart" })
+      .length,
+    0,
+  );
+});
+
+test("storage entitlement refusal quarantines actual media and stops only its own capture", async (t) => {
+  const f = fixture(t);
+  f.worker.admission = (workspace, addition) => {
+    if (workspace === "alpha" && addition.storageBytes)
+      throw new Fault("workspace_quota_exceeded", 429);
+  };
+  for (const workspace of ["alpha", "beta"])
+    f.worker.create(workspace, {
+      id: "metered",
+      sessionId: "session",
+      sourceId: "source",
+      maxDurationSeconds: 12,
+      segmentSeconds: 2,
+    });
+  f.worker.start();
+  await until(() => f.worker.job("alpha", "metered").state === "failed");
+  const denied = f.worker.job("alpha", "metered");
+  assert.equal(denied.error, "workspace_quota_exceeded");
+  assert.equal(denied.segments.length, 0);
+  assert.equal(f.store.search("alpha", { query: "quota limit" }).length, 1);
+  assert.equal(f.worker.job("beta", "metered").state, "recording");
+  f.worker.stop("beta", "metered");
+  await until(() => f.worker.job("beta", "metered").state === "stopped");
 });

@@ -31,10 +31,31 @@ CREATE TABLE IF NOT EXISTS media_segments(
  relative_path TEXT NOT NULL,PRIMARY KEY(workspace,job_id,id),
  FOREIGN KEY(workspace,job_id) REFERENCES recording_jobs(workspace,id));
 CREATE TABLE IF NOT EXISTS recorder_lease(id INTEGER PRIMARY KEY CHECK(id=1),owner TEXT NOT NULL,expires_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS recording_job_leases(
+ workspace TEXT NOT NULL,job_id TEXT NOT NULL,owner TEXT NOT NULL,expires_at INTEGER NOT NULL,
+ PRIMARY KEY(workspace,job_id),FOREIGN KEY(workspace,job_id) REFERENCES recording_jobs(workspace,id));
+CREATE TABLE IF NOT EXISTS recording_budgets(
+ workspace TEXT NOT NULL,job_id TEXT NOT NULL,reserved_bytes INTEGER NOT NULL,
+ PRIMARY KEY(workspace,job_id),FOREIGN KEY(workspace,job_id) REFERENCES recording_jobs(workspace,id));
+CREATE TABLE IF NOT EXISTS recording_sources(workspace TEXT NOT NULL,id TEXT NOT NULL,configuration TEXT NOT NULL,PRIMARY KEY(workspace,id));
+CREATE TABLE IF NOT EXISTS recording_worker_processes(owner TEXT PRIMARY KEY,pid INTEGER NOT NULL,start_token TEXT NOT NULL);
 `;
 
 export class Recorder {
-  constructor({ store, mediaRoot, ffmpeg, sources = [], intervalMs = 200 }) {
+  constructor({
+    store,
+    mediaRoot,
+    ffmpeg,
+    sources = [],
+    intervalMs = 200,
+    maxConcurrent = 2,
+    maxWorkspaceConcurrent = 2,
+    maxWorkspacePending = 20,
+    maxWorkspaceDurationSeconds = 3600,
+    maxWorkspaceBytes = 10 * 1024 ** 3,
+    maxJobBytes = 1024 ** 3,
+    leaseMs = 10_000,
+  }) {
     this.store = store;
     this.db = store.db;
     this.root = resolve(mediaRoot);
@@ -43,9 +64,21 @@ export class Recorder {
     this.root = realpathSync(this.root);
     this.owner = randomUUID();
     this.intervalMs = intervalMs;
-    this.active = null;
+    this.activeJobs = new Map();
     this.closed = false;
-    this.recovered = false;
+    for (const [key, value, min, max] of [
+      ["maxConcurrent", maxConcurrent, 1, 16],
+      ["maxWorkspaceConcurrent", maxWorkspaceConcurrent, 1, 16],
+      ["maxWorkspacePending", maxWorkspacePending, 1, 100],
+      ["maxWorkspaceDurationSeconds", maxWorkspaceDurationSeconds, 2, 3600],
+      ["maxWorkspaceBytes", maxWorkspaceBytes, 1024, Number.MAX_SAFE_INTEGER],
+      ["maxJobBytes", maxJobBytes, 1024, Number.MAX_SAFE_INTEGER],
+      ["leaseMs", leaseMs, 1000, 60_000],
+    ]) {
+      if (!Number.isSafeInteger(value) || value < min || value > max)
+        throw new Fault("invalid_recorder_quota");
+      this[key] = value;
+    }
     if (process.platform !== "linux")
       throw new Fault("linux_recorder_required");
     const ids = new Set();
@@ -76,6 +109,70 @@ export class Recorder {
       return { ...source };
     });
     this.db.exec(schema);
+    this.processStartToken = processToken(process.pid);
+    this.db
+      .prepare("INSERT INTO recording_worker_processes VALUES(?,?,?)")
+      .run(this.owner, process.pid, this.processStartToken);
+    for (const row of this.db
+      .prepare("SELECT configuration FROM recording_sources")
+      .all()) {
+      const source = JSON.parse(row.configuration);
+      if (
+        !this.sources.some(
+          (s) => s.workspace === source.workspace && s.id === source.id,
+        )
+      ) {
+        // Explicit adapter selection persisted this private configuration previously.
+        // Validate again so removed local fixtures cannot claim capture availability.
+        try {
+          this.sources.push(this.validateSource(source));
+        } catch {}
+      }
+    }
+  }
+
+  // Compatibility for callers inspecting a single fixture worker; production uses activeJobs.
+  get active() {
+    return this.activeJobs.values().next().value ?? null;
+  }
+  key(row) {
+    return row.workspace + ":" + row.id;
+  }
+  validateSource(source) {
+    object(source, ["id", "workspace", "sessionId", "kind", "input", "label"]);
+    ident(source.id);
+    ident(source.workspace);
+    ident(source.sessionId);
+    if (source.kind === "file") {
+      const path = realpathSync(source.input);
+      if (!statSync(path).isFile()) throw new Fault("fixture_file_required");
+      return { ...source, input: path };
+    }
+    if (source.kind !== "https") throw new Fault("invalid_recorder_source");
+    let url;
+    try {
+      url = new URL(source.input);
+    } catch {
+      throw new Fault("https_media_required");
+    }
+    if (url.protocol !== "https:" || url.username || url.password || url.hash)
+      throw new Fault("https_media_required");
+    return { ...source };
+  }
+  registerSource(source) {
+    // Only trusted server-side adapters call this. Browser/API input never supplies media URLs.
+    const existing = this.sources.findIndex(
+      (s) => s.workspace === source.workspace && s.id === source.id,
+    );
+    const configured = this.validateSource(source);
+    if (existing < 0) this.sources.push(configured);
+    else this.sources[existing] = configured;
+    this.db
+      .prepare(
+        "INSERT INTO recording_sources VALUES(?,?,?) ON CONFLICT(workspace,id) DO UPDATE SET configuration=excluded.configuration",
+      )
+      .run(configured.workspace, configured.id, JSON.stringify(configured));
+    return this.sourcesFor(source.workspace).find((s) => s.id === source.id);
   }
 
   sourcesFor(workspace) {
@@ -107,7 +204,12 @@ export class Recorder {
       sessionId: row.session_id,
       sourceId: row.source_id,
       state:
-        row.state === "recording" && this.active?.row.id !== id
+        row.state === "recording" &&
+        !this.db
+          .prepare(
+            "SELECT 1 FROM recording_job_leases WHERE workspace=? AND job_id=? AND expires_at>?",
+          )
+          .get(workspace, id, Date.now())
           ? "recovering"
           : row.state,
       attempts: row.attempts,
@@ -117,6 +219,14 @@ export class Recorder {
       segmentSeconds: row.segment_seconds,
       stopRequested: !!row.stop_requested,
       error: row.error,
+      quotas: {
+        maxConcurrent: this.maxConcurrent,
+        maxWorkspaceConcurrent: this.maxWorkspaceConcurrent,
+        maxWorkspacePending: this.maxWorkspacePending,
+        maxDurationSeconds: this.maxWorkspaceDurationSeconds,
+        maxWorkspaceBytes: this.maxWorkspaceBytes,
+        maxJobBytes: this.maxJobBytes,
+      },
       segments: this.db
         .prepare(
           "SELECT id,attempt,started_at,duration_ms,bytes,sha256 FROM media_segments WHERE workspace=? AND job_id=? ORDER BY started_at,id",
@@ -169,7 +279,7 @@ export class Recorder {
     if (
       !Number.isInteger(max) ||
       max < 2 ||
-      max > 3600 ||
+      max > this.maxWorkspaceDurationSeconds ||
       !Number.isInteger(segment) ||
       segment < 2 ||
       segment > 30 ||
@@ -190,12 +300,32 @@ export class Recorder {
           throw new Fault("job_identity_conflict", 409);
         return this.job(workspace, id);
       }
+      this.admission?.(workspace, { recordingSeconds: max, pendingJobs: 1 });
       const pending = this.db
         .prepare(
           "SELECT count(*) AS n FROM recording_jobs WHERE state NOT IN ('completed','stopped','failed')",
         )
         .get().n;
       if (pending >= 100) throw new Fault("recording_capacity", 409);
+      const workspacePending = this.db
+        .prepare(
+          "SELECT count(*) AS n FROM recording_jobs WHERE workspace=? AND state NOT IN ('completed','stopped','failed')",
+        )
+        .get(workspace).n;
+      if (workspacePending >= this.maxWorkspacePending)
+        throw new Fault("workspace_recording_capacity", 409);
+      const retained = this.db
+        .prepare(
+          "SELECT coalesce(sum(bytes),0) AS n FROM media_segments WHERE workspace=?",
+        )
+        .get(workspace).n;
+      const reserved = this.db
+        .prepare(
+          "SELECT coalesce(sum(b.reserved_bytes),0) AS n FROM recording_budgets b JOIN recording_jobs j ON j.workspace=b.workspace AND j.id=b.job_id WHERE b.workspace=? AND j.state NOT IN ('completed','stopped','failed')",
+        )
+        .get(workspace).n;
+      if (retained + reserved + this.maxJobBytes > this.maxWorkspaceBytes)
+        throw new Fault("workspace_storage_capacity", 409);
       if (
         this.db
           .prepare(
@@ -219,6 +349,9 @@ export class Recorder {
           segment,
           max,
         );
+      this.db
+        .prepare("INSERT INTO recording_budgets VALUES(?,?,?)")
+        .run(workspace, id, this.maxJobBytes);
       return this.job(workspace, id);
     });
   }
@@ -315,6 +448,20 @@ export class Recorder {
         continue;
       }
       const sha256 = await hashFile(path);
+      try {
+        this.admission?.(row.workspace, { storageBytes: statSync(path).size });
+      } catch (error) {
+        row.quotaExceeded =
+          error instanceof Fault ? error.code : "workspace_quota_exceeded";
+        if (existsSync(path)) renameSync(path, path + ".unavailable");
+        this.gap(row, "quota-limit");
+        const active = this.activeJobs.get(this.key(row));
+        if (active) {
+          active.quotaError = row.quotaExceeded;
+          if (!active.signalled) this.signal(active);
+        }
+        break;
+      }
       if (path === partial) renameSync(partial, final);
       this.db
         .prepare(
@@ -364,33 +511,86 @@ export class Recorder {
     );
     renameSync(join(dir, "manifest.json.tmp"), join(dir, "manifest.json"));
   }
-  lease() {
+  claim(row) {
     return this.store.transaction(() => {
-      const lease = this.db
+      const now = Date.now();
+      // An old release may still hold its original global lease. Do not recover its live child.
+      const legacy = this.db
         .prepare("SELECT * FROM recorder_lease WHERE id=1")
         .get();
-      if (lease && lease.owner !== this.owner && lease.expires_at > Date.now())
+      if (legacy && legacy.owner !== this.owner && legacy.expires_at > now)
+        return false;
+      const held = this.db
+        .prepare(
+          "SELECT * FROM recording_job_leases WHERE workspace=? AND job_id=?",
+        )
+        .get(row.workspace, row.id);
+      // Never recover a paused but still living sibling. A PID birth token also
+      // prevents an unrelated process reusing an old PID from blocking recovery.
+      if (
+        held &&
+        held.owner !== this.owner &&
+        (held.expires_at > now || this.ownerAlive(held.owner))
+      )
+        return false;
+      const leases = this.db
+        .prepare("SELECT * FROM recording_job_leases")
+        .all()
+        .filter((l) => l.expires_at > now || this.ownerAlive(l.owner));
+      const live = leases.length;
+      const own = leases.filter((l) => l.workspace === row.workspace).length;
+      if (
+        (!held || held.owner !== this.owner) &&
+        (live >= this.maxConcurrent || own >= this.maxWorkspaceConcurrent)
+      )
         return false;
       this.db
         .prepare(
-          "INSERT INTO recorder_lease VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET owner=excluded.owner,expires_at=excluded.expires_at",
+          "INSERT INTO recording_job_leases VALUES(?,?,?,?) ON CONFLICT(workspace,job_id) DO UPDATE SET owner=excluded.owner,expires_at=excluded.expires_at",
         )
-        .run(this.owner, Date.now() + 10_000);
+        .run(row.workspace, row.id, this.owner, now + this.leaseMs);
       return true;
     });
   }
-  async recover() {
-    const rows = this.db
+  ownerAlive(owner) {
+    const row = this.db
+      .prepare("SELECT * FROM recording_worker_processes WHERE owner=?")
+      .get(owner);
+    return !!row && processToken(row.pid) === row.start_token;
+  }
+  release(row) {
+    this.db
       .prepare(
-        "SELECT * FROM recording_jobs WHERE state IN ('starting','recording','stopping')",
+        "DELETE FROM recording_job_leases WHERE workspace=? AND job_id=? AND owner=?",
       )
-      .all();
-    for (const row of rows) {
-      await this.collect(row, true);
-      this.gap(row, "worker-interrupted");
-      this.retry(row, "worker_interrupted");
+      .run(row.workspace, row.id, this.owner);
+  }
+  async recover(row) {
+    await this.collect(row, true);
+    if (row.quotaExceeded) {
+      this.db
+        .prepare(
+          "UPDATE recording_jobs SET state='failed',error=? WHERE workspace=? AND id=?",
+        )
+        .run(row.quotaExceeded, row.workspace, row.id);
+      this.release(row);
+      return;
     }
-    this.recovered = true;
+    this.gap(row, "worker-interrupted");
+    this.retry(row, "worker_interrupted");
+    this.release(row);
+  }
+  diskBytes(path) {
+    if (!existsSync(path)) return 0;
+    let total = 0;
+    for (const entry of readdirSync(path, { withFileTypes: true })) {
+      const child = join(path, entry.name);
+      // Do not follow symlinks, which cannot be advertised as valid retained segments.
+      if (entry.isDirectory()) total += this.diskBytes(child);
+      else if (entry.isFile()) total += statSync(child).size;
+      if (total > this.maxWorkspaceBytes) return total;
+    }
+    return total;
   }
   retry(row, error) {
     const state = row.stop_requested
@@ -411,202 +611,273 @@ export class Recorder {
       );
   }
   start() {
-    if (this.timer) return;
+    if (this.timer || this.closed) return;
     const fail = () => {
       this.workerError = "worker_failure";
-      if (this.active) {
-        this.signal(this.active);
+      for (const active of this.activeJobs.values()) {
+        this.signal(active);
         this.db
           .prepare(
             "UPDATE recording_jobs SET error='worker_failure' WHERE workspace=? AND id=?",
           )
-          .run(this.active.row.workspace, this.active.row.id);
+          .run(active.row.workspace, active.row.id);
       }
     };
     this.timer = setInterval(() => this.tick().catch(fail), this.intervalMs);
-    this.heartbeat = setInterval(() => {
-      if (!this.closed)
-        this.db
-          .prepare("UPDATE recorder_lease SET expires_at=? WHERE owner=?")
-          .run(Date.now() + 10_000, this.owner);
-    }, 1000);
+    this.heartbeat = setInterval(
+      () => {
+        if (!this.closed)
+          this.db
+            .prepare(
+              "UPDATE recording_job_leases SET expires_at=? WHERE owner=?",
+            )
+            .run(Date.now() + this.leaseMs, this.owner);
+      },
+      Math.min(1000, Math.floor(this.leaseMs / 3)),
+    );
     this.tick().catch(fail);
+  }
+  async pollActive(a) {
+    const lease = this.db
+      .prepare(
+        "SELECT owner FROM recording_job_leases WHERE workspace=? AND job_id=?",
+      )
+      .get(a.row.workspace, a.row.id);
+    if (lease?.owner !== this.owner) {
+      if (!a.signalled) this.signal(a);
+      if (a.done) {
+        clearTimeout(a.killTimer);
+        this.activeJobs.delete(this.key(a.row));
+      }
+      return;
+    }
+    const row = this.db
+      .prepare("SELECT * FROM recording_jobs WHERE workspace=? AND id=?")
+      .get(a.row.workspace, a.row.id);
+    await this.collect(row);
+    const storageExceeded =
+      this.diskBytes(join(this.root, row.workspace, row.id)) >
+        this.maxJobBytes ||
+      this.diskBytes(join(this.root, row.workspace)) > this.maxWorkspaceBytes;
+    if (storageExceeded) a.quotaError = "recording_storage_limit";
+    if (
+      (row.stop_requested || Date.now() >= row.deadline || storageExceeded) &&
+      !a.signalled
+    )
+      this.signal(a);
+    if (!a.done) return;
+    clearTimeout(a.killTimer);
+    await this.collect(row, true);
+    const segments = this.job(row.workspace, row.id).segments;
+    if (a.quotaError) {
+      this.db
+        .prepare(
+          "UPDATE recording_jobs SET state='failed',error=? WHERE workspace=? AND id=?",
+        )
+        .run(a.quotaError, row.workspace, row.id);
+      this.gap(row, "storage-limit");
+    } else if (row.stop_requested)
+      this.db
+        .prepare(
+          "UPDATE recording_jobs SET state='stopped',error=NULL WHERE workspace=? AND id=?",
+        )
+        .run(row.workspace, row.id);
+    else if (a.code === 0 && segments.some((s) => s.attempt === row.attempts))
+      this.db
+        .prepare(
+          "UPDATE recording_jobs SET state='completed',error=NULL WHERE workspace=? AND id=?",
+        )
+        .run(row.workspace, row.id);
+    else {
+      this.gap(row, "media-unavailable");
+      this.retry(row, "media_unavailable");
+    }
+    await this.collect(row);
+    this.activeJobs.delete(this.key(row));
+    this.release(row);
   }
   async tick() {
     if (this.busy || this.closed) return;
     this.busy = true;
     try {
-      if (!this.lease()) return;
-      if (!this.recovered) await this.recover();
-      if (this.active) {
-        const a = this.active;
-        const row = this.db
-          .prepare("SELECT * FROM recording_jobs WHERE workspace=? AND id=?")
-          .get(a.row.workspace, a.row.id);
-        await this.collect(row);
-        if ((row.stop_requested || Date.now() >= row.deadline) && !a.signalled)
-          this.signal(a);
-        if (a.done) {
-          clearTimeout(a.killTimer);
-          await this.collect(row, true);
-          const segments = this.job(row.workspace, row.id).segments;
-          if (row.stop_requested)
-            this.db
-              .prepare(
-                "UPDATE recording_jobs SET state='stopped',error=NULL WHERE workspace=? AND id=?",
-              )
-              .run(row.workspace, row.id);
-          else if (
-            a.code === 0 &&
-            segments.some((s) => s.attempt === row.attempts)
-          )
-            this.db
-              .prepare(
-                "UPDATE recording_jobs SET state='completed',error=NULL WHERE workspace=? AND id=?",
-              )
-              .run(row.workspace, row.id);
-          else {
-            this.gap(row, "media-unavailable");
-            this.retry(row, "media_unavailable");
-          }
-          await this.collect(row);
-          this.active = null;
+      await Promise.all(
+        [...this.activeJobs.values()].map((a) => this.pollActive(a)),
+      );
+      // Lease each job separately. A second worker may collect another session but may
+      // never recover or signal a healthy sibling's FFmpeg process.
+      const interrupted = this.db
+        .prepare(
+          "SELECT j.* FROM recording_jobs j LEFT JOIN recording_job_leases l ON l.workspace=j.workspace AND l.job_id=j.id WHERE j.state IN ('starting','recording','stopping') AND (l.expires_at IS NULL OR l.expires_at<=? OR l.owner=?) ORDER BY j.created_at,j.id LIMIT 100",
+        )
+        .all(Date.now(), this.owner);
+      for (const row of interrupted)
+        if (!this.activeJobs.has(this.key(row)) && this.claim(row))
+          await this.recover(row);
+      const candidates = this.db
+        .prepare(
+          "SELECT * FROM recording_jobs WHERE state IN ('queued','retrying') AND stop_requested=0 AND next_retry<=? ORDER BY created_at,id LIMIT 100",
+        )
+        .all(Date.now());
+      for (const row of candidates) {
+        if (this.activeJobs.size >= this.maxConcurrent) break;
+        if (!this.claim(row)) continue;
+        if (Date.now() >= row.deadline || row.attempts >= 3) {
+          this.db
+            .prepare(
+              "UPDATE recording_jobs SET state='failed',error='capture_deadline_exceeded' WHERE workspace=? AND id=?",
+            )
+            .run(row.workspace, row.id);
+          this.gap(row, "capture-deadline-exceeded");
+          this.release(row);
+          continue;
         }
-        return;
+        if (
+          this.diskBytes(join(this.root, row.workspace)) >=
+          this.maxWorkspaceBytes
+        ) {
+          this.db
+            .prepare(
+              "UPDATE recording_jobs SET state='failed',error='workspace_storage_capacity' WHERE workspace=? AND id=?",
+            )
+            .run(row.workspace, row.id);
+          this.gap(row, "storage-limit");
+          this.release(row);
+          continue;
+        }
+        let source;
+        try {
+          source = this.source(row.workspace, row.source_id);
+        } catch {
+          this.db
+            .prepare(
+              "UPDATE recording_jobs SET state='failed',error='source_unavailable' WHERE workspace=? AND id=?",
+            )
+            .run(row.workspace, row.id);
+          this.gap(row, "source-unavailable");
+          this.release(row);
+          continue;
+        }
+        this.launch(row, source);
       }
-      const row = this.db
-        .prepare(
-          "SELECT * FROM recording_jobs WHERE state IN ('queued','retrying') AND stop_requested=0 AND next_retry<=? ORDER BY created_at,id LIMIT 1",
-        )
-        .get(Date.now());
-      if (!row) return;
-      if (Date.now() >= row.deadline || row.attempts >= 3) {
-        this.db
-          .prepare(
-            "UPDATE recording_jobs SET state='failed',error='capture_deadline_exceeded' WHERE workspace=? AND id=?",
-          )
-          .run(row.workspace, row.id);
-        this.gap(row, "capture-deadline-exceeded");
-        return;
-      }
-      let source;
-      try {
-        source = this.source(row.workspace, row.source_id);
-      } catch {
-        this.db
-          .prepare(
-            "UPDATE recording_jobs SET state='failed',error='source_unavailable' WHERE workspace=? AND id=?",
-          )
-          .run(row.workspace, row.id);
-        this.gap(row, "source-unavailable");
-        return;
-      }
-      row.attempts++;
-      row.attempt_started = Date.now();
-      this.db
-        .prepare(
-          "UPDATE recording_jobs SET state='starting',attempts=?,attempt_started=? WHERE workspace=? AND id=?",
-        )
-        .run(row.attempts, row.attempt_started, row.workspace, row.id);
-      const dir = this.directory(row.workspace, row.id, row.attempts);
-      const remaining = Math.max(
-        1,
-        Math.ceil((row.deadline - Date.now()) / 1000),
-      );
-      const offset =
-        this.job(row.workspace, row.id).segments.reduce(
-          (n, s) => n + s.durationMs,
-          0,
-        ) / 1000;
-      const input =
-        source.kind === "file"
-          ? [
-              "-re",
-              "-ss",
-              String(offset),
-              "-protocol_whitelist",
-              "file",
-              "-i",
-              source.input,
-            ]
-          : [
-              "-protocol_whitelist",
-              "https,tls,tcp,crypto",
-              "-tls_verify",
-              "1",
-              "-ca_file",
-              "/etc/ssl/certs/ca-certificates.crt",
-              "-rw_timeout",
-              "10000000",
-              ...(process.env.HTTPS_PROXY
-                ? ["-http_proxy", process.env.HTTPS_PROXY]
-                : []),
-              "-i",
-              source.input,
-            ];
-      const args = [
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-nostdin",
-        ...input,
-        "-map",
-        "0:v:0?",
-        "-map",
-        "0:a:0?",
-        "-c:v",
-        "libx264",
-        "-preset",
-        "ultrafast",
-        "-threads",
-        "1",
-        "-pix_fmt",
-        "yuv420p",
-        "-force_key_frames",
-        `expr:gte(t,n_forced*${row.segment_seconds})`,
-        "-c:a",
-        "aac",
-        "-t",
-        String(remaining),
-        "-f",
-        "segment",
-        "-segment_time",
-        String(row.segment_seconds),
-        "-reset_timestamps",
-        "1",
-        "-segment_format",
-        "mp4",
-        "-segment_format_options",
-        "movflags=+faststart",
-        "-segment_list",
-        join(dir, "segments.csv"),
-        "-segment_list_type",
-        "csv",
-        join(dir, "segment-%05d.partial.mp4"),
-      ];
-      const child = spawn(
-        "python3",
-        [
-          fileURLToPath(new URL("./recorder-exec.py", import.meta.url)),
-          String(process.pid),
-          this.ffmpeg,
-          ...args,
-        ],
-        { stdio: ["ignore", "ignore", "ignore"], shell: false },
-      );
-      const active = { row, child, done: false, code: null, signalled: false };
-      child.once("error", () => {
-        active.done = true;
-        active.code = -1;
-      });
-      child.once("close", (code) => {
-        active.done = true;
-        active.code = code;
-      });
-      this.active = active;
     } finally {
       this.busy = false;
     }
+  }
+  launch(row, source) {
+    row.attempts++;
+    row.attempt_started = Date.now();
+    this.db
+      .prepare(
+        "UPDATE recording_jobs SET state='starting',attempts=?,attempt_started=? WHERE workspace=? AND id=? AND state IN ('queued','retrying') AND stop_requested=0",
+      )
+      .run(row.attempts, row.attempt_started, row.workspace, row.id);
+    const actual = this.db
+      .prepare("SELECT * FROM recording_jobs WHERE workspace=? AND id=?")
+      .get(row.workspace, row.id);
+    if (
+      actual.state !== "starting" ||
+      actual.attempts !== row.attempts ||
+      actual.stop_requested
+    ) {
+      this.release(row);
+      return;
+    }
+    const dir = this.directory(row.workspace, row.id, row.attempts);
+    const remaining = Math.max(
+      1,
+      Math.ceil((row.deadline - Date.now()) / 1000),
+    );
+    const offset =
+      this.job(row.workspace, row.id).segments.reduce(
+        (n, s) => n + s.durationMs,
+        0,
+      ) / 1000;
+    const input =
+      source.kind === "file"
+        ? [
+            "-re",
+            "-ss",
+            String(offset),
+            "-protocol_whitelist",
+            "file",
+            "-i",
+            source.input,
+          ]
+        : [
+            "-protocol_whitelist",
+            "https,tls,tcp,crypto",
+            "-tls_verify",
+            "1",
+            "-ca_file",
+            "/etc/ssl/certs/ca-certificates.crt",
+            "-rw_timeout",
+            "10000000",
+            ...(process.env.HTTPS_PROXY
+              ? ["-http_proxy", process.env.HTTPS_PROXY]
+              : []),
+            "-i",
+            source.input,
+          ];
+    const args = [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-nostdin",
+      ...input,
+      "-map",
+      "0:v:0?",
+      "-map",
+      "0:a:0?",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "ultrafast",
+      "-threads",
+      "1",
+      "-pix_fmt",
+      "yuv420p",
+      "-force_key_frames",
+      `expr:gte(t,n_forced*${row.segment_seconds})`,
+      "-c:a",
+      "aac",
+      "-t",
+      String(remaining),
+      "-f",
+      "segment",
+      "-segment_time",
+      String(row.segment_seconds),
+      "-reset_timestamps",
+      "1",
+      "-segment_format",
+      "mp4",
+      "-segment_format_options",
+      "movflags=+faststart",
+      "-segment_list",
+      join(dir, "segments.csv"),
+      "-segment_list_type",
+      "csv",
+      join(dir, "segment-%05d.partial.mp4"),
+    ];
+    const child = spawn(
+      "python3",
+      [
+        fileURLToPath(new URL("./recorder-exec.py", import.meta.url)),
+        String(process.pid),
+        this.ffmpeg,
+        ...args,
+      ],
+      { stdio: ["ignore", "ignore", "ignore"], shell: false },
+    );
+    const active = { row, child, done: false, code: null, signalled: false };
+    child.once("error", () => {
+      active.done = true;
+      active.code = -1;
+    });
+    child.once("close", (code) => {
+      active.done = true;
+      active.code = code;
+    });
+    this.activeJobs.set(this.key(row), active);
   }
   signal(active) {
     active.signalled = true;
@@ -616,24 +887,39 @@ export class Recorder {
     }, 3000);
   }
   async close() {
+    if (this.closed) return;
     this.closed = true;
     clearInterval(this.timer);
     clearInterval(this.heartbeat);
     while (this.busy) await new Promise((r) => setTimeout(r, 20));
-    if (this.active) {
-      const a = this.active;
-      this.signal(a);
-      while (!a.done) await new Promise((r) => setTimeout(r, 20));
-      clearTimeout(a.killTimer);
-      const row = this.db
-        .prepare("SELECT * FROM recording_jobs WHERE workspace=? AND id=?")
-        .get(a.row.workspace, a.row.id);
-      await this.collect(row, true);
-      this.gap(row, "service-restart");
-      this.retry(row, "service_restart");
-      this.active = null;
-    }
-    this.db.prepare("DELETE FROM recorder_lease WHERE owner=?").run(this.owner);
+    await Promise.all(
+      [...this.activeJobs.values()].map(async (a) => {
+        if (!a.signalled) this.signal(a);
+        while (!a.done) await new Promise((r) => setTimeout(r, 20));
+        clearTimeout(a.killTimer);
+        const row = this.db
+          .prepare("SELECT * FROM recording_jobs WHERE workspace=? AND id=?")
+          .get(a.row.workspace, a.row.id);
+        await this.collect(row, true);
+        this.gap(row, "service-restart");
+        if (row.quotaExceeded)
+          this.db
+            .prepare(
+              "UPDATE recording_jobs SET state='failed',error=? WHERE workspace=? AND id=?",
+            )
+            .run(row.quotaExceeded, row.workspace, row.id);
+        else this.retry(row, "service_restart");
+        await this.collect(row);
+        this.release(row);
+      }),
+    );
+    this.activeJobs.clear();
+    this.db
+      .prepare("DELETE FROM recording_job_leases WHERE owner=?")
+      .run(this.owner);
+    this.db
+      .prepare("DELETE FROM recording_worker_processes WHERE owner=?")
+      .run(this.owner);
   }
   async media(workspace, jobId, segmentId) {
     this.job(workspace, jobId);
@@ -665,4 +951,15 @@ export async function hashFile(path) {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return hash.digest("hex");
+}
+
+function processToken(pid) {
+  try {
+    // /proc stat field22 is process start time. Commands may contain spaces/parentheses.
+    const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+    const fields = stat.slice(stat.lastIndexOf(")") + 2).split(" ");
+    return fields[0] === "Z" ? null : fields[19];
+  } catch {
+    return null;
+  }
 }

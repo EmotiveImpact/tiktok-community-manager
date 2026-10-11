@@ -1,6 +1,63 @@
 # Validation receipt
 
-## First application release — 10 October 2026
+## Expanded operator application — 11 October 2026
+
+The current continuation follows the first application slice on
+`feat/livelens-first-release-2026-10-10`. Fixtures remain distinct from external
+provider acceptance. Current product/configuration: [FULL_APPLICATION.md](FULL_APPLICATION.md) and
+[RUNTIME_CONFIGURATION.md](RUNTIME_CONFIGURATION.md). Public image gallery:
+[SCREENSHOTS.md](SCREENSHOTS.md). Exact optional-backend/container receipts:
+[deployment validation](../../deployment/livelens/VALIDATION.md).
+
+| Check | Result | Executed scope and limits |
+|---|---|---|
+| Application regression | 84 passed, 10 files | CRM/timeline, Electron archive boundaries and real scoped HTTP uploads preserved. |
+| TypeScript and Vite/Electron bundles | Passed | Final renderer/main/preload outputs; existing bundle-size/browser-data warnings remain. |
+| Intelligence service, all optional test prerequisites enabled | 102 passed; zero failures/skips | Actual PostgreSQL 17.6, independent PocketSphinx known audio, offline Chromium PDF, FFmpeg concurrent recording, scheduler, model HTTP fixtures, investigations/graph/protection, roles/scopes/case ACL/revocation, encrypted archive/restore, retention and SQLite backup recovery. |
+| Evidence demo | Passed | SQLite restart, original clocks/unknown tracks, hash receipts, case export. |
+| Recording recovery demo | Passed | Actual colour bars/tone, abrupt service death, restart, honest gaps/partial tails, 3 verified segments, authenticated range replay and retained case report. |
+| Source pins | 8/8 verified | Committed Gitlinks and lock agree; research checkouts are not materialised/executed in this environment. |
+| Desktop/phone original browser regression | Passed | Actual replay/seek, account search, source context, cases, original JSON/Markdown and restart; zero page errors/phone overflow. |
+| Full operator browser journey | Passed; zero page errors | Reviewed findings/counterevidence, bookmarks, literal comparisons, source-scoped anonymous tracks and unverified person references, source-backed relations after restart, missions/alert reviews, redaction/actual PDF, audit, explicit source creation, desktop/phone and keyboard. Final screenshots/receipt are tracked. |
+| Encrypted archive UI | Passed | Actual fixture snapshot, local segment removal, explicit UI restore, matching SHA-256, video reopened; desktop/phone, zero page errors/overflow. |
+| Native PostgreSQL graph extension | Passed | Anonymous tracks retain job/engine/media scope; operator-declared person reference, original evidence sources and history survive reconnect and remain workspace-isolated. |
+| Packaged API/recorder runtime | Passed | Pinned Node image built; real service health200/auth401, actual FFmpeg capture3segments, AES-GCM archive4objects, missing-media410, exact103815-byte restore/replay. Native PostgreSQL/TikTok modules and PDF helper are packaged. Optional web/PDF/speech derived-image recipes are not validated container claims. |
+| Real public LIVE | Unrun | No selected usable permitted account/media source supplied. Provider fixtures and generated recording do not establish real collection. |
+| Diarisation/semantic quality | Unmeasured | Known-audio CPU receipt is not overlapping-speaker accuracy; model adapter tests use local HTTP fixtures, not an external model. |
+| ALFRED registration | Outstanding | Standalone read/control gateway real HTTP policy tests pass; separate ALFRED repository is unchanged. |
+| Customer/paid rollout | Outstanding | No payment provider, self-service invitations/recovery, target RLS/queue deployment or representative customer capacity/cost receipt. |
+| Native Electron GUI | Unrun | Bundle and actual archive HTTP contract verified; native display/package startup is not. |
+
+Speech receipt: three checksum-pinned excerpts, 15.186 seconds/40 words, 30% word
+error rate and 3.895 seconds CPU processing (0.256 processing/audio ratio). No
+anonymous track is asserted to be a platform account or real person. The optional
+provider drafts are source-validated, model-labelled and atomically saved; review
+history and originals remain distinct. Redaction tests cover dependent notes,
+findings/editorial history and account provenance while preserving original hashes.
+
+Final review regressions cover overview recording-scope refusal, ACL-aware counts
+beyond200cases, malformed job IDs returning400 before lookup/dispatch, and libpq
+query overrides/duplicate TLS configuration rejection. Archive admission reserves
+unique encrypted objects/manifests plus pending jobs transactionally; shared keys
+are counted once per workspace. Uncertain failed writes retain reservations.
+
+Local capacity probe: 10 concurrent callers, 200 requests, 1000 synthetic events,
+zero errors, 441.64 requests/second and p95 37.94ms in its documented in-memory
+SQLite fixture. This is an API pilot measurement, not representative customer,
+recording/speech/analysis concurrency or hundreds-of-users capacity.
+
+No populated keys, signed URLs, media or databases are committed. No merge,
+hosted deployment, real unattended monitoring, external model invocation, paid
+infrastructure provisioning, billing-account change or ALFRED repository edit
+occurred. Reusable install/start instructions are saved in the environment draft;
+saving does not publish a snapshot or guarantee a fresh-task restoration.
+
+Hosted CI was blocked by payment/spending annotations at the first-slice commit.
+That is historical: both LiveLens push/PR runs at screenshot commit3b501a8 later
+completed successfully with actual runner steps. Recheck the current expanded
+release head; do not infer either success or a billing blocker from prior runs.
+
+## Historical first application release — 10 October 2026
 
 Foundation: `14df1ae5d42e38e9dbcf4a974c8d161814a141f5`, verified as the current
 foundation branch/PR #1 head before the new feature branch was created.

@@ -105,6 +105,7 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             page.get_by_role('button', name='Synthetic fixture marker', exact=False).first.wait_for()
             page.get_by_role('button', name='Cases & reports', exact=True).click()
             page.get_by_role('button', name='Fixture browser investigation', exact=False).click()
+            page.get_by_role('button', name='Original evidence', exact=True).click()
             with page.expect_download() as download:
                 page.get_by_role('button', name='Export JSON', exact=True).click()
             report = json.loads(Path(download.value.path()).read_text())
@@ -127,6 +128,7 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             login()
             page.get_by_role('button', name='Cases & reports', exact=True).click()
             page.get_by_role('button', name='Fixture browser investigation', exact=False).click()
+            page.get_by_role('button', name='Original evidence', exact=True).click()
             page.get_by_role('button', name='Synthetic fixture marker', exact=False).click()
             page.wait_for_function('() => document.querySelector("video").readyState >= 1')
             assert not errors, errors
