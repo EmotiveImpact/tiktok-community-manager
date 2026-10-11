@@ -1,5 +1,39 @@
 # Validation receipt
 
+## Aperture Studio implementation — 11 October 2026
+
+The owner selected the Aperture Studio reference. The [implemented app](APERTURE_STUDIO.md)
+now uses its narrow rail, warm charcoal, self-hosted Inter, media-led conversation
+and source-bound saved moments. Final renderer: `index-CBq7TQKy.js`; stylesheet:
+`index-uQ3gdMnf.css`; self-hosted font: `inter-latin-wght-normal-Dx4kXJAl.woff2`.
+
+| Check | Actual result |
+|---|---|
+| Application tests and build | [95 tests pass in 12 files](aperture-studio-build-validation.json); TypeScript, renderer, Electron main/preload all build. Existing bundle-size/Browserslist warnings retained. |
+| Monitor journey | [Pass](aperture-studio-monitor-validation.json): bounded capture, exact-job replay, hash/range, later chat, independent stops, desktop/phone, viewer HTTP 403. New popover default/selection/Escape/outside dismissal and permitted read-only Saved moments assertions pass. |
+| Original operator journey | [Pass](aperture-studio-original-validation.json): existing source, replay and investigation assertions retained. |
+| Full application journey | [Pass](aperture-studio-full-validation.json): actual bookmark ID/text/original clock, decoded thumbnail, keyboard original seek, same-selected re-seek after manual playback change, cross-session isolation, explicit choose-before-write and persistence after restart. Existing saved duration/filter/search, reviewed findings, graph, exports and real PDF assertions pass. |
+| Review journey | [Pass](aperture-studio-review-validation.json): source-linked review, bounded schedule state/disclosures, selection, permissions, stop/deadline, no hidden capture and restart retained. |
+| Onboarding journey | [Pass](aperture-studio-onboarding-validation.json): real cookies, invitations, roles, session revocation, recovery and persisted restart retained. |
+| Visual comparison | [Pass](../../design-qa.md): selected 1487 × 1058 reference and equally sized actual browser state inspected together. Final [geometry and screenshot hashes](aperture-studio-layout-validation.json); 390px phone and desktop have no horizontal overflow or uncaught page errors. |
+
+All five final journeys ran with at most two concurrent QA browsers and produced
+39 screenshots with zero uncaught page errors. [Aggregate receipt and final asset
+SHA-256 hashes](aperture-studio-browser-validation.json) identify the tested build.
+The tests use the usual generated colour-bar fixture: [actual conversation](screenshots/aperture-studio/verification-conversation.png)
+and [actual monitor](screenshots/aperture-studio/verification-monitor.png).
+The separate visual demo uses a generated studio still recorded through FFmpeg
+plus explicit fictional captions; it does not establish recognised speech or LIVE.
+
+An initial visual-capture harness read a job snapshot before all three segments
+were published; it now waits for the complete real receipt. The successful visual
+recapture and final acceptance journeys above ran on the final renderer. No app
+assertion was removed or weakened. Service contracts, provider adapters, dependency
+lockfiles and ALFRED source are unchanged; their earlier complete suites were not
+rerun locally for this UI pass. Hosted checks apply only to their published commit.
+The owner approved the visual direction; final implementation, external-provider
+and production acceptance remain distinct.
+
 ## Recording workspace refinement — 11 October 2026
 
 The [implemented refinement](STUDIO_REFINEMENT.md) gives the actual application six

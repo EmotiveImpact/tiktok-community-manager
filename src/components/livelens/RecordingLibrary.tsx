@@ -81,21 +81,21 @@ export default function RecordingLibrary({ sessions, revision, scopes, query, on
       </div>
       <label className="rl-search"><Search size={15} aria-hidden /><input aria-label="Filter session library" placeholder="Find a title or account…" value={query} onChange={(event) => onQueryChange(event.target.value)} />{query && <button type="button" aria-label="Clear library filter" onClick={() => onQueryChange("")}><X size={14} /></button>}</label>
     </div>
-    <div className="rl-result-heading"><span>{visible.length} {visible.length === 1 ? "conversation" : "conversations"}{normalizedQuery ? " matching your filter" : " on this page"}</span><details className="rl-data-note"><summary>About video status</summary><p>Video details describe the latest saved capture found in up to 200 recent recording receipts. Missing receipts mean media was not loaded here; open a conversation for its retained history. Duration sums saved segments and does not imply uninterrupted coverage. Playback checks the media when opened.</p></details></div>
+    <div className="rl-result-heading"><span><strong>{visible.length}</strong> {visible.length === 1 ? "conversation" : "conversations"}{normalizedQuery ? " matching your filter" : " on this page"}</span><details className="rl-data-note"><summary>About video status</summary><p>Video details describe the latest saved capture found in up to 200 recent recording receipts. Missing receipts mean media was not loaded here; open a conversation for its retained history. Duration sums saved segments and does not imply uninterrupted coverage. Playback checks the media when opened.</p></details></div>
     {!canReadMedia && <p className="rl-notice" role="status"><ShieldAlert size={15} aria-hidden />Recording receipts are outside your current access. You can still open permitted conversations.</p>}
     {receipts.error && <div className="rl-notice rl-notice-error" role="alert"><TriangleAlert size={15} aria-hidden /><p>Media status unavailable. {receipts.error} Conversations can still be opened.</p><button onClick={() => setReceiptRevision((value) => value + 1)}>Retry media status</button></div>}
     {receipts.loading && canReadMedia && <p className="rl-loading" role="status">{receipts.loaded ? "Refreshing recording details…" : "Loading recording details…"}</p>}
     {visible.length ? <div className="rl-record-list">
-      <div className="rl-column-head" aria-hidden><span>Conversation</span><span>Latest saved capture</span><span>Session started</span></div>
+      <div className="rl-column-head" aria-hidden><span className="rl-column-conversation">Conversation</span><span>Latest saved capture</span><span>Session started</span><span /></div>
       {visible.map((session) => {
         const summary = media.get(session.id);
         const hasVideo = !!summary?.saved;
         const Icon = hasVideo ? Video : MessageSquare;
         return <button className={`rl-row${hasVideo ? " rl-row-video" : ""}`} key={session.id} onClick={() => onOpenSession(session.id)}>
-          <span className="rl-media-tile" aria-hidden><Icon size={25} strokeWidth={1.5} /><small>{hasVideo ? "Saved video" : "Conversation"}</small></span>
-          <span className="rl-conversation"><strong>{session.title}</strong><span className="rl-source"><span>{session.account ? `@${session.account}` : "Account unavailable"}</span><span className={`rl-platform${session.platform === "fixture" ? " rl-platform-demo" : ""}`}>{platformName(session.platform)}</span></span></span>
+          <span className="rl-media-tile" aria-hidden><Icon size={24} strokeWidth={1.5} /><small>{hasVideo ? "Saved video" : "Conversation"}</small></span>
+          <span className="rl-conversation"><strong>{session.title}</strong><span className="rl-source"><span className="rl-source-account">{session.account ? `@${session.account}` : "Account unavailable"}</span><span className={`rl-platform${session.platform === "fixture" ? " rl-platform-demo" : ""}`}>{platformName(session.platform)}</span></span></span>
           <MediaStatus summary={summary} loading={receipts.loading} available={receipts.loaded} denied={!canReadMedia} />
-          <span className="rl-date"><time dateTime={new Date(session.startedAtMs).toISOString()} aria-label={`Session started ${calendarDate(session.startedAtMs)} at ${clockTime(session.startedAtMs)}`}>{calendarDate(session.startedAtMs)}</time><small>{clockTime(session.startedAtMs)}</small></span>
+          <span className="rl-date"><span className="rl-date-label">Session started</span><time dateTime={new Date(session.startedAtMs).toISOString()} aria-label={`Session started ${calendarDate(session.startedAtMs)} at ${clockTime(session.startedAtMs)}`}>{calendarDate(session.startedAtMs)}</time><small>{clockTime(session.startedAtMs)}</small></span>
           <ChevronRight className="rl-open-arrow" size={17} aria-hidden />
         </button>;
       })}

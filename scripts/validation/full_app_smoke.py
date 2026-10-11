@@ -139,6 +139,15 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 tools_summary = recording_tools.locator("summary").filter(has_text=re.compile(r"^Recording details & tools$"))
                 expect(tools_summary).to_be_visible()
                 assert not recording_tools.evaluate("element => element.open"), "Recording tools must start collapsed"
+                moments = page.get_by_role("region", name="Saved moments", exact=True)
+                expect(moments).to_be_visible()
+                assert page.evaluate("""() => {
+                    const video = document.querySelector('video');
+                    const moments = document.querySelector('.ll-saved-moments');
+                    const tools = document.querySelector('details.ll-recording-tools');
+                    return Boolean(video.compareDocumentPosition(moments) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+                        Boolean(moments.compareDocumentPosition(tools) & Node.DOCUMENT_POSITION_FOLLOWING);
+                }"""), "Saved moments must follow playback and precede recording tools"
                 expect(recording_tools.locator("video")).to_have_count(0)
                 expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
                 expect(page.locator("video")).to_be_visible()
@@ -160,12 +169,13 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 expect(displayed_hash).not_to_be_visible()
                 expect(page.locator("video")).to_be_visible()
                 expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
+                timeline = page.get_by_role("region", name="Captured timeline", exact=True)
                 for _ in range(20):
                     page.get_by_role("button", name="Refresh records", exact=True).click()
-                    if page.get_by_role("button", name=re.compile("Synthetic fixture marker")).count():
+                    if timeline.get_by_role("button", name=re.compile("Synthetic fixture marker")).count():
                         break
                     page.wait_for_timeout(200)
-                page.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
+                timeline.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
                 page.wait_for_function('() => document.querySelector("video").currentTime >= .45')
                 page.evaluate('async () => { const media = document.querySelector("video"); media.muted = true; await media.play(); }')
                 page.wait_for_function('() => document.querySelector("video").currentTime > .8')
@@ -175,15 +185,47 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_label("Link to investigation").select_option(label="Full application fixture review")
                 page.get_by_role("button", name="Link evidence", exact=True).click()
                 page.get_by_text("Original evidence linked to case.", exact=True).wait_for()
-                page.get_by_role("button", name="Bookmark evidence", exact=True).click()
+                with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/bookmarks" and response.request.method == "POST") as bookmarked:
+                    page.get_by_role("button", name="Bookmark evidence", exact=True).click()
+                assert bookmarked.value.status == 201
+                marker_bookmark = bookmarked.value.json()
+                assert marker_bookmark["evidenceId"] == MARKER_ID and marker_bookmark["sessionId"] == "fixture-conversation"
+                assert marker_bookmark["reviewer"] == "fixture" and marker_bookmark["label"] == marker_text[:120]
+                session_bookmarks = page.request.get(BASE + "/v1/bookmarks?session=fixture-conversation")
+                assert session_bookmarks.status == 200
+                assert next(item for item in session_bookmarks.json()["bookmarks"] if item["id"] == marker_bookmark["id"]) == marker_bookmark
                 page.get_by_text("Evidence bookmarked.", exact=True).wait_for()
-                page.get_by_role("button", name=re.compile("Keep the original conversation with the evidence")).first.click()
+                marker_evidence = page.request.get(BASE + "/v1/evidence/" + MARKER_ID).json()
+                assert marker_evidence["sourceTimestampMs"] is None
+                marker_segment = next(item for item in retained_job.json()["segments"] if item["id"] == marker_evidence["raw"]["segmentId"])
+                assert marker_evidence["raw"]["jobId"] == recording_id
+                marker_offset = (marker_evidence["capturedAtMs"] - marker_segment["startedAtMs"]) / 1000
+                assert 0 <= marker_offset < marker_segment["durationMs"] / 1000
+                saved_moment = moments.locator('.ll-saved-moment[data-evidence-id="' + MARKER_ID + '"]')
+                expect(saved_moment).to_have_count(1)
+                expect(saved_moment).to_have_attribute("aria-pressed", "true")
+                expect(saved_moment.locator("strong")).to_have_text(marker_bookmark["label"])
+                expect(saved_moment.locator("time")).to_have_attribute("datetime", page.evaluate("ms => new Date(ms).toISOString()", marker_evidence["capturedAtMs"]))
+                expect(saved_moment.get_by_text("Capture time", exact=True)).to_be_visible()
+                expect(saved_moment.locator("img")).to_have_count(1, timeout=10000)
+                assert saved_moment.locator("img").get_attribute("src").startswith("data:image/jpeg;")
+                page.wait_for_function("""id => { const image = document.querySelector('.ll-saved-moment[data-evidence-id="' + id + '"] img'); return image?.complete && image.naturalWidth > 0; }""", arg=MARKER_ID)
+                assert saved_moment.locator("img").evaluate("image => image.complete && image.naturalWidth > 0"), "Saved moment thumbnail must decode a real retained frame"
+                timeline.get_by_role("button", name=re.compile("Keep the original conversation with the evidence")).first.click()
                 page.locator(".ll-context blockquote").filter(has_text="Keep the original conversation with the evidence.").wait_for()
                 COUNTER_ID = page.locator(".ll-context .ll-id").inner_text()
                 counter_text = page.locator(".ll-context blockquote").inner_text()
                 page.get_by_label("Link to investigation").select_option(label="Full application fixture review")
                 page.get_by_role("button", name="Link evidence", exact=True).click()
                 page.get_by_text("Original evidence linked to case.", exact=True).wait_for()
+                page.evaluate('() => { const video = document.querySelector("video"); video.pause(); video.currentTime = 0; }')
+                page.wait_for_function('() => !document.querySelector("video").seeking && document.querySelector("video").currentTime < .1')
+                saved_moment.focus()
+                page.keyboard.press("Enter")
+                expect(page.locator(".ll-context .ll-id")).to_have_text(MARKER_ID)
+                expect(page.locator(".ll-context blockquote")).to_have_text(marker_text)
+                expect(saved_moment).to_have_attribute("aria-pressed", "true")
+                page.wait_for_function('offset => { const video = document.querySelector("video"); return !video.seeking && video.readyState >= 2 && Math.abs(video.currentTime - offset) < .1; }', arg=marker_offset)
                 capture("02-desktop-conversation.png")
 
                 # The library's saved duration describes retained media, not
@@ -216,11 +258,46 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 library.get_by_label("Filter session library", exact=True).fill("Reference fixture")
                 expect(library.locator(".rl-row")).to_have_count(1)
                 expect(library.locator(".rl-row strong")).to_contain_text("Reference fixture")
+                library.locator(".rl-row").focus()
+                page.keyboard.press("Enter")
+                expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
+                expect(moments.locator(".ll-saved-moment")).to_have_count(0)
+                expect(moments.get_by_text("No moments saved for this recording yet.", exact=True)).to_be_visible()
+                assert page.request.get(BASE + "/v1/bookmarks?session=fixture-reference").json()["bookmarks"] == []
+                reference_statement = timeline.locator(".ll-evidence").filter(has_text="A different session can contain context without proving a relationship.")
+                expect(reference_statement).to_be_visible()
+                header_bookmark = page.get_by_role("button", name="Bookmark moment", exact=True)
+                header_bookmark.focus()
+                page.keyboard.press("Enter")
+                expect(page.get_by_text("Choose a statement to bookmark.", exact=True)).to_be_visible()
+                assert page.request.get(BASE + "/v1/bookmarks?session=fixture-reference").json()["bookmarks"] == [], "Choosing a moment must not save evidence before an explicit statement selection"
+                expect(reference_statement).to_be_focused()
+                with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/bookmarks" and response.request.method == "POST") as reference_saved:
+                    page.keyboard.press("Enter")
+                assert reference_saved.value.status == 201
+                reference_bookmark = reference_saved.value.json()
+                reference_id = page.locator(".ll-context .ll-id")
+                expect(reference_id).to_have_text(reference_bookmark["evidenceId"])
+                assert reference_bookmark["sessionId"] == "fixture-reference" and reference_bookmark["evidenceId"] != MARKER_ID
+                page.get_by_text("Moment bookmarked.", exact=True).wait_for()
+                reference_moment = moments.locator('.ll-saved-moment[data-evidence-id="' + reference_bookmark["evidenceId"] + '"]')
+                expect(reference_moment).to_have_count(1)
+                expect(moments.locator('.ll-saved-moment[data-evidence-id="' + MARKER_ID + '"]')).to_have_count(0)
+                expect(reference_moment.locator("img")).to_have_count(0)
+                expect(page.locator("video")).to_have_count(0)
+                expect(page.get_by_text("No retained media for this session.", exact=True)).to_be_visible()
+                reference_moment.focus()
+                page.keyboard.press("Enter")
+                expect(reference_id).to_have_text(reference_bookmark["evidenceId"])
+                expect(page.locator(".ll-context blockquote")).to_have_text("A different session can contain context without proving a relationship.")
+                nav("Session library")
                 library.get_by_role("button", name="Clear library filter", exact=True).click()
                 expect(library.locator(".rl-row")).to_have_count(2)
                 saved_row.focus()
                 page.keyboard.press("Enter")
                 page.get_by_role("heading", name="Captured timeline", exact=True).wait_for()
+                expect(saved_moment).to_have_count(1)
+                expect(moments.locator('.ll-saved-moment[data-evidence-id="' + reference_bookmark["evidenceId"] + '"]')).to_have_count(0)
 
                 open_investigation()
                 page.get_by_label(re.compile("Select evidence: Synthetic fixture marker")).first.check()
@@ -508,10 +585,20 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 assert reopened["manifest"]["evidence"] == report["manifest"]["evidence"]
                 nav("Session library")
                 page.get_by_role("button", name=re.compile("Fictional fixture")).first.click()
-                page.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
+                timeline.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
                 page.locator("video").wait_for()
                 page.wait_for_function('() => document.querySelector("video").readyState >= 1')
                 assert page.locator(".ll-context blockquote").inner_text() == marker_text, "Export redaction must not change the retained original"
+                persisted_bookmarks = page.request.get(BASE + "/v1/bookmarks?session=fixture-conversation").json()["bookmarks"]
+                assert next(item for item in persisted_bookmarks if item["id"] == marker_bookmark["id"]) == marker_bookmark
+                expect(saved_moment).to_have_count(1)
+                page.evaluate('() => { const video = document.querySelector("video"); video.pause(); video.currentTime = 0; }')
+                page.wait_for_function('() => !document.querySelector("video").seeking && document.querySelector("video").currentTime < .1')
+                saved_moment.focus()
+                page.keyboard.press("Enter")
+                expect(page.locator(".ll-context .ll-id")).to_have_text(MARKER_ID)
+                expect(page.locator(".ll-context blockquote")).to_have_text(marker_text)
+                page.wait_for_function('offset => { const video = document.querySelector("video"); return !video.seeking && video.readyState >= 2 && Math.abs(video.currentTime - offset) < .1; }', arg=marker_offset)
                 assert not errors, errors
                 receipt = {
                     "fixture": True,
@@ -525,6 +612,10 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                     "counterevidenceRetained": True,
                     "bookmarkSaved": True,
                     "bookmarkOriginalReopened": True,
+                    "savedMomentsExactOriginalClockFrameAndKeyboardSeek": True,
+                    "savedMomentsSessionIsolationAndExplicitStatementChoice": True,
+                    "savedMomentsPersistAfterServiceRestart": True,
+                    "sameSelectedSavedMomentReseeksAfterManualPlaybackChange": True,
                     "crossSessionComparisonSources": True,
                     "observedAccountSearch": True,
                     "sourceConfigurationWithoutBackgroundCapture": True,

@@ -1,10 +1,27 @@
 # LiveLens — actual application screenshots
 
-Looking for the three newly proposed designs? Open the separate
+The owner selected **Aperture Studio** from the
 [visual concept gallery](design-concepts/visual-exploration-2026-10-11/README.md).
-Those are generated concepts; the screenshots below show the implemented app.
+The screenshots below show that language implemented in the actual app.
 
-## Current recording workspace refinement — 11 October 2026
+## Aperture Studio — 11 October 2026
+
+![Actual Aperture Studio conversation](screenshots/aperture-studio/01-conversation-desktop.png)
+
+[Full-size desktop](screenshots/aperture-studio/01-conversation-desktop.png) ·
+[Monitor](screenshots/aperture-studio/02-monitor-desktop.png) ·
+[Library](screenshots/aperture-studio/03-library-desktop.png) ·
+[Phone conversation](screenshots/aperture-studio/04-conversation-phone.png) ·
+[Phone navigation](screenshots/aperture-studio/05-navigation-phone.png) ·
+[Phone monitor](screenshots/aperture-studio/06-monitor-phone.png).
+
+Actual browser captures of an authenticated **synthetic demo**: the studio portrait
+is generated and recorded with a tone through FFmpeg; captions are illustrative
+fixture text, not speech recognition. Thumbnails come from actual retained media.
+Renderer `index-CBq7TQKy.js`; stylesheet `index-uQ3gdMnf.css`. The
+[implementation guide](APERTURE_STUDIO.md) explains behavior, media and verification.
+
+## Earlier recording workspace refinement — 11 October 2026
 
 The [implemented design pass](STUDIO_REFINEMENT.md) simplifies navigation, gives the
 library real saved-capture metadata, places video beside a searchable timeline and

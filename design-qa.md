@@ -1,6 +1,89 @@
 # LiveLens design QA
 
-## Current recording workspace refinement — 11 October 2026
+## Aperture Studio implementation — 11 October 2026
+
+final result: passed
+
+The owner selected **Aperture Studio**. This pass implements that reference in the
+existing authenticated application using Product Design's image-to-code and design
+QA workflows. Earlier rejected directions and their receipts below are historical.
+
+### Comparison evidence
+
+- Source visual truth: [01-aperture-studio.png](docs/livelens/design-concepts/visual-exploration-2026-10-11/01-aperture-studio.png), **1487 × 1058 pixels**.
+- Actual browser implementation: [desktop viewport](docs/livelens/screenshots/aperture-studio/01-conversation-desktop.png), **1487 × 1058 CSS pixels**, deviceScaleFactor **1**, equal output pixel dimensions. No density conversion or device frame.
+- State: authenticated demo workspace, recorded conversation, paused decoded video,
+  two saved moments, the third caption selected, recording tools closed. The selected
+  statement is the same illustrative sentence as the reference. The real segment
+  duration and absolute evidence clocks differ from its invented 28-minute video.
+- The source and final browser screenshot were opened together in the same visual
+  comparison input at original resolution. Header typography, conversation rows,
+  player crop and saved-moment thumbnails were readable there; separate enlarged
+  crops were unnecessary. This is a composition/state comparison, not a pixel-diff
+  equality claim for generated subjects, native controls or original-clock text.
+- Additional captures: [phone conversation](docs/livelens/screenshots/aperture-studio/04-conversation-phone.png),
+  [phone navigation](docs/livelens/screenshots/aperture-studio/05-navigation-phone.png),
+  [desktop monitor](docs/livelens/screenshots/aperture-studio/02-monitor-desktop.png),
+  [phone monitor](docs/livelens/screenshots/aperture-studio/06-monitor-phone.png),
+  [library](docs/livelens/screenshots/aperture-studio/03-library-desktop.png).
+  Phone viewport is 390 × 844 CSS pixels; long captures are explicitly full-page.
+
+### Findings and comparison history
+
+| Severity | Observed issue | Implemented fix and final evidence |
+|---|---|---|
+| P1, resolved | Previous application retained a wide labelled sidebar and weaker media emphasis, unlike the selected narrow rail and recording-led frame. | Shared 72px rail/header, 1.85:1 video/conversation grid and compact controls. Final measured widths are 869px and 470px. |
+| P1, resolved | The reference's saved moments had no equivalent below the previous player. | Real scoped bookmarks, decoded retained-media frames, exact context and repeatable seeking; permission/session/restart behavior passes actual browser checks. |
+| P2, resolved | First implementation's player began at 217px; its 32px title and 60px thumbnails were smaller than the reference. | Session title increased to 36px, header spacing reduced, thumbnails enlarged to 94 × 52px. Final player/conversation align at 205px versus approximately 200px in the reference. Recording details remain in the viewport. |
+| P2, resolved | Add moment inherited a 32px target on the phone. | Phone Add moment and Show more have 44px minimum targets. Final 390px capture has no horizontal overflow. |
+| P2, resolved | Desktop specialist navigation could compete with the narrow rail; same-selected bookmarks needed to repeat a seek after manual playback. | Dismissible popover with Escape/focus restoration; explicit seek revision. Both pass real keyboard/browser assertions on the final bundle. |
+
+No actionable P0/P1/P2 findings remain in the inspected surfaces. The first visual
+capture was inspected before the spacing/thumbnail corrections; the published
+gallery preserves the final recapture rather than presenting that earlier build
+as current evidence.
+
+### Required fidelity surfaces
+
+| Surface | Assessment |
+|---|---|
+| Fonts and typography | Self-hosted variable Inter matches the reference's neutral sans. 36px session title, 24px wordmark, 21px conversation heading and quieter metadata preserve hierarchy. The 27px phone title fits. Full quotes remain readable; saved-row previews truncate with exact original context available. Font provenance/OFL is committed. |
+| Spacing and layout | 72px frame, 28px content inset, 20px split gap, small radii and thin dividers retain the selected structure. Video → saved moments → recording tools is actual DOM order. Conversation stacks beneath at narrow widths. Measured geometry is in the layout receipt. |
+| Colors and tokens | Canvas #101315, charcoal surfaces, warm #f0e9dc actions, muted slate text and warm focus indicators; no neon. Semantic warning/danger states remain distinct. Visible keyboard focus and selected rows are retained. |
+| Image quality | A custom generated studio still follows the reference's warm microphone/plant/book art direction, played through actual retained video. Actual frame thumbnails remain sharp at 94px. The asset is confined to a labelled synthetic fixture; missing real media receives no stock portrait. Existing thin Lucide icons match the reference's outlined control family, including Aperture. No custom SVG/CSS illustration substitutes. |
+| Copy/content | Familiar Live monitor, Session library, Conversation and Saved moments labels. Search text describes its real evidence search. Source/capture/receipt clocks and anonymous-track attribution remain accurate. Caption and independent speech filters stay separate. No generated counts, waveform, identities or duration are claimed as app data. |
+
+### Interactions and verification
+
+Final renderer `index-CBq7TQKy.js`, stylesheet `index-uQ3gdMnf.css`. TypeScript,
+renderer/Electron build and all **95 application tests in 12 files pass**. All
+**five browser journeys pass**, with **zero uncaught page errors**. Real Chromium
+captures and interaction checks cover capture/stop, verified segment bytes and
+decoded replay, exact-job and same-moment seeking, evidence filters, library
+search/video filter, bookmarks/thumbnails, keyboard popover and phone focus trap,
+viewer HTTP 403, investigations, actual PDF and account/review persistence after
+restart. See [validation receipts](docs/livelens/VALIDATION.md).
+
+### Expected differences and follow-up
+
+The real app preserves original clocks, four evidence-kind filters, bounded
+scrollable evidence, native segment playback and source-linked context. These
+constraints explain the taller conversation pane, segment selector instead of the
+illustrative waveform, and functional refresh instead of an unspecified menu.
+The studio asset is a generated still with tone; caption text is an illustrative
+fixture script, not an independently recognised conversation.
+
+P3: further tune dense metadata/clock typography with representative long recordings.
+Broader assistive-technology/zoom testing, private ALFRED installation, external
+LIVE quality and production acceptance remain outside this local UI pass. Passing
+this comparison does not substitute for owner acceptance of the implementation.
+
+Implementation checklist complete: selected target resolved; real components and
+states implemented; generated fixture asset and licensed font accounted for;
+desktop/phone captures compared; actionable findings fixed; final browser journeys
+and affected tests passed; actual screenshots and receipts published with the code.
+
+## Earlier recording workspace refinement — 11 October 2026
 
 [Implemented design and actual captures](docs/livelens/STUDIO_REFINEMENT.md).
 Shiro fix mode follows the previous audit's evidence: six primary destinations,

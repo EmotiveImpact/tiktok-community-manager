@@ -1,4 +1,4 @@
-/* Capture workspace: source selection, video, conversation, then capture settings. */
+/* Aperture Studio: a compact source strip above the retained video/conversation workspace. */
 .ll-app.ll-monitor-home .ll-heading .ll-eyebrow { display: none; }
 
 .ll-app .lm-console {
@@ -16,18 +16,39 @@
 .ll-app .lm-console input,
 .ll-app .lm-console select { font-size: 13px; }
 .ll-app .lm-layout {
-  display: grid;
-  grid-template-columns: 212px minmax(0, 1fr);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 22px;
 }
 .ll-app .lm-watchlist,
 .ll-app .lm-stage {
   min-width: 0;
-  border-radius: 9px;
-  overflow: hidden;
+  border-radius: 4px;
 }
-.ll-app .lm-watchlist { background: var(--lm-panel); border: 1px solid var(--lm-line); }
+.ll-app .lm-watchlist {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 0 18px;
+  border: 0;
+  border-bottom: 1px solid var(--lm-line);
+  border-radius: 0;
+  background: transparent;
+}
+.ll-app .lm-source-list {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  padding: 3px 1px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ll-line-strong) transparent;
+}
+.ll-app .lm-source-list:empty { display: none; }
+.ll-app .lm-watchlist > .lm-empty { flex: 1; min-width: 0; padding: 0; }
 .ll-app .lm-section-header {
   display: flex;
   align-items: center;
@@ -50,30 +71,33 @@
   color: var(--ll-text-soft);
   font-size: 12px;
 }
-.ll-app .lm-watchlist > .lm-section-header { margin: 0; padding: 15px 14px 9px; }
+.ll-app .lm-watchlist > .lm-section-header { flex-shrink: 0; justify-content: flex-start; gap: 8px; margin: 0; padding: 0; }
+.ll-app .lm-watchlist > .lm-section-header h2 { font-size: 12px; font-weight: 500; }
 .ll-app .lm-add-form {
   display: flex;
-  flex-direction: column;
+  flex: 0 0 232px;
+  align-items: center;
   gap: 7px;
   min-width: 0;
-  margin: 13px 12px 12px;
-  padding-top: 13px;
-  border-top: 1px solid var(--lm-line);
+  margin: 0;
+  padding: 0;
 }
 .ll-app .lm-add-form > input {
   flex: 1;
   width: 100%;
   min-width: 0;
-  min-height: 36px;
-  padding: 7px 8px;
-  border-radius: 6px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 4px;
   font-size: 12px;
 }
 .ll-app .lm-add-form > button {
   gap: 3px;
-  width: 100%;
-  min-height: 32px;
-  padding: 6px 7px;
+  flex-shrink: 0;
+  width: auto;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 4px;
   white-space: nowrap;
   font-size: 12px;
 }
@@ -82,20 +106,21 @@
   align-items: flex-start;
   justify-content: flex-start;
   gap: 10px;
-  width: calc(100% - 12px);
+  flex: 0 0 214px;
+  width: 214px;
   min-width: 0;
-  min-height: 74px;
-  margin: 3px 6px;
-  padding: 10px 9px;
+  min-height: 73px;
+  margin: 0;
+  padding: 9px 10px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 4px;
   background: transparent;
   text-align: left;
   font-weight: 400;
 }
 .ll-app .lm-source-row:hover { background: var(--lm-raised); border-color: transparent; }
 .ll-app .lm-source-row.selected,
-.ll-app .lm-source-row[aria-pressed="true"] { background: var(--ll-selected); border-color: var(--ll-line-strong); }
+.ll-app .lm-source-row[aria-pressed="true"] { background: var(--ll-selected); border-color: var(--lm-line); }
 .ll-app .lm-source-avatar {
   display: inline-flex;
   align-items: center;
@@ -124,16 +149,16 @@
 .ll-app .lm-source-meta > .lm-status { margin-top: 4px; padding: 0; border: 0; background: transparent; color: var(--ll-text-soft); font-size: 10px; }
 .ll-app .lm-manage {
   justify-content: space-between;
-  width: 100%;
+  flex-shrink: 0;
+  width: auto;
   min-height: 38px;
-  margin-top: 7px;
-  padding: 9px 13px;
+  margin: 0;
+  padding: 8px 0;
   border: 0;
-  border-top: 1px solid var(--ll-line);
   border-radius: 0;
   background: transparent;
   color: var(--ll-text-soft);
-  font-size: 11px;
+  font-size: 12px;
 }
 .ll-app .lm-stage { container-type: inline-size; overflow: visible; border-radius: 0; background: transparent; }
 .ll-app .lm-stage-header {
@@ -141,39 +166,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 67px;
-  padding: 1px 0 15px;
-  border-bottom: 1px solid var(--lm-line);
+  min-height: 66px;
+  padding: 0 0 20px;
 }
 .ll-app .lm-stage-header > div:first-child { flex: 1; min-width: 0; }
 .ll-app .lm-stage-identity { display: flex; align-items: center; gap: 11px; }
 .ll-app .lm-stage-identity > div { min-width: 0; }
-.ll-app .lm-stage-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 39px;
-  height: 39px;
-  border: 1px solid var(--lm-line);
-  border-radius: 50%;
-  background: var(--lm-raised);
-  color: var(--ll-text-soft);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
+.ll-app .lm-stage-avatar { display: none; }
 .ll-app .lm-stage-header h2 {
-  font-size: 17px;
-  line-height: 1.35;
+  font-size: 28px;
+  line-height: 1.25;
   font-weight: 600;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.7px;
   overflow-wrap: anywhere;
 }
 .ll-app .lm-stage-header p {
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--lm-muted);
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .ll-app .lm-status-dot { display: inline-block; width: 5px; height: 5px; margin: 0 6px 2px 0; border-radius: 50%; background: var(--ll-subtle); }
@@ -188,19 +199,19 @@
   gap: 7px;
 }
 .ll-app .lm-control-actions > button {
-  min-height: 36px;
-  gap: 6px;
-  padding: 7px 10px;
-  border-radius: 6px;
+  min-height: 40px;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: 4px;
   white-space: nowrap;
   font-size: 12px;
 }
 .ll-app .lm-stage-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1.85fr) minmax(340px, 1fr);
   align-items: start;
-  gap: 18px;
-  padding: 16px 0 0;
+  gap: 20px;
+  padding: 0;
 }
 .ll-app .lm-media-column { min-width: 0; }
 .ll-app .lm-media-column > .lm-controls { margin-top: 13px; border-radius: 0; }
@@ -221,7 +232,7 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
 }
 .ll-app .lm-player video,
@@ -231,7 +242,8 @@
   max-height: 660px;
   min-width: 0;
   aspect-ratio: 16 / 9;
-  border-radius: 7px;
+  border: 1px solid var(--lm-line);
+  border-radius: 4px;
   background: #060707;
   object-fit: contain;
 }
@@ -249,7 +261,7 @@
   aspect-ratio: 16 / 9;
   padding: 24px;
   border: 1px solid var(--lm-line);
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--lm-inset);
   color: var(--lm-muted);
   text-align: center;
@@ -262,7 +274,7 @@
   height: 52px;
   margin-bottom: 9px;
   border: 1px solid var(--ll-line-strong);
-  border-radius: 12px;
+  border-radius: 6px;
   background: var(--lm-raised);
   color: var(--ll-text-soft);
 }
@@ -274,47 +286,49 @@
   flex-direction: column;
   min-width: 0;
   height: 400px;
-  height: clamp(300px, calc((100cqw - 298px) * 0.5625 + 26px), 650px);
+  height: clamp(360px, calc((100cqw - 20px) * 0.365132 + 87px), 700px);
   overflow: hidden;
   border: 1px solid var(--lm-line);
-  border-radius: 8px;
-  background: var(--lm-inset);
+  border-radius: 4px;
+  background: transparent;
 }
 .ll-app .lm-chat-session {
   flex-shrink: 0;
-  padding: 12px 13px 10px;
-  border-bottom: 1px solid var(--lm-line);
+  padding: 15px 16px 10px;
 }
+.ll-app .lm-chat-session h3 { color: var(--ll-text); font-size: 20px; line-height: 1.35; font-weight: 600; letter-spacing: -0.4px; }
+.ll-app .lm-chat-session > p { margin-top: 5px; }
 .ll-app .lm-chat-session strong {
   display: block;
-  color: var(--ll-text-soft);
-  font-size: 13px;
-  font-weight: 550;
+  color: var(--ll-muted);
+  font-size: 11px;
+  font-weight: 400;
 }
 .ll-app .lm-chat-session small {
   display: block;
   margin-top: 2px;
-  color: var(--ll-muted);
+  color: var(--ll-subtle);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 .ll-app .lm-stage-header > button {
-  min-height: 34px;
-  padding: 7px 10px;
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: 4px;
   font-size: 12px;
 }
 .ll-app .lm-chat-tabs {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 6px;
-  padding: 0 9px;
+  gap: 12px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--lm-line);
 }
 .ll-app .lm-chat-tabs > button {
   flex: 1;
   min-width: 0;
-  min-height: 39px;
+  min-height: 42px;
   margin-bottom: -1px;
   padding: 8px 5px;
   border: 0;
@@ -331,22 +345,21 @@
   flex: 1;
   min-width: 0;
   min-height: 0;
-  padding: 1px 7px 6px;
+  padding: 0 8px 7px;
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--ll-line-strong) transparent;
 }
 .ll-app .lm-chat-list > .lm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 190px; padding: 24px 14px; text-align: center; }
 .ll-app .lm-message {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 83px minmax(0, 1fr);
+  align-items: start;
+  gap: 5px 11px;
   width: 100%;
   min-width: 0;
-  min-height: 62px;
-  padding: 12px 7px;
+  min-height: 72px;
+  padding: 15px 9px;
   border: 0;
   border-bottom: 1px solid var(--lm-line);
   border-radius: 0;
@@ -357,30 +370,26 @@
 }
 .ll-app .lm-message:hover { background: var(--lm-raised); border-color: var(--lm-line); }
 .ll-app .lm-message.selected { background: var(--ll-selected); box-shadow: inset 2px 0 0 var(--ll-accent); }
-.ll-app .lm-message > span:first-child {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-}
+.ll-app .lm-message > span:first-child { display: contents; }
 .ll-app .lm-message strong {
+  grid-column: 2;
   min-width: 0;
   color: var(--ll-text);
   font-size: 12px;
-  font-weight: 550;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 .ll-app .lm-message time,
 .ll-app .lm-message small { color: var(--lm-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-.ll-app .lm-message time { flex-shrink: 0; white-space: nowrap; }
+.ll-app .lm-message time { grid-column: 1; grid-row: 1 / 4; white-space: nowrap; }
+.ll-app .lm-message small { grid-column: 2; }
 .ll-app .lm-message p {
+  grid-column: 2;
   width: 100%;
   min-width: 0;
   color: var(--ll-text-soft);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .ll-app .lm-chat > button,
@@ -590,7 +599,7 @@
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
-.ll-app .lm-dialog { margin-bottom: 18px; padding: 16px; border: 1px solid var(--ll-line); border-radius: 10px; background: var(--ll-surface); }
+.ll-app .lm-dialog { margin-bottom: 18px; padding: 16px; border: 1px solid var(--ll-line); border-radius: 4px; background: var(--ll-surface); }
 .ll-app .lm-console :where(button, input, select, summary):focus-visible {
   outline: 2px solid var(--ll-focus);
   outline-offset: 3px;
@@ -599,63 +608,47 @@
 .ll-app .lm-message:focus-visible,
 .ll-app .lm-recording:focus-visible { outline-offset: -2px; }
 
-@media (max-width: 1280px) {
-  .ll-app .lm-layout { grid-template-columns: 194px minmax(0, 1fr); gap: 18px; }
-  .ll-app .lm-stage-body { grid-template-columns: minmax(0, 1fr) 250px; gap: 16px; }
-  .ll-app .lm-chat { height: clamp(300px, calc((100cqw - 266px) * 0.5625 + 26px), 650px); }
-  .ll-app .lm-stage-header { align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 1180px) {
+  .ll-app .lm-watchlist { flex-wrap: wrap; gap: 10px 14px; }
+  .ll-app .lm-source-list { flex-basis: calc(100% - 100px); }
+  .ll-app .lm-add-form { margin-left: 0; }
+  .ll-app .lm-manage { margin-left: auto; }
+  .ll-app .lm-stage-header { flex-wrap: wrap; gap: 15px; }
+  .ll-app .lm-stage-header h2 { font-size: 25px; }
   .ll-app .lm-control-actions { flex-shrink: 1; }
-  .ll-app .lm-player-label { flex-wrap: wrap; }
-  .ll-app .lm-player-label > small { margin-left: 0; }
+  .ll-app .lm-stage-body { grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); gap: 18px; }
+  .ll-app .lm-chat { height: clamp(360px, calc((100cqw - 18px) * 0.354167 + 87px), 700px); }
 }
-@media (max-width: 1100px) {
-  .ll-app .lm-stage-body { grid-template-columns: minmax(0, 1fr); }
-  .ll-app .lm-chat { height: 300px; }
-  .ll-app .lm-player-label > small { margin-left: auto; }
-}
-@media (max-width: 920px) {
-  .ll-app .lm-layout { grid-template-columns: minmax(0, 1fr); }
-  .ll-app .lm-watchlist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-  .ll-app .lm-watchlist > .lm-section-header,
-  .ll-app .lm-watchlist > .lm-add-form,
-  .ll-app .lm-watchlist > .lm-empty,
-  .ll-app .lm-watchlist > .lm-manage { grid-column: 1 / -1; }
-  .ll-app .lm-watchlist > .lm-section-header { padding: 11px 13px 8px; }
-  .ll-app .lm-add-form { flex-direction: row; margin: 9px 12px 12px; padding-top: 11px; }
-  .ll-app .lm-add-form > input { width: 0; }
-  .ll-app .lm-add-form > button { width: auto; }
-  .ll-app .lm-source-row { min-height: 67px; padding: 9px; }
-  .ll-app .lm-watchlist[data-source-count="1"] > .lm-source-row { grid-column: 1 / -1; }
-  .ll-app .lm-source-meta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; }
-  .ll-app .lm-source-meta > strong { grid-column: 1; }
-  .ll-app .lm-source-meta > small { grid-column: 1; margin: 0; }
-  .ll-app .lm-source-meta > .lm-status { grid-column: 2; grid-row: 1 / 3; align-self: center; margin: 0; }
-  .ll-app .lm-manage { min-height: 32px; margin-top: 4px; padding-block: 7px; }
+@media (max-width: 960px) {
+  .ll-app .lm-stage-body { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .ll-app .lm-chat { height: 390px; }
 }
 @media (max-width: 760px) {
-  .ll-app .lm-layout { gap: 12px; }
-  .ll-app .lm-watchlist > .lm-section-header { padding-top: 10px; padding-bottom: 7px; }
+  .ll-app .lm-layout { gap: 18px; }
+  .ll-app .lm-watchlist { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 10px; padding-bottom: 16px; }
+  .ll-app .lm-watchlist > .lm-section-header { align-self: center; }
+  .ll-app .lm-source-list { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 0; overflow: visible; }
+  .ll-app .lm-source-row { width: 100%; min-height: 73px; padding: 9px 7px; gap: 7px; }
+  .ll-app .lm-source-avatar { flex-basis: 26px; height: 26px; }
+  .ll-app .lm-source-meta > strong { font-size: 12px; }
+  .ll-app .lm-source-meta > .lm-status { font-size: 10px; }
+  .ll-app .lm-watchlist[data-source-count="1"] .lm-source-row { grid-column: 1 / -1; }
+  .ll-app .lm-add-form { grid-column: 1 / -1; margin: 0; padding-top: 4px; }
   .ll-app .lm-add-form > input { min-height: 44px; padding: 8px 10px; font-size: 16px; }
   .ll-app .lm-add-form > button { min-height: 44px; padding: 8px 11px; font-size: 12px; }
-  .ll-app .lm-source-row { min-height: 60px; padding: 9px 7px; gap: 8px; }
-  .ll-app .lm-source-meta > strong { font-size: 12px; }
-  .ll-app .lm-source-meta { grid-template-columns: minmax(0, 1fr); }
-  .ll-app .lm-source-meta > .lm-status { grid-column: 1; grid-row: auto; }
-  .ll-app .lm-watchlist[data-source-count="1"] .lm-source-meta { grid-template-columns: minmax(0, 1fr) auto; }
-  .ll-app .lm-watchlist[data-source-count="1"] .lm-source-meta > .lm-status { grid-column: 2; grid-row: 1 / 3; }
-  .ll-app .lm-manage { min-height: 44px; padding-block: 9px; font-size: 12px; }
+  .ll-app .lm-watchlist > .lm-empty { grid-column: 1 / -1; padding: 4px 0; }
+  .ll-app .lm-manage { grid-column: 2; grid-row: 1; min-height: 44px; padding: 9px 0; font-size: 12px; }
   .ll-app .lm-stage { display: flex; flex-direction: column; }
-  .ll-app .lm-stage-header { order: 0; gap: 13px; padding: 0 0 13px; }
+  .ll-app .lm-stage-header { order: 0; gap: 14px; padding: 0 0 15px; }
   .ll-app .lm-stage-header > div:first-child { flex-basis: 100%; }
-  .ll-app .lm-stage-header h2 { font-size: 15px; }
+  .ll-app .lm-stage-header h2 { font-size: 23px; letter-spacing: -0.5px; }
   .ll-app .lm-control-actions { flex: 1 1 100%; justify-content: flex-start; gap: 6px; }
   .ll-app .lm-control-actions > button { flex: 1 1 auto; min-height: 44px; padding: 9px 8px; font-size: 12px; }
   .ll-app .lm-stage-body { display: contents; }
   .ll-app .lm-media-column { display: contents; }
-  .ll-app .lm-media-column > .lm-controls { margin-top: 0; border-radius: 0; }
-  .ll-app .lm-stage-avatar { flex-basis: 35px; height: 35px; }
-  .ll-app .lm-player { order: 1; margin: 13px 0 0; }
-  .ll-app .lm-player-label { gap: 5px; margin-bottom: 7px; }
+  .ll-app .lm-media-column > .lm-controls { margin-top: 0; }
+  .ll-app .lm-player { order: 1; margin: 0; }
+  .ll-app .lm-player-label { gap: 5px; margin-bottom: 8px; }
   .ll-app .lm-player-label > small { margin-left: auto; }
   .ll-app .lm-player-empty,
   .ll-app .lm-player .ll-media-empty { gap: 5px; padding: 13px 12px; }
@@ -663,12 +656,14 @@
   .ll-app .lm-empty-camera svg { width: 22px; height: 22px; }
   .ll-app .lm-player-empty h3 { font-size: 15px; }
   .ll-app .lm-player-empty p { max-width: 33ch; font-size: 12px; }
-  .ll-app .lm-chat { order: 3; height: 330px; margin: 13px 0 0; }
+  .ll-app .lm-chat { order: 3; height: 390px; margin: 15px 0 0; }
+  .ll-app .lm-chat-session h3 { font-size: 18px; }
   .ll-app .lm-stage-header > button,
   .ll-app .lm-chat-tabs > button,
   .ll-app .lm-chat > button,
   .ll-app .lm-context-link { min-height: 44px; }
-  .ll-app .lm-message p { font-size: 14px; }
+  .ll-app .lm-message { grid-template-columns: 76px minmax(0, 1fr); gap: 5px 8px; padding-inline: 8px; }
+  .ll-app .lm-message time { font-size: 10px; }
   .ll-app .lm-controls { order: 2; gap: 9px 12px; padding: 12px 0; border-bottom: 1px solid var(--lm-line); }
   .ll-app .lm-controls > label { flex: 1 1 100%; gap: 8px; font-size: 12px; }
   .ll-app .lm-controls input[type="number"] { width: 68px; min-height: 44px; margin-left: auto; font-size: 16px; }
@@ -681,14 +676,15 @@
   .ll-app .lm-jobs { margin-top: 18px; padding: 12px 0; }
   .ll-app .lm-job > button { min-height: 44px; }
   .ll-app .lm-jobs.lm-jobs-idle { gap: 10px; flex-wrap: wrap; padding: 0; }
-  .ll-app .lm-console > section[aria-label="Recent recordings"] { margin-top: 18px; }
+  .ll-app .lm-console > section[aria-label="Recent recordings"] { margin-top: 20px; }
   .ll-app .lm-section-header > button { min-height: 44px; font-size: 11px; }
-  .ll-app .lm-recording { gap: 10px; padding: 11px 12px; }
+  .ll-app .lm-recording { gap: 10px; padding: 11px 8px; }
   .ll-app .lm-recording > span:nth-child(2) { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .ll-app .lm-recording .lm-status { grid-column: 1; grid-row: 3; }
   .ll-app .lm-empty { padding: 14px 12px; font-size: 12px; }
 }
 @media (max-width: 360px) {
+  .ll-app .lm-player-label { flex-wrap: wrap; }
   .ll-app .lm-player-label > small { flex-basis: 100%; margin-left: 19px; }
   .ll-app .lm-control-actions > button { flex-basis: calc(50% - 3px); }
   .ll-app .lm-control-actions > .ll-primary { flex-basis: 100%; }

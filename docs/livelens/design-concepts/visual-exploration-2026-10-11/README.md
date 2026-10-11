@@ -1,9 +1,9 @@
 # LiveLens — three visual directions
 
 Generated on 11 October 2026 following the request for a stronger visual design.
-These are **proposed designs**, not screenshots of the implemented application.
-People, recordings and conversation content are illustrative. No direction has
-been selected for implementation yet.
+These are **generated design references**, not screenshots of the application.
+People, recordings and conversation content are illustrative. The owner selected
+**Aperture Studio**; see the [implemented app and actual screenshots](../../APERTURE_STUDIO.md).
 
 The numbers below match the order the images appeared in the chat. Each link
 opens the original full-resolution PNG; no images have been resized or edited.
@@ -37,8 +37,9 @@ typography and the original portrait recording beside the source quotations.
 
 ## Implementation status
 
-These images establish possible visual targets only. Illustrative controls,
-metadata, thumbnails and layouts are not verification of delivered behavior.
-Any selected direction must preserve existing source context, permissions and
-recording semantics when implemented. See the separate
-[actual application gallery](../../SCREENSHOTS.md) for the current software.
+The selected Aperture Studio direction is implemented in the authenticated app.
+The images above remain visual references: their illustrative controls, metadata
+and recordings are not validation receipts. The [actual application gallery](../../SCREENSHOTS.md)
+and [implementation guide](../../APERTURE_STUDIO.md) distinguish working behavior
+from generated visual content and document preserved context, permissions and
+recording semantics. Obsidian Desk and Field Notes were not selected.

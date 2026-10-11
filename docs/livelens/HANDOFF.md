@@ -7,11 +7,14 @@ Current continuation is the capture-first LIVE monitor on
 `feat/livelens-live-studio-2026-10-11`, following invited workspace onboarding.
 Preserve later commits and user changes. This continuation does not deploy the application.
 
-The latest [recording workspace refinement](STUDIO_REFINEMENT.md) simplifies the
-primary navigation and library and places playback beside the searchable timeline.
-More tools preserves specialist destinations and deep links. Recording maintenance
-and idle collection schedules use explicit disclosures. Consult the latest
-validation/screenshot sections before relying on an earlier audit's remaining-work list.
+The owner selected **Aperture Studio**. Its [implemented design](APERTURE_STUDIO.md)
+adds a narrow rail, warm charcoal frame, self-hosted Inter, expansive playback,
+compact conversation and source-bound saved moments with actual media thumbnails.
+The monitor and library share the design language. More tools preserves specialist
+destinations and deep links. Recording maintenance and idle collection schedules
+use disclosures. Consult the latest validation/screenshots before relying on an
+earlier audit's remaining-work list. The design selection is approved; acceptance
+of the implementation and external-provider/production gates remain separate.
 
 Read [FULL_APPLICATION.md](FULL_APPLICATION.md) for the product and remaining gates,
 [VALIDATION.md](VALIDATION.md) for executed receipts,
@@ -65,7 +68,8 @@ XploitVoid recorder/Pieter monitor references. Their pinned sources are design
 references; they are not installed applications or runtime imports.
 
 Prior browser passes establish the exercised workflows and access boundaries.
-They do not establish that the owner accepted the design or that the console is
+The owner has now selected Aperture Studio as the visual direction; earlier browser
+passes do not establish acceptance of its implementation or that the console is
 visually finished. Keep capture-monitor receipts separate from those historical
 checks. Real external LIVE discovery/capture remains unvalidated; retained-media
 replay must not be called a direct live-video preview. Actual ALFRED integration

@@ -164,10 +164,10 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
       <div className="lm-layout">
         <aside className="lm-watchlist" aria-label="Selected account watchlist" data-source-count={snapshot.sources.length}>
           <div className="lm-section-header"><h2>Accounts</h2><span>{snapshot.sources.length}</span></div>
-          {snapshot.sources.map((source) => <button key={source.id} className={`lm-source-row ${source.id === selectedId ? "selected" : ""}`} aria-pressed={source.id === selectedId} onClick={() => select(source)}>
+          <div className="lm-source-list">{snapshot.sources.map((source) => <button key={source.id} className={`lm-source-row ${source.id === selectedId ? "selected" : ""}`} aria-pressed={source.id === selectedId} onClick={() => select(source)}>
             <span className="lm-source-avatar" aria-hidden="true">{sourceMark(source)}</span>
             <span className="lm-source-meta"><strong>{sourceName(source)}</strong><small>{source.kind === "file" || source.fixture ? "Synthetic fixture" : source.kind === "tiktok-public" ? "TikTok" : "Permitted media"}</small><span className="lm-status" data-state={status(source).toLowerCase()}>{status(source)}</span></span>
-          </button>)}
+          </button>)}</div>
           {!snapshot.sources.length && <div className="lm-empty"><p>No accounts yet.</p><small>{canAdd ? "Add an account below. Checking and recording begin only when you choose." : "A workspace administrator can configure sources for this workspace."}</small></div>}
           {canAdd && <form className="lm-add-form" onSubmit={add}>
             <label className="sr-only" htmlFor="lm-account">TikTok account to add</label>
@@ -207,7 +207,7 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
           </div>}
             </div>
             <aside className="lm-chat" aria-label="Captured conversation feed">
-              {previewSession && <div className="lm-chat-session"><strong>Saved conversation</strong><small>Session started {dateTime(previewSession.startedAtMs)}</small></div>}
+              <div className="lm-chat-session"><h3>Conversation</h3>{previewSession && <p><strong>Saved conversation</strong><small>Session started {dateTime(previewSession.startedAtMs)}</small></p>}</div>
               <div className="lm-chat-tabs" role="group" aria-label="Conversation feed filter">{[["chat", "Chat"], ["speech", "Transcript"], ["all", "All events"]].map(([value, label]) => <button key={value} aria-pressed={tab === value} onClick={() => setTab(value)}>{label}</button>)}</div>
               <div className="lm-chat-list">{displayedEvents.map((event) => <button className={`lm-message ${event.id === selectedEvidence?.id ? "selected" : ""}`} key={event.id} aria-pressed={event.id === selectedEvidence?.id} onClick={() => setSelectedEvidence(event)}>
                 <span><strong>{event.attribution.account ? `@${event.attribution.account}` : event.kind === "gap" ? "Capture gap" : event.kind === "caption" ? "Source caption" : event.kind === "transcript" ? "Unattributed speech" : "Unattributed account"}</strong><time>{time(event.sourceTimestampMs ?? event.capturedAtMs ?? event.receivedAtMs)}</time></span><p>{event.text || "No text"}</p><small>{event.kind} · {event.sourceTimestampMs === null ? "Capture / receipt time" : "Source time"}</small>

@@ -1,0 +1,43 @@
+{
+  "renderer": "index-CBq7TQKy.js",
+  "stylesheet": "index-uQ3gdMnf.css",
+  "applicationTests": {
+    "command": "npm test",
+    "passed": 95,
+    "filesPassed": 12,
+    "failed": 0,
+    "durationSeconds": 2.23
+  },
+  "build": {
+    "command": "npm run build",
+    "passed": true,
+    "targets": [
+      "TypeScript",
+      "renderer",
+      "Electron main",
+      "Electron preload"
+    ],
+    "existingWarnings": [
+      "Renderer chunk exceeds 500 kB; existing Electron bundle strategy retained.",
+      "Browserslist data is six months old."
+    ]
+  },
+  "sourceSha256": {
+    "src/pages/LiveLensConsole.tsx": "a9209feeb8b10fc70743a86eb13176945ea92833d0f39d4f55f386e80a241862",
+    "src/pages/aperture-studio.css": "f539f7670ed8adeb21d4995cc4ff7fc72691327b27021a39e555bf167a5bb3ad",
+    "src/components/livelens/LiveMonitor.tsx": "f90e7de03c4670e4d461fb01fdd43f292cc80f16be51369038a570e094619d8c",
+    "src/components/livelens/live-monitor.css": "a63fa0dea00c21860d81cb37c1222bc20b60246fc99c2ec4e10cdd6badb5096b",
+    "src/components/livelens/RecordingLibrary.tsx": "32605185f9aa4f86ad08ea5637f80bbfc2206e6405039b7b1a12ac61a446a2b4",
+    "src/components/livelens/recording-library.css": "93bda3122ca905eab7698973fec807049949d11a96f9275a08472dbb18bae9b1",
+    "src/components/livelens/SavedMoments.tsx": "df47315ebaa2c935d36fc6bc7d5389d9169cb3cc14c9bc31f19e74b3205528de",
+    "src/components/livelens/saved-moments.css": "3df9b1654710bef2c4d7b3cadc8a11b92d2053e360f10a6864cfbd3e3ba339da",
+    "scripts/validation/full_app_smoke.py": "fcc566f036668ff0eaab7ec56940f6233bf4439070d17252f26551e8912b0a3b",
+    "scripts/validation/live_monitor_smoke.py": "cf14f772b3e002f56f6c1316fd0ef31b36684e31d8dfad89d3dfc61f75b2d6a9"
+  },
+  "rendererAssetsSha256": {
+    "index-CBq7TQKy.js": "48663b41f80e0611d80bda1a7c42f8068d3512d46e76b4597186d8de0bd8194b",
+    "index-uQ3gdMnf.css": "6f073510e9ec24af6654ce7f08219b99df4ca8465087ac7f94e6edecfadb8caa",
+    "inter-latin-wght-normal-Dx4kXJAl.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62"
+  },
+  "backendAndAlfredSuitesRerun": false
+}

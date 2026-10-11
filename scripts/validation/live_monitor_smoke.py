@@ -208,10 +208,25 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             navigate(page, "Context graph", keyboard=True)
             page.get_by_role("heading", name="Context graph", exact=True, level=1).wait_for()
             assert parse_qs(urlsplit(page.url).query).get("view") == ["graph"]
+            expect(more_tools).to_have_attribute("aria-expanded", "false")
             page.reload(wait_until="networkidle")
             page.get_by_role("heading", name="Context graph", exact=True, level=1).wait_for()
+            expect(more_tools).to_have_attribute("aria-expanded", "false")
+            assert parse_qs(urlsplit(page.url).query).get("view") == ["graph"]
+            more_tools.focus()
+            page.keyboard.press("Enter")
             expect(more_tools).to_have_attribute("aria-expanded", "true")
-            expect(navigation.get_by_role("button", name="Context graph", exact=True)).to_have_attribute("aria-current", "page")
+            active_specialist = navigation.get_by_role("button", name="Context graph", exact=True)
+            expect(active_specialist).to_have_attribute("aria-current", "page")
+            active_specialist.focus()
+            expect(active_specialist).to_be_focused()
+            page.keyboard.press("Escape")
+            expect(more_tools).to_have_attribute("aria-expanded", "false")
+            expect(more_tools).to_be_focused()
+            page.keyboard.press("Enter")
+            expect(more_tools).to_have_attribute("aria-expanded", "true")
+            page.get_by_role("heading", name="Context graph", exact=True, level=1).click()
+            expect(more_tools).to_have_attribute("aria-expanded", "false")
             navigate(page, "Live monitor", keyboard=True)
             page.reload(wait_until="networkidle")
             page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
@@ -472,6 +487,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             capture(page, "07-phone-live-monitor.png")
 
             # A real viewer credential receives recording reads, never writes.
+            bookmarked_marker = request(page, "/v1/bookmarks", {"evidenceId": marker["id"], "label": marker["text"][:120]}, csrf)
+            assert bookmarked_marker.status == 201 and bookmarked_marker.json()["sessionId"] == "fixture-conversation"
             invited = request(page, "/v1/workspace/invitations", {"username": "monitor-viewer", "role": "viewer", "reason": "Fictional read-only monitor acceptance"}, csrf)
             assert invited.status == 201
             link = invited.json()
@@ -502,6 +519,22 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 assert denied.status == 403 and denied.json()["error"] == "scope_denied"
             playback(viewer_page)
             capture(viewer_page, "08-desktop-read-only-live-monitor.png", viewport=True)
+            navigate(viewer_page, "Session library", keyboard=True)
+            viewer_page.get_by_role("region", name="Conversation and recording library", exact=True).get_by_role("button", name=re.compile("^Fictional fixture")).click()
+            viewer_page.get_by_role("heading", name="Captured timeline", exact=True).wait_for()
+            viewer_moments = viewer_page.get_by_role("region", name="Saved moments", exact=True)
+            viewer_moment = viewer_moments.locator('.ll-saved-moment[data-evidence-id="' + marker["id"] + '"]')
+            expect(viewer_moment).to_have_count(1)
+            expect(viewer_moments.get_by_role("button", name="Add moment", exact=True)).to_have_count(0)
+            expect(viewer_page.get_by_role("button", name="Bookmark moment", exact=True)).to_have_count(0)
+            viewer_moment.focus()
+            viewer_page.keyboard.press("Enter")
+            expect(viewer_page.locator(".ll-context .ll-id")).to_have_text(marker["id"])
+            expect(viewer_page.locator(".ll-context blockquote")).to_have_text(marker["text"])
+            expect(viewer_page.get_by_role("button", name="Bookmark evidence", exact=True)).to_have_count(0)
+            denied_bookmark = request(viewer_page, "/v1/bookmarks", {"evidenceId": marker["id"], "label": "Forbidden viewer write"}, viewer_csrf)
+            assert denied_bookmark.status == 403 and denied_bookmark.json()["error"] == "scope_denied"
+            assert len(read(page, "/v1/bookmarks?session=fixture-conversation")["bookmarks"]) == 1
             assert len(read(page, "/v1/jobs")["jobs"]) == 2
             schedules = read(page, "/v1/schedules")["schedules"]
             assert len(schedules) == 2 and all(item["state"] == "stopped" for item in schedules)
@@ -513,7 +546,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 "fixture": True, "externalLiveValidated": False,
                 "captureFirstDefaultHome": True, "publicTikTokConfiguredOnlyNoPolling": True,
                 "primaryNavigationAndCollapsedSpecialistTools": True,
-                "specialistUrlReloadAutomaticallyExpandsNavigation": True,
+                "specialistDeepLinkAndKeyboardPopoverReopen": True,
+                "specialistPopoverClosesOnSelectionEscapeAndOutsideClick": True,
                 "boundedFixtureCheckWithoutRecording": True, "boundedWatchWithoutHiddenCapture": True,
                 "delayedCheckReceiptDoesNotLeakToAnotherAccount": True,
                 "actualFixtureCaptureAndVerifiedMediaHashRange": True,
@@ -526,6 +560,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 "realFixtureChatBeyond100DisplayedAndOriginalContextOpened": True,
                 "desktop1440AndPhone390": True, "readOnlyUiAndActualWriteDenied403": True,
                 "phoneNavigationFocusTrapEscapeAndDestinationFocus": True,
+                "readOnlySavedMomentsOriginalReopenAndWriteDenied403": True,
                 "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS),
             }
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))

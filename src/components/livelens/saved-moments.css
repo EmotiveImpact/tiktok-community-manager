@@ -1,0 +1,201 @@
+.ll-app .ll-saved-moments {
+  margin-top: 16px;
+  min-width: 0;
+  color: var(--ll-text);
+}
+.ll-app .ll-saved-moments-heading,
+.ll-app .ll-saved-moments-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ll-app .ll-saved-moments-heading {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.ll-app .ll-saved-moments-heading h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.015em;
+}
+.ll-app .ll-saved-moments-count {
+  color: var(--ll-muted);
+  font-size: 12px;
+}
+.ll-app .ll-saved-moments-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid var(--ll-line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ll-text-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+.ll-app .ll-saved-moments-add:hover {
+  color: var(--ll-text);
+  border-color: var(--ll-muted);
+}
+.ll-app .ll-saved-moments-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ll-app .ll-saved-moments-list > li + li {
+  margin-top: 5px;
+}
+.ll-app .ll-saved-moment {
+  display: grid;
+  grid-template-columns: 94px 82px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-height: 70px;
+  padding: 8px 13px 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: var(--ll-surface);
+  color: var(--ll-text);
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.ll-app .ll-saved-moment:hover {
+  background: var(--ll-surface-raised, var(--ll-surface));
+  border-color: var(--ll-line);
+}
+.ll-app .ll-saved-moment[aria-pressed="true"] {
+  background: var(--ll-surface-raised, var(--ll-surface));
+  box-shadow: inset 2px 0 var(--ll-accent);
+}
+.ll-app .ll-saved-moment-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 94px;
+  height: 52px;
+  overflow: hidden;
+  border: 1px solid var(--ll-line);
+  border-radius: 4px;
+  background: var(--ll-bg);
+  color: var(--ll-muted);
+}
+.ll-app .ll-saved-moment-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ll-app .ll-saved-moment-clock,
+.ll-app .ll-saved-moment-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+.ll-app .ll-saved-moment-clock time {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ll-app .ll-saved-moment-clock small {
+  color: var(--ll-muted);
+  font-size: 10px;
+}
+.ll-app .ll-saved-moment-copy strong,
+.ll-app .ll-saved-moment-copy > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ll-app .ll-saved-moment-copy strong {
+  font-size: 14px;
+  font-weight: 550;
+}
+.ll-app .ll-saved-moment-copy > span {
+  color: var(--ll-muted);
+  font-size: 12px;
+}
+.ll-app .ll-saved-moment-open {
+  color: var(--ll-muted);
+}
+.ll-app .ll-saved-moments-more {
+  min-height: 36px;
+  margin-top: 8px;
+  padding: 5px 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ll-text-soft);
+  font-size: 12px;
+}
+.ll-app .ll-saved-moments-more:hover {
+  color: var(--ll-accent);
+}
+.ll-app .ll-saved-moments-more > span {
+  margin-left: 4px;
+  color: var(--ll-muted);
+}
+.ll-app .ll-saved-moments-empty,
+.ll-app .ll-saved-moments-error,
+.ll-app .ll-saved-moments-limit {
+  margin: 8px 0 0;
+  padding: 10px 0;
+  color: var(--ll-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.ll-app .ll-saved-moments-error {
+  color: var(--ll-danger, var(--ll-text-soft));
+  overflow-wrap: anywhere;
+}
+.ll-app .ll-saved-moments-limit {
+  font-size: 11px;
+}
+.ll-app .ll-saved-moment:focus-visible,
+.ll-app .ll-saved-moments-add:focus-visible,
+.ll-app .ll-saved-moments-more:focus-visible {
+  outline: 2px solid var(--ll-focus);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .ll-app .ll-saved-moments-add,
+  .ll-app .ll-saved-moments-more {
+    min-height: 44px;
+  }
+  .ll-app .ll-saved-moments-heading,
+  .ll-app .ll-saved-moments-heading > div {
+    gap: 8px;
+  }
+  .ll-app .ll-saved-moment {
+    grid-template-columns: 44px minmax(0, 1fr) 14px;
+    gap: 10px;
+    padding: 10px;
+  }
+  .ll-app .ll-saved-moment-thumb {
+    grid-row: 1 / 3;
+    width: 44px;
+    height: 38px;
+  }
+  .ll-app .ll-saved-moment-copy {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .ll-app .ll-saved-moment-clock {
+    grid-column: 2;
+    grid-row: 2;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .ll-app .ll-saved-moment-open {
+    grid-column: 3;
+    grid-row: 1 / 3;
+  }
+}

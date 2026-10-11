@@ -15,8 +15,10 @@ identified as implemented in the backlog and validation receipt.
 **A usable LIVE monitor and recorder that turns captured conversations into
 source-supported investigations, protection review and reports.**
 
-Latest owner direction, 11 October 2026: design the application ourselves around
-the recorder workflow. The default home prioritises selected `@account` sources,
+Latest owner direction, 11 October 2026: implement the selected **Aperture Studio**
+visual language around the recorder workflow. See [APERTURE_STUDIO.md](APERTURE_STUDIO.md)
+for the selected reference, actual implementation and screenshot evidence.
+The default home prioritises selected `@account` sources,
 bounded LIVE checking/watch schedules, Record/Stop, large retained video with
 captured chat and recent recordings. The review desk becomes a secondary screen.
 See [LIVE_MONITOR.md](LIVE_MONITOR.md) for the operating guide and source-pattern
@@ -64,9 +66,10 @@ avoid filling navigation with convincing but non-functional screens.
 
 - A restrained operational interface: dark graphite surfaces, clear contrast,
   refined typography, purposeful spacing and colour for state or emphasis.
-- Latest owner refinement, 11 October 2026: use a recognisable capture-first
-  monitor with an account list, clear recording controls and a large media/chat
-  workspace. Keep warm charcoal, off-white actions and subdued slate states.
+- Latest owner selection, 11 October 2026: **Aperture Studio**, with a narrow icon
+  rail, self-hosted Inter, a large recording beside conversation and saved moments
+  underneath. Carry its warm charcoal, off-white actions and subdued states into
+  the capture-first monitor, compact source strip and divided recording library.
   The earlier selected Mission Inbox concept belongs to the secondary review
   desk; its acceptance receipts remain historical. Pinterest research was
   deferred after cloud network access was blocked.

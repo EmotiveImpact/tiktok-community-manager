@@ -7,6 +7,7 @@ import {
 } from "react";
 import {
   Activity,
+  Aperture,
   ArrowRight,
   Archive,
   ArrowLeft,
@@ -31,9 +32,11 @@ import {
   Shield,
   ShieldCheck,
   Bell,
+  Bookmark,
   Bot,
   Users,
   Video,
+  SquarePlay,
   X,
 } from "lucide-react";
 import {
@@ -53,9 +56,11 @@ import ReviewDesk from "../components/livelens/ReviewDesk";
 import LiveMonitor from "../components/livelens/LiveMonitor";
 import InvitationAcceptance from "../components/livelens/InvitationAcceptance";
 import RecordingLibrary from "../components/livelens/RecordingLibrary";
+import SavedMoments from "../components/livelens/SavedMoments";
 import "./livelens.css";
 import "./livelens-shell.css";
 import "./livelens-conversation.css";
+import "./aperture-studio.css";
 
 type View =
   | "overview"
@@ -73,7 +78,7 @@ type View =
   | "agent";
 const nav = [
   ["overview", "Live monitor", Radio, "WORKSPACE"],
-  ["sessions", "Session library", Layers3, "WORKSPACE"],
+  ["sessions", "Session library", SquarePlay, "WORKSPACE"],
   ["review", "Review desk", Activity, "INVESTIGATE"],
   ["investigations", "Investigations", FolderOpen, "INVESTIGATE"],
   ["search", "Observed accounts", Users, "INVESTIGATE"],
@@ -216,7 +221,7 @@ function OperatorConsole() {
   const [sessionId, setSessionId] = useState<string | null>(
     new URLSearchParams(location.search).get("session"),
   );
-  const [toolsOpen, setToolsOpen] = useState(!primaryDestinations.includes(view));
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [evidenceId, setEvidenceId] = useState<string | null>(
     new URLSearchParams(location.search).get("evidence"),
   );
@@ -233,6 +238,9 @@ function OperatorConsole() {
     [libraryQuery, setLibraryQuery] = useState("");
   const [timelineQuery, setTimelineQuery] = useState(""),
     [timelineKind, setTimelineKind] = useState("all");
+  const [choosingBookmark, setChoosingBookmark] = useState(false);
+  const [seekRevision, setSeekRevision] = useState(0);
+  const [playbackMedia, setPlaybackMedia] = useState<{ sessionId: string; segments: PlaybackSegment[] }>({ sessionId: "", segments: [] });
   const [addingSource, setAddingSource] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [reportView, setReportView] = useState<"original" | "reviewed">(
@@ -246,6 +254,9 @@ function OperatorConsole() {
   const headerSearch = useRef<HTMLInputElement>(null);
   const navigation = useRef<HTMLElement>(null);
   const menuToggle = useRef<HTMLButtonElement>(null);
+  const toolsToggle = useRef<HTMLButtonElement>(null);
+  const toolsNavigation = useRef<HTMLDivElement>(null);
+  const timelinePanel = useRef<HTMLElement>(null);
   const signedIn = (value: Identity | null) => {
     setIdentity(value);
     updateIdentity(value);
@@ -267,11 +278,22 @@ function OperatorConsole() {
       if (event.key === "Escape") {
         setMenu(false);
         setGlobalSearchOpen(false);
+        setChoosingBookmark(false);
+        setToolsOpen(false);
+        if (toolsNavigation.current?.contains(document.activeElement)) toolsToggle.current?.focus();
       }
     }
     document.addEventListener("keydown", shortcut);
     return () => document.removeEventListener("keydown", shortcut);
   }, []);
+  useEffect(() => {
+    if (!toolsOpen || matchMedia("(max-width: 760px)").matches) return;
+    const close = (event: PointerEvent) => {
+      if (!toolsNavigation.current?.contains(event.target as Node)) setToolsOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [toolsOpen]);
   useEffect(() => {
     if (!menu || !navigation.current) return;
     const drawer = navigation.current;
@@ -406,7 +428,8 @@ function OperatorConsole() {
   }, [identity, view, jobs.data]);
   function go(next: View) {
     setView(next);
-    if (!primaryDestinations.includes(next)) setToolsOpen(true);
+    setToolsOpen(!primaryDestinations.includes(next) && matchMedia("(max-width: 760px)").matches);
+    setChoosingBookmark(false);
     setLibraryOffset(0);
     setSessionId(null);
     setEvidenceId(null);
@@ -423,6 +446,7 @@ function OperatorConsole() {
     setCursor(0);
     setTimelineQuery("");
     setTimelineKind("all");
+    setChoosingBookmark(false);
     setView("sessions");
     history.replaceState(null, "", `?view=sessions&session=${id}`);
   }
@@ -442,9 +466,14 @@ function OperatorConsole() {
     main.current?.focus();
   }
   function openEvidence(e: Evidence) {
+    setSeekRevision((value) => value + 1);
     setEvidenceId(e.id);
     setSessionId(e.sessionId);
     setView("sessions");
+    if (choosingBookmark) {
+      setChoosingBookmark(false);
+      saveMoment(e);
+    }
     history.replaceState(
       null,
       "",
@@ -460,7 +489,24 @@ function OperatorConsole() {
         });
     });
   }
+  function saveMoment(event: Evidence) {
+    if (!capabilities.data?.scopes.includes("investigations:write")) return;
+    void mutate(() => api("/v1/bookmarks", {
+      evidenceId: event.id,
+      label: event.text.slice(0, 120) || "Saved evidence",
+    }), "Moment bookmarked.");
+  }
+  function chooseMoment() {
+    setChoosingBookmark(true);
+    setTimelineKind("all");
+    setTimelineQuery("");
+    requestAnimationFrame(() => {
+      timelinePanel.current?.scrollIntoView({ block: "nearest" });
+      (timelinePanel.current?.querySelector<HTMLButtonElement>(".ll-evidence") ?? timelinePanel.current)?.focus({ preventScroll: true });
+    });
+  }
   function openEvidenceById(session: string, evidence: string) {
+    setSeekRevision((value) => value + 1);
     setSessionId(session);
     setEvidenceId(evidence);
     setCursor(0);
@@ -651,6 +697,8 @@ function OperatorConsole() {
   const title = sessionId
     ? "Conversation"
     : (nav.find((n) => n[0] === view)?.[1] ?? "Overview");
+  const selectedEvidence = context.data?.event.id === evidenceId && context.data.event.sessionId === sessionId ? context.data.event : undefined;
+  const conversationSegments = capabilities.data?.scopes.includes("recordings:read") && playbackMedia.sessionId === sessionId ? playbackMedia.segments : [];
   const visibleEvents =
     events.data?.events.filter(
       (event) =>
@@ -710,17 +758,17 @@ function OperatorConsole() {
     </div>
   );
   return (
-    <div className={`ll-app ll-product-shell ${view === "overview" ? "ll-monitor-home" : view === "review" ? "ll-review-home" : ""}`}>
+    <div className={`ll-app ll-product-shell ll-aperture ${sessionId ? "ll-session-view" : ""} ${view === "overview" ? "ll-monitor-home" : view === "review" ? "ll-review-home" : ""}`}>
       <a className="ll-skip" href="#ll-main">
         Skip to content
       </a>
       <aside ref={navigation} className={`ll-sidebar ${menu ? "open" : ""}`} role={menu ? "dialog" : undefined} aria-modal={menu || undefined} aria-label={menu ? "Navigation" : undefined}>
         <button className="ll-nav-close" aria-label="Close navigation" onClick={() => setMenu(false)}><X size={18} /></button>
-        <div className="ll-brand">
+        <div className="ll-brand" aria-label="LiveLens">
           <span className="ll-mark">
-            <Radio size={21} />
+            <Aperture size={30} aria-hidden />
           </span>
-          LiveLens
+          <span className="ll-brand-name">LiveLens</span>
         </div>
         <div className="ll-workspace">
           <span className="ll-workspace-icon">
@@ -736,12 +784,15 @@ function OperatorConsole() {
           {nav.filter(([id]) => primaryDestinations.includes(id)).map(([id, label, Icon]) => (
               <button
                 key={id}
+                className={id === "agent" ? "ll-agent-destination" : undefined}
                 aria-current={view === id ? "page" : undefined}
-                aria-label={id === "cases" ? "Cases & reports" : undefined}
+                aria-label={id === "cases" ? "Cases & reports" : label}
+                title={label}
                 onClick={() => go(id)}
               >
-                <Icon size={17} />
-                <span>{label}</span>
+                <Icon size={21} aria-hidden />
+                <span className="ll-nav-label">{label}</span>
+                {id === "agent" && <span className="ll-agent-caption" aria-hidden>Connect<br />ALFRED</span>}
                 {id === "sessions" && overview.data && (
                   <small className="ll-nav-count" aria-hidden="true">
                     {overview.data.sessions}
@@ -749,25 +800,26 @@ function OperatorConsole() {
                 )}
               </button>
           ))}
-          <button className="ll-tools-toggle" aria-expanded={toolsOpen} aria-controls="ll-specialist-navigation" onClick={() => setToolsOpen((value) => !value)}>
-            <Layers3 size={17} /><span>More tools</span><ChevronDown size={14} />
+          <div className="ll-tools-wrap" ref={toolsNavigation}>
+          <button className="ll-tools-toggle" ref={toolsToggle} aria-label="More tools" title="More tools" data-active={!primaryDestinations.includes(view)} aria-expanded={toolsOpen} aria-controls="ll-specialist-navigation" onClick={() => setToolsOpen((value) => !value)}>
+            <Settings size={21} aria-hidden /><span className="ll-nav-label">More tools</span><ChevronDown size={14} className="ll-tools-chevron" aria-hidden />
           </button>
           <div id="ll-specialist-navigation" className="ll-specialist-navigation" hidden={!toolsOpen}>
+            <p className="ll-tools-heading">Workspace tools</p>
             {nav.filter(([id]) => !primaryDestinations.includes(id)).map(([id, label, Icon]) => (
               <button key={id} aria-current={view === id ? "page" : undefined} onClick={() => go(id)}>
                 <Icon size={16} /><span>{label}</span>
               </button>
             ))}
+            <a href="?page=dashboard" className="ll-community-link"><Users size={16} />Community &amp; CRM<ArrowUpRight size={14} /></a>
+          </div>
           </div>
         </nav>
         <div className="ll-nav-bottom">
-          <a href="?page=dashboard">
-            <Users size={18} />
-            Community & CRM
-            <ArrowUpRight size={14} />
-          </a>
           <button
             className="ll-user"
+            aria-label={`Sign out ${identity.subject}`}
+            title={`Sign out ${identity.subject}`}
             onClick={() =>
               mutate(async () => {
                 await api("/console/logout", {});
@@ -801,13 +853,17 @@ function OperatorConsole() {
             ref={menuToggle}
             aria-label="Toggle navigation"
             aria-expanded={menu}
-            onClick={() => setMenu(!menu)}
+            onClick={() => {
+              if (!menu && !primaryDestinations.includes(view)) setToolsOpen(true);
+              setMenu(!menu);
+            }}
           >
             <Menu size={20} />
           </button>
+          <button className="ll-header-brand" onClick={() => go("overview")} aria-label="LiveLens home">LiveLens</button>
           <span className="ll-breadcrumb">
-            <span>{identity.workspace}</span> <ChevronRight size={13} />{" "}
-            <strong>{title}</strong>
+            <span>{sessionId ? "Recordings" : "Workspace"}</span> <ChevronRight size={13} />{" "}
+            <strong>{sessionId && session.data?.account ? `@${session.data.account}` : title}</strong>
           </span>
           <button
             className="ll-mobile-search"
@@ -830,7 +886,7 @@ function OperatorConsole() {
             <input
               ref={headerSearch}
               aria-label="Search all captured evidence"
-              placeholder="Search captured statements"
+              placeholder="Search captured statements or keywords…"
               value={globalQuery}
               onChange={(event) => setGlobalQuery(event.target.value)}
               maxLength={512}
@@ -854,24 +910,22 @@ function OperatorConsole() {
           >
             <Bell size={17} />
           </button>
-          <span
-            className="ll-connected"
-            title="Signed in to a scoped workspace"
-          >
-            <span />
-            Secure session
-          </span>
+          <button className="ll-workspace-control" onClick={() => go("workspace")} aria-label="Open workspace and access" title={identity.workspace}>
+            <span className="ll-avatar" aria-hidden>{identity.workspace.slice(0, 1).toUpperCase()}</span>
+            <span>{identity.workspace.replaceAll("_", " ")}</span><ChevronDown size={14} aria-hidden />
+          </button>
         </header>
         <main id="ll-main" tabIndex={-1} ref={main}>
           <div className="ll-heading">
             <div>
-              {view !== "overview" && <p className="ll-eyebrow">
+              {sessionId && <button className="ll-back" onClick={() => go("sessions")}><ArrowLeft size={15} />Session library</button>}
+              {view !== "overview" && !sessionId && <p className="ll-eyebrow">
                 {sessionId
                   ? "CONVERSATION / ORIGINAL SOURCE"
                   : "LIVELENS / " + nav.find(([id]) => id === view)?.[3]}
               </p>}
               <h1>{view === "overview" ? "Live monitor" : view === "review" ? "Your review desk" : session.data?.title ?? title}</h1>
-              <p>
+              {!sessionId && <p>
                 {sessionId
                   ? "The recording, its words and the source behind each moment."
                   : view === "review"
@@ -882,16 +936,27 @@ function OperatorConsole() {
                         year: "numeric",
                       })
                     : descriptions[view]}
-              </p>
+              </p>}
+              {sessionId && session.data && <div className="ll-source">
+                <span>{session.data.account ? `@${session.data.account}` : "Account unavailable"}</span>
+                <span>{shortDate(session.data.startedAtMs)}</span>
+                <span><Video size={14} aria-hidden />{conversationSegments.length ? "Saved recording" : "Captured conversation"}</span>
+                <a href={session.data.sourceUrl} target="_blank" rel="noreferrer" title="Open original source">Original source <ArrowUpRight size={13} /></a>
+              </div>}
             </div>
+            <div className="ll-heading-actions">
+            {sessionId && capabilities.data?.scopes.includes("investigations:write") && <button className="ll-primary ll-save-moment" disabled={busy} onClick={() => selectedEvidence ? saveMoment(selectedEvidence) : chooseMoment()}><Bookmark size={18} />Bookmark moment</button>}
             <button
               className="ll-refresh"
+              aria-label="Refresh records"
+              title="Refresh records"
               onClick={() => setRevision((r) => r + 1)}
               disabled={busy}
             >
               <RefreshCw size={14} />
               Refresh records
             </button>
+            </div>
           </div>
           {notice && (
             <p
@@ -1175,38 +1240,17 @@ function OperatorConsole() {
           )}
           {view === "sessions" && sessionId && (
             <>
-              <button className="ll-back" onClick={() => go("sessions")}>
-                <ArrowLeft size={16} />
-                Session library
-              </button>
               <Status
                 loading={session.loading || events.loading}
                 error={session.error || events.error}
               />
-              {session.data && (
-                <div className="ll-source">
-                  <span className="ll-tag">{session.data.platform}</span>
-                  <span>
-                    {session.data.account
-                      ? `@${session.data.account}`
-                      : "Account unavailable"}
-                  </span>
-                  <span>{stamp(session.data.startedAtMs)}</span>
-                  <a
-                    href={session.data.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Original source <ArrowUpRight size={14} />
-                  </a>
-                </div>
-              )}
               <div className="ll-conversation ll-playback-workspace">
                 <div className="ll-conversation-player">
                   <MediaReplay
                     key={sessionId}
                     sessionId={sessionId}
-                    evidence={context.data?.event}
+                    evidence={selectedEvidence}
+                    seekRevision={seekRevision}
                     revision={revision}
                     openSources={() => go("sources")}
                     archiveConfiguration={
@@ -1218,6 +1262,19 @@ function OperatorConsole() {
                     }
                     mutate={mutate}
                     busy={busy}
+                    onSegmentsChange={(segments) => setPlaybackMedia({ sessionId, segments })}
+                    moments={<SavedMoments
+                      key={`${identity.workspace}/${sessionId}`}
+                      sessionId={sessionId}
+                      revision={revision}
+                      canRead={capabilities.data?.scopes.includes("evidence:read") ?? false}
+                      canWrite={capabilities.data?.scopes.includes("investigations:write") ?? false}
+                      events={[...(events.data?.events ?? []), ...(selectedEvidence ? [selectedEvidence] : [])].filter((event) => event.sessionId === sessionId)}
+                      selectedEvidenceId={evidenceId}
+                      segments={conversationSegments}
+                      onOpenEvidence={openEvidenceById}
+                      onChooseMoment={chooseMoment}
+                    />}
                     tools={<SpeechProcessing
                       key={`speech-${sessionId}`}
                       sessionId={sessionId}
@@ -1228,21 +1285,26 @@ function OperatorConsole() {
                     />}
                   />
                 </div>
-                <section className="ll-conversation-timeline" aria-label="Captured timeline">
+                <section className={`ll-conversation-timeline ${choosingBookmark ? "is-choosing-moment" : ""}`} aria-label="Captured timeline" ref={timelinePanel} tabIndex={-1}>
                   <div className="ll-section-head">
                     <div>
-                      <h2>Captured timeline</h2>
-                      <p>
+                      <h2 aria-label="Captured timeline">Conversation</h2>
+                      <p className="ll-timeline-note">
                         {events.data?.events.length ?? 0} records on this page ·
                         original clocks preserved
                       </p>
                     </div>
-                    {evidenceId && <button className="ll-context-link" onClick={() => {
-                      contextPanel.current?.scrollIntoView({ block: "start" });
-                      contextPanel.current?.focus({ preventScroll: true });
-                    }}>View selected context <ArrowRight size={14} /></button>}
                   </div>
                   <div className="ll-timeline-toolbar">
+                    <label>
+                      <Search size={16} />
+                      <input
+                        aria-label="Filter captured timeline"
+                        placeholder="Find a moment in this recording…"
+                        value={timelineQuery}
+                        onChange={(e) => setTimelineQuery(e.target.value)}
+                      />
+                    </label>
                     <div
                       className="ll-segmented"
                       aria-label="Filter timeline by event kind"
@@ -1262,16 +1324,8 @@ function OperatorConsole() {
                         </button>
                       ))}
                     </div>
-                    <label>
-                      <Search size={14} />
-                      <input
-                        aria-label="Filter captured timeline"
-                        placeholder="Find a moment…"
-                        value={timelineQuery}
-                        onChange={(e) => setTimelineQuery(e.target.value)}
-                      />
-                    </label>
                   </div>
+                  {choosingBookmark && <div className="ll-bookmark-prompt" role="status"><Bookmark size={15} /><span>Choose a statement to bookmark.</span><button onClick={() => setChoosingBookmark(false)} aria-label="Cancel bookmark"><X size={15} /></button></div>}
                   <div className="ll-timeline-records">
                   {events.data?.events.length ? (
                     visibleEvents.length ? (
@@ -1292,6 +1346,10 @@ function OperatorConsole() {
                     )
                   )}
                   </div>
+                  {evidenceId && <button className="ll-context-link" onClick={() => {
+                    contextPanel.current?.scrollIntoView({ block: "start" });
+                    contextPanel.current?.focus({ preventScroll: true });
+                  }}>View selected context <ArrowRight size={14} /></button>}
                   {events.data?.events.length === 100 && (
                     <button onClick={() => setCursor(events.data!.nextAfter!)}>
                       Next 100 events
@@ -2280,6 +2338,7 @@ function SpeechProcessing({
   );
 }
 
+type PlaybackSegment = { id: string; jobId: string; durationMs: number; startedAtMs: number };
 function MediaReplay({
   sessionId,
   evidence,
@@ -2292,6 +2351,9 @@ function MediaReplay({
   compact = false,
   preferredJobId,
   tools,
+  moments,
+  onSegmentsChange,
+  seekRevision = 0,
 }: {
   sessionId: string;
   evidence?: Evidence;
@@ -2304,6 +2366,9 @@ function MediaReplay({
   compact?: boolean;
   preferredJobId?: string;
   tools?: ReactNode;
+  moments?: ReactNode;
+  onSegmentsChange?: (segments: PlaybackSegment[]) => void;
+  seekRevision?: number;
 }) {
   const resource = useResource<{
     jobs: {
@@ -2332,9 +2397,12 @@ function MediaReplay({
         (a, b) => a.startedAtMs - b.startedAtMs || a.key.localeCompare(b.key),
       ) ?? [];
   const current = segments.find((s) => s.key === selected) ?? segments.find((s) => s.jobId === preferredJobId) ?? segments[0];
+  useEffect(() => { onSegmentsChange?.(segments); }, [resource.data, preferredJobId]);
   useEffect(() => { setSelected(null); }, [preferredJobId]);
   useEffect(() => {
-    if (!evidence || appliedSeek.current === evidence.id) return;
+    if (!evidence) { appliedSeek.current = null; return; }
+    const intent = `${evidence.id}/${seekRevision}`;
+    if (appliedSeek.current === intent) return;
     const t =
       evidence.capturedAtMs ??
       evidence.sourceTimestampMs ??
@@ -2343,11 +2411,11 @@ function MediaReplay({
       (s) => t >= s.startedAtMs && t < s.startedAtMs + s.durationMs,
     );
     if (s) {
-      appliedSeek.current = evidence.id;
+      appliedSeek.current = intent;
       setSelected(s.key);
       if (video.current) video.current.currentTime = (t - s.startedAtMs) / 1000;
-    }
-  }, [evidence?.id, resource.data]);
+    } else appliedSeek.current = null;
+  }, [evidence?.id, seekRevision, resource.data]);
   const evidenceTime =
     evidence?.capturedAtMs ??
     evidence?.sourceTimestampMs ??
@@ -2364,7 +2432,7 @@ function MediaReplay({
       className={`ll-media ${compact ? "ll-media-compact" : ""}`}
       id={compact ? "ll-desk-media-replay" : "ll-media-replay"}
     >
-      {!compact && <div className="ll-section-head">
+      {!compact && <div className="ll-section-head ll-media-heading">
         <h2>
           <Video size={17} />
           Retained media
@@ -2485,6 +2553,7 @@ function MediaReplay({
             Stop recording
           </button>
         ))}
+      {!compact && moments}
       {!compact && <details className="ll-recording-tools">
         <summary><Settings size={15} /><span>Recording details & tools</span><ChevronDown size={14} /></summary>
         <div className="ll-recording-tools-body">
