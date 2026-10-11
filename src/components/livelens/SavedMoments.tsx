@@ -30,6 +30,11 @@ export type SavedMomentsProps = {
 type Frame = { key: string; path: string; offsetSeconds: number };
 type MomentEvidence = Pick<Evidence, "id" | "sessionId" | "text" |
   "sourceTimestampMs" | "capturedAtMs" | "receivedAtMs">;
+type HydrationState = {
+  live: boolean;
+  wanted: Set<string>;
+  requests: Map<string, AbortController>;
+};
 
 function validTime(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value) &&
@@ -184,6 +189,7 @@ function MomentsContent(props: SavedMomentsProps) {
   const [visibleCount, setVisibleCount] = useState(6);
   const [resolvedEvidence, setResolvedEvidence] = useState<Record<string, MomentEvidence | null>>({});
   const evidenceCache = useRef(new Map<string, MomentEvidence | null>());
+  const hydrationState = useRef<HydrationState | null>(null);
   const [frames, setFrames] = useState<Record<string, string | null>>({});
   const frameCache = useRef(new Map<string, string | null>());
 
@@ -222,31 +228,61 @@ function MomentsContent(props: SavedMomentsProps) {
     }));
 
   useEffect(() => {
-    const controller = new AbortController();
+    const state: HydrationState = { live: true, wanted: new Set(), requests: new Map() };
+    hydrationState.current = state;
+    evidenceCache.current.clear();
+    setResolvedEvidence({});
+    return () => {
+      state.live = false;
+      state.wanted.clear();
+      for (const controller of state.requests.values()) controller.abort();
+      state.requests.clear();
+      evidenceCache.current.clear();
+      if (hydrationState.current === state) hydrationState.current = null;
+    };
+  }, [sessionId]);
+
+  useEffect(() => {
+    const state = hydrationState.current;
+    if (!state?.live) return;
     const requested: Array<{ id: string; supplied: MomentEvidence | null }> = JSON.parse(evidenceSignature);
-    const wanted = new Set(requested.map((item) => item.id));
+    state.wanted = new Set(requested.map((item) => item.id));
     for (const id of evidenceCache.current.keys()) {
-      if (!wanted.has(id)) evidenceCache.current.delete(id);
+      if (!state.wanted.has(id)) evidenceCache.current.delete(id);
     }
     for (const item of requested) {
       if (item.supplied) evidenceCache.current.set(item.id, item.supplied);
     }
+    for (const [id, controller] of state.requests) {
+      if (!state.wanted.has(id) || evidenceCache.current.has(id)) controller.abort();
+    }
     setResolvedEvidence(Object.fromEntries(evidenceCache.current));
-    const queue = requested.filter((item) => !evidenceCache.current.has(item.id));
-    let cursor = 0;
-    async function worker() {
-      while (!controller.signal.aborted && cursor < queue.length) {
-        const { id } = queue[cursor++];
-        const event = await readMomentEvidence(id, sessionId, controller.signal);
-        if (controller.signal.aborted) return;
-        // Cache failed reads too: unavailable evidence keeps its honest context
-        // fallback instead of retrying on every timeline or bookmark refresh.
-        evidenceCache.current.set(id, event);
-        setResolvedEvidence(Object.fromEntries(evidenceCache.current));
+    function pump() {
+      if (!state?.live) return;
+      for (const id of state.wanted) {
+        // Aborted requests retain their slot until settled, so reconciliation
+        // cannot temporarily exceed the six-request limit.
+        if (state.requests.size >= 6) break;
+        if (evidenceCache.current.has(id) || state.requests.has(id)) continue;
+        const controller = new AbortController();
+        state.requests.set(id, controller);
+        void readMomentEvidence(id, sessionId, controller.signal).then((event) => {
+          if (!state.live || controller.signal.aborted ||
+            state.requests.get(id) !== controller || !state.wanted.has(id)) return;
+          // Cache failed reads too: unavailable evidence keeps its honest context
+          // fallback instead of retrying on every timeline or bookmark refresh.
+          evidenceCache.current.set(id, event);
+          setResolvedEvidence(Object.fromEntries(evidenceCache.current));
+        }).finally(() => {
+          if (state.requests.get(id) === controller) state.requests.delete(id);
+          pump();
+        });
       }
     }
-    for (let index = 0; index < Math.min(6, queue.length); index++) void worker();
-    return () => { controller.abort(); };
+    // Keep unchanged missing originals in flight when another visible bookmark
+    // gains supplied context. Only row removal/supply or boundary teardown
+    // cancels that row's request; a first-page response cannot restart its peers.
+    pump();
   }, [sessionId, evidenceSignature]);
 
   const evidence = new Map<string, MomentEvidence>();

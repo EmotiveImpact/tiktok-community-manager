@@ -7,15 +7,15 @@
   "caseAndBothExports": true,
   "serviceRestartReopen": true,
   "uncaughtPageErrors": 0,
-  "screenshots": "/tmp/livelens-operator-final-original",
+  "screenshots": "/tmp/livelens-hydration-final-original",
   "rendererAssets": [
     {
-      "url": "http://127.0.0.1:41909/app/assets/index-BUy4-zTR.css",
+      "url": "http://127.0.0.1:49269/app/assets/index-BUy4-zTR.css",
       "sha256": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe"
     },
     {
-      "url": "http://127.0.0.1:41909/app/assets/index-DmrWQN-8.js",
-      "sha256": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+      "url": "http://127.0.0.1:49269/app/assets/index-Bi3d_2-c.js",
+      "sha256": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
     }
   ]
 }

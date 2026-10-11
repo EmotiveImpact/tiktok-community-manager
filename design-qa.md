@@ -31,7 +31,7 @@ alignment, original source clocks and an unverified ALFRED host remain explicit.
 Phone controls remain usable at 390px with no horizontal page overflow. The
 read-only recipe textarea scrolls internally for long private paths.
 
-Final assets are `index-DmrWQN-8.js` and `index-BUy4-zTR.css`. No uncaught page
+Final assets are `index-Bi3d_2-c.js` and `index-BUy4-zTR.css`. No uncaught page
 errors appeared in the 12 final visual captures. [Current validation](docs/livelens/VALIDATION.md)
 records the unit/service/browser results separately. The studio media and captions
 remain explicitly synthetic; screenshots do not establish LIVE or private-host

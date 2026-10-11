@@ -19,7 +19,7 @@ The screenshots below show that language implemented in the actual app.
 
 These actual browser screens add retained-time recording transport, whole-session
 and library search, stable saved evidence and a private ALFRED setup builder.
-Renderer `index-DmrWQN-8.js`; stylesheet `index-BUy4-zTR.css`.
+Renderer `index-Bi3d_2-c.js`; stylesheet `index-BUy4-zTR.css`.
 [Full gallery and operating details](APERTURE_WORKFLOWS.md).
 
 The isolated visual fixture records a generated portrait with tone through FFmpeg;

@@ -6,72 +6,87 @@
   "failedJourneys": 0,
   "maxConcurrentBrowserJourneys": 2,
   "rendererAssets": {
-    "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337",
+    "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072",
     "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe"
+  },
+  "deterministicOriginalHydration": {
+    "before": "/tmp/livelens-hydration-before-monitor/hydration-request-receipt.json",
+    "beforeRequestCounts": [
+      1,
+      2
+    ],
+    "after": "/tmp/livelens-hydration-final-monitor/hydration-request-receipt.json",
+    "afterRequestCounts": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "actualOriginalAndDecodedFrameResolved": true
   },
   "journeys": [
     {
       "journey": "monitor",
       "passed": true,
-      "receipt": "/tmp/livelens-operator-final-monitor/receipt.json",
-      "receiptSha256": "99d8102f6da0804f0bcfa87389f83120689ae5d1c0d8308655b9391ade21bf78",
+      "receipt": "/tmp/livelens-hydration-final-monitor/receipt.json",
+      "receiptSha256": "43bc69cac5b342f9e207e24b5091f137afcec678c8af77ff4ff3a74ecfb6c68d",
       "screenshots": 10,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
-        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
       },
       "publishedReceipt": "operator-workflow-monitor-validation.json"
     },
     {
       "journey": "full",
       "passed": true,
-      "receipt": "/tmp/livelens-operator-final-full/receipt.json",
-      "receiptSha256": "196a8827bade5567ce1a0badfa2d524fb6800cb0c95a595e49971fd879ebcd32",
+      "receipt": "/tmp/livelens-hydration-final-full/receipt.json",
+      "receiptSha256": "2d3d24275d15a416abf500113f67ab8074fb7ab9f33e5ac2e926dbf8d81a6af7",
       "screenshots": 16,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
-        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
       },
       "publishedReceipt": "operator-workflow-full-validation.json"
     },
     {
       "journey": "original",
       "passed": true,
-      "receipt": "/tmp/livelens-operator-final-original/receipt.json",
-      "receiptSha256": "c95d79d252e5f92ee209009977ca412d6cdc3b3d34c4e5541bce915a68a39de7",
+      "receipt": "/tmp/livelens-hydration-final-original/receipt.json",
+      "receiptSha256": "51704e23e4334410c6f3ceabf11802abbbecce07278e46078a81c8a60870a50d",
       "screenshots": 2,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
-        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
       },
       "publishedReceipt": "operator-workflow-original-validation.json"
     },
     {
       "journey": "review",
       "passed": true,
-      "receipt": "/tmp/livelens-operator-final-review/receipt.json",
-      "receiptSha256": "5d60d0da6495a4fa701ffa6c4297ba2627d90eaec59817f5477ae25b1b6214cb",
+      "receipt": "/tmp/livelens-hydration-final-review/receipt.json",
+      "receiptSha256": "2abdf0417e2c73c563c4f9139d8e88cccad26ff7feb26afc3e9d75ba614ffe7e",
       "screenshots": 8,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
-        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
       },
       "publishedReceipt": "operator-workflow-review-validation.json"
     },
     {
       "journey": "onboarding",
       "passed": true,
-      "receipt": "/tmp/livelens-operator-final-onboarding/receipt.json",
-      "receiptSha256": "46bcc2e8c5e294d77861c857952f72a4ba1b4e16681323e06d0fc1ea119be8c7",
+      "receipt": "/tmp/livelens-hydration-final-onboarding/receipt.json",
+      "receiptSha256": "a484c021f45e7bebc87f7a1ab699d3d52219e089ad474de5ed03b4d8aa54c91e",
       "screenshots": 7,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
-        "index-DmrWQN-8.js": "3a7124a745a3e881aeb3b83ae25f8dcfd874df33dc2ad98b1e26165509acd337"
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
       },
       "publishedReceipt": "operator-workflow-onboarding-validation.json"
     }
@@ -87,11 +102,11 @@
     },
     {
       "path": "docs/livelens/screenshots/operator-workflow/verification-recording-transport.png",
-      "sha256": "2ffd891f79df249d74731d2826dce5b167795801e89070d4fdcad271bd4d2249"
+      "sha256": "e2c953141c5d4efcc4ab00c01f759dfc6a92053ed16e9a38499f423a023e86a2"
     },
     {
       "path": "docs/livelens/screenshots/operator-workflow/verification-whole-session-search.png",
-      "sha256": "e0f48310780fd1d67b736096b03ce42832308d2071cd8370a5b6a2d89784de7f"
+      "sha256": "786fdd75c77a97a6ab1c8c0e8f2fc3e5267f332fcf6b07455195b7689c79f91e"
     }
   ]
 }

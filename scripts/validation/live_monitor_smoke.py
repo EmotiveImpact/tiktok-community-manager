@@ -246,13 +246,75 @@ def whole_session_search(page, csrf, segment, last_event, marker):
                 reads.append(http_request.url)
     page.on("request", observe_original_read)
 
+    # Control real response ordering: bookmarks arrive before the event page,
+    # then the page supplies a different visible bookmark while this original
+    # is still in flight. No source response body is replaced or fabricated.
+    held_pages = []
+    held_originals = []
+    hold_pages = True
+    hydration_stages = []
+    original_path = "/v1/evidence/" + last_event["id"]
+    page_pattern = "**/v1/sessions/*/events?*"
+    original_pattern = "**" + original_path
+
+    def hold_real_page(route):
+        if hold_pages and urlsplit(route.request.url).path == event_path:
+            held_pages.append((route, route.fetch()))
+        else:
+            route.continue_()
+
+    def hold_real_original(route):
+        held_originals.append((route, route.fetch()))
+
+    def hydration_stage(name):
+        hydration_stages.append({"stage": name, "originalRequests": len(original_reads[last_event["id"]]), "otherBookmarkRequests": len(original_reads[marker["id"]])})
+        (SCREENSHOTS / "hydration-request-receipt.json").write_text(json.dumps({"fixture": True, "heldActualServerResponses": True, "stages": hydration_stages}, indent=2))
+
+    page.route(page_pattern, hold_real_page)
+    page.route(original_pattern, hold_real_original)
     page.set_viewport_size({"width": 1440, "height": 1024})
-    navigate(page, "Session library")
-    library = page.get_by_role("region", name="Conversation and recording library", exact=True)
-    library.get_by_role("button", name=re.compile("^Fictional fixture")).click()
-    timeline = page.get_by_role("region", name="Captured timeline", exact=True)
-    query = timeline.get_by_label("Filter captured timeline", exact=True)
-    rows = timeline.locator(".ll-evidence")
+    try:
+        navigate(page, "Session library")
+        library = page.get_by_role("region", name="Conversation and recording library", exact=True)
+        library.get_by_role("button", name=re.compile("^Fictional fixture")).click()
+        timeline = page.get_by_role("region", name="Captured timeline", exact=True)
+        query = timeline.get_by_label("Filter captured timeline", exact=True)
+        rows = timeline.locator(".ll-evidence")
+        deadline = time.monotonic() + 5
+        while (not held_pages or not held_originals) and time.monotonic() < deadline:
+            page.wait_for_timeout(25)
+        assert held_pages and held_originals, "Both delayed reads must reach the actual authenticated service"
+        hydration_stage("original pending before initial event page")
+        assert len(original_reads[last_event["id"]]) == 1, "Initial hydration must issue exactly one original read"
+        hold_pages = False
+        while held_pages:
+            route, response = held_pages.pop(0)
+            route.fulfill(response=response)
+        expect(rows).to_have_count(100)
+        page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+        hydration_stage("different visible bookmark supplied by initial page")
+        assert len(original_reads[last_event["id"]]) == 1, "An unrelated supplied bookmark must not restart the pending original read"
+        with page.expect_response(lambda response: urlsplit(response.url).path == event_path and parse_qs(urlsplit(response.url).query).get("q") == ["Fictional fixture chat burst 0"]):
+            query.fill("Fictional fixture chat burst 0")
+        expect(rows).to_have_count(100)
+        with page.expect_response(lambda response: urlsplit(response.url).path == event_path and parse_qs(urlsplit(response.url).query).get("q") == ["Fictional fixture chat burst 0"]):
+            page.get_by_role("button", name="Refresh records", exact=True).click()
+        expect(rows).to_have_count(100)
+        page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+        hydration_stage("unrelated filter and parent refresh while original pending")
+        assert len(original_reads[last_event["id"]]) == 1, "Unrelated page and bookmark refreshes must preserve the same pending original read"
+        while held_originals:
+            route, response = held_originals.pop(0)
+            assert response.status == 200 and response.json()["id"] == last_event["id"]
+            route.fulfill(response=response)
+    finally:
+        for route, response in [*held_pages, *held_originals]:
+            try:
+                route.fulfill(response=response)
+            except Exception:
+                pass  # Aborted old-code requests must not mask the regression.
+        page.unroute(page_pattern, hold_real_page)
+        page.unroute(original_pattern, hold_real_original)
     # This new bookmark has never been in this panel's initial event page or
     # selected context. Hydration must read the real scoped original once.
     off_page_moment = page.get_by_role("region", name="Saved moments", exact=True).locator('.ll-saved-moment[data-evidence-id="' + last_event["id"] + '"]')
@@ -261,6 +323,7 @@ def whole_session_search(page, csrf, segment, last_event, marker):
     expect(off_page_moment.locator("time")).to_have_attribute("datetime", page.evaluate("ms => new Date(ms).toISOString()", last_event["capturedAtMs"]))
     expect(off_page_moment.locator("img")).to_have_count(1, timeout=10000)
     page.wait_for_function("""id => { const image = document.querySelector('.ll-saved-moment[data-evidence-id="' + id + '"] img'); return image?.complete && image.naturalWidth > 0; }""", arg=last_event["id"])
+    hydration_stage("actual original released with decoded saved frame")
     assert len(original_reads[last_event["id"]]) == 1, "An initially off-page bookmark must hydrate its actual original once"
 
     def response_for(value, kind=None, after=None):
@@ -431,6 +494,7 @@ def whole_session_search(page, csrf, segment, last_event, marker):
             "queryAndKindPreservedAcrossForwardBackwardPages": True,
             "kindChangeResetsCursor": True, "lateSearchResponseCannotReplaceCurrentQuery": True,
             "offPageSavedMomentKeepsOriginalClockDecodedFrameWithoutRepeatedReads": True,
+            "pendingSavedOriginalSurvivesUnrelatedPageArrivalFilterAndRefresh": True,
             "exact100EventAnd200SessionTerminalPagesPreserveEarlierMatches": True,
             "wholeLibrarySearchBeyond200AndExactSession": True}
 

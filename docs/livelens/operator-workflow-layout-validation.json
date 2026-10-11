@@ -51,7 +51,7 @@
     }
   ],
   "uncaughtPageErrors": [],
-  "renderer": "./assets/index-DmrWQN-8.js",
+  "renderer": "./assets/index-Bi3d_2-c.js",
   "fixture": true,
   "generatedStudioMediaSeconds": 6.023,
   "stylesheet": "index-BUy4-zTR.css",
@@ -70,18 +70,18 @@
   "screenshots": [
     {
       "path": "docs/livelens/screenshots/operator-workflow/01-conversation-desktop.png",
-      "sha256": "4f287001064826464d5b0eda75035d2643dd8a87d5eccec205dcb79df892f212",
+      "sha256": "f4dddda665f8b35c152ed6a1165a917c638b3e4d7c24b637f618eff58a5411da",
       "bytes": 653647
     },
     {
       "path": "docs/livelens/screenshots/operator-workflow/01-conversation-full.png",
-      "sha256": "c69264b4580ee5fa1086e93ff6e3a1b5582bea36e027d6def525fb1c720b8a20",
+      "sha256": "1556a1093e8929523f891e829245e31c60a3ce27b95252f3860a7658e0384113",
       "bytes": 745016
     },
     {
       "path": "docs/livelens/screenshots/operator-workflow/02-monitor-desktop.png",
-      "sha256": "6648fe3a141ac804eafe32f45aeeece55cf3022f8933634d7586769214c31053",
-      "bytes": 578010
+      "sha256": "223c4d2ef19fa499a4f400df8596865051e46d550bc7f44cf1658bb667ebb1c8",
+      "bytes": 578092
     },
     {
       "path": "docs/livelens/screenshots/operator-workflow/03-library-desktop.png",
@@ -100,8 +100,8 @@
     },
     {
       "path": "docs/livelens/screenshots/operator-workflow/06-monitor-phone.png",
-      "sha256": "5c7344e7d20997f678709bdfde205ccb5c89be7290baa72f22ae4e735907065a",
-      "bytes": 193444
+      "sha256": "3c247a21c10b80b3c1cb832d9f42d483afb7a2c2890a09b36d34eab632aa4e8a",
+      "bytes": 193460
     },
     {
       "path": "docs/livelens/screenshots/operator-workflow/07-alfred-access-desktop.png",

@@ -40,7 +40,8 @@ substring search; ASCII case matching is portable across SQLite/PostgreSQL.
 Saved moments retrieve missing originals by exact evidence ID. Quotes, original
 clocks and real decoded frames therefore survive changing pages or search filters.
 Reads are bounded to visible rows, cancelled on context change, and cached to avoid
-polling the same original repeatedly. Unavailable evidence or media retains an
+polling the same original repeatedly. Each original keeps its own request lifecycle,
+so loading a different bookmark or event page does not restart a pending read. Unavailable evidence or media retains an
 honest fallback. Selecting the same saved moment can seek again after manual playback.
 
 ## Prepare ALFRED access

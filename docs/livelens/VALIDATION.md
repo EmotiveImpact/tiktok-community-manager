@@ -5,7 +5,7 @@
 The [current application and gallery](APERTURE_WORKFLOWS.md) preserve the approved
 Aperture Studio design while adding per-recording transport, complete retained
 search, stable saved originals and guided private ALFRED setup. Final renderer:
-`index-DmrWQN-8.js`; stylesheet: `index-BUy4-zTR.css`.
+`index-Bi3d_2-c.js`; stylesheet: `index-BUy4-zTR.css`.
 
 | Check | Actual result |
 |---|---|
@@ -34,6 +34,17 @@ new ALFRED assertion used a label locator that included select option text; the
 harness now uses the actual named combobox role. No access, collection, persistence
 or original workflow assertion was removed or weakened. Earlier browser passes
 were repeated on the final asset hashes after visual/copy corrections.
+
+A hosted duplicate push run exposed a timing race after the first successful local
+and PR runs: receiving the initial event page cancelled an unrelated pending
+bookmark-original GET, which was then requested twice. Per-evidence request
+lifetimes now preserve unchanged reads while cancelling removed/supplied rows and
+session/scope teardown. Aborted requests retain their slot until settled, keeping
+the six-request maximum. The [deterministic before/after receipt](operator-workflow-hydration-validation.json)
+holds actual authenticated responses: the previous renderer requests the original
+twice; the fixed renderer keeps one request across page arrival, search and refresh,
+then resolves the exact original and decoded frame. The final journeys include
+this regression; its count assertion was retained, not relaxed.
 
 Generated ALFRED configs also passed its pinned actual in-memory validators
 without transport or installation. ALFRED source is unchanged at `5b37ba4`; its
