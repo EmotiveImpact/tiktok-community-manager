@@ -11,11 +11,13 @@ export default function AdvancedWorkspace({
   onOpenEvidence,
   initialCaseId,
   onSelectCase,
+  revision = 0,
 }: {
   view: string;
   onOpenEvidence: OpenEvidence;
   initialCaseId?: string | null;
   onSelectCase?: (caseId: string | null) => void;
+  revision?: number;
 }) {
   return (
     <div className="aw-workspace">
@@ -29,7 +31,7 @@ export default function AdvancedWorkspace({
         />
       )}
       {view === "graph" && <ContextGraph onOpenEvidence={onOpenEvidence} />}
-      {view === "workspace" && <Workspace />}
+      {view === "workspace" && <Workspace revision={revision} />}
       {view === "agent" && <AgentConnection />}
     </div>
   );

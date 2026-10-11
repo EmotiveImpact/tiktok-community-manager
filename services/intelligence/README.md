@@ -226,3 +226,11 @@ LIVE discovery/media capture, a second external platform, native Electron GUI,
 multispeaker diarisation and customer-scale capacity require separate validation.
 Generated recordings, protocol fixtures and configured adapters do not establish
 those results. Nothing is merged or deployed by these start/test commands.
+## Invited browser accounts
+
+Optional `LIVELENS_BROWSER_AUTH=persisted` adds stored passwords and
+administrator-issued single-use invitations to the existing same-origin console.
+It requires workspace governance. Bootstrap users are inserted once; persisted
+password changes and revocations survive restart. Static authentication remains
+the default. See [workspace onboarding](../../docs/livelens/WORKSPACE_ONBOARDING.md)
+for configuration, administrator APIs and public same-origin redemption.

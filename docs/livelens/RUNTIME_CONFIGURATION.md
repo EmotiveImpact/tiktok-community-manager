@@ -63,6 +63,11 @@ membership/case-grant controls are disabled.
 
 ## Environment catalogue
 
+Set `LIVELENS_BROWSER_AUTH=persisted` to enable administrator-issued invitations
+and stored password changes. This requires configured workspace membership;
+bootstrap users are inserted once and cannot restore reset/revoked credentials.
+See [invited onboarding](WORKSPACE_ONBOARDING.md) for the UI and API contracts.
+
 Defaults resolve relative paths against the service working directory.
 
 | Variable | Purpose and default |
@@ -72,6 +77,7 @@ Defaults resolve relative paths against the service working directory.
 | `LIVELENS_PORT` | Listener port; default `4318` |
 | `LIVELENS_DB_PATH` | SQLite pilot database; default `./data/intelligence.sqlite` |
 | `LIVELENS_BROWSER_USERS` | Optional scoped operator login JSON array |
+| `LIVELENS_BROWSER_AUTH` | `static` by default; `persisted` enables stored accounts and invitations |
 | `LIVELENS_CONSOLE_ORIGIN` | Exact browser origin; required when browser users are configured |
 | `LIVELENS_BUNDLE_DIR` | Absolute built frontend directory |
 | `LIVELENS_WORKSPACE_MEMBERS` | Optional persisted role/member seed JSON array |

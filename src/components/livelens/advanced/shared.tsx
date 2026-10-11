@@ -42,7 +42,7 @@ export function collection<T>(value: unknown, ...keys: string[]): T[] {
   }
   return [];
 }
-export function useResource<T>(path: string | null) {
+export function useResource<T>(path: string | null, revision = 0) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(!!path);
   const [error, setError] = useState("");
@@ -72,7 +72,7 @@ export function useResource<T>(path: string | null) {
     return () => {
       alive = false;
     };
-  }, [path, version]);
+  }, [path, version, revision]);
   return {
     data: previousPath.current === path ? data : null,
     loading: loading || (!!path && previousPath.current !== path),

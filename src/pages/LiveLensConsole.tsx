@@ -49,6 +49,7 @@ import AdvancedWorkspace, {
   ReviewedReport,
 } from "../components/livelens/AdvancedWorkspace";
 import ReviewDesk from "../components/livelens/ReviewDesk";
+import InvitationAcceptance from "../components/livelens/InvitationAcceptance";
 import "./livelens.css";
 
 type View =
@@ -173,6 +174,27 @@ function Status({ loading, error }: { loading: boolean; error: string }) {
 }
 
 export function LiveLensConsole() {
+  const readToken = () => new URLSearchParams(location.hash.slice(1)).get("invite");
+  const [invitationToken, setInvitationToken] = useState(readToken);
+  const [generation, setGeneration] = useState(0);
+  useEffect(() => {
+    const changed = () => setInvitationToken(readToken());
+    window.addEventListener("hashchange", changed);
+    return () => window.removeEventListener("hashchange", changed);
+  }, []);
+  const closeInvitation = (identity?: Identity) => {
+    if (identity) setIdentity(identity);
+    history.replaceState(null, "", `${location.pathname}?view=overview`);
+    setInvitationToken(null);
+    // Mount fresh resources after a link changes the authenticated operator.
+    setGeneration((value) => value + 1);
+  };
+  return invitationToken
+    ? <InvitationAcceptance token={invitationToken} onSignedIn={closeInvitation} onCancel={() => closeInvitation()} />
+    : <OperatorConsole key={generation} />;
+}
+
+function OperatorConsole() {
   const [identity, updateIdentity] = useState<Identity | null>(null),
     [checking, setChecking] = useState(true),
     [error, setError] = useState("");
@@ -322,7 +344,7 @@ export function LiveLensConsole() {
     planned: string[];
     scopes: string[];
     workers?: { mediaArchive?: MediaArchiveConfiguration };
-  }>(identity ? "/v1/capabilities" : null);
+  }>(identity ? "/v1/capabilities" : null, revision);
   useEffect(() => {
     if (!identity || (view !== "sources" && view !== "overview")) return;
     const active = jobs.data?.jobs.some(
@@ -439,6 +461,9 @@ export function LiveLensConsole() {
         await api<Identity>("/console/login", {
           username: data.get("username"),
           password: data.get("password"),
+          ...(String(data.get("workspace") ?? "").trim()
+            ? { workspace: String(data.get("workspace")).trim() }
+            : {}),
         }),
       );
     } catch (e) {
@@ -550,6 +575,10 @@ export function LiveLensConsole() {
                   required
                   maxLength={256}
                 />
+              </label>
+              <label>
+                Workspace (optional)
+                <input name="workspace" autoComplete="off" maxLength={100} placeholder="For names shared by several workspaces" />
               </label>
               <button className="ll-primary" disabled={busy}>
                 {busy ? "Signing in…" : "Open workspace"}
@@ -1689,6 +1718,7 @@ export function LiveLensConsole() {
             "agent",
           ].includes(view) && (
             <AdvancedWorkspace
+              revision={revision}
               view={view}
               onOpenEvidence={openEvidenceById}
               initialCaseId={investigationId}

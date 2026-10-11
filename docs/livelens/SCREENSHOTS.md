@@ -10,6 +10,19 @@ The [current full browser receipt](refined-app-browser-validation.json),
 The separate [archive receipt](browser-validation.json) preserves its earlier
 recovery validation. Design references are in [DESIGN_CONCEPTS.md](DESIGN_CONCEPTS.md).
 
+## Invited workspace accounts
+
+Actual administrator invitation form and persisted operator accounts; no private
+join links or populated password fields are shown. The separate
+[onboarding receipt](onboarding-validation.json) records real signup, access
+changes, password recovery and restart checks on isolated fictional identities.
+
+![Workspace invitations](screenshots/workspace-invitations.png)
+
+| Phone invitation | Persisted accounts |
+|---|---|
+| ![Phone workspace join](screenshots/phone-workspace-join.png) | ![Persisted operator accounts](screenshots/workspace-accounts.png) |
+
 ## Review desk — selected C layout with a restrained dark palette
 
 This is the actual 1440 × 1024 desktop viewport, with a draft finding selected,

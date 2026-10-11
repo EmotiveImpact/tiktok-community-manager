@@ -8,6 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { api } from "../../../lib/livelens/api";
+import WorkspaceInvitations from "./WorkspaceInvitations";
 import {
   collection,
   Empty,
@@ -74,14 +75,15 @@ const metrics = [
   },
 ] as const;
 
-export function Workspace() {
-  const resource = useResource<WorkspaceInfo>("/v1/workspace");
+export function Workspace({ revision = 0 }: { revision?: number }) {
+  const resource = useResource<WorkspaceInfo>("/v1/workspace", revision);
+  const capabilities = useResource<{ enabled: string[]; scopes: string[] }>("/v1/capabilities", revision);
   const [tab, setTab] = useState("usage");
   const info = resource.data;
   return (
     <>
       <Notice error={resource.error} />
-      {resource.loading ? (
+      {resource.loading && !info ? (
         <Loading />
       ) : (
         info && (
@@ -165,10 +167,17 @@ export function Workspace() {
               </>
             )}
             {tab === "members" && (
+              <>
+              {capabilities.data?.enabled.includes("workspace-invitations") &&
+                capabilities.data.scopes.includes("workspace:admin") &&
+                ["owner", "admin"].includes(info.role) &&
+                <WorkspaceInvitations onSaved={resource.reload} revision={revision} />}
               <Members
+                revision={revision}
                 canManage={["owner", "admin"].includes(info.role)}
                 onSaved={resource.reload}
               />
+              </>
             )}
             {tab === "retention" && (
               <Retention info={info} onSaved={resource.reload} />
@@ -268,11 +277,13 @@ function LimitsEditor({
 function Members({
   canManage,
   onSaved,
+  revision = 0,
 }: {
   canManage: boolean;
   onSaved: () => void;
+  revision?: number;
 }) {
-  const resource = useResource<unknown>("/v1/workspace/members");
+  const resource = useResource<unknown>("/v1/workspace/members", revision);
   const [subject, setSubject] = useState("");
   const [role, setRole] = useState("analyst");
   const action = useAction();
@@ -287,7 +298,7 @@ function Members({
     if (
       await action.run(
         () => api("/v1/workspace/members", { subject: subject.trim(), role }),
-        "Member role saved. Login credentials remain managed in the service configuration.",
+        "Member role saved. Granted API scopes still bound access.",
       )
     ) {
       setSubject("");
@@ -353,6 +364,7 @@ function Members({
             <label>
               Workspace role
               <select
+                aria-label="Workspace role"
                 value={role}
                 onChange={(event) => setRole(event.target.value)}
               >

@@ -374,7 +374,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_role("heading", name="Set workspace limits", exact=True).wait_for()
                 page.get_by_role("button", name="Members", exact=True).click()
                 page.get_by_role("heading", name="People and permissions", exact=True).wait_for()
-                page.get_by_role("cell", name="fixture", exact=True).wait_for()
+                page.locator("section.aw-section").filter(has=page.get_by_role("heading", name="People and permissions", exact=True)).get_by_role("cell", name="fixture", exact=True).wait_for()
                 page.get_by_role("button", name="Audit trail", exact=True).click()
                 page.get_by_role("heading", name="Recorded actions", exact=True).wait_for()
                 page.locator(".aw-table tbody tr").first.wait_for()
