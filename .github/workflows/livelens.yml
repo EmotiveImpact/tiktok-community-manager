@@ -117,6 +117,8 @@ jobs:
           python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print("LIVELENS_CHROMIUM="+p.chromium.executable_path); p.stop()' >> "$GITHUB_ENV"
       - name: Original operator journey and restart regression
         run: python scripts/validation/browser_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/original
       - name: Reviewed findings, graph, alerts, redaction, real PDF, phone and restart
         run: python scripts/validation/full_app_smoke.py
         env:

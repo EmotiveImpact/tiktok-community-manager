@@ -2,10 +2,13 @@
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import subprocess
 import tempfile
 import time
+import traceback
+from contextlib import contextmanager
 from urllib.request import urlopen
 from playwright.sync_api import sync_playwright
 
@@ -14,11 +17,51 @@ with socket.socket() as sock:
     sock.bind(('127.0.0.1', 0))
     PORT = sock.getsockname()[1]
 BASE = f'http://127.0.0.1:{PORT}'
-SCREENSHOTS = Path(tempfile.mkdtemp(prefix='livelens-browser-receipt-'))
+SCREENSHOTS = Path(os.environ.get('LIVELENS_SCREENSHOTS_DIR') or tempfile.mkdtemp(prefix='livelens-browser-receipt-'))
+SCREENSHOTS.mkdir(parents=True, exist_ok=True)
+failure_recorded = False
 
-def ready():
+def record_failure(error, page=None):
+    global failure_recorded
+    if failure_recorded:
+        return
+    failure_recorded = True
+    message = re.sub(r'(https?://[^\s?#]+)[?#][^\s]+', r'\1[query redacted]', str(error))
+    message = re.sub(r'(?i)Bearer\s+[A-Za-z0-9._-]+', 'Bearer [redacted]', message)
+    receipt = {'fixture': True, 'passed': False, 'exception': type(error).__name__, 'message': message}
+    if page is not None:
+        try:
+            page.screenshot(path=str(SCREENSHOTS / 'failure.png'), full_page=True)
+            (SCREENSHOTS / 'failure-state.txt').write_text(page.locator('body').inner_text())
+            receipt['media'] = page.evaluate('''() => Array.from(document.querySelectorAll('video')).map(video => ({
+                readyState: video.readyState, networkState: video.networkState,
+                currentTime: video.currentTime, duration: Number.isFinite(video.duration) ? video.duration : null,
+                paused: video.paused, error: video.error ? {code: video.error.code, message: video.error.message} : null,
+                mp4Support: video.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')
+            }))''')
+        except Exception as diagnostic_error:
+            receipt['captureError'] = type(diagnostic_error).__name__
+    (SCREENSHOTS / 'failure-receipt.json').write_text(json.dumps(receipt, indent=2))
+    frames = [frame for frame in traceback.extract_tb(error.__traceback__) if Path(frame.filename).resolve() == Path(__file__).resolve()]
+    location = f',line={frames[-1].lineno}' if frames else ''
+    annotation = f'{type(error).__name__}: {message}'[:3000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+    print(f'::error file=scripts/validation/browser_smoke.py{location},title=Original browser journey::{annotation}', flush=True)
+    print(f'Failure evidence: {SCREENSHOTS}', flush=True)
+
+@contextmanager
+def browser_diagnostics():
+    state = {'page': None}
+    try:
+        yield state
+    except Exception as error:
+        record_failure(error, state['page'])
+        raise
+
+def ready(child):
     deadline = time.monotonic() + 20
     while time.monotonic() < deadline:
+        if child.poll() is not None:
+            raise RuntimeError('Fixture exited before readiness; see fixture-server.log')
         try:
             with urlopen(BASE + '/health', timeout=1) as response:
                 if response.status == 200:
@@ -30,8 +73,13 @@ def ready():
 
 def launch(directory):
     env = {**os.environ, 'LIVELENS_DEMO_DIR': str(directory), 'LIVELENS_PORT': str(PORT)}
-    child = subprocess.Popen(['node', 'services/intelligence/scripts/console-demo.mjs'], cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    ready()
+    with open(SCREENSHOTS / 'fixture-server.log', 'ab') as log:
+        child = subprocess.Popen(['node', 'services/intelligence/scripts/console-demo.mjs'], cwd=ROOT, env=env, stdout=log, stderr=log)
+    try:
+        ready(child)
+    except Exception:
+        stop(child)
+        raise
     return child
 
 def stop(child):
@@ -43,11 +91,13 @@ def stop(child):
         child.wait(timeout=5)
 
 with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
-    server = launch(directory)
+    server = None
     try:
-        with sync_playwright() as p:
+        server = launch(directory)
+        with sync_playwright() as p, browser_diagnostics() as diagnostics:
             browser = p.chromium.launch(executable_path=os.environ.get('LIVELENS_CHROMIUM', '/usr/bin/chromium'), headless=True)
             page = browser.new_page(viewport={'width': 1440, 'height': 960}, accept_downloads=True)
+            diagnostics['page'] = page
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
 
@@ -133,6 +183,12 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             page.wait_for_function('() => document.querySelector("video").readyState >= 1')
             assert not errors, errors
             browser.close()
-            print(json.dumps({'fixture': True, 'desktopAndPhone': True, 'keyboardNavigation': True, 'recordingPlaybackAndSeek': True, 'accountSearch': True, 'caseAndBothExports': True, 'serviceRestartReopen': True, 'uncaughtPageErrors': len(errors), 'screenshots': str(SCREENSHOTS)}))
+            receipt = {'fixture': True, 'desktopAndPhone': True, 'keyboardNavigation': True, 'recordingPlaybackAndSeek': True, 'accountSearch': True, 'caseAndBothExports': True, 'serviceRestartReopen': True, 'uncaughtPageErrors': len(errors), 'screenshots': str(SCREENSHOTS)}
+            (SCREENSHOTS / 'receipt.json').write_text(json.dumps(receipt, indent=2))
+            print(json.dumps(receipt))
+    except Exception as error:
+        record_failure(error)
+        raise
     finally:
-        stop(server)
+        if server is not None:
+            stop(server)
