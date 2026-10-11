@@ -18,5 +18,5 @@
   "desktop1440AndPhone390": true,
   "readOnlyUiAndActualWriteDenied403": true,
   "uncaughtPageErrors": 0,
-  "screenshots": "/tmp/livelens-live-monitor-validation-authoritative"
+  "screenshots": "/tmp/livelens-live-monitor-validation-ci-sync"
 }

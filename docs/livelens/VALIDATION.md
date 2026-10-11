@@ -38,9 +38,18 @@ receipt; the standalone gateway is not evidence of registration by itself.
 No external TikTok collection, model call, email, billing change or deployment
 was performed by the monitor browser checks.
 
+The initial published head's PR browser run passed all five journeys; its push
+run failed the monitor's five-second status matcher after the backend check had
+completed. A [controlled real-read delay](live-monitor-read-sync-validation.json)
+reproduced the same `Unchecked` result while a successful browser schedule read
+was held for six seconds. After delivery, the unchanged status assertion passed
+with a bounded 15-second wait, matching the browser/API timeout. The test now
+waits for that separate browser snapshot; no application behavior, capture limit
+or permission assertion was changed.
+
 ## Actual optional ALFRED tools — 11 October 2026
 
-[ALFRED draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20) publishes
+[ALFRED PR #20](https://github.com/EmotiveImpact/Alfred/pull/20), ready for review, publishes
 branch `feat/livelens-tools-2026-10-11`, commit
 `5b37ba41353cfcd0cae4243482520e25175e21d9`. Its first-party provider is installed
 explicitly, loaded by the actual Desk runtime, and callable through authenticated
@@ -54,7 +63,7 @@ manifest. See [ALFRED_INTEGRATION.md](ALFRED_INTEGRATION.md) and the immutable
 | Actual ALFRED HTTP/CLI transport | 36/36 passed | Authenticated discovery/source reads, independent grants and actual denials, exact capture proposal/approval/dispatch, installed operator CLI and secret-free receipts. |
 | Actual capture through ALFRED | Passed | One explicitly approved six-second generated capture, three hashed segments, strict independent FFmpeg decoding totaling 6,000 ms. Dispatch acceptance and recording completion are separately checked. |
 | ALFRED browser regression | 58 checks passed | 33 Desk and 25 Knowledge Chromium checks. |
-| Hosted ALFRED CI | Pending at publication | Six checks started; local receipts are not hosted success. |
+| Hosted ALFRED CI | All six passed | Exact commit `5b37ba4`: original contracts, local validation, core/source checks, backend browser, console and connected console. [Unified run](https://github.com/EmotiveImpact/Alfred/actions/runs/38111995356). |
 
 G01/G02 are implemented for this optional configured runtime: source/workspace
 binding, current read/model separation, exact independently granted bounded

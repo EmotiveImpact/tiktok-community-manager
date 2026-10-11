@@ -238,7 +238,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             expect(stage.get_by_role("button", name="Check LIVE", exact=True)).to_be_enabled()
             expect(source_row("@" + account).locator(".lm-status")).to_have_text("Unchecked")
             source_row(fixture["label"]).click()
-            expect(source_row(fixture["label"]).locator(".lm-status")).to_have_text("Available at last check")
+            # Backend polling finishes before the separate browser snapshot read.
+            expect(source_row(fixture["label"]).locator(".lm-status")).to_have_text("Available at last check", timeout=15000)
             capture(page, "03-desktop-fixture-check-without-recording.png", viewport=True)
             with page.expect_response(lambda response: response.url.endswith(f"/v1/schedules/{check['id']}/stop")) as stop_check:
                 stage.get_by_role("button", name="Stop watch", exact=True).click()
