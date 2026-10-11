@@ -14,7 +14,7 @@ import tempfile
 import time
 from urllib.request import urlopen
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -221,6 +221,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_label("Terms, separated by commas", exact=True).fill("context")
                 page.get_by_role("textbox", name=re.compile("^Observed account")).fill("fictional_viewer")
                 conversations = page.locator(".aw-selection-list").get_by_role("checkbox")
+                expect(conversations).to_have_count(2)
                 for index in range(conversations.count()):
                     conversations.nth(index).check()
                 page.get_by_role("button", name="Compare statements", exact=True).click()
