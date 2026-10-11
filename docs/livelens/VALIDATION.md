@@ -52,10 +52,22 @@ infrastructure provisioning, billing-account change or ALFRED repository edit
 occurred. Reusable install/start instructions are saved in the environment draft;
 saving does not publish a snapshot or guarantee a fresh-task restoration.
 
-Hosted CI was blocked by payment/spending annotations at the first-slice commit.
-That is historical: both LiveLens push/PR runs at screenshot commit3b501a8 later
-completed successfully with actual runner steps. Recheck the current expanded
-release head; do not infer either success or a billing blocker from prior runs.
+Hosted CI at implementation/diagnostic commit
+`844bc2f3e10bb4c26bd6a55e7b8a3ab245369654` completed successfully:
+[push run 38098045790](https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38098045790)
+and [PR run 38098048357](https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38098048357).
+Both executed all three jobs: application tests/build, intelligence/source pins
+with actual PostgreSQL/speech/FFmpeg recovery, and original/full browser journeys
+including real PDF, phone and restart. Uploaded browser receipts are linked from
+the runs. This receipt update changes documentation only.
+
+The preceding expanded run at `868b741` passed application/service checks but
+failed the original browser journey before precise diagnostics were installed.
+Its signed blob logs remain denied by the current managed proxy, so no cause is
+asserted. Failure annotations, screenshots, media state and fixture logs are now
+retained. Both subsequent fresh browser runs passed without weakening assertions
+or changing the browser/codecs. The first-slice payment/spending blocker is
+historical; no billing-account change was made.
 
 ## Historical first application release — 10 October 2026
 
