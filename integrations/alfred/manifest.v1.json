@@ -1,0 +1,38 @@
+{
+  "contract_version": 1,
+  "product": {
+    "id": "livelens",
+    "name": "LiveLens",
+    "owner": "EmotiveImpact",
+    "independent": true
+  },
+  "mode": "live",
+  "identity": {
+    "record_id_scheme": "Stable product observation ID per immutable session/evidence revision.",
+    "stable": true
+  },
+  "freshness_seconds": 3600,
+  "capabilities": [
+    {
+      "id": "read_status",
+      "kind": "read",
+      "description": "Read LiveLens configured collection status and capture health.",
+      "effect": "none",
+      "approval": "not_required"
+    },
+    {
+      "id": "read_alerts",
+      "kind": "read",
+      "description": "Read permitted source-backed monitoring alerts and review status.",
+      "effect": "none",
+      "approval": "not_required"
+    },
+    {
+      "id": "read_reports",
+      "kind": "read",
+      "description": "Read reviewed LiveLens session reports and evidence references.",
+      "effect": "none",
+      "approval": "not_required"
+    }
+  ]
+}

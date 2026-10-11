@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-10",
+  "repositories": [
+    {
+      "id": "tiktok-live-connector",
+      "repository": "zerodytrash/TikTok-Live-Connector",
+      "url": "https://github.com/zerodytrash/TikTok-Live-Connector.git",
+      "path": "research/upstream/tiktok-live-connector",
+      "commit": "8a92330066ae4dea287b98e3ee27504764fc9cdd",
+      "branch": "ts-rewrite",
+      "role": "TikTok chat/event adapter candidate",
+      "licence": "AGPL-3.0 with additional terms",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "LICENSE",
+          "gitBlob": "ffdf21fd42d99a796f724b942572972d5fbb884f"
+        },
+        {
+          "path": "src/lib/client/index.ts",
+          "gitBlob": "227dcb470afec8a9993ce2d7f7b04c4ea108eeba"
+        }
+      ]
+    },
+    {
+      "id": "tiktoklive-python",
+      "repository": "isaackogan/TikTokLive",
+      "url": "https://github.com/isaackogan/TikTokLive.git",
+      "path": "research/upstream/tiktoklive-python",
+      "commit": "fc73b8f6afa0020c722e27925d331d072d7f1396",
+      "branch": "master",
+      "role": "Python TikTok events and status adapter candidate",
+      "licence": "AGPL-3.0 with additional terms",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "LICENSE",
+          "gitBlob": "ffdf21fd42d99a796f724b942572972d5fbb884f"
+        },
+        {
+          "path": "TikTokLive/client/web/routes/fetch_is_live.py",
+          "gitBlob": "6f753753e567feffbc3654586d401b516250bab3"
+        }
+      ]
+    },
+    {
+      "id": "pyannote-audio",
+      "repository": "pyannote/pyannote-audio",
+      "url": "https://github.com/pyannote/pyannote-audio.git",
+      "path": "research/upstream/pyannote-audio",
+      "commit": "b749285c5cdd4636b2edc7f766f1352c8dde9369",
+      "branch": "main",
+      "role": "Anonymous speaker diarisation candidate",
+      "licence": "MIT",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "LICENSE",
+          "gitBlob": "9712e8a75f3b007849124dfb5653863925fdaaf9"
+        },
+        {
+          "path": "README.md",
+          "gitBlob": "8d64ca7ed05f2a4d20f73f707e1bc7288e41d6ee"
+        }
+      ]
+    },
+    {
+      "id": "tiktok-live-recorder-node",
+      "repository": "XploitVoid/tiktok-live-recorder",
+      "url": "https://github.com/XploitVoid/tiktok-live-recorder.git",
+      "path": "research/upstream/tiktok-live-recorder-node",
+      "commit": "148c1d91b091be7052367480104f032d751d6068",
+      "branch": "master",
+      "role": "Multi-stream recorder and replay reference",
+      "licence": "MIT",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "LICENSE",
+          "gitBlob": "612a5e9eff12dbcee78336ec93f87724c7250618"
+        },
+        {
+          "path": "lib/recorder.js",
+          "gitBlob": "add9a800113a9b010e1de932a047284f84a5a240"
+        },
+        {
+          "path": "server.js",
+          "gitBlob": "744bc9668fc7e8bd5eb70ceed4c902357db296a9"
+        }
+      ]
+    },
+    {
+      "id": "tiktoklive-monitor",
+      "repository": "PieterVanBoheemen/tiktoklive_monitor",
+      "url": "https://github.com/PieterVanBoheemen/tiktoklive_monitor.git",
+      "path": "research/upstream/tiktoklive-monitor",
+      "commit": "51aba4d5dfcdda190db1827000487d6f28661e04",
+      "branch": "main",
+      "role": "Long-running monitoring and scheduling reference",
+      "licence": "MIT claimed in README; no repository licence file found",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "README.md",
+          "gitBlob": "624758e0e6d9e0c1818cf7ca258cacdf44c16d38"
+        },
+        {
+          "path": "monitor/stream_monitor.py",
+          "gitBlob": "bac07c21a73f0f93088b9df214886a14b1ec507e"
+        }
+      ]
+    },
+    {
+      "id": "tiktok-live-recorder-python",
+      "repository": "Michele0303/tiktok-live-recorder",
+      "url": "https://github.com/Michele0303/tiktok-live-recorder.git",
+      "path": "research/upstream/tiktok-live-recorder-python",
+      "commit": "e2189ae4239ae0c516870109ecd72ec725813920",
+      "branch": "main",
+      "role": "FFmpeg capture lifecycle reference",
+      "licence": "MIT",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "LICENSE",
+          "gitBlob": "7948da6d15082c32f466375fb0f17a77ad4e3bd2"
+        },
+        {
+          "path": "README.md",
+          "gitBlob": "8b01ceacf6b5975bdd6a02a975b4dd4a4b0c673a"
+        }
+      ]
+    },
+    {
+      "id": "whisperlivekit",
+      "repository": "QuentinFuxa/WhisperLiveKit",
+      "url": "https://github.com/QuentinFuxa/WhisperLiveKit.git",
+      "path": "research/upstream/whisperlivekit",
+      "commit": "363e4f6d029694d9c81ae548beddd9d3c88a3637",
+      "branch": "main",
+      "role": "Streaming transcription and diarisation candidate",
+      "licence": "Apache-2.0",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "LICENSE",
+          "gitBlob": "c3fa9ffb0a447178310a166e736bd9e408a52023"
+        },
+        {
+          "path": "README.md",
+          "gitBlob": "01e50f4ff3373d56c5a13500662c7aa002ec5af0"
+        }
+      ]
+    },
+    {
+      "id": "detoxify",
+      "repository": "unitaryai/detoxify",
+      "url": "https://github.com/unitaryai/detoxify.git",
+      "path": "research/upstream/detoxify",
+      "commit": "d5376446b6accee5dd2d346f2d3050f9d8a69af1",
+      "branch": "master",
+      "role": "Text moderation signal candidate",
+      "licence": "Apache-2.0",
+      "adoptionStatus": "research-only",
+      "reviewedPaths": [
+        {
+          "path": "LICENSE",
+          "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+        },
+        {
+          "path": "README.md",
+          "gitBlob": "5c26dfd8bde279d57cf90546c986305c089231d7"
+        }
+      ]
+    }
+  ]
+}

@@ -15,7 +15,8 @@
     "dist:win": "npm run build && electron-builder --win",
     "start": "electron .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "console:fixture": "vite build && node services/intelligence/scripts/console-demo.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.16",

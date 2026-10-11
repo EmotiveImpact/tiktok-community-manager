@@ -1,4 +1,36 @@
-# TikTok Community Manager
+# LiveLens
+
+Live conversation intelligence, developed from the existing TikTok Community
+Manager. The wider product connects collection, searchable evidence,
+investigations, reporting and ALFRED through one scoped service interface.
+
+The private operator release includes an authenticated browser console, durable
+evidence/cases/reports, explicit desktop archiving and a bounded recorder with
+verified media replay and restart recovery. Eight pinned upstream repositories
+remain research sources. Existing community/CRM workflows remain available.
+See [first-release setup and validation](docs/livelens/FIRST_RELEASE.md).
+Run `npm run console:fixture` for the labelled local fixture application; this
+does not connect a real LIVE or enable paid operation.
+
+- [Platform vision and build sequence](docs/livelens/PLATFORM.md)
+- [Full app blueprint, design and consolidated plans](docs/livelens/APP_BLUEPRINT.md)
+- [Current implementation and handoff](docs/livelens/HANDOFF.md)
+- [Cloud build handoff and continuation prompt](docs/livelens/CLOUD_HANDOFF.md)
+- [Source library and reuse decisions](research/REUSE_REGISTER.md)
+- [Intelligence service: demo, API and tests](services/intelligence/README.md)
+- [ALFRED integration contract](docs/livelens/ALFRED_INTEGRATION.md)
+- [Tracked implementation backlog](plans/livelens-backlog.json)
+
+Try the independent service demonstration with Node 24 or later:
+
+```bash
+npm --prefix services/intelligence run demo
+```
+
+This demonstration uses synthetic evidence. Server recording, speech processing,
+the new operating console and registered ALFRED tools are tracked future work.
+
+## Existing TikTok Community Manager
 
 A desktop **fan CRM + live command center** for TikTok LIVE creators. Connect to a public LIVE by `@username` and watch comments, gifts, likes, and follows stream in — while every gifter is quietly captured into a permanent fan ledger you can browse, annotate, and act on long after the stream ends.
 

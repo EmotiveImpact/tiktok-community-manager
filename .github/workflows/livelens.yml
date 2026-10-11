@@ -1,0 +1,134 @@
+name: LiveLens branch checks
+
+on:
+  push:
+    branches:
+      - 'feat/livelens-*'
+  pull_request:
+    paths:
+      - 'src/lib/livelens/**'
+      - 'src/components/LiveLensPanel.tsx'
+      - 'src/components/livelens/**'
+      - 'src/pages/LiveLensConsole.tsx'
+      - 'src/pages/livelens.css'
+      - 'src/main.tsx'
+      - 'electron/**'
+      - 'src/App.tsx'
+      - 'src/state/ui.ts'
+      - 'test/livelens.test.ts'
+      - 'services/intelligence/**'
+      - 'integrations/alfred/**'
+      - 'deployment/livelens/**'
+      - 'scripts/validation/**'
+      - 'scripts/research/**'
+      - 'research/upstream-lock.json'
+      - '.gitmodules'
+      - '.github/workflows/livelens.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  unit-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Application regression tests
+        run: npm test
+      - name: Type-check and bundle
+        run: npm run build
+  intelligence-and-source-pins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.6-bookworm
+        env:
+          POSTGRES_DB: livelens
+          POSTGRES_USER: livelens_fixture
+          POSTGRES_PASSWORD: fixture-postgres-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U livelens_fixture -d livelens"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      LIVELENS_TEST_POSTGRES_URL: postgres://livelens_fixture:fixture-postgres-only@127.0.0.1:5432/livelens
+      LIVELENS_FFMPEG_PATH: /usr/bin/ffmpeg
+      LIVELENS_SPEECH_PYTHON: /tmp/livelens-ci-speech/bin/python
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify committed source pins without executing upstream code
+        run: node scripts/research/verify-upstreams.mjs
+      - name: Install verified distro FFmpeg for fixture recording
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libpq-dev
+          ffmpeg -version
+      - name: Install locked optional PostgreSQL driver
+        run: npm ci --prefix services/intelligence --no-audit --no-fund
+      - name: Prepare pinned independent CPU speech and reference audio
+        run: |
+          python -m venv /tmp/livelens-ci-speech
+          /tmp/livelens-ci-speech/bin/python -m pip install -r services/intelligence/speech/requirements.txt
+          /tmp/livelens-ci-speech/bin/python services/intelligence/speech/prepare_reference.py --output-dir /tmp/livelens-speech-references
+      - name: Durable service and real HTTP client checks
+        run: npm --prefix services/intelligence test
+      - name: Restart and evidence export demonstration
+        run: npm --prefix services/intelligence run demo
+      - name: Actual recording, abrupt interruption, restart and replay
+        run: npm --prefix services/intelligence run demo:recording
+  browser-journeys:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LIVELENS_FFMPEG_PATH: /usr/bin/ffmpeg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --ignore-scripts
+      - run: npx --no-install vite build
+      - name: Install browser and media verification tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install playwright==1.62.0
+          python -m playwright install --with-deps chromium
+          python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print("LIVELENS_CHROMIUM="+p.chromium.executable_path); p.stop()' >> "$GITHUB_ENV"
+      - name: Original operator journey and restart regression
+        run: python scripts/validation/browser_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/original
+      - name: Reviewed findings, graph, alerts, redaction, real PDF, phone and restart
+        run: python scripts/validation/full_app_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact
+      - name: Review desk source selection, playback, acknowledgement and read-only access
+        run: python scripts/validation/review_desk_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/review-desk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: livelens-browser-receipt
+          path: /tmp/livelens-browser-artifact

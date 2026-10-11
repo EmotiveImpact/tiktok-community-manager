@@ -1,0 +1,42 @@
+name: livelens-infrastructure-preview
+services:
+  postgres:
+    image: postgres:17.6-bookworm
+    environment:
+      POSTGRES_DB: livelens
+      POSTGRES_USER: livelens_admin
+      POSTGRES_PASSWORD: ${LIVELENS_POSTGRES_PASSWORD:?Set private postgres password}
+    ports:
+      - "127.0.0.1:5439:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U livelens_admin -d livelens"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [private]
+  objects:
+    image: minio/minio:RELEASE.2025-02-07T23-21-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${LIVELENS_OBJECT_ACCESS_KEY:?Set private object storage access key}
+      MINIO_ROOT_PASSWORD: ${LIVELENS_OBJECT_SECRET_KEY:?Set private object storage secret key}
+    ports:
+      - "127.0.0.1:9009:9000"
+      - "127.0.0.1:9010:9001"
+    volumes:
+      - object-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [private]
+volumes:
+  postgres-data:
+  object-data:
+networks:
+  private:
+    internal: true

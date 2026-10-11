@@ -1,0 +1,31 @@
+[submodule "tiktok-live-connector"]
+	path = research/upstream/tiktok-live-connector
+	url = https://github.com/zerodytrash/TikTok-Live-Connector.git
+
+[submodule "tiktoklive-python"]
+	path = research/upstream/tiktoklive-python
+	url = https://github.com/isaackogan/TikTokLive.git
+
+[submodule "pyannote-audio"]
+	path = research/upstream/pyannote-audio
+	url = https://github.com/pyannote/pyannote-audio.git
+
+[submodule "tiktok-live-recorder-node"]
+	path = research/upstream/tiktok-live-recorder-node
+	url = https://github.com/XploitVoid/tiktok-live-recorder.git
+
+[submodule "tiktoklive-monitor"]
+	path = research/upstream/tiktoklive-monitor
+	url = https://github.com/PieterVanBoheemen/tiktoklive_monitor.git
+
+[submodule "tiktok-live-recorder-python"]
+	path = research/upstream/tiktok-live-recorder-python
+	url = https://github.com/Michele0303/tiktok-live-recorder.git
+
+[submodule "whisperlivekit"]
+	path = research/upstream/whisperlivekit
+	url = https://github.com/QuentinFuxa/WhisperLiveKit.git
+
+[submodule "detoxify"]
+	path = research/upstream/detoxify
+	url = https://github.com/unitaryai/detoxify.git

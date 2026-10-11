@@ -1,0 +1,42 @@
+services:
+  intelligence:
+    build:
+      context: ../..
+      dockerfile: services/intelligence/Dockerfile
+      secrets: [proxy_ca]
+    restart: "no"
+    ports:
+      - "127.0.0.1:4318:4318"
+    environment:
+      LIVELENS_API_KEYS: ${LIVELENS_API_KEYS:?Set workspace-scoped API keys first}
+      LIVELENS_WORKSPACE_MEMBERS: ${LIVELENS_WORKSPACE_MEMBERS:-}
+      LIVELENS_POSTGRES_URL: ${LIVELENS_POSTGRES_URL:-}
+      LIVELENS_POSTGRES_SCHEMA: ${LIVELENS_POSTGRES_SCHEMA:-livelens}
+      LIVELENS_BROWSER_USERS: ${LIVELENS_BROWSER_USERS:-}
+      LIVELENS_CONSOLE_ORIGIN: ${LIVELENS_CONSOLE_ORIGIN:-}
+      LIVELENS_BUNDLE_DIR: ${LIVELENS_BUNDLE_DIR:-}
+      LIVELENS_RECORDER_SOURCES: ${LIVELENS_RECORDER_SOURCES:-}
+      LIVELENS_SOURCE_ADAPTERS: ${LIVELENS_SOURCE_ADAPTERS:-}
+      LIVELENS_ENABLE_RECORDER: ${LIVELENS_ENABLE_RECORDER:-}
+      LIVELENS_OBJECT_STORAGE: ${LIVELENS_OBJECT_STORAGE:-}
+      LIVELENS_OBJECT_ENCRYPTION_KEY: ${LIVELENS_OBJECT_ENCRYPTION_KEY:-}
+      LIVELENS_PDF_RENDERER: ${LIVELENS_PDF_RENDERER:-}
+      LIVELENS_SPEECH_RECOGNIZER: ${LIVELENS_SPEECH_RECOGNIZER:-}
+      LIVELENS_ANALYSIS_PROVIDER: ${LIVELENS_ANALYSIS_PROVIDER:-}
+    volumes:
+      - evidence:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4318/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+volumes:
+  evidence:
+secrets:
+  proxy_ca:
+    file: ${CODEX_PROXY_CERT:-/etc/ssl/certs/ca-certificates.crt}

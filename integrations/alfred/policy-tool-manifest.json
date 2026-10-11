@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "livelens-policy-http-tools",
+  "status": "local adapter ready; independent ALFRED registration required",
+  "registeredInAlfred": false,
+  "adapter": "livelens_gateway.py:LiveLensGateway",
+  "network": true,
+  "polling": false,
+  "credentials": "private runtime token provider",
+  "workspaceBinding": "one configured workspace",
+  "sourceBinding": "explicit configured source/session catalogue",
+  "dispatchPermissions": ["source:read", "collection:control"],
+  "modelEgressPermission": "model:egress",
+  "memoryWrite": false,
+  "automaticMonitoring": false,
+  "collection": {"explicitDurationRequired": true, "idempotentJobIdRequired": true, "maximumSeconds": 7200},
+  "tools": ["sessions", "search", "evidence", "context", "report", "start_recording", "job", "stop_recording"],
+  "untrustedContent": "returned as data with no instruction authority"
+}

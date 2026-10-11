@@ -29,6 +29,7 @@ import { SessionComparison } from './components/SessionComparison';
 import { CreatorAnalytics } from './components/CreatorAnalytics';
 import { FollowerWatchlist } from './components/FollowerWatchlist';
 import { TranscriptPanel } from './components/TranscriptPanel';
+import { LiveLensPanel } from './components/LiveLensPanel';
 import { CommandPalette } from './components/CommandPalette';
 import { FanPeek } from './components/FanPeek';
 import { HighlightsPanel } from './components/HighlightsPanel';
@@ -84,6 +85,7 @@ const TOOLS_GROUPS: { group: string; items: { id: LiveTool; label: string; icon:
       { id: 'alerts', label: 'Alerts', icon: '🔔' },
       { id: 'mod', label: 'Moderation', icon: '🛡️' },
       { id: 'transcript', label: 'Live Transcript', icon: '🎙️' },
+      { id: 'livelens', label: 'LiveLens Evidence', icon: '◉' },
       { id: 'highlights', label: 'Highlight Clips', icon: '🎬' },
       { id: 'liker', label: 'Live Liker', icon: '❤️' },
     ],
@@ -425,7 +427,7 @@ export default function App() {
  * Tools that need horizontal room (grids / side-by-side charts). For these we
  * hide the StreamPlayer column but keep the Fan Memory panel visible.
  */
-const WIDE_TOOLS = new Set<LiveTool>(['analytics', 'compare', 'history', 'multiroom']);
+const WIDE_TOOLS = new Set<LiveTool>(['analytics', 'compare', 'history', 'multiroom', 'livelens']);
 
 /**
  * Single persistent StreamPlayer instance. Mounted once at the App root so it
@@ -515,6 +517,7 @@ function LiveToolView({ tool, onClose }: { tool: LiveTool; onClose: () => void }
     case 'alerts': return <AlertsPanel onClose={onClose} />;
     case 'mod': return <ModerationPanel onClose={onClose} />;
     case 'transcript': return <TranscriptPanel onClose={onClose} />;
+    case 'livelens': return <LiveLensPanel onClose={onClose} />;
     case 'highlights': return <HighlightsPanel onClose={onClose} />;
     case 'liker': return <LikerPanel onClose={onClose} />;
     case 'insights': return <WordCloud onClose={onClose} />;

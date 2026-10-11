@@ -1,8 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { sessionsDir } from './paths';
 
 export type StoredEvent = {
+  sourceTimestampMs?: number | null;
+  capturedAtMs?: number;
+  sourceEventId?: string;
+  text?: string;
+  definite?: boolean;
   ts: number;
   type: string;
   user?: { uniqueId: string; nickname: string };
@@ -14,6 +20,7 @@ export type StoredEvent = {
 };
 
 export type SessionRecord = {
+  broadcastId?: string;
   id: string;
   hostUniqueId: string;
   hostNickname: string;
@@ -122,15 +129,17 @@ function emptyTotals(): SessionRecord['totals'] {
 
 const REJOIN_WINDOW_MS = 60 * 60 * 1000; // 60 minutes
 
-export function start(hostUniqueId: string, hostNickname: string, roomTitle: string): string {
+export function start(hostUniqueId: string, hostNickname: string, roomTitle: string, broadcastId?: string): string {
   // Look for the most recent session with the same host that ended within REJOIN_WINDOW_MS
   // (or never ended cleanly — likely an app crash or quick reconnect)
   const recent = list().find((s) => {
     if (s.hostUniqueId !== hostUniqueId) return false;
+    if (broadcastId) return s.broadcastId === broadcastId;
     if (s.endedAt === null) return true; // session was never closed; resume
     return Date.now() - s.endedAt < REJOIN_WINDOW_MS;
   });
 
+  if (activeRecord && activeRecord.id !== recent?.id) end();
   if (recent) {
     const rec = read(recent.id);
     if (rec) {
@@ -145,9 +154,10 @@ export function start(hostUniqueId: string, hostNickname: string, roomTitle: str
     }
   }
 
-  const id = `${Date.now()}-${hostUniqueId.replace(/[^a-z0-9_-]/gi, '_')}`;
+  const id = broadcastId ? 'broadcast_' + createHash('sha256').update(hostUniqueId + ':' + broadcastId).digest('hex').slice(0, 48) : `${Date.now()}-${hostUniqueId.replace(/[^a-z0-9_-]/gi, '_')}`;
   const rec: SessionRecord = {
     id,
+    ...(broadcastId ? { broadcastId } : {}),
     hostUniqueId,
     hostNickname,
     roomTitle,
@@ -190,6 +200,11 @@ export function append(evt: any) {
   const stored: StoredEvent = {
     ts: evt.ts ?? Date.now(),
     type: evt.type,
+    sourceTimestampMs: evt.sourceTimestampMs ?? null,
+    capturedAtMs: evt.ts ?? Date.now(),
+    sourceEventId: evt.sourceEventId,
+    text: evt.text,
+    definite: evt.definite,
     user: evt.user
       ? { uniqueId: evt.user.uniqueId, nickname: evt.user.nickname }
       : undefined,
@@ -206,6 +221,10 @@ export function append(evt: any) {
       break;
     case 'chat':
       rec.totals.comments++;
+      rec.events.push(stored);
+      break;
+    case 'caption':
+      if (!evt.definite) return;
       rec.events.push(stored);
       break;
     case 'gift':

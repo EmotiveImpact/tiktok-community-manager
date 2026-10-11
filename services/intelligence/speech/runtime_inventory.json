@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "engineSourceDistribution": {
+    "name": "pocketsphinx",
+    "version": "5.1.1",
+    "licenseMetadata": null,
+    "sourceUrl": "https://files.pythonhosted.org/packages/61/e7/13e0e787ff467218de880310d79cba14424f13b87171ac44af0bde1e428c/pocketsphinx-5.1.1.tar.gz",
+    "sourceSha256": "675778b309a22dfc9b7d37f7621976bba491d2a5f8c59696bd77fd6d07271355",
+    "retainedLicences": [
+      "runtime-licences/pocketsphinx-5.1.1-AUTHORS",
+      "runtime-licences/pocketsphinx-5.1.1-LICENSE"
+    ]
+  },
+  "packages": [
+    {
+      "name": "pocketsphinx",
+      "version": "5.1.1",
+      "licenseMetadata": null,
+      "sourceUrl": "https://files.pythonhosted.org/packages/61/e7/13e0e787ff467218de880310d79cba14424f13b87171ac44af0bde1e428c/pocketsphinx-5.1.1.tar.gz",
+      "sourceSha256": "675778b309a22dfc9b7d37f7621976bba491d2a5f8c59696bd77fd6d07271355",
+      "retainedLicences": [
+        "runtime-licences/pocketsphinx-5.1.1-AUTHORS",
+        "runtime-licences/pocketsphinx-5.1.1-LICENSE"
+      ]
+    },
+    {
+      "name": "sounddevice",
+      "version": "0.5.6",
+      "licenseMetadata": "MIT",
+      "sourceUrl": "https://files.pythonhosted.org/packages/ec/db/0c890e2d9aab9ba284021efc02e1d3aebfecab1b611762d7434602209bcf/sounddevice-0.5.6.tar.gz",
+      "sourceSha256": "8ec9fbfde2e32f020b167e348f3ab3bac6625a5f15af524d790108ac7147a410",
+      "retainedLicences": ["runtime-licences/sounddevice-0.5.6-LICENSE"]
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1",
+      "licenseMetadata": "MIT-0",
+      "sourceUrl": "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz",
+      "sourceSha256": "dd31f52ea1086513bb9df30f8fcee9b8918323ae067a3d5b78bc826a000712be",
+      "retainedLicences": ["runtime-licences/cffi-2.1.1-LICENSE"]
+    },
+    {
+      "name": "pycparser",
+      "version": "3.11",
+      "licenseMetadata": "BSD-3-Clause",
+      "sourceUrl": "https://files.pythonhosted.org/packages/da/a8/c5fdbeee588bb8ada9458774f43adf1bdd30bd59157055142183e769a024/pycparser-3.11.tar.gz",
+      "sourceSha256": "d875f09c3507d00e1aba0eecc6dcadc1352f30fff09dc6bff2f1c2935e97c2bc",
+      "retainedLicences": ["runtime-licences/pycparser-3.11-LICENSE"]
+    }
+  ],
+  "model": {
+    "route": "bundled pocketsphinx 5.1.1 en-US acoustic/language/dictionary data",
+    "licenceNotice": "runtime-licences/pocketsphinx-en-US-model-README.txt",
+    "files": [
+      {
+        "path": "cmudict-en-us.dict",
+        "sha256": "20b5c293e1f311fb375fe067e500ec5636f4fc7af5594967263696def9b23bfe",
+        "bytes": 3275645
+      },
+      {
+        "path": "en-us/README",
+        "sha256": "8b88de980568509c646d0527b8414beef136964391903b40996d32f737bf752e",
+        "bytes": 1617
+      },
+      {
+        "path": "en-us/feat.params",
+        "sha256": "c982c5f75e2a30c34d2c9ef1f6b129a5a00e67e3e927565076b58664cc2404c9",
+        "bytes": 164
+      },
+      {
+        "path": "en-us/mdef",
+        "sha256": "2360f9a86889c1cfee8bd618a0269387911e5fb2920a594f506b18b8c79683b0",
+        "bytes": 2959176
+      },
+      {
+        "path": "en-us/means",
+        "sha256": "832019e32cac12eb318964f96f469034acb12d0348eeddc3831831a100cb4dd4",
+        "bytes": 838732
+      },
+      {
+        "path": "en-us/noisedict",
+        "sha256": "7295b07df2c204c4f87c6782b6be1a3859d7006d4e3864181c955d6dab105a33",
+        "bytes": 56
+      },
+      {
+        "path": "en-us/sendump",
+        "sha256": "8c9564c0d5bef69ca9d9bf1014abe162f071644cf02cf1fa8a483c3dc165a7a8",
+        "bytes": 1969024
+      },
+      {
+        "path": "en-us/transition_matrices",
+        "sha256": "c1f7f28ea43177be734be1f88bd7f1b9a853d0e660f8599c67c6eaeca8bb539a",
+        "bytes": 2080
+      },
+      {
+        "path": "en-us/variances",
+        "sha256": "b00d696f85e96834fc10f8e5f06428d8c4db6bffdbe5845b6f69bf6efbc48fa5",
+        "bytes": 838732
+      },
+      {
+        "path": "en-us-phone.lm.bin",
+        "sha256": "c57e0fa4191b096b1279cfe3a77927f52568fdecfc6624ddb5cec9527c763a54",
+        "bytes": 857195
+      },
+      {
+        "path": "en-us.lm.bin",
+        "sha256": "db21d0642286677699e6dbc859d2e5395570222361999387ce60f6e1d01995d6",
+        "bytes": 27114385
+      }
+    ]
+  },
+  "destinations": ["pypi.org", "files.pythonhosted.org"],
+  "runtimeNetworkCalls": false,
+  "researchRuntimeAdopted": false,
+  "rollback": "Remove speech recognizer configuration; retained evidence and media remain readable."
+}
