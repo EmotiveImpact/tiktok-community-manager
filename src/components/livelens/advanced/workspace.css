@@ -1362,3 +1362,8 @@
     animation: none;
   }
 }
+.ll-app .aw-workspace .aw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

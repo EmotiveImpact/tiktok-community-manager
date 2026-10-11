@@ -3,8 +3,8 @@ import { createReadStream, statSync, realpathSync } from "node:fs";
 import { resolve, sep, extname } from "node:path";
 import { Fault, ident, object, text } from "./validation.mjs";
 
-// Private-operator authentication. Customer roles/billing remain a separate milestone.
-export function browserTransport({ origin, users, bundleDir }, scopes) {
+// Private operator transport with optional persisted, workspace-bound accounts.
+export function browserTransport({ origin, users, bundleDir, accounts: directory }, scopes) {
   const url = new URL(origin);
   if (
     url.origin !== origin ||
@@ -12,10 +12,10 @@ export function browserTransport({ origin, users, bundleDir }, scopes) {
       !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname))
   )
     throw new Fault("invalid_console_origin");
-  if (!Array.isArray(users) || !users.length || users.length > 100)
+  if (!directory && (!Array.isArray(users) || !users.length || users.length > 100))
     throw new Fault("browser_users_required");
   const names = new Set();
-  const accounts = users.map((user) => {
+  const accounts = (directory ? [] : users).map((user) => {
     object(user, ["username", "password", "workspace", "scopes"]);
     ident(user.username);
     ident(user.workspace);
@@ -61,6 +61,7 @@ export function browserTransport({ origin, users, bundleDir }, scopes) {
       sessions.delete(id);
       throw new Fault("unauthorised", 401);
     }
+    if (directory) value.principal = directory.refresh(value.principal, value.credentialVersion);
     if (
       !["GET", "HEAD"].includes(request.method) &&
       (request.headers.origin !== origin ||
@@ -69,12 +70,36 @@ export function browserTransport({ origin, users, bundleDir }, scopes) {
       throw new Fault("csrf_denied", 403);
     return { ...value, id };
   };
+  const originGuard = request => {
+    if (request.headers.host !== url.host || request.headers.origin !== origin || request.headers['sec-fetch-site'] === 'cross-site') throw new Fault('console_origin_denied', 403);
+  };
+  const issueSession = (principal, response, send) => {
+    for (const [key, value] of sessions) if (value.expires < Date.now()) sessions.delete(key);
+    if (sessions.size >= 1000) throw new Fault('session_capacity', 429);
+    if (directory) principal = directory.refresh(principal, principal.credentialVersion);
+    const id = randomBytes(32).toString('base64url');
+    const value = { principal, credentialVersion: principal.credentialVersion, csrf: randomBytes(32).toString('base64url'), expires: Date.now() + 8 * 60 * 60_000 };
+    sessions.set(id, value); response.setHeader('Set-Cookie', cookie(id, 8 * 60 * 60));
+    send(response, 200, { workspace: principal.workspace, subject: principal.subject, csrf: value.csrf });
+  };
   return {
     authenticate(request) {
       return session(request).principal;
     },
     async route(request, response, pathname, readBody, send) {
+      if (directory && ['/console/invitations/inspect', '/console/invitations/redeem'].includes(pathname) && request.method === 'POST') {
+        originGuard(request);
+        const body = object(await readBody(request), pathname.endsWith('/inspect') ? ['token'] : ['token', 'password']);
+        if (pathname.endsWith('/inspect')) send(response, 200, directory.inspect(body.token, request.socket.remoteAddress));
+        else issueSession(await directory.redeem(body, request.socket.remoteAddress), response, send);
+        return true;
+      }
       if (pathname === "/console/login" && request.method === "POST") {
+        if (directory) {
+          originGuard(request);
+          const body = object(await readBody(request), ['username', 'password', 'workspace']);
+          issueSession(await directory.login(body, request.socket.remoteAddress), response, send); return true;
+        }
         if (
           request.headers.host !== url.host ||
           request.headers.origin !== origin
@@ -107,19 +132,7 @@ export function browserTransport({ origin, users, bundleDir }, scopes) {
         for (const [key, value] of sessions)
           if (value.expires < Date.now()) sessions.delete(key);
         if (sessions.size >= 1000) throw new Fault("session_capacity", 429);
-        const id = randomBytes(32).toString("base64url");
-        const value = {
-          principal: account.principal,
-          csrf: randomBytes(32).toString("base64url"),
-          expires: Date.now() + 8 * 60 * 60_000,
-        };
-        sessions.set(id, value);
-        response.setHeader("Set-Cookie", cookie(id, 8 * 60 * 60));
-        send(response, 200, {
-          workspace: value.principal.workspace,
-          subject: value.principal.subject,
-          csrf: value.csrf,
-        });
+        issueSession(account.principal, response, send);
         return true;
       }
       if (pathname === "/console/session" && request.method === "GET") {

@@ -18,6 +18,7 @@ import { SourceCatalog } from './source-catalog.mjs';
 import { PostgresDatabase } from './postgres-db.mjs';
 import { MediaArchive } from './media-archive.mjs';
 import { objectStorageFromEnvironment } from './storage-config.mjs';
+import { AccountDirectory } from './accounts.mjs';
 
 export const SCOPES = Object.freeze(['sessions:read', 'sessions:write', 'evidence:read', 'evidence:write', 'assertions:write', 'cases:read', 'cases:write', 'recordings:read', 'recordings:write', 'speech:read', 'speech:write', 'analysis:write', 'investigations:write', 'missions:read', 'missions:write', 'reports:write', 'workspace:read', 'workspace:admin']);
 
@@ -62,9 +63,14 @@ function send(response, status, value, markdown = false) {
   response.end(markdown ? value : JSON.stringify(value));
 }
 
-export function createIntelligenceServer({ store, keys: configuredKeys, browser: browserOptions, recorder, investigation = new InvestigationEngine({ store }), scheduler, speech, governance, analysis, pdf, sourceCatalog, mediaArchive }) {
+export function createIntelligenceServer({ store, keys: configuredKeys, browser: browserOptions, recorder, investigation = new InvestigationEngine({ store }), scheduler, speech, governance, analysis, pdf, sourceCatalog, mediaArchive, accounts: configuredAccounts }) {
   const keys = validateKeys(configuredKeys);
-  const browser = browserOptions ? browserTransport(browserOptions, SCOPES) : null;
+  if (browserOptions?.authMode !== undefined && !['static', 'persisted'].includes(browserOptions.authMode)) throw new Fault('invalid_browser_auth_mode');
+  if ((configuredAccounts || browserOptions?.authMode === 'persisted') && !governance) throw new Fault('persisted_auth_governance_required');
+  const accounts = configuredAccounts ?? (browserOptions?.authMode === 'persisted' ? new AccountDirectory({ store, governance, scopes: SCOPES, users: browserOptions.users ?? [], apiPrincipalForHash: hash => keys.find(key => key.tokenHash.toString('hex') === hash) }) : undefined);
+  if (accounts && (!browserOptions || accounts.store !== store || accounts.governance !== governance)) throw new Fault('invalid_account_directory');
+  if (accounts) accounts.apiPrincipalForHash = hash => keys.find(key => key.tokenHash.toString('hex') === hash);
+  const browser = browserOptions ? browserTransport({ ...browserOptions, accounts }, SCOPES) : null;
   const server = createServer(async (request, response) => {
     try {
       const url = new URL(request.url, 'http://localhost');
@@ -79,11 +85,11 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
       let route;
       if (request.method === 'GET' && url.pathname === '/v1/capabilities') return send(response, 200, {
         schemaVersion: 1, workspace, subject: principal.subject, scopes: [...principal.scopes],
-        enabled: ['durable-evidence', 'search', 'case-exports', 'manual-attribution-history', 'session-integrity', 'reviewed-investigations', 'source-supported-graph', 'protection-missions', 'reviewed-alerts', 'redacted-report-exports', 'agent-gateway-adapter', ...(browser ? ['authenticated-console'] : []), ...(recorder ? ['bounded-recording', 'retained-media-replay', 'concurrent-recording'] : []), ...(scheduler ? ['bounded-source-schedules'] : []), ...(speech ? ['speech-to-text'] : []), ...(governance ? ['workspace-roles', 'case-permissions', 'usage-and-retention'] : []), ...(analysis ? ['model-suggested-findings'] : []), ...(pdf ? ['pdf-reports'] : []), ...(mediaArchive ? ['verified-media-archive'] : []), ...(store.db.dialect === 'postgres' ? ['postgresql-store'] : [])],
+        enabled: ['durable-evidence', 'search', 'case-exports', 'manual-attribution-history', 'session-integrity', 'reviewed-investigations', 'source-supported-graph', 'protection-missions', 'reviewed-alerts', 'redacted-report-exports', 'agent-gateway-adapter', ...(browser ? ['authenticated-console'] : []), ...(accounts ? ['persisted-browser-accounts', 'workspace-invitations'] : []), ...(recorder ? ['bounded-recording', 'retained-media-replay', 'concurrent-recording'] : []), ...(scheduler ? ['bounded-source-schedules'] : []), ...(speech ? ['speech-to-text'] : []), ...(governance ? ['workspace-roles', 'case-permissions', 'usage-and-retention'] : []), ...(analysis ? ['model-suggested-findings'] : []), ...(pdf ? ['pdf-reports'] : []), ...(mediaArchive ? ['verified-media-archive'] : []), ...(store.db.dialect === 'postgres' ? ['postgresql-store'] : [])],
         planned: ['validated-live-provider', 'validated-multi-speaker-diarisation', 'semantic-model-analysis', 'alfred-registration', 'production-postgresql-rollout', 'paid-provider-billing', 'measured-customer-capacity'],
         workers: { recording: !!recorder, scheduling: !!scheduler, speech: speech?.capabilities() ?? { enabled: false, reason: 'recognizer_not_configured', diarization: false }, mediaArchive: { enabled: !!mediaArchive, encrypted: !!mediaArchive?.encrypted } },
       });
-      if (await advancedRoute({ request, response, url, principal, requireScope, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive })) return;
+      if (await advancedRoute({ request, response, url, principal, requireScope, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive, accounts })) return;
       if (url.pathname === '/v1/overview' && request.method === 'GET') {
         requireScope('sessions:read'); requireScope('cases:read'); requireScope('evidence:read');
         const count = table => store.db.prepare(`SELECT count(*) AS n FROM ${table} WHERE workspace=?`).get(workspace).n;
@@ -205,8 +211,9 @@ export function startFromEnvironment(env = process.env) {
   if (!env.LIVELENS_POSTGRES_URL) mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
   const store = new EvidenceStore(path, { database: env.LIVELENS_POSTGRES_URL ? new PostgresDatabase({ connectionString: env.LIVELENS_POSTGRES_URL, schema: env.LIVELENS_POSTGRES_SCHEMA ?? 'livelens' }) : undefined });
   let browser;
-  if (env.LIVELENS_BROWSER_USERS) {
-    browser = { origin: env.LIVELENS_CONSOLE_ORIGIN, users: JSON.parse(env.LIVELENS_BROWSER_USERS), bundleDir: env.LIVELENS_BUNDLE_DIR ? resolve(env.LIVELENS_BUNDLE_DIR) : undefined };
+  if (env.LIVELENS_BROWSER_AUTH !== undefined && !['static', 'persisted'].includes(env.LIVELENS_BROWSER_AUTH)) throw new Fault('invalid_browser_auth_mode');
+  if (env.LIVELENS_BROWSER_USERS || env.LIVELENS_BROWSER_AUTH === 'persisted') {
+    browser = { authMode: env.LIVELENS_BROWSER_AUTH ?? 'static', origin: env.LIVELENS_CONSOLE_ORIGIN, users: env.LIVELENS_BROWSER_USERS ? JSON.parse(env.LIVELENS_BROWSER_USERS) : [], bundleDir: env.LIVELENS_BUNDLE_DIR ? resolve(env.LIVELENS_BUNDLE_DIR) : undefined };
   }
   const recorderSources = env.LIVELENS_RECORDER_SOURCES ? JSON.parse(env.LIVELENS_RECORDER_SOURCES) : [];
   const adapterConfig = env.LIVELENS_SOURCE_ADAPTERS ? JSON.parse(env.LIVELENS_SOURCE_ADAPTERS) : recorderSources;

@@ -2,9 +2,8 @@
 
 LiveLens implements the documented operator journey: select a source, retain a
 conversation, reopen its media/context, investigate conflicting evidence, review
-findings, run a protection mission and export a reviewed report. The continuation
-is on `feat/livelens-first-release-2026-10-10`, draft
-[PR #3](https://github.com/EmotiveImpact/tiktok-community-manager/pull/3).
+findings, run a protection mission and export a reviewed report. The operator app and research/foundation PRs #1–#3 are merged into `redesign`.
+The next continuation adds [invited workspace accounts](WORKSPACE_ONBOARDING.md).
 
 The existing desktop/community/CRM application is preserved. The new React console
 uses the shared authenticated service, grouped navigation, global evidence search,
@@ -24,7 +23,7 @@ show the actual app with labelled fictional evidence and generated media.
 | Context graph | Observed, operator-reviewed and inferred relationships remain distinct and reopen source evidence. Anonymous tracks retain session/job/engine/media provenance; operator-declared person references remain unverified and separate from account assertions. No automatic identity link is made. |
 | Protection | Workspace missions select a protected account, retained sessions (with selected-source references) and contextual literal rules; explicit idempotent runs create in-app signals with surrounding context/gaps and retained reviews. |
 | Reports | Editable brief, dependent-text redaction, JSON/Markdown/HTML and actual offline PDF when configured; originals and hash/source/media receipts are preserved. |
-| Workspace | Independently enforced scopes/roles/case grants, revocation, usage/reservations/limits, explicit retention preview/apply and hash-chained audit. |
+| Workspace | Optional persisted accounts, expiring single-use invitations, password reset/revocation; independently enforced scopes/roles/case grants, revocation, usage/reservations/limits, explicit retention preview/apply and hash-chained audit. |
 | Agent | Tool manifest and standalone ALFRED gateway with separate source-read, collection dispatch and model-egress policy. Registration and automatic memory acceptance are not claimed. |
 
 ## Optional engines and storage
@@ -102,7 +101,7 @@ broad keys, signing credentials, object keys and model secrets stay on the serve
   comparisons work.
 - G01/G02 gateway code is tested, but separate ALFRED registration is outstanding.
   That repository has not been changed.
-- S01 remains partial for customer invitations/self-service account recovery,
+- S01 remains partial for public self-service signup,
   payments, target RLS/queue rollout, external objects, representative load/cost
   budgets and production disaster recovery. Manual limits are entitlements, not
   charges. Local API timings and two recording slots do not prove hundreds of users.

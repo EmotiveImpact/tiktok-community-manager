@@ -1,11 +1,11 @@
 # LiveLens development handoff
 
-Current work is the expanded operator application on
-`feat/livelens-first-release-2026-10-10`, based on foundation
-`14df1ae5d42e38e9dbcf4a974c8d161814a141f5`, targeting that foundation in draft
-[PR #3](https://github.com/EmotiveImpact/tiktok-community-manager/pull/3).
-Preserve later commits and user changes. PR #1 remains the unmerged foundation
-proposal targeting `redesign`; publication is not a merge or deployment.
+PRs #1, #2 and #3 were merged into `redesign` on 11 October 2026 at the
+owner's request. Merged baseline `aacfb18` has the same tree as `53267ed`,
+which passed both hosted application/service/browser runs and source inventory.
+Current continuation is invited workspace onboarding on
+`feat/livelens-workspace-onboarding-2026-10-11`. Preserve later commits and
+user changes. This continuation does not deploy the application.
 
 Read [FULL_APPLICATION.md](FULL_APPLICATION.md) for the product and remaining gates,
 [VALIDATION.md](VALIDATION.md) for executed receipts,
@@ -30,9 +30,11 @@ from external-provider and production acceptance.
 Partial gates remain explicit: real selected LIVE, speech diarisation/overlap,
 external-model semantic quality and separate ALFRED registration are unvalidated.
 PostgreSQL uses the pilot schema, not the separately scaffolded production RLS/
-queue target. Payments, self-service customer accounts, production rollout and
+queue target. Payments, public self-service signup, production rollout and
 representative capacity/cost remain outstanding. Native Electron GUI startup is
-unverified. All eight research imports remain pinned/research-only; adopted
+unverified. Optional persisted accounts support administrator-issued invitations,
+password reset links and immediate session revocation; see
+[WORKSPACE_ONBOARDING.md](WORKSPACE_ONBOARDING.md). All eight research imports remain pinned/research-only; adopted
 optional runtimes have separate licence inventories.
 
 Use the existing isolated checkout in cloud tasks; create no worktree unless

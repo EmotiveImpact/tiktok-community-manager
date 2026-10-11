@@ -160,6 +160,7 @@ const server = createIntelligenceServer({
     },
   ],
   browser: {
+    authMode: "persisted",
     origin: `http://127.0.0.1:${port}`,
     bundleDir: resolve("dist"),
     users: [

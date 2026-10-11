@@ -89,17 +89,19 @@ export class Governance {
     return this.db.prepare('SELECT subject,role,updated_at AS updatedAtMs,updated_by AS updatedBy FROM workspace_members WHERE workspace=? ORDER BY subject LIMIT 1000').all(workspace);
   }
   setMember(workspace, value, actor) {
+    return this.store.transaction(() => this.setMemberInTransaction(workspace, value, actor));
+  }
+  setMemberInTransaction(workspace, value, actor) {
+    if (!this.db.isTransaction) throw new Fault('member_transaction_required', 500);
     const subjectActor = this.actor(workspace, actor); object(value, ['subject', 'role']);
     const subject = this.validateSubject(value.subject), role = this.validateRole(value.role);
-    return this.store.transaction(() => {
-      const existing = this.db.prepare('SELECT role FROM workspace_members WHERE workspace=? AND subject=?').get(workspace, subject);
-      if (existing?.role === 'owner' && role !== 'owner' && this.db.prepare("SELECT count(*) AS n FROM workspace_members WHERE workspace=? AND role='owner'").get(workspace).n <= 1) throw new Fault('last_workspace_owner', 409);
-      const callerRole = this.role({ workspace, subject: subjectActor });
-      if (callerRole !== 'owner' && (role === 'owner' || existing?.role === 'owner')) throw new Fault('workspace_owner_required', 403);
-      this.db.prepare('INSERT INTO workspace_members VALUES(?,?,?,?,?) ON CONFLICT(workspace,subject) DO UPDATE SET role=excluded.role,updated_at=excluded.updated_at,updated_by=excluded.updated_by').run(workspace, subject, role, this.now(), subjectActor);
-      this.recordAudit(workspace, 'member.role.changed', subject, subjectActor, { previousRole: existing?.role ?? null, role });
-      return this.members(workspace).find(member => member.subject === subject);
-    });
+    const existing = this.db.prepare('SELECT role FROM workspace_members WHERE workspace=? AND subject=?').get(workspace, subject);
+    if (existing?.role === 'owner' && role !== 'owner' && this.db.prepare("SELECT count(*) AS n FROM workspace_members WHERE workspace=? AND role='owner'").get(workspace).n <= 1) throw new Fault('last_workspace_owner', 409);
+    const callerRole = this.role({ workspace, subject: subjectActor });
+    if (callerRole !== 'owner' && (role === 'owner' || existing?.role === 'owner')) throw new Fault('workspace_owner_required', 403);
+    this.db.prepare('INSERT INTO workspace_members VALUES(?,?,?,?,?) ON CONFLICT(workspace,subject) DO UPDATE SET role=excluded.role,updated_at=excluded.updated_at,updated_by=excluded.updated_by').run(workspace, subject, role, this.now(), subjectActor);
+    this.recordAudit(workspace, 'member.role.changed', subject, subjectActor, { previousRole: existing?.role ?? null, role });
+    return this.members(workspace).find(member => member.subject === subject);
   }
   caseAccess(workspace, caseId) {
     this.store.case(workspace, caseId);

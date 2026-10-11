@@ -1,5 +1,45 @@
 # Validation receipt
 
+## Invited workspace continuation and merged baseline — 11 October 2026
+
+PRs #1, #2 and #3 are merged into `redesign` at `aacfb18`. Its tree matches
+`53267ed`, which passed [push run 38102007232](https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38102007232)
+and [PR run 38102009370](https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38102009370):
+application tests/build, actual PostgreSQL/speech/FFmpeg service checks and all
+three original/full/review-desk browser journeys. Source inventory also passed.
+The research merge retains exactly eight canonical, unchanged source pins.
+
+The combined research branch exposed an asynchronous comparison-selector race in
+the test. A controlled 1500 ms delay reproduced its zero-checkbox snapshot and
+disabled submit button. Waiting for both retained conversation checkboxes then
+selected their actual IDs and created the comparison with HTTP 201. The original
+comparison assertions were retained; no application behavior was changed.
+
+The next continuation adds optional persisted accounts and real administrator
+invitations. [Its browser receipt](onboarding-validation.json) and
+[actual screenshots](SCREENSHOTS.md) use isolated fictional identities and real
+SQLite/HTTP/cookies. Renderer bundle: `index-D-WDEAHp.js`.
+
+| Check | Result | Scope |
+|---|---|---|
+| Application regression | 91 passed, 11 files | Existing community, timeline and desk checks |
+| Complete backend suite | 118 passed, zero failed/skipped | Twelve account tests plus actual PostgreSQL 17.6 lifecycle/parity, Chromium PDF, PocketSphinx recognition and actual FFmpeg recording/recovery |
+| TypeScript/renderer/Electron build | Passed | Final account forms, fragment redemption and resource refresh wiring |
+| New onboarding browser journey | Passed | Real viewer/analyst joins, clipboard link handoff, phone/keyboard, minimum password, workspace isolation, ambiguous-name refusal/explicit workspace login, single-use/expiry/revocation, same-cookie downgrade, reset of multiple cookies, owner reset and unchanged-bootstrap restart; zero page errors or overflow |
+| Secret retention checks | Passed | Raw passwords/tokens absent from account metadata, audit, database bytes, request URLs and published screenshots |
+| Original/full/review-desk journeys | Passed | Persisted demonstration mode retains actual capture/playback/seek, findings/comparisons/graph, alerts, exports/PDF, read-only controls and restart |
+
+Browser QA also found and fixed missing concise role-selector names, one-time
+link receipt loss during workspace refresh, and account tables failing to reload
+when teammates joined in another browser. The broader membership assertion now
+targets the actual membership section because the new account table also names
+the operator. It still verifies the same retained member.
+
+No application deployment, email delivery, external LIVE collection, model
+request, billing change or separate ALFRED registration occurred. Twelve of
+nineteen milestones remain implemented and seven partial; invitations complete
+one S01 slice, while payments, public signup and production infrastructure remain.
+
 ## Selected C review desk — 11 October 2026
 
 The owner selected the Mission Inbox structure and requested a restrained dark

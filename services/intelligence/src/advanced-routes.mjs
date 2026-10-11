@@ -3,7 +3,7 @@ import { renderPdf } from './pdf.mjs';
 
 // The HTTP principal supplies workspace and reviewer. Captured content never
 // selects a tenant, a command, an executable or an agent permission.
-export async function advancedRoute({ request, response, url, principal, requireScope, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive }) {
+export async function advancedRoute({ request, response, url, principal, requireScope, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive, accounts }) {
   const workspace = principal.workspace, actor = principal.subject;
   const get = request.method === 'GET', post = request.method === 'POST';
   const match = pattern => url.pathname.match(pattern);
@@ -17,6 +17,25 @@ export async function advancedRoute({ request, response, url, principal, require
   };
   const result = value => { if (post) governance?.recordAudit(workspace, 'api.write', url.pathname, actor, { method: request.method }); send(response, post ? 201 : 200, value); return true; };
   let route;
+
+  if (url.pathname === '/v1/workspace/accounts' && get) {
+    requireScope('workspace:admin'); if (!accounts) throw new Fault('persisted_accounts_unavailable', 503);
+    return result({ accounts: accounts.accounts(workspace) });
+  }
+  if (url.pathname === '/v1/workspace/invitations') {
+    requireScope('workspace:admin'); if (!accounts) throw new Fault('persisted_accounts_unavailable', 503);
+    if (get) return result({ invitations: accounts.invitations(workspace) });
+    if (post) return result(accounts.invite(workspace, await body(), principal));
+  }
+  if ((route = match(/^\/v1\/workspace\/invitations\/([A-Za-z0-9_-]+)\/revoke$/)) && post) {
+    requireScope('workspace:admin'); if (!accounts) throw new Fault('persisted_accounts_unavailable', 503);
+    send(response, 200, accounts.revokeInvitation(workspace, route[1], await body(), principal)); return true;
+  }
+  if ((route = match(/^\/v1\/workspace\/accounts\/([A-Za-z0-9_-]+)\/(reset|revoke)$/)) && post) {
+    requireScope('workspace:admin'); if (!accounts) throw new Fault('persisted_accounts_unavailable', 503);
+    const value = await body();
+    send(response, route[2] === 'reset' ? 201 : 200, route[2] === 'reset' ? accounts.reset(workspace, route[1], value, principal) : accounts.revoke(workspace, route[1], value, principal)); return true;
+  }
 
   if (url.pathname === '/v1/media-archives') {
     if (get) { requireScope('recordings:read'); return result({ archives: mediaArchive?.list(workspace, { limit: url.searchParams.get('limit') ?? 100 }) ?? [] }); }

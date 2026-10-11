@@ -366,10 +366,14 @@
         "deployment/livelens/README.md",
         "deployment/livelens/CAPACITY.md",
         "services/intelligence/test/postgres.test.mjs",
-        "services/intelligence/test/media-archive-http.test.mjs"
+        "services/intelligence/test/media-archive-http.test.mjs",
+        "services/intelligence/src/accounts.mjs",
+        "services/intelligence/test/accounts.test.mjs",
+        "scripts/validation/onboarding_smoke.py",
+        "docs/livelens/WORKSPACE_ONBOARDING.md"
       ],
       "remaining": [
-        "Optional PostgreSQL pilot-schema bridge tested on actual PostgreSQL 17.6; encrypted object archival and explicit restoration tested on local filesystem and signed S3 HTTP fixture. Target PostgreSQL RLS/queue migration, external object deployment, customer invitations/self-service login, payment-provider integration, representative customer load and production rollout remain outstanding. Local SQLite backup recovery is tested; PostgreSQL production backup operations need their own receipt."
+        "Optional PostgreSQL pilot-schema bridge tested on actual PostgreSQL 17.6; encrypted object archival and explicit restoration tested on local filesystem and signed S3 HTTP fixture. Target PostgreSQL RLS/queue migration, external object deployment, public self-service signup, payment-provider integration, representative customer load and production rollout remain outstanding. Local SQLite backup recovery is tested; PostgreSQL production backup operations need their own receipt."
       ]
     },
     {
