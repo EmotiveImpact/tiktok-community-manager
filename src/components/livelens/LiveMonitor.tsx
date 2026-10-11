@@ -140,50 +140,49 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
   const recent = snapshot.jobs.filter((job) => job.segments.length > 0).slice(0, 8);
   const displayedEvents = events.filter((event) => tab === "all" || (tab === "chat" ? event.kind === "chat" : ["transcript", "caption"].includes(event.kind)));
   return <div className="lm-console">
-    <div className="lm-toolbar">
-      <div><Radio size={18} /><span>Selected accounts & sources</span><small className="lm-muted">Collection starts only when you choose a control.</small></div>
-      {canAdd && <form className="lm-add-form" onSubmit={add}>
-        <label className="sr-only" htmlFor="lm-account">TikTok account to add</label>
-        <input id="lm-account" name="account" placeholder="@TikTok account" required maxLength={64} pattern="@?[A-Za-z0-9_.]+" autoComplete="off" />
-        <button className="ll-primary" disabled={busy}><Plus size={15} />Add account</button>
-      </form>}
-    </div>
     {notice && <p className="ll-notice" role="status">{notice}</p>}
     {error && <p className="lm-error" role="alert">{error}. Refresh to retry or check service configuration.</p>}
     {!readable ? <div className="lm-empty">Recording access is not granted to this operator.</div> : loading ? <p role="status">Loading selected accounts…</p> : <>
       <div className="lm-layout">
         <aside className="lm-watchlist" aria-label="Selected account watchlist" data-source-count={snapshot.sources.length}>
-          <div className="lm-section-header"><h2>Watchlist</h2><span>{snapshot.sources.length}</span></div>
+          <div className="lm-section-header"><h2>Accounts</h2><span>{snapshot.sources.length}</span></div>
+          {canAdd && <form className="lm-add-form" onSubmit={add}>
+            <label className="sr-only" htmlFor="lm-account">TikTok account to add</label>
+            <input id="lm-account" name="account" placeholder="@account" required maxLength={64} pattern="@?[A-Za-z0-9_.]+" autoComplete="off" />
+            <button disabled={busy}><Plus size={14} />Add account</button>
+          </form>}
           {snapshot.sources.map((source) => <button key={source.id} className={`lm-source-row ${source.id === selectedId ? "selected" : ""}`} aria-pressed={source.id === selectedId} onClick={() => select(source)}>
             <span className="lm-source-avatar"><Radio size={17} /></span>
             <span className="lm-source-meta"><strong>{sourceName(source)}</strong><small>{source.kind === "file" || source.fixture ? "Synthetic fixture" : source.kind === "tiktok-public" ? "TikTok" : "Permitted media"}</small><span className="lm-status" data-state={status(source).toLowerCase()}>{status(source)}</span></span>
           </button>)}
           {!snapshot.sources.length && <div className="lm-empty"><p>No accounts yet.</p><small>Add a TikTok account above to get started.</small></div>}
-          <button className="lm-manage" onClick={onSources}>Manage sources & schedules <ArrowRight size={14} /></button>
+          <button className="lm-manage" onClick={onSources}>Manage accounts <ArrowRight size={14} /></button>
         </aside>
         <section className="lm-stage" aria-label="Selected source monitor">
           <div className="lm-stage-header">
             <div><h2>{replayId ? previewSession?.account ? `@${previewSession.account}` : previewSession?.title ?? "Saved recording" : selected ? sourceName(selected) : "Select an account"}</h2>
               <p>{replayId ? "Saved recording" : selected ? status(selected) : "Add an account to check and record its broadcasts."}{selectedSchedule?.lastCheckedAtMs && !replayId ? ` · checked ${time(selectedSchedule.lastCheckedAtMs)}` : ""}</p></div>
-            {previewId && <button onClick={() => onOpenSession(previewId)}>Open conversation <ArrowRight size={14} /></button>}
-          </div>
-          {selected && <div className="lm-controls">
-            <label>Recording limit (seconds)<input type="number" aria-label="Recording limit (seconds)" min={2} max={3600} required value={limit} onChange={(event) => setLimit(Number(event.target.value))} /></label>
-            {scheduling && <label>Watch window (minutes)<input type="number" aria-label="Watch window (minutes)" min={1} max={1440} required value={windowMinutes} onChange={(event) => setWindowMinutes(Number(event.target.value))} /></label>}
-            <div className="lm-control-actions">
+            {selected && <div className="lm-control-actions">
               {scheduling && <button disabled={!writable || busy || selectedWatches.length > 0 || !validLimit} onClick={() => watch(false, true)}><Radio size={14} />{selected.kind === "tiktok-public" ? "Check LIVE" : "Check source"}</button>}
               {scheduling && <button disabled={!writable || busy || selectedWatches.length > 0 || !validWindow || !validLimit} onClick={() => watch(false)}><Clock3 size={14} />Watch only</button>}
               {selectedJob ? <button className="ll-primary" disabled={!writable || busy || selectedJob.stopRequested} onClick={() => run(() => api(`/v1/jobs/${selectedJob.id}/stop`, {}), "Recording stop requested. Saved segments remain replayable.")}><Square size={13} />{selectedJob.stopRequested ? "Stopping…" : "Stop recording"}</button>
                 : <button className="ll-primary" disabled={!recording || !writable || busy || (!selected.sessionId && (!scheduling || selectedWatches.length > 0 || !validWindow)) || !validLimit} onClick={record}><Circle size={13} />{selected.sessionId ? "Record now" : "Record when LIVE"}</button>}
+            </div>}
+          </div>
+          <div className="lm-stage-body">
+            <div className="lm-media-column">
+            <div className="lm-player">
+              <div className="lm-player-label"><Video size={14} /><span>{replayId ? "Saved recording" : "Recording preview"}</span><small>{selected?.kind === "file" ? "Synthetic media" : "Saved segments · preview is delayed"}</small></div>
+              {previewId && mediaJob ? renderMedia(previewId, selectedEvidence, refreshKey, preferredJobId) : <div className="lm-player-empty"><span className="lm-empty-camera"><Video size={28} /></span><h3>{selectedJob ? "Saving the first segment" : "Your recording starts here"}</h3><p>{selectedJob ? "Verified video will appear as capture progresses." : selected ? selected.sessionId ? "Choose Record now to capture this source." : "Choose Record when LIVE to watch and capture." : "Select an account to get started."}</p><small>Preview uses saved video and is delayed.</small></div>}
             </div>
+          {selected && <div className="lm-controls">
+            <label>Recording limit <input type="number" aria-label="Recording limit (seconds)" min={2} max={3600} required value={limit} onChange={(event) => setLimit(Number(event.target.value))} /><span>sec</span></label>
+            {scheduling && <label>Watch window <input type="number" aria-label="Watch window (minutes)" min={1} max={1440} required value={windowMinutes} onChange={(event) => setWindowMinutes(Number(event.target.value))} /><span>min</span></label>}
+            {previewId && <button className="lm-open-conversation" onClick={() => onOpenSession(previewId)}>Open conversation <ArrowRight size={14} /></button>}
             {selectedWatches.map((schedule) => <div className="lm-watch-receipt" key={schedule.id}><span>{schedule.autoRecord ? "Watching & recording when available" : "Watching only"} · ends {time(schedule.endAtMs)}</span><button disabled={!writable || busy} onClick={() => run(() => api(`/v1/schedules/${schedule.id}/stop`, {}), schedule.jobId ? "Watch stopped and its linked recording stop requested. Saved segments remain replayable." : "Watch stopped. Recordings started separately keep their own limit and Stop recording control.")}>Stop watch</button></div>)}
             {selectedSchedule?.error && <p className="lm-error" role="alert">Source check: {selectedSchedule.error.replaceAll("_", " ")}</p>}
             {selectedJobs[0]?.error && <p className="lm-error" role="alert">Last recording: {selectedJobs[0].state} · {selectedJobs[0].error.replaceAll("_", " ")}. Previously saved segments remain available.</p>}
           </div>}
-          <div className="lm-stage-body">
-            <div className="lm-player">
-              <div className="lm-player-label"><Video size={14} /><span>{replayId ? "Saved recording" : "Recording preview"}</span><small>{selected?.kind === "file" ? "Synthetic media" : "Saved segments · preview is delayed"}</small></div>
-              {previewId && mediaJob ? renderMedia(previewId, selectedEvidence, refreshKey, preferredJobId) : <div className="lm-player-empty"><Video size={35} /><h3>{selectedJob ? "Waiting for saved media" : "Ready to record"}</h3><p>{selectedJob ? "The first verified segment appears here as capture progresses." : selected ? "Start a bounded recording to see its video and follow the captured conversation." : "Add or select an account to begin."}</p><small>Video appears from actual retained media. A source check does not create a live preview.</small></div>}
             </div>
             <aside className="lm-chat" aria-label="Captured conversation feed">
               <div className="lm-chat-tabs" role="group" aria-label="Conversation feed filter">{[["chat", "Chat"], ["speech", "Transcript"], ["all", "All events"]].map(([value, label]) => <button key={value} aria-pressed={tab === value} onClick={() => setTab(value)}>{label}</button>)}</div>
@@ -200,8 +199,8 @@ export default function LiveMonitor({ scopes, enabled, revision, sessions, onRef
           {!writable && <p className="lm-muted">Read-only access. A collector can check sources and start or stop recording.</p>}
         </section>
       </div>
-      <section className="lm-jobs" aria-label="Active recordings"><div className="lm-section-header"><h2>Active recordings</h2><span>{activeJobs.length}</span></div>
-        {!activeJobs.length && <p className="lm-muted">No recording is running. Choose an account and Record now or Record when LIVE.</p>}
+      <section className={`lm-jobs ${activeJobs.length ? "" : "lm-jobs-idle"}`} aria-label="Active recordings"><div className="lm-section-header"><h2>Active recordings</h2><span>{activeJobs.length}</span></div>
+        {!activeJobs.length && <p className="lm-muted">Recorder idle</p>}
         {activeJobs.map((job) => <div className="lm-job" key={job.id}>
           <div><strong>{sessions.find((session) => session.id === job.sessionId)?.title ?? snapshot.sources.find((source) => source.id === job.sourceId)?.label ?? "Recording"}</strong><small>{job.state.replaceAll("_", " ")}{job.stopRequested ? " · stop requested" : ""} · {duration(job.segments.reduce((sum, segment) => sum + segment.durationMs, 0) / 1000)} saved · {bytes(job.segments.reduce((sum, segment) => sum + segment.bytes, 0))} · {job.maxDurationSeconds}s limit</small></div>
           <button disabled={!writable || busy || job.stopRequested} onClick={() => run(() => api(`/v1/jobs/${job.id}/stop`, {}), "Recording stop requested.")} aria-label={`Stop recording ${job.id}`}><Square size={13} />Stop</button>

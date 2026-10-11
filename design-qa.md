@@ -1,4 +1,33 @@
-# Review desk design QA
+# LiveLens design QA
+
+## Current monitor audit and refinement — 11 October 2026
+
+The owner rejected the monitor design. This audit starts with actual before-change
+screenshots of two steps: the authenticated desktop home at 1440 × 1024 and the
+phone home at 390 × 844. Both were saved and visually inspected before editing.
+[Before desktop](docs/livelens/screenshots/monitor-redesign/before-desktop.png) and
+[before phone](docs/livelens/screenshots/monitor-redesign/before-phone.png) preserve
+that evidence. No external collection was started for the audit.
+
+The repeated header, form, actions and settings pushed the desktop player to
+511.9px and phone player to 1003.7px below the top. Heavy outlines and large idle
+cards competed with the recording. The change moves setup into Accounts, actions
+into the selected-source header and settings beneath the player, narrows navigation,
+uses quieter neutral surfaces and presents saved recordings as compact rows.
+
+The actual final renderer is `index-BQzEr-5F.js` with `index-gnFuFJ2Q.css`.
+The same empty-player state now starts at 255.7px on desktop and 521.1px on phone;
+desktop video width increases from 556px to 672px. Final desktop, phone replay and
+read-only screenshots were visually inspected. [Current gallery](docs/livelens/SCREENSHOTS.md).
+
+The phone DOM matches the visible order. Real keypresses verify recording limit →
+watch window → Open conversation → Chat. Phone width has no horizontal overflow;
+final monitor, review and onboarding journeys retain their functional and permission
+assertions with zero page errors. [Geometry/keyboard receipt](docs/livelens/monitor-redesign-layout-validation.json)
+and [monitor receipt](docs/livelens/monitor-redesign-validation.json).
+Screenshots and these focused checks do not establish complete accessibility
+compliance or final owner design acceptance. The earlier reference comparison
+below is historical and does not override the owner's rejection.
 
 ## Current direction supersedes the reference comparison
 

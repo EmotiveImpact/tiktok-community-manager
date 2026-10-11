@@ -1,5 +1,29 @@
 # Validation receipt
 
+## Monitor layout refinement — 11 October 2026
+
+The owner rejected the crowded monitor. The revised actual app places account
+setup in Accounts, collection actions beside the selected source, a larger 16:9
+player next to chat, limits below the player and compact saved-recording rows.
+The home uses neutral charcoal/warm-white tokens and removes the redundant eyebrow.
+Final renderer: `index-BQzEr-5F.js`; stylesheet: `index-gnFuFJ2Q.css`.
+[Actual screenshots](SCREENSHOTS.md) and [design audit](../../design-qa.md) show the
+change. No service/API, provider, ALFRED policy or test assertion changed.
+
+| Check | Result | Scope |
+|---|---|---|
+| Application regression | 91 passed, 11 files | Existing application tests after the main layout edits. |
+| Final TypeScript/renderer/Electron build | Passed | Includes the final phone DOM/keyboard correction and scoped CSS. |
+| Final monitor browser journey | Passed | Real bounded check/watch, FFmpeg capture/hash/range/decoded playback/seek, exact-job replay, >100 actual chat records, source-switch receipts, independent stops, viewer HTTP 403 and desktop/phone; zero uncaught page errors. [Receipt](monitor-redesign-validation.json). |
+| Final secondary review and onboarding | Both passed | Existing complete assertions on `BQzEr-5F`; source selection, deep links, persistence, invitations, role/revocation/recovery and restart. [Review](monitor-redesign-review-validation.json), [onboarding](monitor-redesign-onboarding-validation.json). |
+| Original and full browser journeys | Both passed | Preceding `index-YCnd_bzW.js`, before the monitor-only keyboard-order correction; not relabelled as final-bundle receipts. Hosted CI re-executes all five journeys on the published commit. |
+| Actual phone keyboard and geometry | Passed | Real Tab order: recording limit → watch window → Open conversation → Chat; no horizontal overflow. Empty-player top moves from 1003.7px to 521.1px at 390px phone width; desktop from 511.9px to 255.7px. [Measured receipt](monitor-redesign-layout-validation.json). |
+
+The complete 120-test optional service receipt and ALFRED continuation below
+remain evidence for unchanged backend source. Current-head hosted results are
+reported separately in PR #5. Screenshots are actual fictional/generated fixtures;
+external LIVE access, production capacity and owner design approval remain unvalidated.
+
 ## Capture-first LIVE monitor — 11 October 2026
 
 The owner requested a recognisable account monitor/recorder as the default home,

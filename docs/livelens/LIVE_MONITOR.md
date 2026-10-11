@@ -7,15 +7,20 @@ and protection signals. Investigations and reports remain available. Existing
 community/CRM tools run in native Electron; their browser `?page=` bridge is a
 development demonstration, not a shared-server CRM.
 
+The Accounts panel contains source selection and account setup. Check, Watch and
+Record actions sit beside the selected source. Recording and watch limits appear
+below the player; chat sits alongside it on desktop and follows those controls on
+phone. Saved recordings appear as compact rows below the workspace.
+
 ## Choose and check a source
 
 Workspace administrators with source-management permission can enter `@account` and select
 **Add account**. This saves a public TikTok source; it starts no collection.
-**Manage sources & schedules** also exposes configured permitted HTTPS media and
+**Manage accounts** also exposes configured permitted HTTPS media and
 explicitly labelled generated-file fixtures. Source credentials and signed media
 URLs stay on the service.
 
-Select a watchlist row to work with that source. **Check LIVE** for TikTok, or
+Select an Accounts row to work with that source. **Check LIVE** for TikTok, or
 **Check source** for other adapters, creates a discovery-only schedule ending
 within 15 seconds, with a 10-second polling interval and recording off. It is a
 short bounded watch, not an instantaneous API peek. **Watch only** uses the

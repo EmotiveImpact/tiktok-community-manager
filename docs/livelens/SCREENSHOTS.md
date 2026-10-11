@@ -1,6 +1,35 @@
 # LiveLens — actual application screenshots
 
-## Current capture-first LIVE monitor
+## Current monitor redesign — 11 October 2026
+
+Actual authenticated application captures from renderer `index-BQzEr-5F.js` and
+stylesheet `index-gnFuFJ2Q.css`. The palette uses neutral charcoal and warm white;
+accounts, selected-source actions, the larger player and chat share one workspace.
+Phone controls and keyboard focus follow player → limits → conversation → chat.
+All accounts and evidence here are fictional fixtures. Recording colour bars are
+actual generated test media, not interface decoration or external LIVE footage.
+
+![Redesigned LiveLens desktop monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/monitor-redesign/desktop-ready.png)
+
+| Capture | Actual state |
+|---|---|
+| [Desktop ready](screenshots/monitor-redesign/desktop-ready.png) | Selected fixture account, recording idle, no automatic collection. |
+| [Phone ready](screenshots/monitor-redesign/phone-ready.png) | 390px layout; player and controls precede chat. |
+| [Recording and chat](screenshots/monitor-redesign/04-desktop-actual-fixture-recording.png) | Actual FFmpeg capture with verified playback and source-linked fictional chat. |
+| [Stopped recording](screenshots/monitor-redesign/05-desktop-stopped-recording-replay.png) | Verified saved video remains replayable after explicit stop. |
+| [Later chat](screenshots/monitor-redesign/06-desktop-late-chat-after-100-events.png) | Actual appended events advance the loaded-event window. |
+| [Phone replay](screenshots/monitor-redesign/07-phone-live-monitor.png) | Two configured sources, actual saved media and recording rows without horizontal overflow. |
+| [Read-only monitor](screenshots/monitor-redesign/08-desktop-read-only-live-monitor.png) | Viewer controls remain restricted; actual writes return HTTP 403. |
+| [Before desktop](screenshots/monitor-redesign/before-desktop.png) / [before phone](screenshots/monitor-redesign/before-phone.png) | Authenticated captures taken before this refinement. |
+
+[Monitor receipt](monitor-redesign-validation.json),
+[recording receipt](monitor-redesign-recording-validation.json),
+[measured layout and keyboard check](monitor-redesign-layout-validation.json),
+[review-desk regression](monitor-redesign-review-validation.json) and
+[onboarding regression](monitor-redesign-onboarding-validation.json) preserve the
+actual checked states. These checks do not establish owner design acceptance.
+
+## Earlier capture-first LIVE monitor
 
 The default home now shows selected accounts, bounded checks/watch schedules,
 Record/Stop and a large retained video/chat workspace. These are actual browser

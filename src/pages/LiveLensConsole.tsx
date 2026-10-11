@@ -815,13 +815,11 @@ function OperatorConsole() {
         <main id="ll-main" tabIndex={-1} ref={main}>
           <div className="ll-heading">
             <div>
-              <p className="ll-eyebrow">
+              {view !== "overview" && <p className="ll-eyebrow">
                 {sessionId
                   ? "CONVERSATION / ORIGINAL SOURCE"
-                  : view === "overview"
-                    ? "COLLECTION / LIVE MONITOR"
-                    : "LIVELENS / " + nav.find(([id]) => id === view)?.[3]}
-              </p>
+                  : "LIVELENS / " + nav.find(([id]) => id === view)?.[3]}
+              </p>}
               <h1>{view === "overview" ? "Live monitor" : view === "review" ? "Your review desk" : session.data?.title ?? title}</h1>
               <p>
                 {sessionId
