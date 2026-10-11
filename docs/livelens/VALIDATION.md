@@ -66,8 +66,18 @@ failed the original browser journey before precise diagnostics were installed.
 Its signed blob logs remain denied by the current managed proxy, so no cause is
 asserted. Failure annotations, screenshots, media state and fixture logs are now
 retained. Both subsequent fresh browser runs passed without weakening assertions
-or changing the browser/codecs. The first-slice payment/spending blocker is
-historical; no billing-account change was made.
+or changing the browser/codecs. A later documentation-only rerun at `ad01247`
+exposed the precise recurring test synchronization failure through those new
+annotations: after reopening original context on restart, the test accessed
+`video.readyState` before React had mounted the player. The test now explicitly
+waits for the video element before the existing media-readiness assertion. No
+application behavior, playback assertion or browser/codec selection was changed.
+A controlled 1500ms delay of the real post-restart media metadata reproduced the
+old null-player exception. Both corrected original/full journeys passed the same
+delay, explicitly observing an initially absent video before mount, with all
+playback/export/PDF/phone/restart assertions retained and zero page errors.
+The first-slice payment/spending blocker is historical; no billing-account change
+was made.
 
 ## Historical first application release — 10 October 2026
 

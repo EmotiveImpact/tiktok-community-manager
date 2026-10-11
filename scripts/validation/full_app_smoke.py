@@ -447,6 +447,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 nav("Session library")
                 page.get_by_role("button", name=re.compile("Fictional fixture")).first.click()
                 page.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
+                page.locator("video").wait_for()
                 page.wait_for_function('() => document.querySelector("video").readyState >= 1')
                 assert page.locator(".ll-context blockquote").inner_text() == marker_text, "Export redaction must not change the retained original"
                 assert not errors, errors

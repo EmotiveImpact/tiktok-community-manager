@@ -180,6 +180,7 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             page.get_by_role('button', name='Fixture browser investigation', exact=False).click()
             page.get_by_role('button', name='Original evidence', exact=True).click()
             page.get_by_role('button', name='Synthetic fixture marker', exact=False).click()
+            page.locator('video').wait_for()
             page.wait_for_function('() => document.querySelector("video").readyState >= 1')
             assert not errors, errors
             browser.close()
