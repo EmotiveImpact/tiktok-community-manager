@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 const api = {
+  livelensOpenConsole: () => ipcRenderer.invoke('livelens:openConsole'),
+  livelensArchive: (id?: string) => ipcRenderer.invoke('livelens:archive', id),
+  livelensArchiveStatus: (id?: string) => ipcRenderer.invoke('livelens:archiveStatus', id),
   connect: (username: string) =>
     ipcRenderer.invoke('tt:connect', username) as Promise<{ ok: boolean; error?: string }>,
   disconnect: () => ipcRenderer.invoke('tt:disconnect') as Promise<{ ok: boolean }>,

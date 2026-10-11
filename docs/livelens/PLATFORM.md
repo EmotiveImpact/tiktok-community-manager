@@ -1,5 +1,9 @@
 # LiveLens: live conversation intelligence
 
+Current implementation and measured limits are recorded in [FULL_APPLICATION.md](FULL_APPLICATION.md),
+[VALIDATION.md](VALIDATION.md) and the backlog. This document retains the full target architecture;
+the build-order sections are a programme rather than an assertion of production readiness.
+
 Product direction, 10 October 2026. The goal is an operational intelligence
 platform that can serve the owner, paying users, creator teams, investigators and
 ALFRED. TikTok is the first source adapter. The community manager is an existing
@@ -32,16 +36,16 @@ claims. They do not assign a universal judgement about a person.
 
 | Area | Product behaviour | Current status |
 |---|---|---|
-| Operations | Active sources, worker health, capture gaps, backlog, storage and spend | Existing desktop event monitoring; server console planned |
-| Collection | Selected accounts, LIVE status, scheduled collection and concurrent capture | Existing desktop connector; server workers planned |
-| Conversation | Replay synchronised media, chat, captions, independent speech and speaker turns | Desktop chat/caption timeline implemented; independent speech planned |
-| Observed accounts | Search statements and comments associated with captured accounts across sessions | Backend account-filtered evidence search implemented; account activity UI planned |
-| Context graph | Claims, topics, appearances and source-supported links with relationship status | Planned; no inferred identity graph exists |
-| Investigations | Questions, evidence, counterevidence, notes, reviewer decisions and timelines | Durable case/evidence links implemented; full analyst workspace planned |
-| Reporting | Evidence exports, reviewed findings, redaction and shareable briefs | Backend JSON/Markdown evidence reports implemented; AI findings/PDF/redaction planned |
-| Protection missions | Named protected account, selected sources, detection rules and reviewed alerts | Planned |
-| Agent gateway | Scoped queries and later bounded collection/report jobs from ALFRED | HTTP API and read-only clients implemented; ALFRED registration planned |
-| Commercial operation | Workspaces, access controls, quotas, subscription metering and retention | Pilot workspace isolation implemented; full commercial controls planned |
+| Operations | Active sources, worker health, capture gaps, backlog, storage and spend | Desktop monitoring and real operator console implemented; spend is manual entitlement |
+| Collection | Selected accounts, LIVE status, scheduled collection and concurrent capture | Concurrent bounded recorder and explicit selected-source scheduler implemented; external LIVE unvalidated |
+| Conversation | Replay synchronised media, chat, captions, independent speech and speaker turns | Media/chat/caption replay and optional independent speech implemented; diarisation unmeasured |
+| Observed accounts | Search statements and comments associated with captured accounts across sessions | Source-linked account activity UI and literal search implemented |
+| Context graph | Claims, topics, appearances and source-supported links with relationship status | Source-backed graph with observed/reviewed/inferred status implemented; identities remain assertions |
+| Investigations | Questions, evidence, counterevidence, notes, reviewer decisions and timelines | Notes, support/counterevidence, findings and immutable review workspace implemented |
+| Reporting | Evidence exports, reviewed findings, redaction and shareable briefs | Reviewed redacted JSON/Markdown/HTML/PDF implemented; external model quality unmeasured |
+| Protection missions | Named protected account, selected sources, detection rules and reviewed alerts | Explicit retained-session contextual rules and in-app review implemented |
+| Agent gateway | Scoped queries and later bounded collection/report jobs from ALFRED | Read/control policy gateway and HTTP clients tested; separate ALFRED registration outstanding |
+| Commercial operation | Workspaces, access controls, quotas, subscription metering and retention | Roles/case ACL/quotas/audit/retention and optional PG/archive implemented; payment/customer rollout partial |
 
 ## Shared architecture
 

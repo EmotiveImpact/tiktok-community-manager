@@ -1,112 +1,228 @@
 # LiveLens intelligence service
 
-A runnable first backend for session evidence, search, investigations and agent
-queries. Node 24 or later, no third-party runtime packages. SQLite is the pilot
-store. The existing desktop UI continues to run separately.
+The backend for the LiveLens operator console, retained media, investigations,
+protection review and scoped agent access. The existing Electron community manager
+remains available. See [full application status](../../docs/livelens/FULL_APPLICATION.md)
+and [runtime configuration](../../docs/livelens/RUNTIME_CONFIGURATION.md) for the
+current application, optional workers and deployment boundaries.
 
-Implemented: workspace-bound API keys and scopes; persistent sessions and original
-events; content-sensitive idempotent ingestion; source/collector/receipt clocks;
-anonymous speaker tracks; append-only operator attribution history; case evidence
-links; JSON/Markdown reports; local hash-chain verification; JavaScript and Python
-clients. The synthetic demo writes a database, closes it, reopens it and exports
-the retained evidence.
+The default private pilot uses Node 24 and SQLite. Collection uses trusted Linux,
+Python and FFmpeg processes; speech, model analysis, PDF rendering, PostgreSQL and
+object archiving are optional. Installing or configuring a source does not start
+network polling. Operators explicitly create bounded schedules or recording jobs.
 
-## Try the demo and tests
+## Run locally
+
+From the repository root, the generated-media console is:
 
 ```bash
-npm --prefix services/intelligence run demo
-npm --prefix services/intelligence test
+npm run console:fixture
 ```
 
-No live account is connected by these commands. The demo uses fictional fixtures,
-creates a temporary database and removes it after the demonstration.
+It uses fictional evidence and generated recordings. The loopback development
+login is `fixture` / `fixture-operator-only`; these are public fixture credentials,
+not credentials for a private deployment. Stop the fixture with Ctrl+C. No TikTok
+account or remote model is contacted by this command.
 
-## Start the API
-
-Set `LIVELENS_API_KEYS` to a JSON array held in your private environment:
-
-```json
-[
-  {
-    "token": "REPLACE_WITH_A_RANDOM_TOKEN_OF_AT_LEAST_32_CHARACTERS",
-    "workspace": "your_workspace",
-    "subject": "operator",
-    "scopes": ["sessions:read", "sessions:write", "evidence:read", "evidence:write", "assertions:write", "cases:read", "cases:write"]
-  }
-]
-```
-
-Generate tokens with `node -e 'console.log(require("node:crypto").randomBytes(32).toString("base64url"))'`.
-Never commit the populated configuration. Give the ALFRED client a separate key
-with only `sessions:read`, `evidence:read` and `cases:read` initially.
+For the API, privately configure `LIVELENS_API_KEYS`, then run:
 
 ```bash
 npm --prefix services/intelligence start
 ```
 
-Default address: `127.0.0.1:4318`. Default database: `./data/intelligence.sqlite`
-relative to the service working directory. Optional variables: `LIVELENS_DB_PATH`,
-`LIVELENS_HOST`, `LIVELENS_PORT`. The service refuses to start without keys.
-`compose.yml` binds the container port to host loopback and keeps its database in
-a named volume. The container scaffold has not been built or deployed here.
+The default listener is `127.0.0.1:4318`. The database defaults to
+`./data/intelligence.sqlite` relative to the service working directory. Browser
+hosting additionally needs scoped browser users, an exact console origin and the
+built bundle. [Runtime configuration](../../docs/livelens/RUNTIME_CONFIGURATION.md)
+contains the full environment catalogue and worker examples. Runtime databases,
+media, object archives and secrets belong outside Git.
 
-## API
+Affected checks and demonstrations are available without contacting a LIVE:
 
-Use `Authorization: Bearer <token>` and JSON request bodies. The token establishes
-the workspace; body fields cannot select a different one. Browser-origin requests
-are refused until an explicit desktop/browser transport is added.
+```bash
+npm --prefix services/intelligence test
+npm --prefix services/intelligence run demo
+npm --prefix services/intelligence run demo:recording
+npm test
+npm run build
+```
 
-| Method and path | Scope | Result |
+Tests label generated media and provider fixtures. Optional native speech and
+PostgreSQL checks require their documented prerequisites; a skip is not provider
+or model validation. Current acceptance receipts live in
+[full application status](../../docs/livelens/FULL_APPLICATION.md).
+
+## Authentication and authority
+
+The HTTP principal supplies the workspace and reviewer. A request body cannot
+select another workspace. API clients send `Authorization: Bearer TOKEN` and
+`Content-Type: application/json` for writes. Bodies are bounded to 1 MiB. Browser
+bearer requests with an Origin header remain refused; the configured same-origin
+console uses an HttpOnly, SameSite cookie and a separate CSRF token for writes.
+Login/session/logout are `/console/login`, `/console/session`, `/console/logout`.
+Browser sessions expire and are cleared on service restart.
+
+Every route checks its API scope. When `LIVELENS_WORKSPACE_MEMBERS` enables the
+governance layer, it also checks current membership and role on each request.
+`owner` and `admin` can manage workspace controls; `analyst` can use permitted
+writes; `viewer` is read-only; `revoked` cannot access the workspace. Only an owner
+can assign owner authority, and the final owner cannot be removed. Role changes
+and revocations persist across restarts; initial seeds do not overwrite them.
+
+Cases default to workspace visibility. Owners/admins can restrict a case and
+assign read/write grants to current members. Case routes enforce those grants;
+filtered case lists omit inaccessible cases. Scope and role checks remain
+independent: a role never supplies a missing scope. Without the optional
+governance configuration, API workspace/scope isolation remains, but membership,
+case grants and workspace controls are unavailable.
+
+## API catalogue
+
+`GET /health` is unauthenticated minimal liveness. `GET /v1/capabilities` describes
+configured and unavailable features for the caller. All routes below are bound to
+the authenticated workspace. IDs in paths are opaque identifiers. Read pages and
+searches use bounded `limit`; session/case lists also support `offset`.
+
+| Method and path | Required scopes | Result |
 |---|---|---|
-| GET `/health` | None | Minimal service liveness |
-| GET `/v1/capabilities` | Any valid key | Implemented/planned features and caller scopes |
-| GET/POST `/v1/sessions` | sessions:read/write | List or create sessions |
+| GET `/v1/overview` | sessions:read, cases:read, evidence:read | Retained counts and recording receipts |
+| GET/POST `/v1/sessions` | sessions:read / sessions:write | List/create session provenance |
 | GET `/v1/sessions/:id` | sessions:read | Session provenance |
-| GET/POST `/v1/sessions/:id/events` | evidence:read/write | Paginated journal or atomic ingestion |
-| GET `/v1/sessions/:id/integrity` | evidence:read | Local chain verification |
-| GET `/v1/evidence/search?q=&account=&session=&limit=` | evidence:read | Literal text and observed/asserted account search |
+| GET/POST `/v1/sessions/:id/events` | evidence:read / evidence:write | Paginated journal / atomic ingestion |
+| GET `/v1/sessions/:id/integrity` | evidence:read | Local journal verification |
+| GET `/v1/evidence/search?q=&account=&session=&limit=` | evidence:read | Literal text/account search |
 | GET `/v1/evidence/:id` | evidence:read | Original event and current attribution |
-| GET/POST `/v1/evidence/:id/assertions` | evidence:read / assertions:write | Attribution history or an operator assertion |
-| POST `/v1/cases` | cases:write | Create an investigation question |
-| POST `/v1/cases/:id/evidence` | cases:write + evidence:read | Link up to 200 evidence IDs |
-| GET `/v1/cases/:id/report?format=markdown` | cases:read + evidence:read | JSON by default, Markdown optionally |
+| GET `/v1/evidence/:id/context` | evidence:read, sessions:read | Before/after context in the same session |
+| GET/POST `/v1/evidence/:id/assertions` | evidence:read / assertions:write | Attribution revisions / explicit account assertion |
+| GET/POST `/v1/cases` | cases:read / cases:write | Accessible cases / create question |
+| GET `/v1/cases/:id` | cases:read | Accessible case |
+| POST `/v1/cases/:id/evidence` | cases:write, evidence:read | Link retained evidence |
+| GET `/v1/cases/:id/report?format=markdown` | cases:read, evidence:read | Original JSON/Markdown evidence export |
+| GET `/v1/sources` | recordings:read | Configured source descriptors; no private media URLs |
+| POST `/v1/sources` | workspace:admin, recordings:write | Persist selected public TikTok account or HTTPS media source |
+| GET/POST `/v1/jobs` | recordings:read / recordings:write | Recorder receipts / explicit bounded capture |
+| GET `/v1/jobs/:id` | recordings:read | Recording progress, gaps and verified segments |
+| POST `/v1/jobs/:id/stop` | recordings:write | Persist stop request |
+| GET `/v1/sessions/:id/media` | recordings:read, sessions:read | Retained recording receipts |
+| GET `/v1/media/:job/:segment` | recordings:read | Hash-verified MP4 replay, including bounded byte ranges |
+| GET/POST `/v1/schedules` | recordings:read / recordings:write | Selected-source schedules / explicit bounded watchlist |
+| POST `/v1/schedules/:id/stop` | recordings:write | Stop schedule and its current capture |
+| GET/POST `/v1/media-archives` | recordings:read / recordings:write | Object archive receipts / explicit verified-media snapshot |
+| GET `/v1/media-archives/:id` | recordings:read | Snapshot, readback and restore receipts |
+| POST `/v1/media-archives/:id/restore` | recordings:write | Explicit bounded restore to original verified media locations |
+| GET `/v1/speech/capabilities` | evidence:read | Actual configured recognition/diarisation capability |
+| GET/POST `/v1/speech/jobs` | speech:read / speech:write | Speech receipts / selected retained-media transcription |
+| GET `/v1/speech/jobs/:id` | speech:read | Per-input progress and transcript count |
+| POST `/v1/speech/jobs/:id/stop` | speech:write | Stop speech job |
+| GET `/v1/investigations/:case` | cases:read, evidence:read | Linked evidence, notes and finding revisions |
+| POST `/v1/investigations/:case/notes` | cases:write, evidence:read | Source-linked operator note |
+| POST `/v1/investigations/:case/findings` | cases:write, evidence:read | Draft finding with supporting/counter evidence |
+| POST `/v1/investigations/:case/findings/:finding/review` | cases:write, evidence:read | Append reviewed status/reason |
+| GET/POST `/v1/bookmarks` | evidence:read / evidence:read, investigations:write | Retained evidence bookmarks |
+| GET `/v1/accounts/:handle/activity` | evidence:read, sessions:read | Observed/asserted activity across retained sessions |
+| POST `/v1/comparisons` | evidence:read, sessions:read | Bounded comparison of selected sessions |
+| GET/POST `/v1/graph` | evidence:read, sessions:read / evidence:read, investigations:write | Evidence-supported graph / reviewed relation |
+| GET/POST `/v1/missions` | missions:read / missions:write, evidence:read | Protection review missions / create rules |
+| POST `/v1/missions/:id` | missions:write, evidence:read | Append mission configuration revision |
+| POST `/v1/missions/:id/run` | missions:write, evidence:read | Explicit contextual review over retained evidence |
+| GET `/v1/alerts?mission=&limit=` | missions:read, evidence:read | In-app review candidates |
+| POST `/v1/alerts/:id/review` | missions:write | Reviewed alert revision |
+| GET `/v1/investigations/:case/report` | cases:read, evidence:read | Revised report metadata |
+| POST `/v1/investigations/:case/report` | reports:write, cases:write, cases:read, evidence:read | Append report/redaction revision |
+| GET `/v1/investigations/:case/report?format=json\|markdown\|html\|pdf` | cases:read, evidence:read | Redacted source-backed export; PDF requires configured renderer |
+| GET `/v1/analysis/capabilities` | evidence:read | Configured model suggestion capability |
+| POST `/v1/analysis` | analysis:write, investigations:write, evidence:read, cases:write | Explicit model request producing unreviewed findings |
+| GET `/v1/workspace` | workspace:read | Role, members, limits, usage and retention |
+| GET `/v1/workspace/usage` | workspace:read | Retained-media/speech metering |
+| POST `/v1/workspace/limits` | workspace:admin | Manual entitlement changes with reason |
+| GET/POST `/v1/workspace/members` | workspace:read / workspace:admin | Membership / role changes |
+| GET `/v1/workspace/audit` | workspace:admin | Local hash-chained audit receipts |
+| POST `/v1/workspace/retention` | workspace:admin | Retention policy; no automatic deletion |
+| GET `/v1/workspace/retention/preview` | workspace:admin | Eligible/protected sessions and preview hash |
+| POST `/v1/workspace/retention/apply` | workspace:admin | Explicit selected deletion with matching preview/reason |
+| GET/POST `/v1/workspace/cases/:case/access` | workspace:admin | Restricted case policy and member grants |
+| GET `/v1/agent` | sessions:read | Scoped adapter manifest; registration remains false |
 
-Create a session with `{id?, platform, account?, sourceUrl, title, startedAtMs}`.
-Ingest `{events: [...]}` with up to 200 events and a maximum 1 MiB request:
+Optional workers return an explicit unavailable error when unconfigured. Reports
+include media only for callers with `recordings:read`; media bytes are checked
+before export. Case-specific scopes in the table also enforce case permissions
+when governance is enabled. Stop/restore/run endpoints expect the empty JSON
+object `{}` unless their route defines a configuration body.
+
+## Evidence and operation contracts
+
+Create sessions with `{id?, platform, account?, sourceUrl, title, startedAtMs}`.
+Ingest `{events:[...]}` atomically, with at most 200 original events:
 
 ```json
 {
-  "source": {"adapter": "your-collector", "eventId": "provider-id-123"},
-  "kind": "transcript",
-  "text": "Words actually returned by the speech provider",
-  "speakerId": "speaker-1",
-  "sourceTimestampMs": 1791657600000,
+  "source": {"adapter":"configured-collector","eventId":"provider-event-id"},
+  "kind": "chat",
+  "text": "Words actually captured",
+  "account": "observed_platform_account",
+  "sourceTimestampMs": null,
   "capturedAtMs": 1791657600400,
-  "raw": {"providerConfidence": 0.87}
+  "raw": {"broadcastId":"known-provider-room-id"}
 }
 ```
 
-Event kinds: chat, caption, transcript, observation, gap. Source timestamps may be
-null and are never replaced by receipt timestamps. Speech cannot carry an account
-handle in the original event contract; add an explicitly labelled operator
-assertion separately. Event IDs are scoped by workspace, session, adapter and
-provider ID. Matching retries return the original event; conflicting content
-under the same identity refuses the entire batch with HTTP 409.
+Kinds are `chat`, `caption`, `transcript`, `observation`, `gap`. Provider source,
+collector capture and service receipt clocks remain separate. Missing provider
+source time remains null. Matching source-event retries return the original
+receipt; conflicting content under the same identity refuses the batch.
+Speech carries no inferred account identity. An operator assertion is a separate
+labelled revision, not a rewrite of the original evidence.
 
-Create a case with `{id?, title, question}`; link with `{evidenceIds:[...]}`; assert
-an account with `{account, reason}`. The reviewer comes from the API principal.
-Reports contain captured statements, source references, assertion history and
-integrity information. They do not perform semantic AI reasoning.
+Recording creation is `{id?,sessionId,sourceId,maxDurationSeconds?,segmentSeconds?}`.
+Only a configured source ID selects media. Default recording duration is 60 seconds;
+segments are 2–30 seconds and jobs are capped at one hour. The Linux recorder
+uses job leases, bounded retries, byte reservations, workspace limits and a
+default concurrency of two. It declares recording active only after verified
+media is retained. Failed/unlisted tails remain unavailable; gaps never stand in
+for missing content. Media timestamps are collector/media offsets.
 
-## Practical limits
+Schedules accept `{id?,sourceId,startAtMs?,endAtMs?,maxDurationSeconds?,segmentSeconds?,pollSeconds?,autoRecord?}`.
+`autoRecord` defaults false. Each schedule watches one explicitly selected source,
+within a maximum 24-hour window, with bounded polling/backoff. Discovery-only
+schedules do not record. Direct files are fixtures, HTTPS media is operator
+supplied, and the TikTok adapter addresses selected public accounts only. There
+is no universal guest/account locator or bypass of private broadcasts.
 
-SQLite and synchronous bounded API operations are suitable for this pilot, not a
-proven high-volume commercial service. Case exports are capped at 1,000 linked
-events; searches/pages at 200. There is no billing, case-level ACL, encryption,
-deletion/retention lifecycle, media store, durable recording scheduler or local
-speech model yet. A database administrator can rewrite an entire local chain;
-external signing, retained checkpoints and trusted timestamps are future work.
+Object archives snapshot currently verified segments; they do not promise
+future capture coverage. Archive creation is
+`{id?,recordingJobId,maxDurationSeconds?,maxAttempts?}`. Readback and manifest
+hashes must verify before completion. Missing/damaged local replay remains refused
+until an explicit archive restore completes. Archive encryption is configured
+server-side; API callers cannot supply storage endpoints or credentials.
+Workspace quotas reserve object bytes before upload, meter shared immutable media
+keys once and include manifests/encryption overhead. Failed uncertain writes keep
+their reservation; usage is a logical footprint rather than a provider bill.
 
-The SDK has been exercised against the actual HTTP service with synthetic data.
-No real TikTok broadcast, speech provider, VPS or registered ALFRED tool has been
-validated by this milestone. See the platform roadmap for the next acceptance gates.
+Speech jobs snapshot selected retained media. The optional PocketSphinx baseline
+performs independent offline recognition; it does not substitute platform captions.
+It has no measured multi-speaker diarisation or identity inference. Source-linked
+findings, graph edges and protection alerts require human review. Literal rule
+matches and temporal proximity do not establish harassment, identity or causation.
+Protection runs produce in-app candidates; they do not send external messages.
+
+Optional model analysis is a separate explicit request and data-egress decision.
+It sends only bounded evidence already linked to the selected case and creates
+unreviewed suggestions. Captured text cannot invoke tools, grant access or become
+accepted agent memory. [The ALFRED gateway](../../integrations/alfred/GATEWAY.md)
+rechecks source-read, collection-control and model-egress permissions separately;
+it does not register tools in the separate ALFRED repository.
+
+## Operational boundaries
+
+The default SQLite service remains a private pilot. The optional PostgreSQL
+bridge exposes the same synchronous pilot schema and serial writer behaviour;
+it is not the separate forced-RLS target schema or proven horizontal capacity.
+The optional AES-256-GCM object archive does not silently replace local recordings
+or encrypt the live SQLite database. Backups and recovery scaffolding are in
+[deployment instructions](../../deployment/livelens/README.md).
+
+Usage limits are manual entitlements, not a payment-provider integration. Public
+LIVE discovery/media capture, a second external platform, native Electron GUI,
+multispeaker diarisation and customer-scale capacity require separate validation.
+Generated recordings, protocol fixtures and configured adapters do not establish
+those results. Nothing is merged or deployed by these start/test commands.

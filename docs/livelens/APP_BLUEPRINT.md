@@ -1,5 +1,10 @@
 # LiveLens full application blueprint
 
+The operator implementation now follows this application map. Current code/acceptance receipts
+are in [FULL_APPLICATION.md](FULL_APPLICATION.md), [VALIDATION.md](VALIDATION.md) and the backlog.
+The starting-boundary table and first-build sequence below describe the historical brief;
+commercial and external-provider gates still require their own measured acceptance.
+
 Updated 10 October 2026 following the owner's request to expand the basic
 community manager into a complete app and eventual server product. This is a
 product and design brief. The features below are targets unless explicitly
@@ -50,6 +55,10 @@ avoid filling navigation with convincing but non-functional screens.
 
 - A restrained operational interface: dark graphite surfaces, clear contrast,
   refined typography, purposeful spacing and colour for state or emphasis.
+- Owner refinement, 11 October 2026: use the review inbox/detail structure from
+  the selected Mission Inbox concept. Replace bright lime/neon accents with warm
+  charcoal, off-white actions and subdued slate selection states. The owner
+  deferred Pinterest research after cloud network access was blocked.
 - One clear navigation system with a workspace header, contextual search and
   consistent detail views. Give an operator a useful next action on every screen.
 - Dense enough for investigation without making every page a wall of cards.
@@ -65,8 +74,8 @@ avoid filling navigation with convincing but non-functional screens.
 - Demo fixtures must be labelled. Counts, live status, recordings and working
   controls must reflect actual service state rather than decorative placeholder data.
 
-These are design instructions for the next implementation, not a claim that the
-current UI has already been redesigned.
+These instructions describe the accepted design target. The implemented overhaul
+and actual browser receipts are documented in FULL_APPLICATION.md and VALIDATION.md.
 
 ## First complete application release
 

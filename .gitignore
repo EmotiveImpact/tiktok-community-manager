@@ -6,3 +6,10 @@ release
 *.log
 .env
 .env.local
+/services/intelligence/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+core
+__pycache__/
+*.pyc

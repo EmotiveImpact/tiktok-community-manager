@@ -1,5 +1,9 @@
 # ALFRED integration contract
 
+The standalone scoped read/control policy gateway is now implemented and tested in
+[GATEWAY.md](../../integrations/alfred/GATEWAY.md). Registration in the separate ALFRED
+application remains outstanding. The earlier client-transport milestone below is historical.
+
 Inspected repository: `EmotiveImpact/Alfred`, main commit
 `75947b8dd59a3161c862d2533850a032994778e2`.
 Relevant sources: `README.md`, `AGENTS.md`, `alfred/connectors.py`.
@@ -47,5 +51,5 @@ registration, requested read scopes and inspected ALFRED revision.
 
 Collection controls follow as a separate integration once LiveLens has a durable
 job API. Their parameters need exact source IDs, duration/concurrency limits,
-retention and a traceable completion receipt. No such control API is implemented
-by this milestone.
+retention and a traceable completion receipt. Bounded recorder start/stop and independent dispatch policy are implemented in
+the standalone gateway; registration in ALFRED remains outstanding.

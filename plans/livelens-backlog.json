@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "product": "LiveLens",
-  "updated": "2026-10-10",
+  "updated": "2026-10-11",
   "baseline": {
     "repository": "EmotiveImpact/tiktok-community-manager",
     "branch": "feat/livelens-evidence-timeline-2026-10-10",
@@ -65,7 +65,7 @@
     {
       "id": "U00",
       "title": "Complete operator app foundation and design overhaul",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "F03",
         "C01"
@@ -78,12 +78,19 @@
         "Useful desktop/community/CRM workflows preserved; loading, empty, pending, failed and unavailable states reflect real service capabilities",
         "Operator browses a retained session, searches evidence, opens context, links a case and previews/exports a report after service restart",
         "Actual desktop and phone browser verification, accessible keyboard navigation, documented reproduction and labelled demo fixtures"
+      ],
+      "evidence": [
+        "src/pages/LiveLensConsole.tsx",
+        "src/pages/livelens.css",
+        "services/intelligence/src/browser.mjs",
+        "scripts/validation/browser_smoke.py",
+        "docs/livelens/FIRST_RELEASE.md"
       ]
     },
     {
       "id": "C01",
       "title": "Desktop-to-service evidence bridge",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "F03"
       ],
@@ -91,24 +98,42 @@
         "Explicit operator action archives a real captured timeline",
         "Source versus receipt timestamp basis retained; session IDs do not mix broadcasts",
         "Renderer never holds broad operator credentials"
+      ],
+      "evidence": [
+        "electron/livelens-archive.ts",
+        "electron/sessions.ts",
+        "test/livelens-archive.test.ts",
+        "docs/livelens/FIRST_RELEASE.md"
+      ],
+      "limitations": [
+        "Native Electron window startup is unverified in the container; archive contract and actual HTTP upload/retry are covered by tests."
       ]
     },
     {
       "id": "C02",
       "title": "Recorder source and licence selection",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "F01"
       ],
       "acceptance": [
         "Exact event connector and all direct/transitive runtime licence routes recorded",
         "One selected accessible media source produces available stream URLs without bypassing access controls"
+      ],
+      "evidence": [
+        "research/REUSE_REGISTER.md",
+        "research/runtime-lock.json",
+        "research/runtime-licences",
+        "docs/livelens/FIRST_RELEASE.md"
+      ],
+      "remaining": [
+        "Validate the selected accessible public LIVE and its permitted HTTPS media URL; no usable provider source supplied. Runtime/licence selection is recorded; fixture recording is verified separately."
       ]
     },
     {
       "id": "C03",
       "title": "Durable recorder worker",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "F03",
         "C02"
@@ -116,24 +141,42 @@
       "acceptance": [
         "One session has segmented media plus chat and gap records",
         "Durable jobs, stop/retry and restart recovery; recording-active requires written media"
+      ],
+      "evidence": [
+        "services/intelligence/src/recorder.mjs",
+        "services/intelligence/src/recorder-exec.py",
+        "services/intelligence/test/recorder.test.mjs",
+        "services/intelligence/scripts/recording-demo.mjs"
+      ],
+      "limitations": [
+        "Bounded concurrent Linux workers now support two jobs, workspace quotas and process-fenced leases. Real provider capture remains unverified; this is not a proven customer-scale distributed service."
       ]
     },
     {
       "id": "A01",
       "title": "Independent transcription and diarisation",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "C03"
       ],
       "acceptance": [
         "Known-audio evaluation measures text errors, speaker overlap and latency",
         "Speech segments reference media ranges; unidentified tracks remain unknown"
+      ],
+      "evidence": [
+        "services/intelligence/src/speech.mjs",
+        "services/intelligence/speech/README.md",
+        "services/intelligence/speech/evaluation.json",
+        "services/intelligence/test/speech.test.mjs"
+      ],
+      "remaining": [
+        "Independent PocketSphinx speech and media-linked anonymous tracks implemented; three known-audio excerpts measured 30% word error rate and 0.256 processing/audio ratio. Multi-speaker overlap and diarisation remain unmeasured; captions are kept separate."
       ]
     },
     {
       "id": "C04",
       "title": "Multi-stream scheduler",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "C03"
       ],
@@ -141,12 +184,22 @@
         "Two independent sessions collected concurrently without event/identity mixing",
         "Live-status polling, leases, backoff, quotas and durable restart handling",
         "Selected account watchlists discover their available broadcasts; observed guest/chat appearances do not imply a universal room-to-room locator"
+      ],
+      "evidence": [
+        "services/intelligence/src/scheduler.mjs",
+        "services/intelligence/src/source-adapters.mjs",
+        "services/intelligence/src/source-catalog.mjs",
+        "services/intelligence/test/scheduler.test.mjs",
+        "services/intelligence/test/recorder.test.mjs"
+      ],
+      "limitations": [
+        "Explicit bounded schedules only. Selected account polling/event subscription is implemented and exercised with provider fixtures; no external LIVE or universal account/guest locator was validated."
       ]
     },
     {
       "id": "U01",
       "title": "Intelligence operating console",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "C01",
         "C03",
@@ -156,12 +209,18 @@
         "Sessions, worker health, media replay, account activity, evidence and cases use the real API",
         "Desktop and phone browser acceptance; no decorative controls implying unavailable collection",
         "Full application map and design in APP_BLUEPRINT.md: conversation seek/context, evidence bookmarks, account activity, case notes/corrections and consistent navigation"
+      ],
+      "evidence": [
+        "src/pages/LiveLensConsole.tsx",
+        "src/components/livelens/AdvancedWorkspace.tsx",
+        "scripts/validation/full_app_smoke.py",
+        "docs/livelens/FULL_APPLICATION.md"
       ]
     },
     {
       "id": "I01",
       "title": "Context intelligence and findings",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "A01",
         "F03"
@@ -170,24 +229,38 @@
         "Topics, claims, possible incidents and counterevidence reference exact evidence",
         "Human review status preserved; adversarial transcript instructions cannot dispatch tools",
         "Cross-session statement/topic comparisons use captured evidence and distinguish suggested interpretation from original records"
+      ],
+      "evidence": [
+        "services/intelligence/src/investigations.mjs",
+        "services/intelligence/src/analysis.mjs",
+        "services/intelligence/test/analysis.test.mjs",
+        "services/intelligence/test/investigations.test.mjs"
+      ],
+      "remaining": [
+        "Source-linked findings, support/counterevidence, immutable reviews and literal cross-session comparisons implemented. Optional grounded model proposals are tested against an actual local HTTP fixture; external-provider semantic quality and broad incident detection remain unmeasured."
       ]
     },
     {
       "id": "I02",
       "title": "Source-supported relationship graph",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "I01"
       ],
       "acceptance": [
         "Observed, operator-reviewed and inferred links remain distinguishable",
         "Account identity, speaker track and real-world person are distinct objects"
+      ],
+      "evidence": [
+        "services/intelligence/src/investigations.mjs",
+        "src/components/livelens/advanced/ContextGraph.tsx",
+        "services/intelligence/test/investigations.test.mjs"
       ]
     },
     {
       "id": "P01",
       "title": "Protection missions and alerts",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "C04",
         "I01"
@@ -195,12 +268,20 @@
       "acceptance": [
         "Protected account, selected sources, rules and delivery preferences belong to one workspace",
         "Reviewed/uncertain alerts show source context and capture gaps"
+      ],
+      "evidence": [
+        "services/intelligence/src/investigations.mjs",
+        "services/intelligence/test/full-application.test.mjs",
+        "src/components/livelens/AdvancedWorkspace.tsx"
+      ],
+      "limitations": [
+        "Rules evaluate literal terms plus protected-account/context checks on retained evidence. In-app delivery is implemented; external notifications and broad threat-classifier quality are not configured or claimed."
       ]
     },
     {
       "id": "R01",
       "title": "Reviewed reports and evidence packs",
-      "status": "planned",
+      "status": "implemented",
       "dependsOn": [
         "I01",
         "U01"
@@ -208,24 +289,42 @@
       "acceptance": [
         "Report editor, redaction, PDF/JSON evidence bundle and retained source manifests",
         "Every material finding has sources and review history"
+      ],
+      "evidence": [
+        "services/intelligence/src/investigations.mjs",
+        "services/intelligence/src/pdf.mjs",
+        "services/intelligence/scripts/pdf-export.py",
+        "services/intelligence/test/full-application.test.mjs"
+      ],
+      "limitations": [
+        "JSON evidence packs contain original hash/source/media receipts rather than embedding media files. Redacted copies preserve originals and mask dependent text; persistent identifiers, paraphrases and media still require review before sharing."
       ]
     },
     {
       "id": "G01",
       "title": "Registered ALFRED read interface",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "F04"
       ],
       "acceptance": [
         "Dedicated ALFRED HTTP adapter respects source/model grants and workspace binding",
         "Revocation, unavailable service, token rotation and untrusted content acceptance tests"
+      ],
+      "evidence": [
+        "integrations/alfred/livelens_gateway.py",
+        "integrations/alfred/policy-tool-manifest.json",
+        "integrations/alfred/GATEWAY.md",
+        "services/intelligence/test/governance.test.mjs"
+      ],
+      "remaining": [
+        "Standalone policy gateway and real HTTP acceptance implemented; registration in the separate ALFRED application remains outstanding and that repository has not been changed."
       ]
     },
     {
       "id": "G02",
       "title": "ALFRED collection controls",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "G01",
         "C04"
@@ -233,12 +332,20 @@
       "acceptance": [
         "Explicit bounded job parameters and independent dispatch policy",
         "Traceable job receipt; memory acceptance never automatic"
+      ],
+      "evidence": [
+        "integrations/alfred/livelens_gateway.py",
+        "integrations/alfred/GATEWAY.md",
+        "services/intelligence/test/governance.test.mjs"
+      ],
+      "remaining": [
+        "Bounded start/stop with independent dispatch grants and rechecked policy implemented in the standalone gateway; separate ALFRED registration remains outstanding. No automatic memory acceptance."
       ]
     },
     {
       "id": "S01",
       "title": "Paid pilot infrastructure",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "C04",
         "U01",
@@ -251,12 +358,24 @@
         "Customer login, teams/roles and case-level permissions are enforced at the server; invited customer pilot precedes wider rollout",
         "Representative app-user load, recording concurrency and speech/analysis concurrency measured separately, with explicit latency, queue, storage and cost budgets",
         "Hundreds-of-users ambition remains a target until capacity and failure/recovery results support a stated service limit"
+      ],
+      "evidence": [
+        "services/intelligence/src/governance.mjs",
+        "services/intelligence/src/postgres-db.mjs",
+        "services/intelligence/src/media-archive.mjs",
+        "deployment/livelens/README.md",
+        "deployment/livelens/CAPACITY.md",
+        "services/intelligence/test/postgres.test.mjs",
+        "services/intelligence/test/media-archive-http.test.mjs"
+      ],
+      "remaining": [
+        "Optional PostgreSQL pilot-schema bridge tested on actual PostgreSQL 17.6; encrypted object archival and explicit restoration tested on local filesystem and signed S3 HTTP fixture. Target PostgreSQL RLS/queue migration, external object deployment, customer invitations/self-service login, payment-provider integration, representative customer load and production rollout remain outstanding. Local SQLite backup recovery is tested; PostgreSQL production backup operations need their own receipt."
       ]
     },
     {
       "id": "S02",
       "title": "Additional source platforms",
-      "status": "planned",
+      "status": "partial",
       "dependsOn": [
         "C04",
         "I01"
@@ -264,19 +383,29 @@
       "acceptance": [
         "A second permitted platform uses the same event/media contracts",
         "Independent provider failures and credentials isolated"
+      ],
+      "evidence": [
+        "services/intelligence/src/source-adapters.mjs",
+        "services/intelligence/src/source-catalog.mjs",
+        "services/intelligence/test/source-adapters.test.mjs"
+      ],
+      "remaining": [
+        "Direct permitted HTTPS media adapter implemented alongside selected TikTok-public adapter. A second named platform and external provider failure/credential behavior have not been validated."
       ]
     }
   ],
   "productTarget": {
     "application": "Complete browser-capable operator app with a substantial design overhaul; preserve useful existing desktop/community workflows",
     "growth": "Private operator app, invited customer pilot, then measured server operation towards hundreds of users",
-    "capacityStatus": "unvalidated",
+    "capacityStatus": "local-pilot-measured; customer-capacity-unvalidated",
     "firstBuild": [
       "U00",
       "C01",
       "C02",
       "C03"
     ],
-    "blueprint": "docs/livelens/APP_BLUEPRINT.md"
+    "blueprint": "docs/livelens/APP_BLUEPRINT.md",
+    "firstBuildStatus": "complete-private-operator-app; provider-validation-pending",
+    "expandedBuildStatus": "operator-workflows-implemented; speech-model-agent-and-commercial-gates-partial"
   }
 }

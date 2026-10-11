@@ -27,6 +27,11 @@ export function LiveLensPanel({ onClose }: { onClose: () => void }) {
   const [manual, setManual] = useState<Record<string, string>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editor, setEditor] = useState('');
+  const [archive, setArchive] = useState<{ state: string; error?: string }>({ state: 'unavailable' });
+  const [archiveSession, setArchiveSession] = useState('');
+  const [retained, setRetained] = useState<{ id: string; roomTitle: string }[]>([]);
+  useEffect(() => { if (window.tiktok.livelensArchive) window.tiktok.sessionsList().then(setRetained).catch(() => setRetained([])); }, [status]);
+  useEffect(() => { let live = true; window.tiktok.livelensArchiveStatus?.(archiveSession || undefined).then(s => live && setArchive(s)); return () => { live = false; }; }, [archiveSession]);
 
   const rows = useMemo(
     () => buildTimeline(room, comments, captions, {
@@ -93,6 +98,15 @@ export function LiveLensPanel({ onClose }: { onClose: () => void }) {
           </>
         }
       />
+      <div className="flex flex-wrap items-center gap-3 border-b border-zinc-700 px-4 py-3">
+        <label className="text-xs text-zinc-300">Desktop archive
+          <select aria-label="Desktop session to archive" value={archiveSession} onChange={e => setArchiveSession(e.target.value)} className="ml-2 rounded bg-zinc-800 p-2">
+            <option value="">Current broadcast</option>{retained.map(s => <option key={s.id} value={s.id}>{s.roomTitle || s.id}</option>)}
+          </select>
+        </label>
+        <button className="panel-btn" disabled={!window.tiktok.livelensArchive || (archive.state === 'pending' && !archive.error)} onClick={async () => { setArchive({ state: 'pending' }); try { setArchive(await window.tiktok.livelensArchive!(archiveSession || undefined)); } catch { setArchive({ state: 'failed', error: 'Upload failed; retry explicitly' }); } }}>Archive to LiveLens</button>
+        <span role="status" className="text-xs text-zinc-400">{window.tiktok.livelensArchive ? archive.state : 'Browser demo — desktop archiving unavailable'}{archive.error && ` · ${archive.error}`}</span>
+      </div>
       <div className="flex flex-none flex-wrap items-center gap-3 border-b border-zinc-800/60 px-4 py-3">
         <div className="mr-auto">
           <div className="text-sm font-semibold text-zinc-100">Listening context: @{room}</div>
@@ -186,8 +200,10 @@ export function LiveLensPanel({ onClose }: { onClose: () => void }) {
                 <div className="mt-1 text-zinc-200">{selected.source}</div>
               </div>
               <div>
-                <div className="text-zinc-500">Original timestamp</div>
-                <div className="mt-1 font-mono text-zinc-200">{new Date(selected.sourceTs).toISOString()}</div>
+                <div className="text-zinc-500">Provider timestamp</div>
+                <div className="mt-1 font-mono text-zinc-200">{selected.sourceTimestampMs == null ? 'Unavailable' : new Date(selected.sourceTimestampMs).toISOString()}</div>
+                <div className="mt-2 text-zinc-500">Collector timestamp</div>
+                <div className="mt-1 font-mono text-zinc-200">{new Date(selected.capturedAtMs).toISOString()}</div>
               </div>
               <div>
                 <div className="text-zinc-500">Evidence ID</div>

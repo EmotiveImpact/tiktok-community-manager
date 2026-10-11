@@ -16,8 +16,11 @@ export type EvidenceRow = {
   id: string;
   kind: EvidenceKind;
   room: string;
-  /** Original platform/event clock, never overwritten. */
+  /** Legacy original event clock. Consult timestampBasis before treating it as source time. */
   sourceTs: number;
+  sourceTimestampMs: number | null;
+  capturedAtMs: number;
+  timestampBasis: 'provider-and-collector' | 'collector-only';
   /** Aligned UTC clock, in milliseconds. */
   ts: number;
   text: string;
@@ -56,10 +59,12 @@ export function buildTimeline(
 
   for (const entry of comments) {
     if (entry.type !== 'chat' || !Number.isFinite(entry.ts)) continue;
-    const id = room + ':chat:' + entry.id;
+    const id = room + ':chat:' + (entry.sourceEventId || entry.id);
     rows.set(id, {
-      id, kind: 'chat', room, sourceTs: entry.ts, ts: entry.ts,
-      sourceId: entry.id, source: 'tiktok-chat',
+      id, kind: 'chat', room, sourceTs: entry.sourceTimestampMs ?? entry.ts, ts: entry.ts,
+      sourceTimestampMs: entry.sourceTimestampMs ?? null, capturedAtMs: entry.ts,
+      timestampBasis: entry.sourceTimestampMs == null ? 'collector-only' : 'provider-and-collector',
+      sourceId: entry.sourceEventId || entry.id, source: 'tiktok-chat',
       text: plainText(entry.comment),
       username: normaliseHandle(entry.user?.uniqueId ?? '') || null,
       attribution: 'platform-chat',
@@ -67,11 +72,13 @@ export function buildTimeline(
   }
   for (const entry of captions) {
     if (entry.type !== 'caption' || !entry.definite || !Number.isFinite(entry.ts)) continue;
-    const id = room + ':caption:' + entry.id;
+    const id = room + ':caption:' + (entry.sourceEventId || entry.id);
     const asserted = normaliseHandle(attribution[id] ?? '');
     rows.set(id, {
-      id, kind: 'caption', room, sourceTs: entry.ts, ts: entry.ts + offset,
-      sourceId: entry.id, source: 'tiktok-caption',
+      id, kind: 'caption', room, sourceTs: entry.sourceTimestampMs ?? entry.ts, ts: entry.ts + offset,
+      sourceTimestampMs: entry.sourceTimestampMs ?? null, capturedAtMs: entry.ts,
+      timestampBasis: entry.sourceTimestampMs == null ? 'collector-only' : 'provider-and-collector',
+      sourceId: entry.sourceEventId || entry.id, source: 'tiktok-caption',
       text: plainText(entry.text),
       username: asserted || null,
       attribution: asserted ? 'operator' : 'unknown',
@@ -181,7 +188,8 @@ export function reportMarkdown(report: EvidenceReport): string {
       '',
       '- ' + stamp(row.ts) + ' | ' + row.kind + ' | ' + person +
       ' | ' + quote(row.text) + ' | Evidence ID: ' + row.id +
-      ' | Original timestamp: ' + stamp(row.sourceTs),
+      ' | Source timestamp: ' + (row.sourceTimestampMs == null ? 'unavailable' : stamp(row.sourceTimestampMs)) +
+      ' | Collector timestamp: ' + stamp(row.capturedAtMs),
     );
   }
   lines.push('', '## Scope and limitations');

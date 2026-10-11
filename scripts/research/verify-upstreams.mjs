@@ -7,6 +7,22 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const lock = JSON.parse(readFileSync(resolve(root, 'research/upstream-lock.json'), 'utf8'));
 const modules = readFileSync(resolve(root, '.gitmodules'), 'utf8');
 if (lock.schemaVersion !== 1 || lock.repositories.length !== 8) throw new Error('invalid_upstream_lock');
+if ((modules.match(/^\[submodule /gm) ?? []).length !== 8) throw new Error('unexpected_submodules');
+const allLinks = spawnSync('git', ['ls-files', '--stage', '--', 'research/upstream'], { cwd: root, encoding: 'utf8' });
+if (allLinks.status !== 0 || allLinks.stdout.split('\n').filter(line => line.startsWith('160000 ')).length !== 8) throw new Error('unexpected_upstream_gitlinks');
+const cataloguePath = resolve(root, 'research/upstream/catalogue.lock.json');
+if (existsSync(cataloguePath)) {
+  const catalogue = JSON.parse(readFileSync(cataloguePath, 'utf8'));
+  if (catalogue.schema_version !== 1 || catalogue.items.length !== 8) throw new Error('invalid_research_catalogue');
+  const catalogueIds = new Set();
+  for (const item of catalogue.items) {
+    const current = lock.repositories.find(entry => entry.id === item.id);
+    if (!current || catalogueIds.has(item.id) || item.repository !== current.repository ||
+        item.submodule_path !== current.path || item.revision !== current.commit ||
+        item.https_url !== current.url.slice(0, -4) || item.linked_to_production !== false) throw new Error('research_catalogue_mismatch');
+    catalogueIds.add(item.id);
+  }
+}
 const checkedOut = process.argv.includes('--checkouts');
 const seen = new Set();
 for (const entry of lock.repositories) {

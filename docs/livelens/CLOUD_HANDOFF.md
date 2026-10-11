@@ -1,5 +1,20 @@
 # LiveLens cloud build handoff
 
+The first slice and expanded operator application are now implemented on
+`feat/livelens-first-release-2026-10-10` (draft PR #3). Read the latest HEAD,
+[HANDOFF.md](HANDOFF.md), [FULL_APPLICATION.md](FULL_APPLICATION.md),
+[RUNTIME_CONFIGURATION.md](RUNTIME_CONFIGURATION.md) and current backlog before
+using the historical starting instructions or paste-ready brief below. Later
+milestones are individually implemented or partial; external gates remain explicit.
+Do not reset the checkout to a historical checkpoint.
+
+First application release continuation: see [FIRST_RELEASE.md](FIRST_RELEASE.md),
+the new section in [HANDOFF.md](HANDOFF.md), and [VALIDATION.md](VALIDATION.md).
+U00/C01 and the bounded C03 recorder are implemented on
+`feat/livelens-first-release-2026-10-10`; C02's real provider check is pending.
+Use its latest head when continuing this implementation; do not reset to the
+historical foundation. The original authorised programme below remains retained.
+
 Prepared 10 October 2026. This is the product vision and continuation brief for
 the next coding task. Use the repository, backlog and verified code as the
 project memory. The next task must not depend on access to the previous chat.

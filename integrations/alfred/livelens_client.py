@@ -9,7 +9,9 @@ import argparse
 import json
 import os
 import re
+import socket
 from urllib.error import HTTPError
+from urllib.error import URLError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
@@ -28,11 +30,17 @@ class LiveLensClient:
             raise ValueError('https_or_loopback_required')
         if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}', token):
             raise ValueError('invalid_token')
+        if not isinstance(timeout, (float, int)) or not 0.05 <= timeout <= 30:
+            raise ValueError('invalid_timeout')
         self.base_url, self.token, self.timeout = base_url.rstrip('/'), token, timeout
         self.opener = build_opener(NoRedirect())
 
-    def _get(self, path: str):
-        request = Request(self.base_url + path, headers={'Authorization': 'Bearer ' + self.token})
+    def _request(self, path: str, value=None):
+        body = None if value is None else json.dumps(value, ensure_ascii=False).encode('utf-8')
+        if body is not None and len(body) > 1_048_576:
+            raise ValueError('request_too_large')
+        request = Request(self.base_url + path, data=body, headers={'Authorization': 'Bearer ' + self.token,
+                          **({'Content-Type': 'application/json'} if body is not None else {})})
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
                 raw = response.read(2_097_153)
@@ -41,6 +49,11 @@ class LiveLensClient:
                 return json.loads(raw)
         except HTTPError as error:
             raise RuntimeError('livelens_http_' + str(error.code)) from None
+        except (URLError, TimeoutError, socket.timeout):
+            raise RuntimeError('livelens_unavailable_or_timeout') from None
+
+    def _get(self, path: str):
+        return self._request(path)
 
     def capabilities(self):
         return self._get('/v1/capabilities')
@@ -60,6 +73,30 @@ class LiveLensClient:
         if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,95}', case_id):
             raise ValueError('invalid_case_id')
         return self._get('/v1/cases/' + quote(case_id, safe='') + '/report')
+
+    def evidence(self, evidence_id):
+        return self._get('/v1/evidence/' + self._identifier(evidence_id))
+
+    def context(self, evidence_id, limit=25):
+        return self._get('/v1/evidence/' + self._identifier(evidence_id) + '/context?' + urlencode({'limit': limit}))
+
+    def sources(self):
+        return self._get('/v1/sources')
+
+    def job(self, job_id):
+        return self._get('/v1/jobs/' + self._identifier(job_id))
+
+    def create_job(self, value):
+        return self._request('/v1/jobs', value)
+
+    def stop_job(self, job_id):
+        return self._request('/v1/jobs/' + self._identifier(job_id) + '/stop', {})
+
+    @staticmethod
+    def _identifier(value):
+        if not isinstance(value, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,95}', value):
+            raise ValueError('invalid_identifier')
+        return quote(value, safe='')
 
 
 def main():

@@ -1,0 +1,32 @@
+{
+  "source": "pocketsphinx-5.1.1 source distribution",
+  "archiveUrl": "https://files.pythonhosted.org/packages/61/e7/13e0e787ff467218de880310d79cba14424f13b87171ac44af0bde1e428c/pocketsphinx-5.1.1.tar.gz",
+  "archiveSha256": "675778b309a22dfc9b7d37f7621976bba491d2a5f8c59696bd77fd6d07271355",
+  "references": [
+    {
+      "id": "goforward",
+      "path": "test/data/goforward.raw",
+      "sha256": "f15c60ec54059d8b66e410d0064945a0b0a04ea56e1ddca1958e493c0cf70e71",
+      "encoding": "s16le-mono-16000",
+      "text": "go forward ten meters"
+    },
+    {
+      "id": "austen-0870",
+      "path": "test/data/librivox/sense_and_sensibility_01_austen_64kb-0870.wav",
+      "sha256": "b0557cf95c974d930577e58e46b7f068c432a6e3afcc286563d88922b2a5315c",
+      "encoding": "wav",
+      "text": "and mister john dashwood had then leisure to consider how much there might be prudently in his power to do for them"
+    },
+    {
+      "id": "austen-0890",
+      "path": "test/data/librivox/sense_and_sensibility_01_austen_64kb-0890.wav",
+      "sha256": "5793ffbdee55fb8bfd284943a6866864c832d9d4accf2661cabd39915c84ee10",
+      "encoding": "wav",
+      "text": "unless to be rather cold hearted and rather selfish is to be ill disposed"
+    }
+  ],
+  "limitations": [
+    "Three short single-speaker English references are not representative TikTok audio.",
+    "No speaker-overlap reference or real diarisation engine is evaluated."
+  ]
+}
