@@ -1,5 +1,9 @@
 # LiveLens — actual application screenshots
 
+Looking for the three newly proposed designs? Open the separate
+[visual concept gallery](design-concepts/visual-exploration-2026-10-11/README.md).
+Those are generated concepts; the screenshots below show the implemented app.
+
 ## Current recording workspace refinement — 11 October 2026
 
 The [implemented design pass](STUDIO_REFINEMENT.md) simplifies navigation, gives the
