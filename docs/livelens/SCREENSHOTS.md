@@ -1,5 +1,182 @@
 # LiveLens — actual application screenshots
 
+The owner selected **Aperture Studio** from the
+[visual concept gallery](design-concepts/visual-exploration-2026-10-11/README.md).
+The screenshots below show that language implemented in the actual app.
+
+## Operations & Recovery — 16 October 2026
+
+![Actual workspace Operations](screenshots/operations/01a-desktop-operations-viewport.png)
+
+[Operating guide](OPERATIONS.md) ·
+[Full desktop](screenshots/operations/01-desktop-operations.png) ·
+[Restricted access](screenshots/operations/02-desktop-restricted-workers.png) ·
+[Partial cleanup](screenshots/operations/03-desktop-retention-cleanup-failed.png) ·
+[Phone capacity](screenshots/operations/05-phone-pending-cleanup.png) ·
+[Phone retry failure](screenshots/operations/06-phone-durable-retry-failed.png) ·
+[Completed cleanup](screenshots/operations/07-phone-cleanup-complete.png) ·
+[Corrupt usage recovery](screenshots/operations/10-phone-capacity-unavailable.png).
+
+Twelve captures show the actual authenticated app with fictional workspace data,
+real generated-media recording and a real filesystem permission failure. Cleanup
+survives restart, retries the original task and releases its reservation only on
+completion. The final failure screen uses an actual damaged archive manifest;
+Operations remains available while capacity cannot be measured. These are neither
+mockups nor evidence of external LIVE. [Geometry and screenshot hashes](operations-layout-validation.json).
+
+## Investigation Desk — 16 October 2026
+
+![Actual investigation source gathering](screenshots/investigation-desk/02a-desktop-gather-viewport.png)
+
+[Full operating guide and delivery plan](INVESTIGATION_DESK.md) ·
+[Create from a statement](screenshots/investigation-desk/01-desktop-create-from-conversation.png) ·
+[Phone gathering](screenshots/investigation-desk/06a-phone-gather-viewport.png) ·
+[Reviewed finding](screenshots/investigation-desk/04-desktop-reviewed-finding.png) ·
+[Report](screenshots/investigation-desk/05-desktop-reviewed-brief.png).
+
+These are actual authenticated browser captures of explicitly fictional evidence,
+including real case writes, reviewed conflicting sources and report exports.
+They are not mockups or a real external LIVE. The prior recording and ALFRED gallery
+below remains available; this milestone extends the same Aperture design language.
+
+## Current Aperture workflows — 11 October 2026
+
+![Current working recording workspace](screenshots/operator-workflow/01-conversation-desktop.png)
+
+[Full-size conversation](screenshots/operator-workflow/01-conversation-full.png) ·
+[Phone](screenshots/operator-workflow/04-conversation-phone.png) ·
+[Monitor](screenshots/operator-workflow/02-monitor-desktop.png) ·
+[Library](screenshots/operator-workflow/03-library-desktop.png) ·
+[ALFRED access](screenshots/operator-workflow/07-alfred-access-desktop.png) ·
+[ALFRED private host](screenshots/operator-workflow/08-alfred-host-desktop.png) ·
+[ALFRED recipe](screenshots/operator-workflow/09-alfred-recipe-desktop.png) ·
+[ALFRED phone](screenshots/operator-workflow/11-alfred-host-phone.png).
+
+These actual browser screens add retained-time recording transport, whole-session
+and library search, stable saved evidence and a private ALFRED setup builder.
+Renderer `index-Bi3d_2-c.js`; stylesheet `index-BUy4-zTR.css`.
+[Full gallery and operating details](APERTURE_WORKFLOWS.md).
+
+The isolated visual fixture records a generated portrait with tone through FFmpeg;
+its captions are illustrative API input, not recognised speech or LIVE. ALFRED
+host fields contain fictional example values; no connection was installed.
+
+## Earlier Aperture Studio implementation — 11 October 2026
+
+![Actual Aperture Studio conversation](screenshots/aperture-studio/01-conversation-desktop.png)
+
+[Full-size desktop](screenshots/aperture-studio/01-conversation-desktop.png) ·
+[Monitor](screenshots/aperture-studio/02-monitor-desktop.png) ·
+[Library](screenshots/aperture-studio/03-library-desktop.png) ·
+[Phone conversation](screenshots/aperture-studio/04-conversation-phone.png) ·
+[Phone navigation](screenshots/aperture-studio/05-navigation-phone.png) ·
+[Phone monitor](screenshots/aperture-studio/06-monitor-phone.png).
+
+Actual browser captures of an authenticated **synthetic demo**: the studio portrait
+is generated and recorded with a tone through FFmpeg; captions are illustrative
+fixture text, not speech recognition. Thumbnails come from actual retained media.
+Renderer `index-CBq7TQKy.js`; stylesheet `index-uQ3gdMnf.css`. The
+[implementation guide](APERTURE_STUDIO.md) explains behavior, media and verification.
+
+## Earlier recording workspace refinement — 11 October 2026
+
+The [implemented design pass](STUDIO_REFINEMENT.md) simplifies navigation, gives the
+library real saved-capture metadata, places video beside a searchable timeline and
+keeps recording maintenance and idle schedules in disclosures. Final renderer:
+`index-DvisZsW-.js`; stylesheet: `index-BAyBVht6.css`.
+
+![Current recording workspace](screenshots/studio-refinement/04-conversation-desktop.png)
+
+[Monitor](screenshots/studio-refinement/01-monitor-desktop.png) ·
+[Library](screenshots/studio-refinement/02-library-desktop.png) ·
+[Review desk](screenshots/studio-refinement/06-review-desktop.png) ·
+[Phone library](screenshots/studio-refinement/08-library-phone.png) ·
+[Phone monitor](screenshots/studio-refinement/10-monitor-phone.png).
+
+These are actual authenticated fixture screens. The monochrome pattern is a real
+generated test recording; no screenshot or customer video has been recoloured.
+All evidence/accounts are fictional. Full captures and measured limits are linked
+from the refinement document; earlier screenshots remain historical evidence.
+
+## Earlier product audit — 11 October 2026
+
+[The eight-step audit](PRODUCT_AUDIT.md) contains the current assessment, before/after
+captures and remaining design work. These actual authenticated screens use
+`index-Ch5jfvlq.js` and `index-CepzgEEN.css`; all accounts and evidence are fictional.
+The colour bars are generated recording content. The common app shell, distinct
+saved-replay mode, phone drawer and ALFRED setup hierarchy are implemented.
+
+![Current actual LiveLens monitor](screenshots/product-audit/after-01-monitor.png)
+
+[Phone](screenshots/product-audit/after-02-phone.png) ·
+[Saved replay](screenshots/product-audit/after-03-replay.png) ·
+[Library](screenshots/product-audit/after-04-library.png) ·
+[Conversation](screenshots/product-audit/after-05-conversation.png) ·
+[Review](screenshots/product-audit/after-06-review.png) ·
+[ALFRED setup](screenshots/product-audit/after-07-alfred.png) ·
+[Settings](screenshots/product-audit/after-08-settings.png).
+
+All five final browser journeys pass. The product still needs navigation and
+conversation hierarchy work; these screenshots do not establish final design acceptance.
+
+## Earlier monitor redesign — 11 October 2026
+
+Actual authenticated application captures from renderer `index-BQzEr-5F.js` and
+stylesheet `index-gnFuFJ2Q.css`. The palette uses neutral charcoal and warm white;
+accounts, selected-source actions, the larger player and chat share one workspace.
+Phone controls and keyboard focus follow player → limits → conversation → chat.
+All accounts and evidence here are fictional fixtures. Recording colour bars are
+actual generated test media, not interface decoration or external LIVE footage.
+
+![Redesigned LiveLens desktop monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/monitor-redesign/desktop-ready.png)
+
+| Capture | Actual state |
+|---|---|
+| [Desktop ready](screenshots/monitor-redesign/desktop-ready.png) | Selected fixture account, recording idle, no automatic collection. |
+| [Phone ready](screenshots/monitor-redesign/phone-ready.png) | 390px layout; player and controls precede chat. |
+| [Recording and chat](screenshots/monitor-redesign/04-desktop-actual-fixture-recording.png) | Actual FFmpeg capture with verified playback and source-linked fictional chat. |
+| [Stopped recording](screenshots/monitor-redesign/05-desktop-stopped-recording-replay.png) | Verified saved video remains replayable after explicit stop. |
+| [Later chat](screenshots/monitor-redesign/06-desktop-late-chat-after-100-events.png) | Actual appended events advance the loaded-event window. |
+| [Phone replay](screenshots/monitor-redesign/07-phone-live-monitor.png) | Two configured sources, actual saved media and recording rows without horizontal overflow. |
+| [Read-only monitor](screenshots/monitor-redesign/08-desktop-read-only-live-monitor.png) | Viewer controls remain restricted; actual writes return HTTP 403. |
+| [Before desktop](screenshots/monitor-redesign/before-desktop.png) / [before phone](screenshots/monitor-redesign/before-phone.png) | Authenticated captures taken before this refinement. |
+
+[Monitor receipt](monitor-redesign-validation.json),
+[recording receipt](monitor-redesign-recording-validation.json),
+[measured layout and keyboard check](monitor-redesign-layout-validation.json),
+[review-desk regression](monitor-redesign-review-validation.json) and
+[onboarding regression](monitor-redesign-onboarding-validation.json) preserve the
+actual checked states. These checks do not establish owner design acceptance.
+
+## Earlier capture-first LIVE monitor
+
+The default home now shows selected accounts, bounded checks/watch schedules,
+Record/Stop and a large retained video/chat workspace. These are actual browser
+captures from final bundle `index-hYmzztav.js`, not generated design references.
+All accounts/evidence are fictional fixtures. Video is actual FFmpeg colour bars
+and tone; no external LIVE or direct live-video preview is claimed.
+[Browser receipt](live-monitor-validation.json),
+[recording receipt](live-monitor-recording-validation.json) and
+[operating guide](LIVE_MONITOR.md) explain the exercised controls and limits.
+
+![Capture-first monitor with actual generated recording and captured chat](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/04-desktop-actual-fixture-recording.png)
+
+| Capture | Actual state |
+|---|---|
+| [01 — Desktop monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/01-desktop-live-monitor-ready.png) | Configured source, no automatic collection. |
+| [02 — Saved account](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/02-desktop-configured-account-unchecked.png) | Fictional TikTok account remains unchecked; no provider is contacted. |
+| [03 — Source check](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/03-desktop-fixture-check-without-recording.png) | Bounded generated-file discovery check with recording off. |
+| [04 — Recording and chat](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/04-desktop-actual-fixture-recording.png) | Verified saved video beside source-linked fictional chat; explicit stop controls. |
+| [05 — Stopped recording](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/05-desktop-stopped-recording-replay.png) | Retained media stays replayable after explicit stop. |
+| [06 — Chat beyond 100 events](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/06-desktop-late-chat-after-100-events.png) | Rolling loaded-event window advances to actual later journal records. |
+| [07 — Phone monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/07-phone-live-monitor.png) | Actual 390-pixel layout with no horizontal overflow. |
+| [08 — Read-only monitor](https://raw.githubusercontent.com/EmotiveImpact/tiktok-community-manager/feat/livelens-live-studio-2026-10-11/docs/livelens/screenshots/live-monitor/08-desktop-read-only-live-monitor.png) | Viewer sees permitted retained data; actual write attempts return HTTP 403. |
+
+These screenshots establish the shown running states. Functional checks and
+reference comparisons do not establish final owner design acceptance.
+
+## Earlier operator and review-desk captures
+
 These captures show the running application, not mock-ups. Desktop
 views use 1440-pixel width; phone views use 390-pixel width. All accounts,
 statements and media are labelled fictional fixtures. The colour bars and tone

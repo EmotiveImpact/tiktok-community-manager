@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-16",
+  "fixture": true,
+  "externalLiveValidated": false,
+  "privateAlfredHostInstalledOrConnected": false,
+  "passedJourneys": 7,
+  "failedJourneys": 0,
+  "maxConcurrentBrowserJourneys": 2,
+  "rendererAssets": {
+    "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb",
+    "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf"
+  },
+  "screenshots": 70,
+  "publishedOperationsCaptures": 12,
+  "journeys": [
+    {
+      "journey": "original",
+      "passed": true,
+      "publishedReceipt": "operations-original-validation.json",
+      "receiptSha256": "55d0b51a407da3f54d0707f01acdccca711246cfc5371e6ac595be4a0a8b52e1",
+      "screenshots": 2,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
+        "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+      }
+    },
+    {
+      "journey": "full",
+      "passed": true,
+      "publishedReceipt": "operations-full-validation.json",
+      "receiptSha256": "2ced446d0a6fdd5b511d120cf08b12afbc228d46ae1b31d2e318149b27625f96",
+      "screenshots": 16,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
+        "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+      }
+    },
+    {
+      "journey": "review",
+      "passed": true,
+      "publishedReceipt": "operations-review-validation.json",
+      "receiptSha256": "d7066283e7af9f08fcca4bab09a5d2b4c67cfab468c58dddf9bff286afcd1c08",
+      "screenshots": 8,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
+        "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+      }
+    },
+    {
+      "journey": "onboarding",
+      "passed": true,
+      "publishedReceipt": "operations-onboarding-validation.json",
+      "receiptSha256": "3607fe2ebdaa61590296463aedd0c7f56bd10c21f000f76850723f003c6cce68",
+      "screenshots": 7,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
+        "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+      }
+    },
+    {
+      "journey": "monitor",
+      "passed": true,
+      "publishedReceipt": "operations-monitor-validation.json",
+      "receiptSha256": "f5d5b89192015ae36700b02a9d8a99004fd62b02b9ef21cf649f5f34a742e6a0",
+      "screenshots": 10,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
+        "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+      },
+      "followup": "Repeated with pinned hosted-CI Chromium1234 after retaining the one-shot response interceptor; exact-one schedule assertion added."
+    },
+    {
+      "journey": "investigation",
+      "passed": true,
+      "publishedReceipt": "operations-investigation-validation.json",
+      "receiptSha256": "970132204a9a416a9333512ed96b295ffc527c5727dec2052e9ea789e7e769fa",
+      "screenshots": 15,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
+        "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+      }
+    },
+    {
+      "journey": "journey",
+      "passed": true,
+      "publishedReceipt": "operations-journey-validation.json",
+      "receiptSha256": "064f83e55718c2353822bb3adf9e68186f45cfd75d69094b159e24743ca5f0d2",
+      "screenshots": 12,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
+        "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+      },
+      "followup": "Repeated with pinned Chromium1234 after focus ordering and recorder cleanup allocation fixes; exact reservations persist through restart and release only on completion."
+    }
+  ],
+  "maxConcurrentBrowserProcessesIncludingFollowupProbes": 4
+}

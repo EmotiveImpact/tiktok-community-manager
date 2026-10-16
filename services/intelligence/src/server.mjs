@@ -17,6 +17,7 @@ import { AnalysisProvider } from './analysis.mjs';
 import { SourceCatalog } from './source-catalog.mjs';
 import { PostgresDatabase } from './postgres-db.mjs';
 import { MediaArchive } from './media-archive.mjs';
+import { workspaceOperations } from './operations.mjs';
 import { objectStorageFromEnvironment } from './storage-config.mjs';
 import { AccountDirectory } from './accounts.mjs';
 
@@ -81,15 +82,22 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
       governance?.role(principal);
       const workspace = principal.workspace;
       const requireScope = (scope, context = {}) => { if (!principal.scopes.has(scope)) throw new Fault('scope_denied', 403); governance?.authorize(principal, scope, context); };
+      const allowed = (scope, context = {}) => { try { requireScope(scope, context); return true; } catch (error) { if (error instanceof Fault && error.status === 403) return false; throw error; } };
+      const caseCanWrite = caseId => allowed('cases:write', { caseId });
       const match = pattern => url.pathname.match(pattern);
       let route;
+      if (request.method === 'GET' && url.pathname === '/v1/workspace/operations') {
+        requireScope('workspace:read');
+        return send(response, 200, workspaceOperations({ store, governance, principal, allowed, recorder, scheduler, speech, mediaArchive }));
+      }
       if (request.method === 'GET' && url.pathname === '/v1/capabilities') return send(response, 200, {
         schemaVersion: 1, workspace, subject: principal.subject, scopes: [...principal.scopes],
+        permissions: { createCases: allowed('cases:write') },
         enabled: ['durable-evidence', 'search', 'case-exports', 'manual-attribution-history', 'session-integrity', 'reviewed-investigations', 'source-supported-graph', 'protection-missions', 'reviewed-alerts', 'redacted-report-exports', 'agent-gateway-adapter', ...(browser ? ['authenticated-console'] : []), ...(accounts ? ['persisted-browser-accounts', 'workspace-invitations'] : []), ...(recorder ? ['bounded-recording', 'retained-media-replay', 'concurrent-recording'] : []), ...(scheduler ? ['bounded-source-schedules'] : []), ...(speech ? ['speech-to-text'] : []), ...(governance ? ['workspace-roles', 'case-permissions', 'usage-and-retention'] : []), ...(analysis ? ['model-suggested-findings'] : []), ...(pdf ? ['pdf-reports'] : []), ...(mediaArchive ? ['verified-media-archive'] : []), ...(store.db.dialect === 'postgres' ? ['postgresql-store'] : [])],
         planned: ['validated-live-provider', 'validated-multi-speaker-diarisation', 'semantic-model-analysis', 'alfred-registration', 'production-postgresql-rollout', 'paid-provider-billing', 'measured-customer-capacity'],
         workers: { recording: !!recorder, scheduling: !!scheduler, speech: speech?.capabilities() ?? { enabled: false, reason: 'recognizer_not_configured', diarization: false }, mediaArchive: { enabled: !!mediaArchive, encrypted: !!mediaArchive?.encrypted } },
       });
-      if (await advancedRoute({ request, response, url, principal, requireScope, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive, accounts })) return;
+      if (await advancedRoute({ request, response, url, principal, requireScope, caseCanWrite, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive, accounts })) return;
       if (url.pathname === '/v1/overview' && request.method === 'GET') {
         requireScope('sessions:read'); requireScope('cases:read'); requireScope('evidence:read');
         const count = table => store.db.prepare(`SELECT count(*) AS n FROM ${table} WHERE workspace=?`).get(workspace).n;
@@ -105,7 +113,12 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
       }
       if (url.pathname === '/v1/jobs') {
         if (!recorder) throw new Fault('recorder_unavailable', 503);
-        if (request.method === 'GET') { requireScope('recordings:read'); return send(response, 200, { jobs: recorder.list(workspace, { limit: url.searchParams.get('limit') ?? 100 }) }); }
+        if (request.method === 'GET') {
+          requireScope('recordings:read');
+          const values = url.searchParams.getAll('active');
+          if (values.length > 1 || (values.length === 1 && !['true', 'false'].includes(values[0]))) throw new Fault('invalid_active_filter');
+          return send(response, 200, { jobs: recorder.list(workspace, { limit: url.searchParams.get('limit') ?? 100, active: values[0] === 'true' }) });
+        }
         if (request.method === 'POST') { requireScope('recordings:write'); const value = object(await readBody(request)); const requestId = value.id == null ? null : ident(value.id); const existing = requestId && store.db.prepare('SELECT 1 FROM recording_jobs WHERE workspace=? AND id=?').get(workspace, requestId); if (!existing) governance?.checkQuota(workspace, { recordingSeconds: value.maxDurationSeconds ?? 60, pendingJobs: 1 }); const job = recorder.create(workspace, value); governance?.recordAudit(workspace, 'capture.created', job.id, principal.subject, { sourceId: job.sourceId, maxDurationSeconds: job.maxDurationSeconds }); return send(response, 201, job); }
       }
       if ((route = match(/^\/v1\/jobs\/([A-Za-z0-9_-]+)(\/stop)?$/))) {
@@ -133,7 +146,7 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
         createReadStream(media.path, { start, end }).on('error', () => response.destroy()).pipe(response); return;
       }
       if (url.pathname === '/v1/sessions') {
-        if (request.method === 'GET') { requireScope('sessions:read'); return send(response, 200, { sessions: store.listSessions(workspace, url.searchParams.get('limit') ?? 100, Number(url.searchParams.get('offset') ?? 0)) }); }
+        if (request.method === 'GET') { requireScope('sessions:read'); return send(response, 200, { sessions: store.listSessions(workspace, url.searchParams.get('limit') ?? 100, Number(url.searchParams.get('offset') ?? 0), { query: url.searchParams.get('q') ?? '' }) }); }
         if (request.method === 'POST') { requireScope('sessions:write'); return send(response, 201, store.createSession(workspace, await readBody(request))); }
       }
       if ((route = match(/^\/v1\/sessions\/([A-Za-z0-9_-]+)$/)) && request.method === 'GET') {
@@ -141,7 +154,7 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
       }
       if ((route = match(/^\/v1\/sessions\/([A-Za-z0-9_-]+)\/events$/))) {
         if (request.method === 'GET') {
-          requireScope('evidence:read'); const events = store.events(workspace, route[1], { after: Number(url.searchParams.get('after') ?? 0), limit: url.searchParams.get('limit') ?? 100 });
+          requireScope('evidence:read'); const events = store.events(workspace, route[1], { after: Number(url.searchParams.get('after') ?? 0), limit: url.searchParams.get('limit') ?? 100, query: url.searchParams.get('q') ?? '', kind: url.searchParams.get('kind') ?? 'all' });
           return send(response, 200, { events, nextAfter: events.at(-1)?.sequence ?? null });
         }
         if (request.method === 'POST') {
@@ -153,9 +166,10 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
         requireScope('evidence:read'); return send(response, 200, store.verify(workspace, route[1]));
       }
       if (request.method === 'GET' && url.pathname === '/v1/evidence/search') {
-        requireScope('evidence:read'); return send(response, 200, { evidence: store.search(workspace, {
+        requireScope('evidence:read'); return send(response, 200, store.searchPage(workspace, {
           query: url.searchParams.get('q') ?? '', account: url.searchParams.get('account'), sessionId: url.searchParams.get('session'), limit: url.searchParams.get('limit') ?? 100,
-        }) });
+          kind: url.searchParams.get('kind') ?? 'all', offset: Number(url.searchParams.get('offset') ?? 0),
+        }));
       }
       if ((route = match(/^\/v1\/evidence\/([A-Za-z0-9_-]+)\/assertions$/))) {
         if (request.method === 'GET') { requireScope('evidence:read'); return send(response, 200, { assertions: store.assertionHistory(workspace, route[1]) }); }
@@ -168,18 +182,23 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
         requireScope('evidence:read'); requireScope('sessions:read'); return send(response, 200, store.context(workspace, route[1], url.searchParams.get('limit') ?? 25));
       }
       if (request.method === 'GET' && url.pathname === '/v1/cases') {
-        requireScope('cases:read'); const cases = store.listCases(workspace, url.searchParams.get('limit') ?? 100, Number(url.searchParams.get('offset') ?? 0)).filter(c => { if (!governance) return true; try { governance.authorize(principal, 'cases:read', { caseId: c.id }); return true; } catch { return false; } }); return send(response, 200, { cases });
+        requireScope('cases:read');
+        const role = governance?.role(principal);
+        const page = store.casePage(workspace, { limit: url.searchParams.get('limit') ?? 100, offset: Number(url.searchParams.get('offset') ?? 0), query: url.searchParams.get('q') ?? '', accessibleTo: governance && !['owner', 'admin'].includes(role) ? principal.subject : null });
+        return send(response, 200, { ...page, cases: page.cases.map(item => ({ ...item, canWrite: caseCanWrite(item.id) })) });
       }
       if ((route = match(/^\/v1\/cases\/([A-Za-z0-9_-]+)$/)) && request.method === 'GET') {
-        requireScope('cases:read', { caseId: route[1] }); return send(response, 200, store.case(workspace, route[1]));
+        requireScope('cases:read', { caseId: route[1] }); return send(response, 200, { ...store.case(workspace, route[1]), canWrite: caseCanWrite(route[1]) });
       }
       if (request.method === 'POST' && url.pathname === '/v1/cases') {
-        requireScope('cases:write'); const created = store.createCase(workspace, await readBody(request), principal.subject); governance?.recordAudit(workspace, 'case.created', created.id, principal.subject, {}); return send(response, 201, created);
+        requireScope('cases:write'); const value = object(await readBody(request), ['id', 'title', 'question', 'evidenceIds']);
+        if (value.evidenceIds !== undefined && (!Array.isArray(value.evidenceIds) || value.evidenceIds.length)) requireScope('evidence:read');
+        const created = store.createCase(workspace, value, principal.subject); governance?.recordAudit(workspace, 'case.created', created.id, principal.subject, {}); return send(response, 201, created);
       }
       if ((route = match(/^\/v1\/cases\/([A-Za-z0-9_-]+)\/evidence$/)) && request.method === 'POST') {
         requireScope('cases:write', { caseId: route[1] }); requireScope('evidence:read');
-        const body = object(await readBody(request), ['evidenceIds']);
-        return send(response, 200, store.linkEvidence(workspace, route[1], body.evidenceIds, principal.subject));
+        const body = object(await readBody(request), ['evidenceIds', 'forReview']);
+        return send(response, 200, store.linkEvidence(workspace, route[1], body.evidenceIds, principal.subject, { forReview: body.forReview }));
       }
       if ((route = match(/^\/v1\/cases\/([A-Za-z0-9_-]+)\/report$/)) && request.method === 'GET') {
         requireScope('cases:read', { caseId: route[1] }); requireScope('evidence:read'); let report = store.report(workspace, route[1]);

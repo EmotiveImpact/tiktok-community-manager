@@ -1,0 +1,177 @@
+/* Recorded conversations put playback and the searchable record together. */
+.ll-app.ll-product-shell .ll-playback-workspace {
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.ll-app.ll-product-shell .ll-conversation-player,
+.ll-app.ll-product-shell .ll-conversation-timeline { min-width: 0; }
+.ll-app.ll-product-shell .ll-conversation-player .ll-media {
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ll-surface);
+}
+.ll-app.ll-product-shell .ll-conversation-player .ll-media > .ll-section-head {
+  margin: 0;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--ll-line);
+}
+.ll-app.ll-product-shell .ll-conversation-player .ll-media video {
+  max-height: none;
+  border-radius: 0;
+}
+.ll-app.ll-product-shell .ll-conversation-player .ll-media > label {
+  display: block;
+  margin: 15px 16px;
+  font-size: 11px;
+  color: var(--ll-muted);
+}
+.ll-app.ll-product-shell .ll-conversation-player .ll-media > label select {
+  min-height: 38px;
+  margin-top: 7px;
+  font-size: 12px;
+}
+.ll-app.ll-product-shell .ll-conversation-player .ll-media > p,
+.ll-app.ll-product-shell .ll-conversation-player .ll-media > button { margin: 12px 16px; }
+.ll-app.ll-product-shell .ll-conversation-player .ll-media-empty {
+  aspect-ratio: 16 / 9;
+  min-height: 200px;
+  border-radius: 0;
+  background: #101112;
+}
+.ll-app.ll-product-shell .ll-recording-tools {
+  border-top: 1px solid var(--ll-line);
+  color: var(--ll-muted);
+  font-size: 12px;
+}
+.ll-app.ll-product-shell .ll-recording-tools > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.ll-app.ll-product-shell .ll-recording-tools > summary::-webkit-details-marker { display: none; }
+.ll-app.ll-product-shell .ll-recording-tools > summary > svg:last-child { margin-left: auto; }
+.ll-app.ll-product-shell .ll-recording-tools[open] > summary > svg:last-child { transform: rotate(180deg); }
+.ll-app.ll-product-shell .ll-recording-tools > summary:hover { color: var(--ll-text); background: var(--ll-surface-raised); }
+.ll-app.ll-product-shell .ll-recording-tools > summary:focus-visible { outline: 2px solid var(--ll-focus); outline-offset: -3px; }
+.ll-app.ll-product-shell .ll-recording-tools-body { padding: 0 16px 16px; }
+.ll-app.ll-product-shell .ll-segment-integrity {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ll-line);
+}
+.ll-app.ll-product-shell .ll-segment-integrity > svg { flex-shrink: 0; }
+.ll-app.ll-product-shell .ll-segment-integrity .ll-id { margin: 0; overflow-wrap: anywhere; }
+.ll-app.ll-product-shell .ll-recording-tools .ll-speech,
+.ll-app.ll-product-shell .ll-recording-tools .ll-media-archive { border-radius: 0; background: transparent; }
+.ll-app.ll-product-shell .ll-conversation-timeline {
+  overflow: hidden;
+  border: 1px solid var(--ll-line);
+  border-radius: 10px;
+  background: var(--ll-surface);
+}
+.ll-app.ll-product-shell .ll-conversation-timeline > .ll-section-head {
+  margin: 0;
+  padding: 15px 16px 12px;
+  gap: 10px;
+  align-items: flex-start;
+}
+.ll-app.ll-product-shell .ll-conversation-timeline .ll-section-head h2 { font-size: 14px; }
+.ll-app.ll-product-shell .ll-conversation-timeline .ll-section-head p { margin-top: 5px; font-size: 11px; }
+.ll-app.ll-product-shell .ll-context-link { padding: 4px 0; min-height: 30px; border: 0; background: transparent; font-size: 11px; white-space: nowrap; }
+.ll-app.ll-product-shell .ll-conversation-timeline .ll-timeline-toolbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 0;
+  padding: 0 16px 14px;
+}
+.ll-app.ll-product-shell .ll-conversation-timeline .ll-segmented { display: flex; }
+.ll-app.ll-product-shell .ll-conversation-timeline .ll-segmented button { flex: 1; padding: 7px; font-size: 11px; min-height: 32px; }
+.ll-app.ll-product-shell .ll-conversation-timeline .ll-timeline-toolbar > label {
+  width: 100%;
+  padding: 0 10px;
+  min-height: 36px;
+  background: var(--ll-bg);
+  border: 1px solid var(--ll-line);
+  border-radius: 6px;
+}
+.ll-app.ll-product-shell .ll-conversation-timeline .ll-timeline-toolbar input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+}
+.ll-app.ll-product-shell .ll-timeline-records {
+  max-height: 440px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ll-line-strong) transparent;
+  border-top: 1px solid var(--ll-line);
+}
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence-list { gap: 0; }
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence {
+  border: 0;
+  border-bottom: 1px solid var(--ll-line);
+  border-radius: 0;
+  padding: 13px 14px;
+  background: transparent;
+  gap: 12px;
+}
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence:hover,
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence.selected { background: var(--ll-selected); }
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence-time { width: 59px; font-size: 10px; }
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence-time small { font-size: 9px; }
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence-author strong { font-size: 11px; }
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence p { font-size: 13px; line-height: 1.6; }
+.ll-app.ll-product-shell .ll-timeline-records .ll-evidence-body > small { font-size: 10px; }
+.ll-app.ll-product-shell .ll-conversation-timeline > button { margin: 10px 14px; }
+.ll-app.ll-product-shell .ll-playback-workspace > .ll-context {
+  grid-column: 1 / -1;
+  position: static;
+  padding: 20px;
+  background: transparent;
+  scroll-margin-top: 76px;
+}
+.ll-app.ll-product-shell .ll-playback-workspace > .ll-context:not(.has-selection) {
+  border-style: dashed;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 20px;
+}
+.ll-app.ll-product-shell .ll-context:not(.has-selection) .ll-context-title { border: 0; padding: 0; margin: 0; flex-shrink: 0; }
+.ll-app.ll-product-shell .ll-context:not(.has-selection) .ll-empty { min-height: 0; padding: 0; text-align: left; border: 0; }
+.ll-app.ll-product-shell .ll-context:not(.has-selection) .ll-empty { align-items: flex-start; justify-items: start; }
+.ll-app.ll-product-shell .ll-context:not(.has-selection) .ll-empty > svg { display: none; }
+.ll-app.ll-product-shell .ll-context:not(.has-selection) .ll-empty h3 { margin: 0 0 4px; font-size: 12px; }
+.ll-app.ll-product-shell .ll-context:not(.has-selection) .ll-empty p { margin: 0; max-width: none; font-size: 12px; }
+.ll-app.ll-product-shell .ll-context.has-selection { max-width: 100%; }
+.ll-app.ll-product-shell .ll-context.has-selection > dl { display: grid; grid-template-columns: 135px minmax(0, 1fr); gap: 8px 20px; }
+.ll-app.ll-product-shell .ll-context.has-selection > dl dd { margin: 0; }
+.ll-app.ll-product-shell .ll-context.has-selection > form { max-width: 500px; }
+.ll-app.ll-product-shell .ll-context.has-selection blockquote { max-width: 850px; }
+.ll-app.ll-product-shell .ll-context.has-selection > .ll-evidence-list { max-width: 850px; }
+@media (max-width: 1100px) {
+  .ll-app.ll-product-shell .ll-playback-workspace { grid-template-columns: minmax(0, 1fr); }
+  .ll-app.ll-product-shell .ll-timeline-records { max-height: 480px; }
+}
+@media (max-width: 760px) {
+  .ll-app.ll-product-shell .ll-playback-workspace { gap: 16px; }
+  .ll-app.ll-product-shell .ll-playback-workspace > .ll-context { padding: 16px; }
+  .ll-app.ll-product-shell .ll-playback-workspace > .ll-context:not(.has-selection) { display: block; }
+  .ll-app.ll-product-shell .ll-context:not(.has-selection) .ll-context-title { margin-bottom: 12px; }
+  .ll-app.ll-product-shell .ll-context.has-selection > dl { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+  .ll-app.ll-product-shell .ll-context.has-selection > dl dd { margin-bottom: 8px; }
+  .ll-app.ll-product-shell .ll-conversation-timeline .ll-segmented button { min-height: 44px; }
+  .ll-app.ll-product-shell .ll-conversation-player .ll-media > label select { min-height: 44px; }
+  .ll-app.ll-product-shell .ll-conversation-timeline .ll-section-head { flex-wrap: wrap; }
+  .ll-app.ll-product-shell .ll-context-link { min-height: 44px; }
+  .ll-app.ll-product-shell .ll-specialist-navigation button { min-height: 44px; font-size: 12px; }
+}

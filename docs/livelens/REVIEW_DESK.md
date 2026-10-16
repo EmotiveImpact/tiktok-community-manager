@@ -1,8 +1,13 @@
 # LiveLens review desk
 
-The console home now places retained evidence, protection signals and draft
+The review desk places retained evidence, protection signals and draft
 findings beside their original source context. The owner selected the Mission
 Inbox structure and requested a restrained dark interface without neon accents.
+
+It is now a secondary workflow. The owner's later direction makes the
+[LIVE monitor](LIVE_MONITOR.md) the default entry point, with account selection,
+capture controls and a large recording/chat workspace. The prior desk checks
+below remain functional receipts; they do not establish final design acceptance.
 
 The desk uses existing authenticated workspace routes. It loads at most 100
 recent evidence records, 100 protection signals and drafts from six accessible

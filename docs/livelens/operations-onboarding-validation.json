@@ -1,0 +1,37 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "actualPersistedAccounts": true,
+  "ownerCreatesViewerAndAnalystInBrowser": true,
+  "privateLinkClipboardAndFragment": true,
+  "desktop1440AndPhone390": true,
+  "keyboardFormNavigation": true,
+  "minimumPasswordEnforced": true,
+  "correctWorkspaceAndRole": true,
+  "crossWorkspaceResourcesDenied": true,
+  "viewerWriteDenied403": true,
+  "analystCreatesActualInvestigation": true,
+  "sameSessionRoleDowngradeWriteDenied": true,
+  "noStaleWritePersisted": true,
+  "passwordResetInvalidatesMultipleCookies": true,
+  "singleUseLinks": true,
+  "expiredAndRevokedLinksDenied": true,
+  "revokedIdentityCannotRead": true,
+  "serviceRestartCredentialsPersist": true,
+  "bootstrapPasswordNotRestored": true,
+  "ambiguousUsernameDenied401": true,
+  "explicitWorkspaceBrowserLoginBound": true,
+  "accountMetadataAuditAndDatabaseOmitRawSecrets": true,
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:55373/app/assets/index-Brl14Sbd.css",
+      "sha256": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf"
+    },
+    {
+      "url": "http://127.0.0.1:55373/app/assets/index-CrYZznnn.js",
+      "sha256": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+    }
+  ],
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-o01-browser-final/onboarding"
+}

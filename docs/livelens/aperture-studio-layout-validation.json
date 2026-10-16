@@ -1,0 +1,83 @@
+{
+  "geometry": [
+    {
+      "class": "ll-sidebar ",
+      "top": 0,
+      "left": 0,
+      "width": 72,
+      "height": 1058
+    },
+    {
+      "class": "ll-top",
+      "top": 0,
+      "left": 72,
+      "width": 1415,
+      "height": 72
+    },
+    {
+      "class": "ll-heading",
+      "top": 92,
+      "left": 100,
+      "width": 1359,
+      "height": 100.59375
+    },
+    {
+      "class": "ll-conversation-player",
+      "top": 204.59375,
+      "left": 100,
+      "width": 869.171875,
+      "height": 818.5
+    },
+    {
+      "class": "ll-saved-moments",
+      "top": 765.5,
+      "left": 100,
+      "width": 869.171875,
+      "height": 189
+    },
+    {
+      "class": "ll-recording-tools",
+      "top": 974.5,
+      "left": 100,
+      "width": 869.171875,
+      "height": 48.59375
+    },
+    {
+      "class": "ll-conversation-timeline ",
+      "top": 204.59375,
+      "left": 989.171875,
+      "width": 469.828125,
+      "height": 613.390625
+    }
+  ],
+  "uncaughtPageErrors": [],
+  "renderer": "./assets/index-CBq7TQKy.js",
+  "fixture": true,
+  "generatedStudioMediaSeconds": 6.023,
+  "sourceVisualTruth": "docs/livelens/design-concepts/visual-exploration-2026-10-11/01-aperture-studio.png",
+  "sourcePixels": [
+    1487,
+    1058
+  ],
+  "desktopCssViewport": [
+    1487,
+    1058
+  ],
+  "deviceScaleFactor": 1,
+  "phoneCssViewport": [
+    390,
+    844
+  ],
+  "stylesheet": "index-uQ3gdMnf.css",
+  "noHorizontalOverflow": true,
+  "mediaDisclosure": "Generated studio still plus tone recorded through the actual isolated FFmpeg fixture; captions are an illustrative script, not recognised speech.",
+  "actualScreenshotSha256": {
+    "01-conversation-desktop.png": "df7446d985d181df977dc3d6d997fb179288e47c63f8c176e9388bb3925395d0",
+    "01-conversation-full.png": "be939ce3eec91008922b0e14375a333eb4f4353be54bf56417711c017ca4ab9b",
+    "02-monitor-desktop.png": "f27fa6f883ac9b6b1557b2eea10ee6ed66cf83073f2c39a3515a3d41bef80f7a",
+    "03-library-desktop.png": "a201f39b631cb845a3e8b200975741d5a6ecd967afdf0e8fc94fac766c634338",
+    "04-conversation-phone.png": "8ea7817a3d134f4a8dfc2736acdc60e93c770e98a596d211e847f02a0605920c",
+    "05-navigation-phone.png": "e408aa6cb2cf0235444d554f85bfbb0b928e6a7d75def63fee09a270d3f96f53",
+    "06-monitor-phone.png": "8e6c21be145a803e7316daa5af82aeabf115e7d0709aeb53f92eec6213918d93"
+  }
+}

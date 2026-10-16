@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "product": "LiveLens",
+  "status": "active",
+  "setBy": "owner instruction, 2026-10-16",
+  "goal": "A polished, reliable capture-first conversation-intelligence application: permitted capture to searchable originals, reviewed investigations and reports, usable independently and through scoped ALFRED tools.",
+  "masterPlan": "docs/livelens/MASTER_PLAN.md",
+  "designLanguage": "Aperture Studio",
+  "currentMilestone": null,
+  "continuation": "Complete the highest-priority unblocked milestone with real validation and reviewable publication; continue independent work when external prerequisites are missing.",
+  "stages": [
+    {
+      "id": "operator",
+      "status": "implemented-fixture-verified",
+      "milestones": [
+        "U00",
+        "U01",
+        "U02"
+      ]
+    },
+    {
+      "id": "operations-recovery",
+      "status": "implemented-local-pilot-verified",
+      "milestones": [
+        "O01"
+      ]
+    },
+    {
+      "id": "real-source",
+      "status": "needs-selected-source-and-provider-access",
+      "milestones": [
+        "C02",
+        "C05"
+      ]
+    },
+    {
+      "id": "speech-context-quality",
+      "status": "planned-local-evaluation",
+      "milestones": [
+        "A01",
+        "A02",
+        "I01",
+        "I03"
+      ]
+    },
+    {
+      "id": "private-alfred",
+      "status": "needs-private-host",
+      "milestones": [
+        "G01",
+        "G02",
+        "G03"
+      ]
+    },
+    {
+      "id": "investigation-protection-depth",
+      "status": "planned-on-working-foundation",
+      "milestones": [
+        "I04",
+        "P02",
+        "R02"
+      ]
+    },
+    {
+      "id": "production-pilot",
+      "status": "planned",
+      "milestones": [
+        "S01",
+        "S03"
+      ]
+    },
+    {
+      "id": "commercial-expansion",
+      "status": "planned",
+      "milestones": [
+        "S04",
+        "S02"
+      ]
+    }
+  ],
+  "completion": "Every selected release stage has its stated actual exit evidence, including real provider/private-host and operational/commercial gates; unrun checks and fixture-only evidence cannot complete external gates.",
+  "autonomousQueue": [
+    "A02",
+    "I03",
+    "I04",
+    "R02"
+  ],
+  "conditionalQueue": [
+    "C05",
+    "G03",
+    "P02",
+    "S03",
+    "S04",
+    "S02"
+  ],
+  "lastDeliveredMilestone": "O01",
+  "nextMilestone": "A02",
+  "nextMilestoneStatus": "queued",
+  "latestValidation": "docs/livelens/VALIDATION.md"
+}

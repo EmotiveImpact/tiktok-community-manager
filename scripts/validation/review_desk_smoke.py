@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
+from browser_navigation import navigate, renderer_assets
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -59,6 +60,49 @@ def stop(child):
     except subprocess.TimeoutExpired:
         child.kill()
         child.wait(timeout=5)
+
+
+def verify_pending_navigation_focus(page, collection):
+    """Reproduce a navigation frame arriving after a test targets a control.
+
+    The application focuses main on its next animation frame. Hold that actual
+    focus request, target the summary, then deliver the pending request before
+    Enter. This establishes why keyboard actions must wait for navigation to
+    finish; no network response or application state is fabricated.
+    """
+    page.evaluate("""() => {
+        const original = HTMLElement.prototype.focus;
+        const probe = window.__reviewDeskFocusProbe = { intercepted: false, pending: null, released: false };
+        probe.restore = () => { HTMLElement.prototype.focus = original; };
+        HTMLElement.prototype.focus = function(...args) {
+            if (this.id === 'll-main' && !probe.intercepted) {
+                probe.intercepted = true;
+                probe.pending = () => original.apply(this, args);
+            } else original.apply(this, args);
+        };
+    }""")
+    try:
+        navigate(page, "Review desk")
+        page.wait_for_function("() => typeof window.__reviewDeskFocusProbe?.pending === 'function'")
+        summary = collection.locator("summary")
+        expect(collection).not_to_have_attribute("open", "")
+        summary.focus()
+        expect(summary).to_be_focused()
+        page.evaluate("""() => {
+            const probe = window.__reviewDeskFocusProbe;
+            probe.restore();
+            probe.pending();
+            probe.pending = null;
+            probe.released = true;
+        }""")
+        expect(page.locator("#ll-main")).to_be_focused()
+        page.keyboard.press("Enter")
+        expect(collection).not_to_have_attribute("open", "")
+        assert page.evaluate("window.__reviewDeskFocusProbe.intercepted && window.__reviewDeskFocusProbe.released")
+        return {"pendingNavigationFocusDeliveredAfterSummaryFocus": True,
+                "enterOnMainLeavesCollectionCollapsed": True}
+    finally:
+        page.evaluate("() => { window.__reviewDeskFocusProbe?.restore(); delete window.__reviewDeskFocusProbe; }")
 
 
 def launch(directory, readonly=False):
@@ -128,6 +172,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
                 with page.expect_response(lambda response: response.url.endswith("/console/login") and response.request.method == "POST") as authenticated:
                     page.get_by_role("button", name="Open workspace", exact=True).click()
                 assert authenticated.value.status == 200
+                page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
+                navigate(page, "Review desk")
                 page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
                 return authenticated.value.json()["csrf"]
 
@@ -144,9 +190,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
                 return response.json()
 
             def nav(label):
-                if page.viewport_size["width"] < 800:
-                    page.get_by_role("button", name="Toggle navigation", exact=True).click()
-                page.get_by_role("navigation", name="LiveLens navigation").get_by_role("button", name=label, exact=True).click()
+                navigate(page, label)
 
             def capture(name):
                 page.evaluate("window.scrollTo(0, 0)")
@@ -341,7 +385,21 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             capture("02a-desktop-after-acknowledgement-selection.png")
 
             # Explicit discovery without auto-recording cannot create hidden captures.
+            collection = page.locator("details.ll-desk-collection")
+            navigation_focus = verify_pending_navigation_focus(page, collection)
             nav("Review desk")
+            # Re-entering an already rendered view still schedules main.focus.
+            # Wait for that actual navigation effect before targeting summary.
+            expect(page.locator("#ll-main")).to_be_focused()
+            collection_summary = collection.locator("summary")
+            expect(collection_summary).to_contain_text("Collection schedule")
+            assert not collection.evaluate("element => element.open"), "Idle review must keep collection details collapsed"
+            expect(collection.get_by_role("button", name="View schedules", exact=True)).not_to_be_visible()
+            collection_summary.focus()
+            expect(collection_summary).to_be_focused()
+            page.keyboard.press("Enter")
+            expect(collection).to_have_attribute("open", "")
+            navigation_focus["keyboardDisclosureOpensAfterNavigationFocusSettles"] = True
             page.get_by_role("button", name="View schedules", exact=True).click()
             page.get_by_label("Selected source", exact=True).select_option("fixture-media")
             page.get_by_label("Watch window (minutes)", exact=True).fill("1")
@@ -354,12 +412,42 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             schedule = created_schedule.value.json()
             assert schedule["sourceId"] == "fixture-media" and schedule["autoRecord"] is False
             assert schedule["maxDurationSeconds"] == 8 and 0 < schedule["endAtMs"] - schedule["startAtMs"] <= 61000
+            # Creation precedes the local worker's first discovery. Wait for
+            # that actual receipt so an older scheduled snapshot cannot be
+            # compared with the desk's newer discovered state.
+            discovery_deadline = time.monotonic() + 10
+            while time.monotonic() < discovery_deadline:
+                discovered_schedule = next(item for item in read("/v1/schedules")["schedules"] if item["id"] == schedule["id"])
+                if discovered_schedule["pollCount"] >= 1 and discovered_schedule["lastCheckedAtMs"] is not None:
+                    break
+                page.wait_for_timeout(100)
+            assert discovered_schedule["status"] == "available" and discovered_schedule["state"] == "discovered"
+            assert discovered_schedule["jobId"] is None and discovered_schedule["autoRecord"] is False
+            with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/schedules" and response.request.method == "GET") as desk_schedules:
+                nav("Review desk")
+            assert desk_schedules.value.status == 200
+            displayed_schedule = next(item for item in desk_schedules.value.json()["schedules"] if item["id"] == schedule["id"])
+            assert displayed_schedule["state"] == discovered_schedule["state"]
+            assert displayed_schedule["state"] not in {"stopped", "completed", "failed"}
+            expect(collection).to_have_attribute("open", "")
+            expect(collection.get_by_role("region", name="Selected source schedules")).to_contain_text(displayed_schedule["state"] + " · closes")
+            expect(collection.get_by_role("button", name="Stop schedule", exact=True)).to_have_count(0)
+            collection.get_by_role("button", name="View schedules", exact=True).click()
             page.get_by_role("button", name="Stop schedule", exact=True).click()
             page.get_by_text("Source schedule stopped.", exact=True).wait_for()
             assert next(item for item in read("/v1/schedules")["schedules"] if item["id"] == schedule["id"])["state"] == "stopped"
             assert [item["id"] for item in read("/v1/jobs")["jobs"]] == prior_jobs
             nav("Review desk")
+            expect(collection_summary).to_be_visible()
+            stopped_receipt = page.get_by_role("region", name="Selected source schedules", include_hidden=True).get_by_text(re.compile("stopped · closes"))
+            expect(stopped_receipt).to_have_count(1)
+            assert not collection.evaluate("element => element.open"), "Stopped collection must remain quiet on a fresh review desk"
+            expect(stopped_receipt).not_to_be_visible()
+            collection_summary.focus()
+            page.keyboard.press("Enter")
             expect(page.get_by_role("region", name="Selected source schedules").get_by_text(re.compile("stopped · closes"))).to_be_visible()
+            collection_summary.focus()
+            page.keyboard.press("Enter")
 
             # Phone selection moves focus to a real detail; back restores its row.
             page.set_viewport_size({"width": 390, "height": 844})
@@ -418,7 +506,9 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             assert denied.status == 403 and denied.json()["error"] == "scope_denied"
             capture("06-desktop-read-only-desk.png")
             assert not errors, errors
-            receipt = {"fixture": True, "externalLiveValidated": False, "desktop1440AndPhone390": True, "sourceSelectionAndCounterevidence": True, "sourceResetAfterFindingRevisionRefresh": True, "actualPreviewPlaybackAndSeek": True, "exactOriginalContextNavigation": True, "correctInvestigationDeepLinkAndReload": True, "investigationLibrarySelectionBackAndReload": True, "signalAcknowledgementPersisted": True, "acknowledgementReceiptBoundToSelectedItem": True, "boundedScheduleWithoutHiddenCapture": True, "phoneSelectionBackAndKeyboardFocus": True, "readOnlyScopeFilteredResources": True, "actualReadOnlyWriteDenied": True, "serviceRestartReopen": True, "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS)}
+            receipt = {"fixture": True, "externalLiveValidated": False, "desktop1440AndPhone390": True, "sourceSelectionAndCounterevidence": True, "sourceResetAfterFindingRevisionRefresh": True, "actualPreviewPlaybackAndSeek": True, "exactOriginalContextNavigation": True, "correctInvestigationDeepLinkAndReload": True, "investigationLibrarySelectionBackAndReload": True, "signalAcknowledgementPersisted": True, "acknowledgementReceiptBoundToSelectedItem": True, "boundedScheduleWithoutHiddenCapture": True, "collectionDisclosureQuietWhenIdleAndOpensForActualSchedule": True, "phoneSelectionBackAndKeyboardFocus": True, "readOnlyScopeFilteredResources": True, "actualReadOnlyWriteDenied": True, "serviceRestartReopen": True, "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS)}
+            receipt["rendererAssets"] = renderer_assets(page)
+            receipt["controlledNavigationFocusOrdering"] = navigation_focus
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))
             print(json.dumps(receipt))
             browser.close()

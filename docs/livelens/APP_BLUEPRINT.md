@@ -1,6 +1,7 @@
 # LiveLens full application blueprint
 
-The operator implementation now follows this application map. Current code/acceptance receipts
+The [standing product goal and current delivery programme](MASTER_PLAN.md) supersede historical next-step wording in this document.
+The operator implementation follows this application map. Current code/acceptance receipts
 are in [FULL_APPLICATION.md](FULL_APPLICATION.md), [VALIDATION.md](VALIDATION.md) and the backlog.
 The starting-boundary table and first-build sequence below describe the historical brief;
 commercial and external-provider gates still require their own measured acceptance.
@@ -12,8 +13,18 @@ identified as implemented in the backlog and validation receipt.
 
 ## Intended outcome
 
-**A polished conversation intelligence and protection application, backed by a
-durable engine that human operators and ALFRED can both use.**
+**A usable LIVE monitor and recorder that turns captured conversations into
+source-supported investigations, protection review and reports.**
+
+Latest owner direction, 11 October 2026: implement the selected **Aperture Studio**
+visual language around the recorder workflow. See [APERTURE_STUDIO.md](APERTURE_STUDIO.md)
+for the selected reference, actual implementation and screenshot evidence.
+The default home prioritises selected `@account` sources,
+bounded LIVE checking/watch schedules, Record/Stop, large retained video with
+captured chat and recent recordings. The review desk becomes a secondary screen.
+See [LIVE_MONITOR.md](LIVE_MONITOR.md) for the operating guide and source-pattern
+attribution. Working controls and browser receipts do not establish visual
+acceptance or real external LIVE access.
 
 An operator selects sources and a mission, collects conversations, reopens their
 media and evidence, investigates events across sessions and produces a reviewed
@@ -38,7 +49,8 @@ avoid filling navigation with convincing but non-functional screens.
 
 | Area | Screens and useful actions | Delivery |
 |---|---|---|
-| Overview / operations | Actual sessions, job state, recent evidence, service health, capture gaps and usage; open the item behind each figure | U00 starts from available data; C03/U01 add worker operations |
+| LIVE monitor / capture | Selected accounts, explicit bounded checks/watch schedules, Record/Stop, retained video and captured chat, recent recordings, actual job state and gaps | Current capture-first entry point over C03/C04/U01; external LIVE acceptance remains separate |
+| Review / operations | Retained evidence, pending protection signals and draft findings with exact source context; worker health and usage | Secondary review desk and existing operations routes |
 | Sources and missions | Configured accounts and sources, accessibility, schedules, limits, start/stop and research/protection objectives | C02/C03/C04; P01 adds protection rules |
 | Session library | Search, filters, source/account/date, completeness, retention state, open/replay/export | U00 evidence library; C03/U01 media |
 | Conversation | Video/audio beside timed chat, transcript and speaker turns; seek from evidence, search, bookmark and inspect original context | U00 existing evidence; C03/U01 replay; A01 independent speech |
@@ -49,16 +61,19 @@ avoid filling navigation with convincing but non-functional screens.
 | Alerts / protection | Mission-specific rules, contextual alerts, review, acknowledgement, delivery history | P01 |
 | Community / CRM | Preserve useful fan records, gifts, notes, relationship tools and existing creator workflows | Existing app; make access coherent during expansion |
 | Settings / workspace | Service/source configuration, capabilities, access, limits, retention and audit; later team roles and billing | U00 private pilot settings; S01 commercial controls |
-| ALFRED connection | Connection state and permitted tools, evidence receipts and later bounded job controls | F04 transport exists; G01/G02 registration/control planned |
+| ALFRED connection | Explicit private installation, current permitted tools, source receipts and exact approved bounded recording controls | G01/G02 actual optional HTTP/CLI runtime implemented/tested in separate draft PR #20; no NLP auto-tool or tool-board UI claim |
 
 ## Design direction
 
 - A restrained operational interface: dark graphite surfaces, clear contrast,
   refined typography, purposeful spacing and colour for state or emphasis.
-- Owner refinement, 11 October 2026: use the review inbox/detail structure from
-  the selected Mission Inbox concept. Replace bright lime/neon accents with warm
-  charcoal, off-white actions and subdued slate selection states. The owner
-  deferred Pinterest research after cloud network access was blocked.
+- Latest owner selection, 11 October 2026: **Aperture Studio**, with a narrow icon
+  rail, self-hosted Inter, a large recording beside conversation and saved moments
+  underneath. Carry its warm charcoal, off-white actions and subdued states into
+  the capture-first monitor, compact source strip and divided recording library.
+  The earlier selected Mission Inbox concept belongs to the secondary review
+  desk; its acceptance receipts remain historical. Pinterest research was
+  deferred after cloud network access was blocked.
 - One clear navigation system with a workspace header, contextual search and
   consistent detail views. Give an operator a useful next action on every screen.
 - Dense enough for investigation without making every page a wall of cards.
@@ -74,8 +89,9 @@ avoid filling navigation with convincing but non-functional screens.
 - Demo fixtures must be labelled. Counts, live status, recordings and working
   controls must reflect actual service state rather than decorative placeholder data.
 
-These instructions describe the accepted design target. The implemented overhaul
-and actual browser receipts are documented in FULL_APPLICATION.md and VALIDATION.md.
+These instructions describe the current design direction. Implemented functions
+and actual browser receipts are documented in FULL_APPLICATION.md and VALIDATION.md;
+they are not a declaration of final design acceptance.
 
 ## First complete application release
 

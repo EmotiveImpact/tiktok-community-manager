@@ -7,13 +7,19 @@ investigations, reporting and ALFRED through one scoped service interface.
 The private operator release includes an authenticated browser console, durable
 evidence/cases/reports, explicit desktop archiving and a bounded recorder with
 verified media replay and restart recovery. Eight pinned upstream repositories
-remain research sources. Existing community/CRM workflows remain available.
-See [first-release setup and validation](docs/livelens/FIRST_RELEASE.md).
+remain research sources. Existing native Electron community/CRM workflows remain
+available; their browser `?page=` bridge is a development demo, not shared-server CRM.
+The default console is a capture-first LIVE monitor with selected accounts,
+bounded checks/watch schedules, Record/Stop and retained video beside captured
+chat. The review desk and investigation tools follow capture. See the
+[operating guide](docs/livelens/LIVE_MONITOR.md) and
+[current application status](docs/livelens/FULL_APPLICATION.md).
 Run `npm run console:fixture` for the labelled local fixture application; this
 does not connect a real LIVE or enable paid operation.
 
 - [Platform vision and build sequence](docs/livelens/PLATFORM.md)
 - [Full app blueprint, design and consolidated plans](docs/livelens/APP_BLUEPRINT.md)
+- [LIVE monitor operating guide](docs/livelens/LIVE_MONITOR.md)
 - [Current implementation and handoff](docs/livelens/HANDOFF.md)
 - [Cloud build handoff and continuation prompt](docs/livelens/CLOUD_HANDOFF.md)
 - [Source library and reuse decisions](research/REUSE_REGISTER.md)
@@ -27,8 +33,13 @@ Try the independent service demonstration with Node 24 or later:
 npm --prefix services/intelligence run demo
 ```
 
-This demonstration uses synthetic evidence. Server recording, speech processing,
-the new operating console and registered ALFRED tools are tracked future work.
+This demonstration uses synthetic evidence. Bounded server recording, retained
+replay, optional speech and operator workflows are implemented. Real external
+LIVE/provider access remains unvalidated. Actual optional ALFRED tools are
+fixture-tested in [draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20);
+[the integration guide](docs/livelens/ALFRED_INTEGRATION.md) records its exact
+revision and private installation. It is unmerged/undeployed and does not connect
+every user's host. Prior functional passes do not establish final design acceptance.
 
 ## Existing TikTok Community Manager
 

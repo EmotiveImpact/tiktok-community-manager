@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-16",
+  "status": "passed",
+  "tests": 165,
+  "passed": 165,
+  "failed": 0,
+  "skipped": 0,
+  "durationMs": 70020.880398,
+  "command": "npm --prefix services/intelligence test",
+  "runtime": {
+    "node": "24.19.0",
+    "postgres": "17.6-bookworm",
+    "database": "actual isolated PostgreSQL and SQLite",
+    "ffmpeg": "/usr/bin/ffmpeg",
+    "speech": "pinned PocketSphinx and checksum-pinned references",
+    "pdf": "actual offline Chromium via Playwright 1.62.0"
+  },
+  "focusedOperationsTests": 16,
+  "backupCleanupTests": 1,
+  "focusedTestsIncludedInTotal": true,
+  "logSha256": "6ef67591cdf5b3ec144f95972973f2ac86279c1d198bafd55871ef0c8a07af2e",
+  "sourceSha256": {
+    "services/intelligence/src/operations.mjs": "fb325eeace2e47d614e363fbbc20af94b93aab4c0d7abe2ef47165ce0df1f88a",
+    "services/intelligence/src/governance.mjs": "f75c5c95ecf0eee260d7376edcb9ad8f4d153b9c210697444c30cb8f82e5a615",
+    "services/intelligence/src/recorder.mjs": "2c4f9bf5c277f25c696b61d12eb11a4b0e94e21563915a85f7c75bdb1fbcd13a",
+    "services/intelligence/src/server.mjs": "7f8af6bd832dc4e0640cda77e7d1997ac509aa8d1ed47ace96789d44acfa6831",
+    "services/intelligence/src/advanced-routes.mjs": "bb7d79cc6b80f8bca048ee38a74bdabc5912255915712b8e6af68a001b12490e",
+    "services/intelligence/test/operations.test.mjs": "c806b88c18b29f50148e029718452d25eb4153e61950889bcc7fdcbf1acb7ec9",
+    "services/intelligence/test/backup-cleanup.test.mjs": "c5addfdc353790ae10736ea17a272f89bb2fef41fc96a38261320b80d1bf0618",
+    "deployment/livelens/backup.mjs": "2db0f824f478f8806db4dea168abc4fd66c4dd46d693c3947d3a297f4b8c0c20"
+  },
+  "limits": [
+    "Synthetic fixtures and local PostgreSQL do not establish external LIVE, speech/model quality or customer production capacity.",
+    "Private database credentials and runtime media are outside Git."
+  ],
+  "cleanup": "Dedicated PostgreSQL fixture stopped; private credential files removed after validation.",
+  "recordingAllocation": "Unfinished cleanup remains reserved in recorder admission and Operations as well as workspace governance; actual SQLite/PostgreSQL tests refuse a distinct new job until physical cleanup completes, without affecting another workspace."
+}

@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-16",
+  "result": "passed",
+  "unitTests": {
+    "command": "npm test -- --reporter=dot",
+    "files": 14,
+    "passed": 127,
+    "failed": 0,
+    "logSha256": "263d0f982db6c11138e1bac7af5dcd0a3e084e9ac582cbf3ced98bf1fd70c049"
+  },
+  "build": {
+    "command": "npm run build",
+    "typescript": true,
+    "renderer": true,
+    "electronMainAndPreload": true,
+    "logSha256": "ddf1462741cfb6b76179a24e64b93503e4c722c21279d32e6e69fdf6c85c758e",
+    "warnings": [
+      "Existing Browserslist age notice",
+      "Existing renderer chunk size notice"
+    ]
+  },
+  "assets": {
+    "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46",
+    "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+  },
+  "sourceSha256": {
+    "src/pages/LiveLensConsole.tsx": "1d571d751d2ed316dbf06eeee2d3cd6ed019c61f0b3000533d452e4b5bda1b0c",
+    "src/pages/aperture-studio.css": "867b43ba98f2ee6de416696ef117fa286e0c5cf6bda154b7272ef68c5771d1dd",
+    "src/components/livelens/AdvancedWorkspace.tsx": "adc40ba835fd9644d54dccf36a9eb36fad897c1723635964c0a6df342aacc9a7",
+    "src/components/livelens/EvidenceCaseLink.tsx": "399ec7d08df5e40075a1284918ef8664b4e6114723860f266df6b76671e7427f",
+    "src/components/livelens/evidence-case-link.css": "ec85f2e140f207f5bec546d81c938d81eefd6d1f286c6ddf08776a40740e852b",
+    "src/components/livelens/advanced/Investigations.tsx": "93a3965f42931a93b46a86e06239f4d58c79f088081b9c8afc56ac58f558527b",
+    "src/components/livelens/advanced/EvidenceIntake.tsx": "4966f15876b8474c9bb937504f6133b60e62d349b66a0204eb922abf9dfffffe",
+    "src/components/livelens/advanced/investigation-desk.css": "cea4f91ebea1debb5da08decd066be880f7b4575b77b0b76c4f8e3a3be539694"
+  },
+  "sourceInventory": {
+    "repositories": 8,
+    "gitlinksVerified": true,
+    "checkoutsVerified": false,
+    "adoption": "research-only"
+  },
+  "limitations": [
+    "No native Electron GUI launch",
+    "No production deployment or external LIVE validation"
+  ]
+}

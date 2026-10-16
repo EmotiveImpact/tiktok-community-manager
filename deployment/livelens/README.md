@@ -22,8 +22,12 @@ Retention is disabled until configured. Setting days creates no automatic
 deletion. Preview, select up to 100 eligible sessions, then apply the exact
 preview hash with a reason. Investigations, bookmarks, relationship/mission/alert
 references and pending workers protect retained evidence. Changed previews refuse
-application. Deleted-session receipts and audit remain. Media-cleanup failures
-are returned explicitly and require operator cleanup; no hidden success state.
+application. Deleted-session receipts and audit remain. Per-recording physical
+cleanup tasks commit before filesystem work and survive restart. Failed removal
+retains its known-byte storage reservation. In Workspace → Retention, inspect the
+task, correct the underlying filesystem problem and retry that task with a reason.
+Retries refuse changed directories, symlinks and reused recording identities;
+they do not restore deleted sessions. See the [Operations guide](../../docs/livelens/OPERATIONS.md).
 
 `object-storage.mjs` implements workspace-scoped filesystem and S3 Signature V4
 adapters and an AES-256-GCM envelope wrapper. Configure `LIVELENS_OBJECT_STORAGE`
@@ -34,7 +38,11 @@ interface limits one object to 1 GiB; production large-object streaming and
 multipart uploads need a separate measured migration.
 
 The SQLite backup command includes a consistent snapshot and hash-verified media, encrypted
-with AES-256-GCM. Stop recording and speech jobs before creation. Retain the
+with AES-256-GCM. Stop recording and speech jobs before creation and complete all
+pending/failed retention cleanup. Backup refuses `finish_retention_cleanup_before_backup`
+because cleanup tasks bind filesystem identities that cannot be replayed safely
+against a new restore root. Admission is checked again on the completed database
+snapshot. Retain the
 32-byte base64url `LIVELENS_BACKUP_KEY` separately from the archive; losing it
 prevents recovery. Neither the CLI nor receipts print the key.
 
@@ -50,6 +58,14 @@ after reviewing the recovery receipt. This command does not back up PostgreSQL
 or external object storage. Use PostgreSQL's separately managed backup/recovery
 and retain the object store plus encryption keys. Test restore regularly; an
 archive receipt alone is not proof of recovery.
+
+The [pilot drill](../../docs/livelens/PILOT_DRILL.md) runs a bounded on-disk mixed
+workload with actual concurrent generated-media captures. It removes its own
+original temporary database/media after backup, then verifies original events,
+reviewed investigations, reports and byte-identical decodable media through a
+fresh restored API process. Run `node deployment/livelens/pilot-drill.mjs --output
+/tmp/livelens-pilot-drill.json` with an unused output path. Its receipt measures
+that fixture only; it is not a production capacity or crash-recovery guarantee.
 
 `postgres/001_core.sql` preserves workspace/source clocks and evidence contracts,
 adds forced workspace row policies and independent case grants. `002_queue.sql`

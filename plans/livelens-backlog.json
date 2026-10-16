@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "product": "LiveLens",
-  "updated": "2026-10-11",
+  "updated": "2026-10-16",
   "baseline": {
     "repository": "EmotiveImpact/tiktok-community-manager",
     "branch": "feat/livelens-evidence-timeline-2026-10-10",
@@ -84,8 +84,12 @@
         "src/pages/livelens.css",
         "services/intelligence/src/browser.mjs",
         "scripts/validation/browser_smoke.py",
-        "docs/livelens/FIRST_RELEASE.md"
-      ]
+        "docs/livelens/FIRST_RELEASE.md",
+        "docs/livelens/APERTURE_WORKFLOWS.md",
+        "src/components/livelens/RecordingTransport.tsx",
+        "services/intelligence/test/session-search.test.mjs"
+      ],
+      "currentContinuation": "Owner-selected Aperture Studio: per-recording retained-time transport, server-side whole-session/library search before pagination, off-page original bookmark hydration and guided private ALFRED recipe generation. Actual current checks and screenshot artifacts are in VALIDATION.md; external LIVE and production acceptance remain separate."
     },
     {
       "id": "C01",
@@ -208,13 +212,18 @@
       "acceptance": [
         "Sessions, worker health, media replay, account activity, evidence and cases use the real API",
         "Desktop and phone browser acceptance; no decorative controls implying unavailable collection",
-        "Full application map and design in APP_BLUEPRINT.md: conversation seek/context, evidence bookmarks, account activity, case notes/corrections and consistent navigation"
+        "Full application map and design in APP_BLUEPRINT.md: conversation seek/context, evidence bookmarks, account activity, case notes/corrections and consistent navigation",
+        "Capture-first default home: selected accounts, explicit bounded discovery/watch, Record/Stop, recording-specific verified replay, rolling captured chat and recent plus older active receipts; review desk remains secondary"
       ],
       "evidence": [
         "src/pages/LiveLensConsole.tsx",
         "src/components/livelens/AdvancedWorkspace.tsx",
         "scripts/validation/full_app_smoke.py",
-        "docs/livelens/FULL_APPLICATION.md"
+        "docs/livelens/FULL_APPLICATION.md",
+        "src/components/livelens/LiveMonitor.tsx",
+        "scripts/validation/live_monitor_smoke.py",
+        "services/intelligence/test/recording-list.test.mjs",
+        "docs/livelens/LIVE_MONITOR.md"
       ]
     },
     {
@@ -303,7 +312,7 @@
     {
       "id": "G01",
       "title": "Registered ALFRED read interface",
-      "status": "partial",
+      "status": "implemented",
       "dependsOn": [
         "F04"
       ],
@@ -315,16 +324,23 @@
         "integrations/alfred/livelens_gateway.py",
         "integrations/alfred/policy-tool-manifest.json",
         "integrations/alfred/GATEWAY.md",
-        "services/intelligence/test/governance.test.mjs"
+        "services/intelligence/test/governance.test.mjs",
+        "docs/livelens/ALFRED_INTEGRATION.md",
+        "https://github.com/EmotiveImpact/Alfred/pull/20",
+        "src/components/livelens/advanced/AgentConnection.tsx",
+        "src/components/livelens/advanced/agent-setup.ts",
+        "test/livelens-agent-setup.test.ts"
       ],
-      "remaining": [
-        "Standalone policy gateway and real HTTP acceptance implemented; registration in the separate ALFRED application remains outstanding and that repository has not been changed."
+      "limitations": [
+        "Actual optional ALFRED authenticated HTTP/CLI tools are implemented/tested on branch feat/livelens-tools-2026-10-11, commit 5b37ba41353cfcd0cae4243482520e25175e21d9, draft PR #20; unmerged and undeployed. Explicit private installation and current grants are required; publishing code does not connect a user host.",
+        "Configured fixture proof: 36/36 actual HTTP/CLI transport checks, six-second generated capture with three hashed/independently decoded segments; 1128 ALFRED backend tests and 58 browser checks pass locally. Hosted CI was pending at publication; no external LIVE, NLP automatic tool invocation, tool-board UI, model call or automatic memory acceptance is claimed.",
+        "Guided LiveLens setup exports validated config/read JSON and safely quoted host commands for exact selected session IDs. This does not install or verify a private ALFRED host; its picker offers at most 200 recent sessions, without automatic future access."
       ]
     },
     {
       "id": "G02",
       "title": "ALFRED collection controls",
-      "status": "partial",
+      "status": "implemented",
       "dependsOn": [
         "G01",
         "C04"
@@ -336,10 +352,13 @@
       "evidence": [
         "integrations/alfred/livelens_gateway.py",
         "integrations/alfred/GATEWAY.md",
-        "services/intelligence/test/governance.test.mjs"
+        "services/intelligence/test/governance.test.mjs",
+        "docs/livelens/ALFRED_INTEGRATION.md",
+        "https://github.com/EmotiveImpact/Alfred/pull/20"
       ],
-      "remaining": [
-        "Bounded start/stop with independent dispatch grants and rechecked policy implemented in the standalone gateway; separate ALFRED registration remains outstanding. No automatic memory acceptance."
+      "limitations": [
+        "Actual optional ALFRED authenticated HTTP/CLI tools are implemented/tested on branch feat/livelens-tools-2026-10-11, commit 5b37ba41353cfcd0cae4243482520e25175e21d9, draft PR #20; unmerged and undeployed. Explicit private installation and current grants are required; publishing code does not connect a user host.",
+        "Configured fixture proof: 36/36 actual HTTP/CLI transport checks, six-second generated capture with three hashed/independently decoded segments; 1128 ALFRED backend tests and 58 browser checks pass locally. Hosted CI was pending at publication; no external LIVE, NLP automatic tool invocation, tool-board UI, model call or automatic memory acceptance is claimed."
       ]
     },
     {
@@ -396,10 +415,238 @@
       "remaining": [
         "Direct permitted HTTPS media adapter implemented alongside selected TikTok-public adapter. A second named platform and external provider failure/credential behavior have not been validated."
       ]
+    },
+    {
+      "id": "U02",
+      "title": "Aperture Investigation Desk: retained conversations to reviewed brief",
+      "status": "implemented",
+      "dependsOn": [
+        "U01",
+        "I01",
+        "R01"
+      ],
+      "implementationBrief": "docs/livelens/INVESTIGATION_DESK.md",
+      "acceptance": [
+        "Search all retained evidence and saved labels before bounded pagination; preserve explicit selection across filters and source playback",
+        "Create a case with its selected statement atomically; accessible case pagination applies scope and ACL before the page",
+        "Preserve source-linked notes, reviewed support/counterevidence, report drafts and stale-edit refusal",
+        "Actual desktop, phone, keyboard, denied-write, duplicate, capacity and restart browser/database evidence"
+      ],
+      "evidence": [
+        "src/components/livelens/advanced/EvidenceIntake.tsx",
+        "src/components/livelens/EvidenceCaseLink.tsx",
+        "services/intelligence/test/investigation-intake.test.mjs",
+        "scripts/validation/investigation_desk_smoke.py",
+        "docs/livelens/INVESTIGATION_DESK.md"
+      ],
+      "limitations": [
+        "50-source tray and 200-source reviewed investigations; legacy original-evidence API remains 1,000, larger reviewed views are explicitly bounded",
+        "Unsaved drafts survive source detours within the current page lifetime; explicit navigation or reload does not persist them",
+        "Provider, speech quality, private ALFRED and production gates remain separate"
+      ]
+    },
+    {
+      "id": "O01",
+      "title": "Aperture Operations & Recovery",
+      "status": "implemented",
+      "dependsOn": [
+        "U02",
+        "C04",
+        "S01"
+      ],
+      "implementationBrief": "docs/livelens/OPERATIONS.md",
+      "acceptance": [
+        "Authenticated scoped operational state with actual queues and failures",
+        "Retained plus reserved capacity matches admission accounting",
+        "Durable partial media cleanup receipts and explicit audited safe retry after restart",
+        "File-backed mixed workload with two actual bounded generated-media captures",
+        "Encrypted SQLite/local-media restore into a fresh service reopens original reviewed work and decodable media",
+        "Actual desktop/phone/keyboard and scope/workspace/denial receipts"
+      ],
+      "remaining": [],
+      "validation": [
+        "127 app tests and production build pass",
+        "165 service tests pass with zero skips, including actual PostgreSQL, FFmpeg, PocketSphinx and Chromium PDF",
+        "Seven browser journeys pass on final renderer; 70 captures, 12 published Operations screens",
+        "600 mixed HTTP requests with no unexpected errors and two actual overlapping generated-media captures",
+        "Fresh encrypted restore preserves 2,240 original events and reviewed work; 16 hash-identical segments actually decoded",
+        "Fresh corrupt-usage entry remains reachable with unavailable capacity; real cleanup failure persists across restart and retries safely"
+      ],
+      "evidence": [
+        "docs/livelens/OPERATIONS.md",
+        "docs/livelens/operations-service-validation.json",
+        "docs/livelens/operations-browser-validation.json",
+        "docs/livelens/pilot-drill-validation.json"
+      ],
+      "limitations": [
+        "Short paced SQLite/local-media fixture, not production saturation, crash RPO or PostgreSQL/object recovery",
+        "Missing original cleanup identities require administrator investigation; no force-resolve override",
+        "External provider, private host and representative speech/model quality remain separate gates"
+      ]
+    },
+    {
+      "id": "C05",
+      "title": "Permitted real-source pilot",
+      "status": "planned",
+      "dependsOn": [
+        "C02",
+        "C04",
+        "O01"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Capture one explicitly selected permitted real LIVE with available media/chat",
+        "Retain original clocks, provider failures, bounded stop and verified replay"
+      ],
+      "remaining": [
+        "Selected usable source and provider access required"
+      ]
+    },
+    {
+      "id": "A02",
+      "title": "Representative speech and overlap quality",
+      "status": "planned",
+      "dependsOn": [
+        "A01",
+        "O01"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Pinned licensed reference corpus with representative noise, speakers and overlap",
+        "Measured word error, anonymous speaker/turn error, timing and latency",
+        "Adopt a better recognizer only after comparison and recorded model/runtime terms"
+      ],
+      "remaining": [
+        "Reference corpus and candidate-engine evaluation pending"
+      ]
+    },
+    {
+      "id": "I03",
+      "title": "Grounded analysis quality evaluation",
+      "status": "planned",
+      "dependsOn": [
+        "I01",
+        "U02"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Fixed reviewed cases with support and counterevidence",
+        "Measure unsupported claims, evidence citation validity and contradictory-context handling",
+        "Preserve model-labelled drafts and independent human review"
+      ],
+      "remaining": [
+        "Local fixture evaluation first; external provider quality remains separate"
+      ]
+    },
+    {
+      "id": "G03",
+      "title": "Private ALFRED installation and operational pilot",
+      "status": "planned",
+      "dependsOn": [
+        "G01",
+        "G02",
+        "O01"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Actual private-host scoped reads and separately granted bounded collection",
+        "Revocation, timeout reconciliation and source-backed receipts on installed host"
+      ],
+      "remaining": [
+        "Actual host, permitted installation location and scoped credentials required"
+      ]
+    },
+    {
+      "id": "I04",
+      "title": "Cross-session investigation depth",
+      "status": "planned",
+      "dependsOn": [
+        "U02",
+        "I03"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Useful comparisons and relationship/context review across retained sessions",
+        "Original and counterevidence reopening, reviewed corrections and accessible operator journey"
+      ],
+      "remaining": [
+        "Prioritise against actual operator workflow evidence"
+      ]
+    },
+    {
+      "id": "P02",
+      "title": "Protection review and configured delivery",
+      "status": "planned",
+      "dependsOn": [
+        "P01",
+        "I03"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Contextual signals with review/acknowledgement history",
+        "Explicit configured destination, deduplication, failure and delivery receipts"
+      ],
+      "remaining": [
+        "External delivery destination/provider and sending authorization required before live delivery"
+      ]
+    },
+    {
+      "id": "R02",
+      "title": "Polished collaborative report delivery",
+      "status": "planned",
+      "dependsOn": [
+        "R01",
+        "U02"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Readable source-backed report layouts and collaboration/revision workflow",
+        "Redaction and unresolved-source states verified in exported formats"
+      ],
+      "remaining": [
+        "Refine using actual completed investigations"
+      ]
+    },
+    {
+      "id": "S03",
+      "title": "Production foundation and invited deployment",
+      "status": "planned",
+      "dependsOn": [
+        "S01",
+        "O01",
+        "C05"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Deliberate PostgreSQL/RLS and durable queue migration with rollback proof",
+        "Actual object storage, backup recovery, isolation and realistic load/failure receipts",
+        "Selected deployment target, budget and invited pilot acceptance"
+      ],
+      "remaining": [
+        "Host/budget decisions, migration and external infrastructure acceptance pending"
+      ]
+    },
+    {
+      "id": "S04",
+      "title": "Measured commercial release",
+      "status": "planned",
+      "dependsOn": [
+        "S03",
+        "G03"
+      ],
+      "implementationBrief": "docs/livelens/MASTER_PLAN.md",
+      "acceptance": [
+        "Tested signup/billing lifecycle, idempotency and entitlement enforcement",
+        "Measured cost/capacity envelope, support/upgrade runbooks and release acceptance",
+        "Native package and additional-source gates stay independently verified"
+      ],
+      "remaining": [
+        "Commercial provider/accounts/terms and release authorization required"
+      ]
     }
   ],
   "productTarget": {
-    "application": "Complete browser-capable operator app with a substantial design overhaul; preserve useful existing desktop/community workflows",
+    "application": "Capture-first browser LIVE monitor: selected accounts, bounded checks/watch schedules, explicit Record/Stop, retained video with chat and recent recordings; review/investigation secondary, existing desktop/community workflows preserved",
     "growth": "Private operator app, invited customer pilot, then measured server operation towards hundreds of users",
     "capacityStatus": "local-pilot-measured; customer-capacity-unvalidated",
     "firstBuild": [
@@ -409,7 +656,13 @@
       "C03"
     ],
     "blueprint": "docs/livelens/APP_BLUEPRINT.md",
-    "firstBuildStatus": "complete-private-operator-app; provider-validation-pending",
-    "expandedBuildStatus": "operator-workflows-implemented; speech-model-agent-and-commercial-gates-partial"
+    "firstBuildStatus": "private-operator-workflows-implemented; provider-validation-pending",
+    "expandedBuildStatus": "capture-and-configured-ALFRED-workflows-implemented; speech-model-and-commercial-gates-partial",
+    "currentOperatingGuide": "docs/livelens/LIVE_MONITOR.md",
+    "designAcceptance": "Capture-first monitor replaces review-first home at owner request; prior functional receipts do not establish final visual acceptance",
+    "communityBoundary": "Native Electron CRM preserved with local fan records; browser page bridge is a development demo, not shared-server CRM",
+    "currentContinuation": "O01 Aperture Operations & Recovery delivered; next queued A02 speech-quality evaluation, then I03 grounded analysis; follow the standing master plan",
+    "masterPlan": "docs/livelens/MASTER_PLAN.md",
+    "standingGoal": "plans/livelens-goal.json"
   }
 }

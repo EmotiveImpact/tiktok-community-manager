@@ -2,6 +2,10 @@ import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
 import { canonical, digest, Fault, handle, ident, markdownText, normaliseEvent, object, pageLimit, sourceUrl, text, timestamp } from './validation.mjs';
 
+const eventKinds = new Set(['chat', 'caption', 'transcript', 'observation', 'gap']);
+const literalContains = query => '%' + query.replace(/[\\%_]/g, '\\$&') + '%';
+export const REVIEW_EVIDENCE_LIMIT = 200;
+
 const schema = `
 CREATE TABLE IF NOT EXISTS metadata(version INTEGER NOT NULL);
 INSERT INTO metadata SELECT 1 WHERE NOT EXISTS(SELECT 1 FROM metadata);
@@ -74,10 +78,15 @@ export class EvidenceStore {
     });
   }
 
-  listSessions(workspace, limit = 100, offset = 0) {
-    ident(workspace); limit = pageLimit(limit);
+  listSessions(workspace, limit = 100, offset = 0, { query = '' } = {}) {
+    ident(workspace); limit = pageLimit(limit); text(query, 512, true);
     if (!Number.isSafeInteger(offset) || offset < 0) throw new Fault('invalid_cursor');
-    return this.db.prepare('SELECT id FROM sessions WHERE workspace=? ORDER BY started_at DESC,id LIMIT ? OFFSET ?').all(workspace, limit, offset)
+    const clauses = ['workspace=?'], args = [workspace];
+    if (query) {
+      clauses.push("lower(title || ' ' || coalesce('@' || account,'') || ' ' || platform) LIKE lower(?) ESCAPE '\\'");
+      args.push(literalContains(query));
+    }
+    return this.db.prepare(`SELECT id FROM sessions WHERE ${clauses.join(' AND ')} ORDER BY started_at DESC,id LIMIT ? OFFSET ?`).all(...args, limit, offset)
       .map(row => this.session(workspace, row.id));
   }
 
@@ -125,26 +134,51 @@ export class EvidenceStore {
     return this.project(row);
   }
 
-  events(workspace, sessionId, { after = 0, limit = 100 } = {}) {
-    this.session(workspace, sessionId); limit = pageLimit(limit);
+  events(workspace, sessionId, { after = 0, limit = 100, query = '', kind = 'all' } = {}) {
+    this.session(workspace, sessionId); limit = pageLimit(limit); text(query, 512, true);
     if (!Number.isSafeInteger(after) || after < 0) throw new Fault('invalid_cursor');
-    return this.db.prepare('SELECT * FROM events WHERE workspace=? AND session_id=? AND seq>? ORDER BY seq LIMIT ?')
-      .all(workspace, sessionId, after, limit).map(row => this.project(row));
+    if (kind !== 'all' && !eventKinds.has(kind)) throw new Fault('invalid_event_kind');
+    const clauses = ['e.workspace=?', 'e.session_id=?', 'e.seq>?'], args = [workspace, sessionId, after];
+    if (kind !== 'all') { clauses.push('e.kind=?'); args.push(kind); }
+    if (query) {
+      // Match the displayed current attribution without rewriting original evidence.
+      // Escaping applies to the bound pattern on both SQLite and PostgreSQL.
+      clauses.push("lower(e.text || ' ' || coalesce((SELECT a.account FROM assertions a WHERE a.workspace=e.workspace AND a.event_id=e.id ORDER BY a.seq DESC LIMIT 1),e.account,'')) LIKE lower(?) ESCAPE '\\'");
+      args.push(literalContains(query));
+    }
+    return this.db.prepare(`SELECT e.* FROM events e WHERE ${clauses.join(' AND ')} ORDER BY e.seq LIMIT ?`)
+      .all(...args, limit).map(row => this.project(row));
   }
 
-  search(workspace, { query = '', account = null, sessionId = null, limit = 100 } = {}) {
-    ident(workspace); text(query, 512, true); limit = pageLimit(limit);
+  evidenceFilter(workspace, { query = '', account = null, sessionId = null, kind = 'all' } = {}) {
+    ident(workspace); text(query, 512, true);
     account = handle(account);
     if (sessionId !== null) this.session(workspace, sessionId);
+    if (kind !== 'all' && !eventKinds.has(kind)) throw new Fault('invalid_event_kind');
     const clauses = ['e.workspace=?']; const args = [workspace];
-    if (query) { clauses.push("e.text LIKE ? ESCAPE '\\'"); args.push('%' + query.replace(/[\\%_]/g, '\\$&') + '%'); }
+    const currentAccount = 'coalesce((SELECT a.account FROM assertions a WHERE a.workspace=e.workspace AND a.event_id=e.id ORDER BY a.seq DESC LIMIT 1),e.account)';
+    if (query) {
+      clauses.push("lower(e.text) LIKE lower(?) ESCAPE '\\'");
+      args.push(literalContains(query));
+    }
+    if (kind !== 'all') { clauses.push('e.kind=?'); args.push(kind); }
     if (sessionId !== null) { clauses.push('e.session_id=?'); args.push(sessionId); }
     if (account !== null) {
-      clauses.push(`coalesce((SELECT a.account FROM assertions a WHERE a.workspace=e.workspace AND a.event_id=e.id ORDER BY a.seq DESC LIMIT 1),e.account)=?`);
+      clauses.push(`${currentAccount}=?`);
       args.push(account);
     }
-    args.push(limit);
-    return this.db.prepare(`SELECT e.* FROM events e WHERE ${clauses.join(' AND ')} ORDER BY e.seq DESC LIMIT ?`).all(...args).map(row => this.project(row));
+    return { clauses, args };
+  }
+
+  search(workspace, options = {}) { return this.searchPage(workspace, options).evidence; }
+
+  searchPage(workspace, { limit = 100, offset = 0, ...filters } = {}) {
+    limit = pageLimit(limit);
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new Fault('invalid_cursor');
+    const { clauses, args } = this.evidenceFilter(workspace, filters);
+    const rows = this.db.prepare(`SELECT e.* FROM events e WHERE ${clauses.join(' AND ')} ORDER BY e.seq DESC LIMIT ? OFFSET ?`).all(...args, limit + 1, offset);
+    const hasMore = rows.length > limit;
+    return { evidence: rows.slice(0, limit).map(row => this.project(row)), hasMore, nextOffset: hasMore ? offset + limit : null };
   }
 
   assertAccount(workspace, eventId, value, reviewer) {
@@ -173,11 +207,25 @@ export class EvidenceStore {
     return { id: row.id, title: row.title, question: row.question, createdBy: row.created_by, createdAtMs: row.created_at };
   }
 
-  listCases(workspace, limit = 100, offset = 0) {
-    ident(workspace); limit = pageLimit(limit);
+  listCases(workspace, limit = 100, offset = 0, options = {}) {
+    return this.casePage(workspace, { ...options, limit, offset }).cases;
+  }
+
+  casePage(workspace, { limit = 100, offset = 0, query = '', accessibleTo = null } = {}) {
+    ident(workspace); limit = pageLimit(limit); text(query, 512, true);
     if (!Number.isSafeInteger(offset) || offset < 0) throw new Fault('invalid_cursor');
-    return this.db.prepare('SELECT id FROM cases WHERE workspace=? ORDER BY created_at DESC,id LIMIT ? OFFSET ?').all(workspace, limit, offset)
-      .map(row => this.case(workspace, row.id));
+    const clauses = ['c.workspace=?'], args = [workspace];
+    if (query) { clauses.push("lower(c.title || ' ' || c.question) LIKE lower(?) ESCAPE '\\'"); args.push(literalContains(query)); }
+    if (accessibleTo !== null) {
+      text(accessibleTo, 100);
+      // The authenticated server supplies this subject only when governance is enabled.
+      // Apply the same policy as authorize() before pagination, never after its limit.
+      clauses.push("(NOT EXISTS(SELECT 1 FROM case_access_policy p WHERE p.workspace=c.workspace AND p.case_id=c.id AND p.visibility='restricted') OR c.created_by=? OR EXISTS(SELECT 1 FROM case_access_grants g WHERE g.workspace=c.workspace AND g.case_id=c.id AND g.subject=? AND g.permission IN('read','write')))");
+      args.push(accessibleTo, accessibleTo);
+    }
+    const rows = this.db.prepare(`SELECT c.id FROM cases c WHERE ${clauses.join(' AND ')} ORDER BY c.created_at DESC,c.id LIMIT ? OFFSET ?`).all(...args, limit + 1, offset);
+    const hasMore = rows.length > limit;
+    return { cases: rows.slice(0, limit).map(row => this.case(workspace, row.id)), hasMore, nextOffset: hasMore ? offset + limit : null };
   }
 
   context(workspace, id, limit = 25) {
@@ -188,27 +236,37 @@ export class EvidenceStore {
   }
 
   createCase(workspace, value, reviewer) {
-    ident(workspace); object(value, ['id', 'title', 'question']); text(reviewer, 100);
+    ident(workspace); object(value, ['id', 'title', 'question', 'evidenceIds']); text(reviewer, 100);
     const id = value.id === undefined ? randomUUID() : ident(value.id);
     const title = text(value.title, 256); const question = text(value.question, 2048);
     return this.transaction(() => {
       if (this.db.prepare('SELECT 1 FROM cases WHERE workspace=? AND id=?').get(workspace, id)) throw new Fault('case_exists', 409);
       this.db.prepare('INSERT INTO cases VALUES(?,?,?,?,?,?)').run(workspace, id, title, question, reviewer, timestamp(this.now()));
+      if (value.evidenceIds !== undefined) {
+        if (!Array.isArray(value.evidenceIds) || value.evidenceIds.length > 200) throw new Fault('invalid_evidence_batch');
+        if (value.evidenceIds.length) this.linkEvidenceInTransaction(workspace, id, value.evidenceIds, reviewer);
+      }
       return this.case(workspace, id);
     });
   }
 
-  linkEvidence(workspace, caseId, ids, reviewer) {
+  linkEvidence(workspace, caseId, ids, reviewer, options = {}) {
     this.case(workspace, caseId); text(reviewer, 100);
+    return this.transaction(() => this.linkEvidenceInTransaction(workspace, caseId, ids, reviewer, options));
+  }
+
+  linkEvidenceInTransaction(workspace, caseId, ids, reviewer, { forReview = false } = {}) {
+    if (!this.db.isTransaction) throw new Fault('evidence_link_transaction_required', 500);
+    if (typeof forReview !== 'boolean') throw new Fault('invalid_for_review');
     if (!Array.isArray(ids) || !ids.length || ids.length > 200) throw new Fault('invalid_evidence_batch');
-    ids.forEach(id => this.evidence(workspace, id));
-    return this.transaction(() => {
-      const current = this.db.prepare('SELECT count(*) AS n FROM case_events WHERE workspace=? AND case_id=?').get(workspace, caseId).n;
-      const newIds = new Set(ids.filter(id => !this.db.prepare('SELECT 1 FROM case_events WHERE workspace=? AND case_id=? AND event_id=?').get(workspace, caseId, id)));
-      if (current + newIds.size > 1000) throw new Fault('case_evidence_capacity', 409);
-      for (const id of ids) this.db.prepare('INSERT OR IGNORE INTO case_events VALUES(?,?,?,?,?)').run(workspace, caseId, id, reviewer, timestamp(this.now()));
-      return { linked: newIds.size, total: current + newIds.size };
-    });
+    const uniqueIds = [...new Set(ids)];
+    uniqueIds.forEach(id => this.evidence(workspace, id));
+    const current = this.db.prepare('SELECT count(*) AS n FROM case_events WHERE workspace=? AND case_id=?').get(workspace, caseId).n;
+    const newIds = uniqueIds.filter(id => !this.db.prepare('SELECT 1 FROM case_events WHERE workspace=? AND case_id=? AND event_id=?').get(workspace, caseId, id));
+    if (forReview && current + newIds.length > REVIEW_EVIDENCE_LIMIT) throw new Fault('investigation_evidence_capacity', 409);
+    if (current + newIds.length > 1000) throw new Fault('case_evidence_capacity', 409);
+    for (const id of newIds) this.db.prepare('INSERT INTO case_events VALUES(?,?,?,?,?)').run(workspace, caseId, id, reviewer, timestamp(this.now()));
+    return { linked: newIds.length, total: current + newIds.length, existing: uniqueIds.length - newIds.length };
   }
 
   verify(workspace, sessionId) {

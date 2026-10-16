@@ -3,28 +3,50 @@
 LiveLens implements the documented operator journey: select a source, retain a
 conversation, reopen its media/context, investigate conflicting evidence, review
 findings, run a protection mission and export a reviewed report. The operator app and research/foundation PRs #1–#3 are merged into `redesign`.
-The next continuation adds [invited workspace accounts](WORKSPACE_ONBOARDING.md).
+Optional [invited workspace accounts](WORKSPACE_ONBOARDING.md) are implemented.
+The current continuation prioritises a capture-first LIVE monitor.
 
-The existing desktop/community/CRM application is preserved. The new React console
+The existing native Electron community/CRM application is preserved. Its browser
+`?page=` bridge is a development demonstration, not a shared-server CRM; fan
+records remain in the desktop's existing local storage. The new React console
 uses the shared authenticated service, grouped navigation, global evidence search,
 readable session/evidence views and phone layouts. [Screenshots](SCREENSHOTS.md)
 show the actual app with labelled fictional evidence and generated media.
+
+## Current product direction
+
+The owner rejected the review-first home as the default experience. Collection
+now leads: selected `@account` sources, bounded checks/watch schedules, explicit
+Record/Stop, a large retained-recording preview with captured chat, and recent
+recordings. Review and investigation remain available after capture. See
+[LIVE_MONITOR.md](LIVE_MONITOR.md) for the exact operating guide and pinned
+recorder/monitor design references.
+
+Earlier application and browser receipts prove the named operations, replay,
+restart and permission checks. They do not prove visual acceptance or a finished
+design. Generated media and provider fixtures still do not establish a real
+external LIVE. A retained recording preview is distinct from direct live-video
+streaming; the latter is not claimed here. ALFRED registration is not inferred
+from the standalone gateway and needs its own actual application receipt.
 
 ## Working application
 
 | Area | Implemented behavior |
 |---|---|
-| Overview | Persisted sessions, evidence, cases and gaps; recent conversations and actual capture states. |
+| Live monitor | Default selected-account/source watchlist; explicit bounded Check/Watch and Record/Stop; availability at last check; delayed verified recording preview with captured chat, active-job controls and recent recordings. |
+| Review desk | Secondary retained-evidence, pending-signal and draft-finding inbox with exact support/counterevidence context, scoped acknowledgement and source replay. |
 | Sources/capture | Selected public TikTok accounts or permitted HTTPS media, explicit bounded schedules, two concurrent recorder slots, start/stop, leases, retries, quota admission and capture gaps. Configuring a source alone starts no polling. |
-| Replay | Verified segments, continuous playback, evidence seek/context, chat/captions/transcripts, coverage labels, bookmarks and attribution corrections/history. Refresh preserves playback. |
+| Replay | Verified segments, per-recording retained-time scrubber, speed/skip controls and continuous playback within the selected job; collector-only evidence seek with gap/overlap labels. Whole-conversation server search/kind filters with forward/back pages, stable saved originals/thumbnails, attribution corrections/history. Refresh preserves playback. |
+| Session library | Whole-workspace title/account search before pagination; With video remains explicitly bounded to loaded receipts/current page. |
 | Media archive | Explicit verified-segment snapshots, encrypted configured storage, manifest/hash readback, durable retries and exact-original restoration. Missing/damaged media refuses replay until restoration verifies it. |
 | Accounts | Literal observed/asserted account search and captured cross-session activity with source links. No universal guest locator is claimed. |
-| Investigations | Source-linked notes, support/counterevidence, findings, immutable review history, stale-edit refusal and literal cross-session comparisons. |
+| Investigations | Aperture Investigation Desk: paginated evidence/saved-moment intake and accessible case search, atomic create/link, explicit review200/tray50 bounds, source-return draft preservation, source-linked notes, support/counterevidence, findings, immutable review history and stale-edit refusal. See [operating guide](INVESTIGATION_DESK.md). |
 | Context graph | Observed, operator-reviewed and inferred relationships remain distinct and reopen source evidence. Anonymous tracks retain session/job/engine/media provenance; operator-declared person references remain unverified and separate from account assertions. No automatic identity link is made. |
 | Protection | Workspace missions select a protected account, retained sessions (with selected-source references) and contextual literal rules; explicit idempotent runs create in-app signals with surrounding context/gaps and retained reviews. |
 | Reports | Editable brief, dependent-text redaction, JSON/Markdown/HTML and actual offline PDF when configured; originals and hash/source/media receipts are preserved. |
 | Workspace | Optional persisted accounts, expiring single-use invitations, password reset/revocation; independently enforced scopes/roles/case grants, revocation, usage/reservations/limits, explicit retention preview/apply and hash-chained audit. |
-| Agent | Tool manifest and standalone ALFRED gateway with separate source-read, collection dispatch and model-egress policy. Registration and automatic memory acceptance are not claimed. |
+| Operations & recovery | Independently scoped worker observations, retained + reserved capacity and distinct recorder allocation; durable partial cleanup with audited explicit retry after restart. Encrypted SQLite/local-media drill restores reviewed work and hash-identical decodable segments through a fresh API. See [Operations](OPERATIONS.md) and the [measured pilot drill](PILOT_DRILL.md). |
+| Agent | Guided private setup: explicit session IDs, read-only default, bounded collection opt-in, validated JSON/quoted commands/downloads. Service availability is separate from private runtime registration. Standalone gateway plus actual optional ALFRED authenticated tools/CLI in draft PR #20; separately granted reads, exact approved bounded collection and independent model-egress policy. Fixture integration is tested; production installation and automatic memory acceptance are not claimed. |
 
 ## Optional engines and storage
 
@@ -99,8 +121,12 @@ broad keys, signing credentials, object keys and model secrets stay on the serve
 - A01 remains partial for diarisation/overlap and representative audio quality.
   I01 remains partial for external semantic quality; reviewed findings and literal
   comparisons work.
-- G01/G02 gateway code is tested, but separate ALFRED registration is outstanding.
-  That repository has not been changed.
+- G01/G02 optional actual ALFRED tools are implemented/tested in
+  [draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20), commit
+  `5b37ba41353cfcd0cae4243482520e25175e21d9`. The branch is unmerged/undeployed;
+  [the integration guide](ALFRED_INTEGRATION.md) records configured fixture proof,
+  private installation and current hosted-CI limits. No user's host is connected
+  by publishing code.
 - S01 remains partial for public self-service signup,
   payments, target RLS/queue rollout, external objects, representative load/cost
   budgets and production disaster recovery. Manual limits are entitlements, not

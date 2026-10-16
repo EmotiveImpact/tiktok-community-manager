@@ -13,8 +13,10 @@ import sys
 import tempfile
 import time
 from urllib.request import urlopen
+from urllib.parse import urlsplit
 
 from playwright.sync_api import expect, sync_playwright
+from browser_navigation import navigate, renderer_assets, link_current_evidence
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -23,6 +25,116 @@ with socket.socket() as reservation:
 BASE = f"http://127.0.0.1:{PORT}"
 SCREENSHOTS = Path(os.environ.get("LIVELENS_SCREENSHOTS_DIR") or tempfile.mkdtemp(prefix="livelens-full-app-"))
 SCREENSHOTS.mkdir(parents=True, exist_ok=True)
+
+
+def private_alfred_setup(page, capture):
+    """Generate real setup artifacts without claiming a private-host connection."""
+    requests = []
+    page.on("request", lambda request: requests.append((request.method, request.url)))
+    before_jobs = page.request.get(BASE + "/v1/jobs").json()["jobs"]
+    navigate(page, "Agent connection", keyboard=True)
+    readiness = page.get_by_text("Connection not checked · verify on your private host", exact=True)
+    expect(readiness).to_be_visible()
+    session_choices = page.get_by_role("group", name="Sessions available to ALFRED", exact=True)
+    expect(session_choices.get_by_role("checkbox")).to_have_count(2)
+    assert not session_choices.locator("input:checked").count(), "ALFRED access must not select sessions automatically"
+    collection = page.get_by_role("checkbox", name=re.compile("^Include bounded recording controls"))
+    expect(collection).not_to_be_checked()
+    expect(page.locator(".ac-setup input[type=password]")).to_have_count(0)
+    page.get_by_role("button", name="Continue to private host", exact=True).focus()
+    page.keyboard.press("Enter")
+    expect(session_choices).to_have_attribute("aria-invalid", "true")
+    expect(session_choices).to_be_focused()
+    session_choices.get_by_role("checkbox", name=re.compile("^Fictional fixture")).check()
+    page.get_by_role("button", name="Continue to private host", exact=True).click()
+    expect(page.get_by_role("heading", name="Point to your private host.", exact=True)).to_be_focused()
+    values = {
+        "LiveLens API origin": "https://livelens.example.com",
+        "Existing ALFRED scope ID": "fictional_operator_scope",
+        "Private setup directory": "/tmp/fictional-private-livelens",
+        "Existing ALFRED data directory": "/tmp/fictional-alfred-data",
+    }
+    for label, value in values.items():
+        page.get_by_label(label, exact=True).fill(value)
+    origin = page.get_by_label("LiveLens API origin", exact=True)
+    origin.fill("https://livelens.example.com/private-path?fixture=query")
+    page.get_by_role("button", name="Generate setup recipe", exact=True).click()
+    expect(origin).to_have_attribute("aria-invalid", "true")
+    expect(origin).to_be_focused()
+    expect(page.get_by_role("heading", name="Your setup recipe is ready.", exact=True)).to_have_count(0)
+    origin.fill(values["LiveLens API origin"])
+    page.get_by_role("button", name="Generate setup recipe", exact=True).focus()
+    page.keyboard.press("Enter")
+    expect(page.get_by_role("heading", name="Your setup recipe is ready.", exact=True)).to_be_focused()
+    expect(page.get_by_text("Read access only", exact=True)).to_be_visible()
+    expect(page.get_by_text("Not installed", exact=True)).to_be_visible()
+    config = json.loads(page.get_by_label("livelens-connection.json", exact=True).input_value())
+    assert config["workspace"] == "fixture_workspace" and config["scope"] == values["Existing ALFRED scope ID"]
+    assert config["baseUrl"] == values["LiveLens API origin"] and config["tokenFile"] == values["Private setup directory"] + "/livelens.token"
+    assert config["sources"] == [{"id": "livelens-recordings", "sessionIds": ["fixture-conversation"]}]
+    assert "token" not in config and "password" not in config
+    with page.expect_download() as config_download:
+        page.get_by_role("button", name="Download file", exact=True).click()
+    assert config_download.value.suggested_filename == "livelens-connection.json"
+    assert json.loads(Path(config_download.value.path()).read_text()) == config
+    # The tab sequence is operable without a pointer and keeps truthful local
+    # discovery distinct from the explicit read that contacts LiveLens.
+    page.get_by_role("tab", name="Connection JSON", exact=True).focus()
+    page.keyboard.press("ArrowRight")
+    expect(page.get_by_role("tab", name="Test read JSON", exact=True)).to_be_focused()
+    expect(page.get_by_role("tab", name="Test read JSON", exact=True)).to_have_attribute("aria-selected", "true")
+    assert json.loads(page.get_by_label("livelens-read.json", exact=True).input_value()) == {"operation": "sessions", "parameters": {"sourceId": "livelens-recordings"}}
+    page.keyboard.press("ArrowRight")
+    expect(page.get_by_role("tab", name="Host commands", exact=True)).to_be_focused()
+    commands = page.get_by_label("livelens-setup.sh", exact=True).input_value()
+    assert "--tool discover" in commands and "--tool read --tool-input" in commands
+    assert "--allow-livelens-collection" not in commands and "chmod 600" in commands
+    assert "--data-dir '/tmp/fictional-alfred-data'" in commands
+    with page.expect_download() as recipe_download:
+        page.get_by_role("button", name="Download complete recipe", exact=True).click()
+    assert recipe_download.value.suggested_filename == "livelens-alfred-setup.md"
+    recipe = Path(recipe_download.value.path()).read_text()
+    assert "no installation or network verification has run" in recipe
+    assert "read-only installation" in recipe and values["Private setup directory"] in recipe
+    expect(readiness).to_be_visible()
+    capture("12-desktop-private-alfred-recipe.png")
+
+    # Collection changes require a separate explicit choice and a real
+    # configured source; generating those instructions still starts no job.
+    page.get_by_role("button", name="Back", exact=True).click()
+    page.get_by_role("button", name="Back", exact=True).click()
+    collection.check()
+    recorder_source = page.get_by_role("combobox", name="Configured recorder source", exact=True)
+    expect(recorder_source).to_be_enabled()
+    recorder_source.select_option("fixture-media")
+    page.get_by_label("Maximum recording seconds", exact=True).fill("7")
+    page.set_viewport_size({"width": 390, "height": 844})
+    capture("13-phone-private-alfred-access.png")
+    page.get_by_role("button", name="Continue to private host", exact=True).click()
+    page.get_by_role("button", name="Generate setup recipe", exact=True).click()
+    page.get_by_role("tab", name="Connection JSON", exact=True).click()
+    bounded = json.loads(page.get_by_label("livelens-connection.json", exact=True).input_value())
+    assert bounded["sources"][0]["recorderSourceId"] == "fixture-media" and bounded["maxDurationSeconds"] == 7
+    page.get_by_role("tab", name="Host commands", exact=True).click()
+    assert "--allow-livelens-collection" in page.get_by_label("livelens-setup.sh", exact=True).input_value()
+    expect(page.get_by_text("Separate collection grant requested", exact=True)).to_be_visible()
+    expect(readiness).to_be_visible()
+    assert page.request.get(BASE + "/v1/jobs").json()["jobs"] == before_jobs
+    stored = page.evaluate("JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } })")
+    assert all(value not in stored and value not in page.url for value in values.values()), "Private setup inputs must not persist in browser storage or URL"
+    assert all(method == "GET" for method, _ in requests), "Recipe generation must make no installation, credential or collection writes"
+    assert all(urlsplit(url).netloc == urlsplit(BASE).netloc for _, url in requests), "The entered private service endpoint must not be fetched from the browser"
+    page.reload(wait_until="networkidle")
+    expect(session_choices.get_by_role("checkbox")).to_have_count(2)
+    assert not session_choices.locator("input:checked").count()
+    expect(collection).not_to_be_checked()
+    expect(readiness).to_be_visible()
+    page.set_viewport_size({"width": 1440, "height": 1000})
+    return {"privateAlfredRecipeUsesExactSelectedSessionAndReadOnlyDefault": True,
+            "privateAlfredRecipeActualDownloadsAndKeyboardTabs": True,
+            "privateAlfredRecipeExplicitSourceAndBoundedCollectionOption": True,
+            "privateAlfredRecipeNeverInstallsCallsEndpointOrClaimsConnection": True,
+            "privateAlfredSetupInputsNotStoredOrPutInUrl": True}
 
 
 def launch(directory):
@@ -72,10 +184,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
             page.on("pageerror", lambda error: errors.append(str(error)))
 
             def nav(label):
-                navigation = page.get_by_role("navigation", name="LiveLens navigation")
-                if page.viewport_size["width"] < 800:
-                    page.get_by_role("button", name="Toggle navigation", exact=True).click()
-                navigation.get_by_role("button", name=label, exact=True).click()
+                navigate(page, label)
 
             def login():
                 page.goto(BASE + "/app/", wait_until="networkidle")
@@ -83,7 +192,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_label("Password", exact=True).fill("fixture-operator-only")
                 with page.expect_response(lambda response: response.url.endswith("/console/login") and response.request.method == "POST") as authenticated:
                     page.get_by_role("button", name="Open workspace", exact=True).click()
-                page.get_by_role("heading", name="Your review desk", exact=True).wait_for()
+                page.get_by_role("heading", name="Live monitor", exact=True).wait_for()
                 assert authenticated.value.status == 200, "Fixture browser login must succeed"
                 return authenticated.value.json()["csrf"]
 
@@ -134,31 +243,167 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.get_by_role("button", name="Replay conversation", exact=True).click()
                 page.locator("video").wait_for()
                 page.wait_for_function('() => document.querySelector("video").readyState >= 1')
+                # Hash/archive/transcription tools belong below the working
+                # conversation, and their disclosure must not hide playback.
+                recording_tools = page.locator("details.ll-recording-tools")
+                tools_summary = recording_tools.locator("summary").filter(has_text=re.compile(r"^Recording details & tools$"))
+                expect(tools_summary).to_be_visible()
+                assert not recording_tools.evaluate("element => element.open"), "Recording tools must start collapsed"
+                moments = page.get_by_role("region", name="Saved moments", exact=True)
+                expect(moments).to_be_visible()
+                assert page.evaluate("""() => {
+                    const video = document.querySelector('video');
+                    const moments = document.querySelector('.ll-saved-moments');
+                    const tools = document.querySelector('details.ll-recording-tools');
+                    return Boolean(video.compareDocumentPosition(moments) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+                        Boolean(moments.compareDocumentPosition(tools) & Node.DOCUMENT_POSITION_FOLLOWING);
+                }"""), "Saved moments must follow playback and precede recording tools"
+                expect(recording_tools.locator("video")).to_have_count(0)
+                expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
+                expect(page.locator("video")).to_be_visible()
+                media_path = page.locator("video").get_attribute("src")
+                assert media_path.startswith("/v1/media/")
+                recording_id, segment_id = media_path.removeprefix("/v1/media/").split("/")
+                retained_job = page.request.get(BASE + "/v1/jobs/" + recording_id)
+                assert retained_job.status == 200
+                retained_segment = next(item for item in retained_job.json()["segments"] if item["id"] == segment_id)
+                displayed_hash = recording_tools.get_by_text("Segment SHA-256: " + retained_segment["sha256"], exact=True)
+                expect(displayed_hash).not_to_be_visible()
+                tools_summary.focus()
+                page.keyboard.press("Enter")
+                expect(displayed_hash).to_be_visible()
+                expect(recording_tools.get_by_role("region", name="Verified media archive", exact=True)).to_be_visible()
+                expect(recording_tools.get_by_role("region", name="Independent transcription", exact=True)).to_be_visible()
+                tools_summary.focus()
+                page.keyboard.press("Enter")
+                expect(displayed_hash).not_to_be_visible()
+                expect(page.locator("video")).to_be_visible()
+                expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
+                timeline = page.get_by_role("region", name="Captured timeline", exact=True)
                 for _ in range(20):
                     page.get_by_role("button", name="Refresh records", exact=True).click()
-                    if page.get_by_role("button", name=re.compile("Synthetic fixture marker")).count():
+                    if timeline.get_by_role("button", name=re.compile("Synthetic fixture marker")).count():
                         break
                     page.wait_for_timeout(200)
-                page.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
+                timeline.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
                 page.wait_for_function('() => document.querySelector("video").currentTime >= .45')
                 page.evaluate('async () => { const media = document.querySelector("video"); media.muted = true; await media.play(); }')
                 page.wait_for_function('() => document.querySelector("video").currentTime > .8')
                 page.evaluate('document.querySelector("video").pause()')
                 MARKER_ID = page.locator(".ll-context .ll-id").inner_text()
                 marker_text = page.locator(".ll-context blockquote").inner_text()
-                page.get_by_label("Link to investigation").select_option(label="Full application fixture review")
-                page.get_by_role("button", name="Link evidence", exact=True).click()
-                page.get_by_text("Original evidence linked to case.", exact=True).wait_for()
-                page.get_by_role("button", name="Bookmark evidence", exact=True).click()
+                link_current_evidence(page, 'Full application fixture review')
+                with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/bookmarks" and response.request.method == "POST") as bookmarked:
+                    page.get_by_role("button", name="Bookmark evidence", exact=True).click()
+                assert bookmarked.value.status == 201
+                marker_bookmark = bookmarked.value.json()
+                assert marker_bookmark["evidenceId"] == MARKER_ID and marker_bookmark["sessionId"] == "fixture-conversation"
+                assert marker_bookmark["reviewer"] == "fixture" and marker_bookmark["label"] == marker_text[:120]
+                session_bookmarks = page.request.get(BASE + "/v1/bookmarks?session=fixture-conversation")
+                assert session_bookmarks.status == 200
+                assert next(item for item in session_bookmarks.json()["bookmarks"] if item["id"] == marker_bookmark["id"]) == marker_bookmark
                 page.get_by_text("Evidence bookmarked.", exact=True).wait_for()
-                page.get_by_role("button", name=re.compile("Keep the original conversation with the evidence")).first.click()
+                marker_evidence = page.request.get(BASE + "/v1/evidence/" + MARKER_ID).json()
+                assert marker_evidence["sourceTimestampMs"] is None
+                marker_segment = next(item for item in retained_job.json()["segments"] if item["id"] == marker_evidence["raw"]["segmentId"])
+                assert marker_evidence["raw"]["jobId"] == recording_id
+                marker_offset = (marker_evidence["capturedAtMs"] - marker_segment["startedAtMs"]) / 1000
+                assert 0 <= marker_offset < marker_segment["durationMs"] / 1000
+                saved_moment = moments.locator('.ll-saved-moment[data-evidence-id="' + MARKER_ID + '"]')
+                expect(saved_moment).to_have_count(1)
+                expect(saved_moment).to_have_attribute("aria-pressed", "true")
+                expect(saved_moment.locator("strong")).to_have_text(marker_bookmark["label"])
+                expect(saved_moment.locator("time")).to_have_attribute("datetime", page.evaluate("ms => new Date(ms).toISOString()", marker_evidence["capturedAtMs"]))
+                expect(saved_moment.get_by_text("Capture time", exact=True)).to_be_visible()
+                expect(saved_moment.locator("img")).to_have_count(1, timeout=10000)
+                assert saved_moment.locator("img").get_attribute("src").startswith("data:image/jpeg;")
+                page.wait_for_function("""id => { const image = document.querySelector('.ll-saved-moment[data-evidence-id="' + id + '"] img'); return image?.complete && image.naturalWidth > 0; }""", arg=MARKER_ID)
+                assert saved_moment.locator("img").evaluate("image => image.complete && image.naturalWidth > 0"), "Saved moment thumbnail must decode a real retained frame"
+                timeline.get_by_role("button", name=re.compile("Keep the original conversation with the evidence")).first.click()
                 page.locator(".ll-context blockquote").filter(has_text="Keep the original conversation with the evidence.").wait_for()
                 COUNTER_ID = page.locator(".ll-context .ll-id").inner_text()
                 counter_text = page.locator(".ll-context blockquote").inner_text()
-                page.get_by_label("Link to investigation").select_option(label="Full application fixture review")
-                page.get_by_role("button", name="Link evidence", exact=True).click()
-                page.get_by_text("Original evidence linked to case.", exact=True).wait_for()
+                link_current_evidence(page, 'Full application fixture review')
+                page.evaluate('() => { const video = document.querySelector("video"); video.pause(); video.currentTime = 0; }')
+                page.wait_for_function('() => !document.querySelector("video").seeking && document.querySelector("video").currentTime < .1')
+                saved_moment.focus()
+                page.keyboard.press("Enter")
+                expect(page.locator(".ll-context .ll-id")).to_have_text(MARKER_ID)
+                expect(page.locator(".ll-context blockquote")).to_have_text(marker_text)
+                expect(saved_moment).to_have_attribute("aria-pressed", "true")
+                page.wait_for_function('offset => { const video = document.querySelector("video"); return !video.seeking && video.readyState >= 2 && Math.abs(video.currentTime - offset) < .1; }', arg=marker_offset)
                 capture("02-desktop-conversation.png")
+
+                # The library's saved duration describes retained media, not
+                # the wall-clock length of the imported conversation.
+                with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/jobs" and response.request.method == "GET" and "limit=200" in urlsplit(response.url).query) as library_receipts:
+                    nav("Session library")
+                assert library_receipts.value.status == 200
+                library_job = next(item for item in library_receipts.value.json()["jobs"] if item["id"] == recording_id)
+                assert library_job["segments"] and library_job["sessionId"] == "fixture-conversation"
+                library = page.get_by_role("region", name="Conversation and recording library", exact=True)
+                saved_row = library.locator(".rl-row").filter(has=page.locator("strong", has_text=re.compile("^Fictional fixture")))
+                video_filter = library.get_by_role("button", name=re.compile("^With video"))
+                expect(video_filter).to_be_enabled()
+                shown_duration = saved_row.locator(".rl-duration").inner_text()
+                duration_parts = re.fullmatch(r"(\d+):(\d{2})\s+saved", shown_duration)
+                assert duration_parts, "Short saved footage must show a readable minutes:seconds duration"
+                shown_seconds = int(duration_parts[1]) * 60 + int(duration_parts[2])
+                actual_seconds = sum(item["durationMs"] for item in library_job["segments"]) / 1000
+                assert abs(shown_seconds - actual_seconds) <= 1, "Library duration must reflect this job's actual saved segments"
+                expect(saved_row.locator(".rl-state")).to_have_attribute("data-state", library_job["state"])
+                video_filter.focus()
+                page.keyboard.press("Enter")
+                expect(video_filter).to_have_attribute("aria-pressed", "true")
+                expect(library.locator(".rl-row")).to_have_count(1)
+                expect(saved_row).to_be_visible()
+                expect(library.locator(".rl-row").filter(has=page.locator("strong", has_text=re.compile("^Reference fixture")))).to_have_count(0)
+                capture("02a-desktop-recording-library.png")
+                library.get_by_role("button", name=re.compile("^All conversations")).click()
+                expect(library.locator(".rl-row")).to_have_count(2)
+                library.get_by_label("Filter session library", exact=True).fill("Reference fixture")
+                expect(library.locator(".rl-row")).to_have_count(1)
+                expect(library.locator(".rl-row strong")).to_contain_text("Reference fixture")
+                library.locator(".rl-row").focus()
+                page.keyboard.press("Enter")
+                expect(page.get_by_role("heading", name="Captured timeline", exact=True)).to_be_visible()
+                expect(moments.locator(".ll-saved-moment")).to_have_count(0)
+                expect(moments.get_by_text("No moments saved for this recording yet.", exact=True)).to_be_visible()
+                assert page.request.get(BASE + "/v1/bookmarks?session=fixture-reference").json()["bookmarks"] == []
+                reference_statement = timeline.locator(".ll-evidence").filter(has_text="A different session can contain context without proving a relationship.")
+                expect(reference_statement).to_be_visible()
+                header_bookmark = page.get_by_role("button", name="Bookmark moment", exact=True)
+                header_bookmark.focus()
+                page.keyboard.press("Enter")
+                expect(page.get_by_text("Choose a statement to bookmark.", exact=True)).to_be_visible()
+                assert page.request.get(BASE + "/v1/bookmarks?session=fixture-reference").json()["bookmarks"] == [], "Choosing a moment must not save evidence before an explicit statement selection"
+                expect(reference_statement).to_be_focused()
+                with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/bookmarks" and response.request.method == "POST") as reference_saved:
+                    page.keyboard.press("Enter")
+                assert reference_saved.value.status == 201
+                reference_bookmark = reference_saved.value.json()
+                reference_id = page.locator(".ll-context .ll-id")
+                expect(reference_id).to_have_text(reference_bookmark["evidenceId"])
+                assert reference_bookmark["sessionId"] == "fixture-reference" and reference_bookmark["evidenceId"] != MARKER_ID
+                page.get_by_text("Moment bookmarked.", exact=True).wait_for()
+                reference_moment = moments.locator('.ll-saved-moment[data-evidence-id="' + reference_bookmark["evidenceId"] + '"]')
+                expect(reference_moment).to_have_count(1)
+                expect(moments.locator('.ll-saved-moment[data-evidence-id="' + MARKER_ID + '"]')).to_have_count(0)
+                expect(reference_moment.locator("img")).to_have_count(0)
+                expect(page.locator("video")).to_have_count(0)
+                expect(page.get_by_text("No retained media for this session.", exact=True)).to_be_visible()
+                reference_moment.focus()
+                page.keyboard.press("Enter")
+                expect(reference_id).to_have_text(reference_bookmark["evidenceId"])
+                expect(page.locator(".ll-context blockquote")).to_have_text("A different session can contain context without proving a relationship.")
+                nav("Session library")
+                library.get_by_role("button", name="Clear library filter", exact=True).click()
+                expect(library.locator(".rl-row")).to_have_count(2)
+                saved_row.focus()
+                page.keyboard.press("Enter")
+                page.get_by_role("heading", name="Captured timeline", exact=True).wait_for()
+                expect(saved_moment).to_have_count(1)
+                expect(moments.locator('.ll-saved-moment[data-evidence-id="' + reference_bookmark["evidenceId"] + '"]')).to_have_count(0)
 
                 open_investigation()
                 page.get_by_label(re.compile("Select evidence: Synthetic fixture marker")).first.check()
@@ -446,10 +691,21 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 assert reopened["manifest"]["evidence"] == report["manifest"]["evidence"]
                 nav("Session library")
                 page.get_by_role("button", name=re.compile("Fictional fixture")).first.click()
-                page.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
+                timeline.get_by_role("button", name=re.compile("Synthetic fixture marker")).first.click()
                 page.locator("video").wait_for()
                 page.wait_for_function('() => document.querySelector("video").readyState >= 1')
                 assert page.locator(".ll-context blockquote").inner_text() == marker_text, "Export redaction must not change the retained original"
+                persisted_bookmarks = page.request.get(BASE + "/v1/bookmarks?session=fixture-conversation").json()["bookmarks"]
+                assert next(item for item in persisted_bookmarks if item["id"] == marker_bookmark["id"]) == marker_bookmark
+                expect(saved_moment).to_have_count(1)
+                page.evaluate('() => { const video = document.querySelector("video"); video.pause(); video.currentTime = 0; }')
+                page.wait_for_function('() => !document.querySelector("video").seeking && document.querySelector("video").currentTime < .1')
+                saved_moment.focus()
+                page.keyboard.press("Enter")
+                expect(page.locator(".ll-context .ll-id")).to_have_text(MARKER_ID)
+                expect(page.locator(".ll-context blockquote")).to_have_text(marker_text)
+                page.wait_for_function('offset => { const video = document.querySelector("video"); return !video.seeking && video.readyState >= 2 && Math.abs(video.currentTime - offset) < .1; }', arg=marker_offset)
+                alfred_receipt = private_alfred_setup(page, capture)
                 assert not errors, errors
                 receipt = {
                     "fixture": True,
@@ -457,10 +713,16 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                     "desktopAndPhone": True,
                     "keyboardNavigation": True,
                     "actualMediaPlaybackAndSeek": True,
+                    "recordingToolsDisclosurePreservesTimelineAndVerifiedReceipt": True,
+                    "sessionLibrarySavedDurationAndWithVideoFilter": True,
                     "sourceLinkedNoteAndReviewedFinding": True,
                     "counterevidenceRetained": True,
                     "bookmarkSaved": True,
                     "bookmarkOriginalReopened": True,
+                    "savedMomentsExactOriginalClockFrameAndKeyboardSeek": True,
+                    "savedMomentsSessionIsolationAndExplicitStatementChoice": True,
+                    "savedMomentsPersistAfterServiceRestart": True,
+                    "sameSelectedSavedMomentReseeksAfterManualPlaybackChange": True,
                     "crossSessionComparisonSources": True,
                     "observedAccountSearch": True,
                     "sourceConfigurationWithoutBackgroundCapture": True,
@@ -476,6 +738,8 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                     "jsonMarkdownHtmlAndActualPdf": True,
                     "workspaceMembersAndAudit": True,
                     "serviceRestartReopen": True,
+                    **alfred_receipt,
+                    "rendererAssets": renderer_assets(page),
                     "uncaughtPageErrors": len(errors),
                     "screenshots": str(SCREENSHOTS),
                 }

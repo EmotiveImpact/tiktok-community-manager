@@ -1,0 +1,59 @@
+{
+  "id": "c2f4bef3-302b-4764-8304-ccf8ba69b07a",
+  "sessionId": "fixture-conversation",
+  "sourceId": "fixture-media",
+  "state": "stopped",
+  "attempts": 1,
+  "createdAtMs": 1791702323079,
+  "deadlineMs": 1791702335079,
+  "maxDurationSeconds": 12,
+  "segmentSeconds": 2,
+  "stopRequested": true,
+  "error": null,
+  "quotas": {
+    "maxConcurrent": 2,
+    "maxWorkspaceConcurrent": 2,
+    "maxWorkspacePending": 20,
+    "maxDurationSeconds": 3600,
+    "maxWorkspaceBytes": 10737418240,
+    "maxJobBytes": 1073741824
+  },
+  "segments": [
+    {
+      "id": "a1-segment-00000",
+      "attempt": 1,
+      "startedAtMs": 1791702323176,
+      "durationMs": 2023,
+      "bytes": 119355,
+      "sha256": "ed33eb85a99bf479f2de93dd665971f8e60f0a18c831ca42d5ab6b91607e2bac",
+      "timestampBasis": "collector-media-offset"
+    },
+    {
+      "id": "a1-segment-00001",
+      "attempt": 1,
+      "startedAtMs": 1791702325199,
+      "durationMs": 2000,
+      "bytes": 132736,
+      "sha256": "4c48aa2bc8c336513f2492284f5fcf0d8ba55284a0632652ac1852358fbc7469",
+      "timestampBasis": "collector-media-offset"
+    },
+    {
+      "id": "a1-segment-00002",
+      "attempt": 1,
+      "startedAtMs": 1791702327199,
+      "durationMs": 2000,
+      "bytes": 128356,
+      "sha256": "54bd3a9c246585fc044659c087373febfec100789d7c04b364666233535b0055",
+      "timestampBasis": "collector-media-offset"
+    },
+    {
+      "id": "a1-segment-00003",
+      "attempt": 1,
+      "startedAtMs": 1791702329199,
+      "durationMs": 200,
+      "bytes": 17388,
+      "sha256": "358bd7c0c368952480c53de61f8f55eed9b34ae052adf3a8bbc7c4f1273531d7",
+      "timestampBasis": "collector-media-offset"
+    }
+  ]
+}

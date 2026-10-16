@@ -1,0 +1,112 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "privateAlfredHostInstalledOrConnected": false,
+  "passedJourneys": 5,
+  "failedJourneys": 0,
+  "maxConcurrentBrowserJourneys": 2,
+  "rendererAssets": {
+    "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072",
+    "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe"
+  },
+  "deterministicOriginalHydration": {
+    "before": "/tmp/livelens-hydration-before-monitor/hydration-request-receipt.json",
+    "beforeRequestCounts": [
+      1,
+      2
+    ],
+    "after": "/tmp/livelens-hydration-final-monitor/hydration-request-receipt.json",
+    "afterRequestCounts": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "actualOriginalAndDecodedFrameResolved": true
+  },
+  "journeys": [
+    {
+      "journey": "monitor",
+      "passed": true,
+      "receipt": "/tmp/livelens-hydration-final-monitor/receipt.json",
+      "receiptSha256": "43bc69cac5b342f9e207e24b5091f137afcec678c8af77ff4ff3a74ecfb6c68d",
+      "screenshots": 10,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
+      },
+      "publishedReceipt": "operator-workflow-monitor-validation.json"
+    },
+    {
+      "journey": "full",
+      "passed": true,
+      "receipt": "/tmp/livelens-hydration-final-full/receipt.json",
+      "receiptSha256": "2d3d24275d15a416abf500113f67ab8074fb7ab9f33e5ac2e926dbf8d81a6af7",
+      "screenshots": 16,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
+      },
+      "publishedReceipt": "operator-workflow-full-validation.json"
+    },
+    {
+      "journey": "original",
+      "passed": true,
+      "receipt": "/tmp/livelens-hydration-final-original/receipt.json",
+      "receiptSha256": "51704e23e4334410c6f3ceabf11802abbbecce07278e46078a81c8a60870a50d",
+      "screenshots": 2,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
+      },
+      "publishedReceipt": "operator-workflow-original-validation.json"
+    },
+    {
+      "journey": "review",
+      "passed": true,
+      "receipt": "/tmp/livelens-hydration-final-review/receipt.json",
+      "receiptSha256": "2abdf0417e2c73c563c4f9139d8e88cccad26ff7feb26afc3e9d75ba614ffe7e",
+      "screenshots": 8,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
+      },
+      "publishedReceipt": "operator-workflow-review-validation.json"
+    },
+    {
+      "journey": "onboarding",
+      "passed": true,
+      "receipt": "/tmp/livelens-hydration-final-onboarding/receipt.json",
+      "receiptSha256": "a484c021f45e7bebc87f7a1ab699d3d52219e089ad474de5ed03b4d8aa54c91e",
+      "screenshots": 7,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BUy4-zTR.css": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe",
+        "index-Bi3d_2-c.js": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
+      },
+      "publishedReceipt": "operator-workflow-onboarding-validation.json"
+    }
+  ],
+  "publishedFunctionalScreenshots": [
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-alfred-phone.png",
+      "sha256": "1cb9162ac5bc6b6278612f0bd1abb79629248ef89f6528c28e00cd250b61458c"
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-alfred-recipe.png",
+      "sha256": "0c3b8e5e9c8e1115a76d144ece42fe158136672205d48e9f6482114c848231ae"
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-recording-transport.png",
+      "sha256": "e2c953141c5d4efcc4ab00c01f759dfc6a92053ed16e9a38499f423a023e86a2"
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/verification-whole-session-search.png",
+      "sha256": "786fdd75c77a97a6ab1c8c0e8f2fc3e5267f332fcf6b07455195b7689c79f91e"
+    }
+  ]
+}

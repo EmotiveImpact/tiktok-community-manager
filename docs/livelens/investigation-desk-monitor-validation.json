@@ -1,0 +1,52 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "captureFirstDefaultHome": true,
+  "publicTikTokConfiguredOnlyNoPolling": true,
+  "primaryNavigationAndCollapsedSpecialistTools": true,
+  "specialistDeepLinkAndKeyboardPopoverReopen": true,
+  "specialistPopoverClosesOnSelectionEscapeAndOutsideClick": true,
+  "boundedFixtureCheckWithoutRecording": true,
+  "boundedWatchWithoutHiddenCapture": true,
+  "delayedCheckReceiptDoesNotLeakToAnotherAccount": true,
+  "actualFixtureCaptureAndVerifiedMediaHashRange": true,
+  "actualVideoPlaybackAndSeek": true,
+  "capturedChatAndSeparateClocks": true,
+  "stopWatchKeepsIndependentCapture": true,
+  "explicitRecordingStop": true,
+  "recentRecordingKeyboardReplay": true,
+  "originalContextReopened": true,
+  "replayBindsRecordingSourceAndHidesCollectionControls": true,
+  "keyboardBackToMonitorRestoresRecordingSourceControls": true,
+  "twoSameSessionRecordingsReplayExactJobAndDoNotCross": true,
+  "realFixtureChatBeyond100DisplayedAndOriginalContextOpened": true,
+  "desktop1440AndPhone390": true,
+  "readOnlyUiAndActualWriteDenied403": true,
+  "phoneNavigationFocusTrapEscapeAndDestinationFocus": true,
+  "readOnlySavedMomentsOriginalReopenAndWriteDenied403": true,
+  "wholeRecordingKeyboardRangeCrossesActualSegments": true,
+  "recordingTransportSkipBoundsAndRatePreserved": true,
+  "recordingTransportContinuesOnlyWithinSelectedJob": true,
+  "providerOnlyTimestampNeverSeeksMedia": true,
+  "observedBetweenRecordingGapRemainsUncovered": true,
+  "wholeSessionSearchBeyond100AndExactContext": true,
+  "queryAndKindPreservedAcrossForwardBackwardPages": true,
+  "kindChangeResetsCursor": true,
+  "lateSearchResponseCannotReplaceCurrentQuery": true,
+  "offPageSavedMomentKeepsOriginalClockDecodedFrameWithoutRepeatedReads": true,
+  "pendingSavedOriginalSurvivesUnrelatedPageArrivalFilterAndRefresh": true,
+  "exact100EventAnd200SessionTerminalPagesPreserveEarlierMatches": true,
+  "wholeLibrarySearchBeyond200AndExactSession": true,
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:4479/app/assets/index-BZbmVy_B.css",
+      "sha256": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+    },
+    {
+      "url": "http://127.0.0.1:4479/app/assets/index-Cuq1l9vc.js",
+      "sha256": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+    }
+  ],
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-desk-publish-monitor"
+}

@@ -1,5 +1,16 @@
 # Scoped ALFRED tool adapter
 
+The standalone adapter below remains independently callable and does not infer
+another host's registration. Actual optional ALFRED HTTP/CLI integration is
+implemented/tested in [draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20),
+commit `5b37ba41353cfcd0cae4243482520e25175e21d9`; see
+[the current integration guide](../../docs/livelens/ALFRED_INTEGRATION.md).
+Its configured `/desk/livelens` discovery supplies registration truth. The branch
+is unmerged/undeployed and starts no collection without current grants and exact
+approval.
+
+## Standalone adapter contract
+
 `livelens_gateway.py` is a callable local adapter. The existing ALFRED export-file
 registry does not accept an HTTP connector, so this repository does not register
 tools, alter that policy layer or claim an installed ALFRED connection.

@@ -1,14 +1,13 @@
 import { useState, type FormEvent } from "react";
 import {
-  Bot,
   Fingerprint,
-  KeyRound,
   ShieldCheck,
   Trash2,
   Users,
 } from "lucide-react";
 import { api } from "../../../lib/livelens/api";
 import WorkspaceInvitations from "./WorkspaceInvitations";
+import Operations, { formatStorage, RetentionCleanup, type RetentionResult } from "./Operations";
 import {
   collection,
   Empty,
@@ -37,17 +36,16 @@ type WorkspaceInfo = {
     storageBytes: number;
     speechSeconds: number;
     pendingJobs: number;
+    reservedRecordingSeconds: number;
+    reservedStorageBytes: number;
+    reservedSpeechSeconds: number;
+    pendingCleanupBytes: number;
   };
   retention: { days: number | null; updatedAtMs?: number; updatedBy?: string };
   billing: { mode: string; providerConfigured: boolean };
 };
-const bytes = (value: number) =>
-  value >= 1e9
-    ? `${(value / 1e9).toFixed(2)} GB`
-    : value >= 1e6
-      ? `${(value / 1e6).toFixed(1)} MB`
-      : `${Math.round(value / 1e3)} KB`;
-const time = (value: number) => `${(value / 3600).toFixed(1)} hr`;
+const bytes = formatStorage;
+const time = (value: number) => value < 60 ? `${Math.ceil(value)} sec` : value < 3600 ? `${(value / 60).toFixed(1)} min` : `${(value / 3600).toFixed(1)} hr`;
 const metrics = [
   {
     label: "Recorded media",
@@ -68,26 +66,24 @@ const metrics = [
     format: time,
   },
   {
-    label: "Pending captures",
+    label: "Pending work",
     usage: "pendingJobs",
     limit: "maxPendingJobs",
     format: (value: number) => String(value),
   },
 ] as const;
 
-export function Workspace({ revision = 0 }: { revision?: number }) {
+export function Workspace({ revision = 0, onOpenSession }: { revision?: number; onOpenSession?: (sessionId: string) => void }) {
   const resource = useResource<WorkspaceInfo>("/v1/workspace", revision);
   const capabilities = useResource<{ enabled: string[]; scopes: string[] }>("/v1/capabilities", revision);
   const [tab, setTab] = useState("usage");
   const info = resource.data;
+  const canManage = !!info && !resource.error && !capabilities.error && ["owner", "admin"].includes(info.role) && !!capabilities.data?.scopes.includes("workspace:admin");
+  const canOpenSession = !capabilities.error && ["sessions:read", "evidence:read"].every((scope) => capabilities.data?.scopes.includes(scope));
   return (
     <>
-      <Notice error={resource.error} />
-      {resource.loading && !info ? (
-        <Loading />
-      ) : (
-        info && (
-          <>
+      {tab !== "operations" && <Notice error={resource.error} />}
+      {info && (
             <div className="aw-workspace-summary">
               <div>
                 <span className="aw-eyebrow">CURRENT WORKSPACE</span>
@@ -101,12 +97,14 @@ export function Workspace({ revision = 0 }: { revision?: number }) {
                 </span>
               </div>
             </div>
+      )}
             <div
               className="aw-segmented aw-detail-tabs"
               aria-label="Workspace administration"
             >
               {[
                 ["usage", "Usage & limits"],
+                ["operations", "Operations"],
                 ["members", "Members"],
                 ["retention", "Retention"],
                 ["audit", "Audit trail"],
@@ -115,38 +113,50 @@ export function Workspace({ revision = 0 }: { revision?: number }) {
                   className={tab === value ? "is-active" : ""}
                   key={value}
                   onClick={() => setTab(value)}
+                  aria-pressed={tab === value}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            {tab === "usage" && (
+            {tab === "operations" && <Operations revision={revision} onOpenSession={canOpenSession ? onOpenSession : undefined} onOpenRetention={() => setTab("retention")} />}
+            {tab !== "operations" && resource.loading && !info && <Loading />}
+            {tab !== "operations" && resource.error && <Empty title="Workspace details unavailable">
+              Usage and administration could not be loaded. Operations can still show worker activity and recovery information.
+              <button className="aw-text-button" onClick={() => setTab("operations")}>Open Operations</button>
+            </Empty>}
+            {tab === "usage" && info && !resource.error && (
               <>
                 <div className="aw-meter-grid">
                   {metrics.map((metric) => {
                     const used = info.usage[metric.usage],
                       maximum = info.limits[metric.limit];
+                    const reserved = metric.usage === "recordingSeconds" ? info.usage.reservedRecordingSeconds ?? 0 : metric.usage === "storageBytes" ? info.usage.reservedStorageBytes ?? 0 : metric.usage === "speechSeconds" ? info.usage.reservedSpeechSeconds ?? 0 : 0;
+                    const committed = used + reserved;
                     return (
                       <article className="aw-meter" key={metric.usage}>
                         <h3>{metric.label}</h3>
                         <strong>{metric.format(used)}</strong>
-                        <span>of {metric.format(maximum)} available</span>
+                        <span>of {metric.format(maximum)} limit</span>
                         <meter
                           min={0}
                           max={maximum || 1}
-                          value={used}
-                          aria-label={`${metric.label} usage`}
+                          value={Math.min(committed, maximum || 1)}
+                          aria-label={`${metric.label} usage and reservations`}
                         />
+                        <p className="op-reservation">{metric.format(reserved)} reserved</p>
+                        <p className="op-remaining">{committed > maximum ? `Over limit by ${metric.format(committed - maximum)}` : `${metric.format(Math.max(0, maximum - committed))} remaining`}</p>
                       </article>
                     );
                   })}
                 </div>
                 <p className="aw-help">
-                  Measured from retained media and completed speech receipts.
+                  Usage includes retained media, encrypted archives and completed speech.
+                  Reservations cover admitted work and unfinished media cleanup.
                   Usage does not imply a tested customer capacity or a payment
                   charge.
                 </p>
-                <LimitsEditor info={info} onSaved={resource.reload} />
+                {canManage && <LimitsEditor info={info} onSaved={resource.reload} />}
                 <Section title="Workspace entitlement">
                   <div className="aw-detail-content aw-inline-info">
                     <ShieldCheck size={24} />
@@ -166,7 +176,7 @@ export function Workspace({ revision = 0 }: { revision?: number }) {
                 </Section>
               </>
             )}
-            {tab === "members" && (
+            {tab === "members" && info && !resource.error && (
               <>
               {capabilities.data?.enabled.includes("workspace-invitations") &&
                 capabilities.data.scopes.includes("workspace:admin") &&
@@ -174,18 +184,15 @@ export function Workspace({ revision = 0 }: { revision?: number }) {
                 <WorkspaceInvitations onSaved={resource.reload} revision={revision} />}
               <Members
                 revision={revision}
-                canManage={["owner", "admin"].includes(info.role)}
+                canManage={canManage}
                 onSaved={resource.reload}
               />
               </>
             )}
-            {tab === "retention" && (
-              <Retention info={info} onSaved={resource.reload} />
+            {tab === "retention" && info && !resource.error && (
+              <Retention info={info} onSaved={resource.reload} canManage={canManage} revision={revision} />
             )}
-            {tab === "audit" && <AuditTrail />}
-          </>
-        )
-      )}
+            {tab === "audit" && info && !resource.error && <AuditTrail />}
     </>
   );
 }
@@ -478,9 +485,13 @@ function AuditTrail() {
 function Retention({
   info,
   onSaved,
+  canManage,
+  revision,
 }: {
   info: WorkspaceInfo;
   onSaved: () => void;
+  canManage: boolean;
+  revision: number;
 }) {
   const [days, setDays] = useState(info.retention.days?.toString() ?? "");
   const [reason, setReason] = useState("");
@@ -499,10 +510,14 @@ function Retention({
   } | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmed, setConfirmed] = useState(false);
+  const [result, setResult] = useState<RetentionResult | null>(null);
+  const [cleanupRevision, setCleanupRevision] = useState(0);
   const action = useAction();
-  const canManage = ["owner", "admin"].includes(info.role);
+  const unfinishedCleanup = result ? Math.max(result.cleanupFailures.length, result.cleanupTasks.filter((task) => task.state !== "completed").length) : 0;
+  const changed = () => { setCleanupRevision((old) => old + 1); onSaved(); };
   const save = async (event: FormEvent) => {
     event.preventDefault();
+    setResult(null);
     if (
       await action.run(
         () =>
@@ -520,6 +535,10 @@ function Retention({
     }
   };
   const inspect = async () => {
+    setResult(null);
+    setPreview(null);
+    setSelected([]);
+    setConfirmed(false);
     await action.run(async () => {
       setPreview(await api("/v1/workspace/retention/preview"));
       setSelected([]);
@@ -527,28 +546,42 @@ function Retention({
     }, "Deletion preview prepared. Select only eligible sessions you intend to remove.");
   };
   const apply = async () => {
-    if (!preview || !confirmed || !selected.length) return;
+    if (!preview || !confirmed || !selected.length || action.busy || !canManage) return;
+    setResult(null);
     if (
       await action.run(
-        () =>
-          api("/v1/workspace/retention/apply", {
+        async () => {
+          const receipt = await api<RetentionResult>("/v1/workspace/retention/apply", {
             previewHash: preview.previewHash,
             sessionIds: selected,
             reason,
-          }),
-        "Selected eligible records were deleted. An audit receipt was retained.",
+          });
+          setResult(receipt);
+        },
+        "",
       )
     ) {
       setPreview(null);
       setSelected([]);
       setConfirmed(false);
       setReason("");
-      onSaved();
+      changed();
+    } else {
+      // A lost response may follow a committed deletion. Require a fresh preview
+      // and reload durable cleanup receipts before another attempt.
+      setPreview(null);
+      setSelected([]);
+      setConfirmed(false);
+      changed();
     }
   };
   return (
     <>
       <Notice error={action.error} receipt={action.receipt} />
+      {result && <div className={`op-retention-result${unfinishedCleanup ? " is-partial" : ""}`} role={unfinishedCleanup ? "alert" : "status"}>
+        <strong>{result.deletedSessions} {result.deletedSessions === 1 ? "session removed" : "sessions removed"} from the workspace.</strong>
+        <p>{unfinishedCleanup ? `${unfinishedCleanup} media cleanup ${unfinishedCleanup === 1 ? "task remains" : "tasks remain"} unfinished. Storage stays reserved until removal completes. Review the durable cleanup tasks below.` : "Selected records and their eligible media were removed. An audit receipt was retained."}</p>
+      </div>}
       <Section
         title="Keep evidence for the right amount of time"
         description="A preference defines an eligibility window. Deletion requires a current preview and an explicit selection."
@@ -564,7 +597,7 @@ function Retention({
                 max={3650}
                 step={1}
                 value={days}
-                disabled={!canManage}
+                disabled={!canManage || action.busy}
                 onChange={(event) => setDays(event.target.value)}
               />
             </label>
@@ -574,7 +607,7 @@ function Retention({
                 required
                 maxLength={1000}
                 value={reason}
-                disabled={!canManage}
+                disabled={!canManage || action.busy}
                 onChange={(event) => setReason(event.target.value)}
                 placeholder="Explain this retention decision"
               />
@@ -622,6 +655,8 @@ function Retention({
                   type="checkbox"
                   disabled={
                     !session.eligible ||
+                    action.busy ||
+                    !canManage ||
                     (!selected.includes(session.id) &&
                       selected.length >= preview.maxApply)
                   }
@@ -657,7 +692,7 @@ function Retention({
               <input
                 type="checkbox"
                 checked={confirmed}
-                disabled={!selected.length}
+                disabled={!selected.length || action.busy || !canManage}
                 onChange={(event) => setConfirmed(event.target.checked)}
               />
               <span>
@@ -668,7 +703,7 @@ function Retention({
             <button
               className="aw-danger"
               disabled={
-                action.busy || !confirmed || !selected.length || !reason.trim()
+                action.busy || !canManage || !confirmed || !selected.length || !reason.trim()
               }
               onClick={apply}
             >
@@ -678,151 +713,9 @@ function Retention({
           </div>
         </Section>
       )}
+      {canManage && <RetentionCleanup revision={revision + cleanupRevision} onChanged={() => { setResult(null); changed(); }} />}
     </>
   );
 }
 
-type Tool = {
-  name: string;
-  description: string;
-  scopes?: string[];
-  policy?: string;
-};
-type AgentManifest = {
-  registered?: boolean;
-  registeredInAlfred?: boolean;
-  transport?: string;
-  readTools: Tool[];
-  controlTools: Tool[];
-  workspace?: string;
-  subject?: string;
-  status?: string;
-};
-export function AgentConnection() {
-  const resource = useResource<AgentManifest>("/v1/agent");
-  const manifest = resource.data;
-  return (
-    <>
-      <Notice error={resource.error} />
-      {resource.loading ? (
-        <Loading />
-      ) : (
-        manifest && (
-          <>
-            <div className="aw-agent-banner">
-              <div className="aw-agent-symbol">
-                <Bot size={28} />
-              </div>
-              <div className="aw-grow">
-                <span className="aw-eyebrow">LIVELENS GATEWAY</span>
-                <h2>One evidence engine. Scoped agent access.</h2>
-                <p>
-                  An authorised agent can query the same originals and receipts
-                  you can inspect here.
-                </p>
-              </div>
-              <Status
-                status={
-                  manifest.registered || manifest.registeredInAlfred
-                    ? "reviewed"
-                    : "neutral"
-                }
-              >
-                {manifest.registered || manifest.registeredInAlfred
-                  ? "Registered"
-                  : "Adapter ready"}
-              </Status>
-            </div>
-            <div className="aw-info-grid">
-              <Section title="Connection identity">
-                <dl className="aw-key-values aw-detail-content">
-                  <div>
-                    <dt>Workspace</dt>
-                    <dd>{manifest.workspace ?? "Current workspace"}</dd>
-                  </div>
-                  <div>
-                    <dt>Caller</dt>
-                    <dd>{manifest.subject ?? "Current operator"}</dd>
-                  </div>
-                  <div>
-                    <dt>Transport</dt>
-                    <dd>{manifest.transport ?? "Scoped HTTP"}</dd>
-                  </div>
-                  <div>
-                    <dt>ALFRED registration</dt>
-                    <dd>
-                      {manifest.registered || manifest.registeredInAlfred
-                        ? "Registered by the operator"
-                        : "Requires registration in ALFRED"}
-                    </dd>
-                  </div>
-                </dl>
-              </Section>
-              <Section title="Authority and memory">
-                <div className="aw-detail-content">
-                  <div className="aw-inline-info">
-                    <KeyRound size={20} />
-                    <p>
-                      Credentials and source grants stay on the service. A
-                      captured statement cannot grant a tool new authority.
-                    </p>
-                  </div>
-                  <p>
-                    Memory import requires a separate, explicit acceptance
-                    policy in ALFRED.
-                  </p>
-                  <p className="aw-help">
-                    Model access and data egress require a separate configured
-                    grant.
-                  </p>
-                </div>
-              </Section>
-            </div>
-            <Section
-              title="Available read tools"
-              description="Results preserve source references, uncertainty and workspace isolation."
-            >
-              <ToolList tools={manifest.readTools ?? []} />
-            </Section>
-            <Section
-              title="Bounded control tools"
-              description="Collection controls use separate grants and return traceable receipts."
-            >
-              <ToolList tools={manifest.controlTools ?? []} />
-            </Section>
-            <p className="aw-help">
-              An available gateway does not mean the separate ALFRED application
-              is installed or has accepted memory.
-            </p>
-          </>
-        )
-      )}
-    </>
-  );
-}
-function ToolList({ tools }: { tools: Tool[] }) {
-  return !tools.length ? (
-    <Empty title="No tools granted to this connection">
-      Your administrator can configure explicit service access.
-    </Empty>
-  ) : (
-    <div className="aw-tool-list">
-      {tools.map((tool) => (
-        <article className="aw-tool" key={tool.name}>
-          <div>
-            <h3>{tool.name.replaceAll(/[_.]/g, " ")}</h3>
-            <p>{tool.description}</p>
-            {tool.policy && (
-              <small>Policy: {tool.policy.replaceAll("-", " ")}</small>
-            )}
-          </div>
-          <div className="aw-tag-list">
-            {tool.scopes?.map((scope) => (
-              <Status key={scope}>{scope}</Status>
-            ))}
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
+export { default as AgentConnection } from "./AgentConnection";

@@ -11,6 +11,13 @@ Python and FFmpeg processes; speech, model analysis, PDF rendering, PostgreSQL a
 object archiving are optional. Installing or configuring a source does not start
 network polling. Operators explicitly create bounded schedules or recording jobs.
 
+The console's current direction is a capture-first account monitor with explicit
+checks/watch schedules, Record/Stop, retained video/chat and recent recordings.
+The [LIVE monitor operating guide](../../docs/livelens/LIVE_MONITOR.md) distinguishes
+discovery, recording jobs and verified replay. A last observed LIVE status is not
+a direct live-video feed. Existing fixture tests do not validate an external LIVE
+or establish final visual acceptance.
+
 ## Run locally
 
 From the repository root, the generated-media console is:
@@ -86,21 +93,21 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | Method and path | Required scopes | Result |
 |---|---|---|
 | GET `/v1/overview` | sessions:read, cases:read, evidence:read | Retained counts and recording receipts |
-| GET/POST `/v1/sessions` | sessions:read / sessions:write | List/create session provenance |
+| GET/POST `/v1/sessions` | sessions:read / sessions:write | Literal `q` search with `limit`/`offset` / create session provenance |
 | GET `/v1/sessions/:id` | sessions:read | Session provenance |
-| GET/POST `/v1/sessions/:id/events` | evidence:read / evidence:write | Paginated journal / atomic ingestion |
+| GET/POST `/v1/sessions/:id/events` | evidence:read / evidence:write | Literal `q`, exact `kind`, sequence `after` and `limit` / atomic ingestion |
 | GET `/v1/sessions/:id/integrity` | evidence:read | Local journal verification |
-| GET `/v1/evidence/search?q=&account=&session=&limit=` | evidence:read | Literal text/account search |
+| GET `/v1/evidence/search?q=&account=&session=&kind=&limit=&offset=` | evidence:read | Literal captured-text search, exact current account, filtered lookahead pages |
 | GET `/v1/evidence/:id` | evidence:read | Original event and current attribution |
 | GET `/v1/evidence/:id/context` | evidence:read, sessions:read | Before/after context in the same session |
 | GET/POST `/v1/evidence/:id/assertions` | evidence:read / assertions:write | Attribution revisions / explicit account assertion |
-| GET/POST `/v1/cases` | cases:read / cases:write | Accessible cases / create question |
+| GET/POST `/v1/cases` | cases:read / cases:write; evidence:read when linking | Accessible literal `q` search and pages / create question with optional atomic evidence links |
 | GET `/v1/cases/:id` | cases:read | Accessible case |
 | POST `/v1/cases/:id/evidence` | cases:write, evidence:read | Link retained evidence |
 | GET `/v1/cases/:id/report?format=markdown` | cases:read, evidence:read | Original JSON/Markdown evidence export |
 | GET `/v1/sources` | recordings:read | Configured source descriptors; no private media URLs |
 | POST `/v1/sources` | workspace:admin, recordings:write | Persist selected public TikTok account or HTTPS media source |
-| GET/POST `/v1/jobs` | recordings:read / recordings:write | Recorder receipts / explicit bounded capture |
+| GET/POST `/v1/jobs` | recordings:read / recordings:write | Recorder receipts (`active=true` filters nonterminal jobs) / explicit bounded capture |
 | GET `/v1/jobs/:id` | recordings:read | Recording progress, gaps and verified segments |
 | POST `/v1/jobs/:id/stop` | recordings:write | Persist stop request |
 | GET `/v1/sessions/:id/media` | recordings:read, sessions:read | Retained recording receipts |
@@ -118,7 +125,7 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | POST `/v1/investigations/:case/notes` | cases:write, evidence:read | Source-linked operator note |
 | POST `/v1/investigations/:case/findings` | cases:write, evidence:read | Draft finding with supporting/counter evidence |
 | POST `/v1/investigations/:case/findings/:finding/review` | cases:write, evidence:read | Append reviewed status/reason |
-| GET/POST `/v1/bookmarks` | evidence:read / evidence:read, investigations:write | Retained evidence bookmarks |
+| GET/POST `/v1/bookmarks` | evidence:read / evidence:read, investigations:write | Filtered saved-moment pages; optional `includeEvidence=true` original hydration / save moment |
 | GET `/v1/accounts/:handle/activity` | evidence:read, sessions:read | Observed/asserted activity across retained sessions |
 | POST `/v1/comparisons` | evidence:read, sessions:read | Bounded comparison of selected sessions |
 | GET/POST `/v1/graph` | evidence:read, sessions:read / evidence:read, investigations:write | Evidence-supported graph / reviewed relation |
@@ -134,12 +141,15 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | POST `/v1/analysis` | analysis:write, investigations:write, evidence:read, cases:write | Explicit model request producing unreviewed findings |
 | GET `/v1/workspace` | workspace:read | Role, members, limits, usage and retention |
 | GET `/v1/workspace/usage` | workspace:read | Retained-media/speech metering |
+| GET `/v1/workspace/operations` | workspace:read | Workspace capacity and independently scope-filtered worker observations; reads start no work |
 | POST `/v1/workspace/limits` | workspace:admin | Manual entitlement changes with reason |
 | GET/POST `/v1/workspace/members` | workspace:read / workspace:admin | Membership / role changes |
 | GET `/v1/workspace/audit` | workspace:admin | Local hash-chained audit receipts |
 | POST `/v1/workspace/retention` | workspace:admin | Retention policy; no automatic deletion |
 | GET `/v1/workspace/retention/preview` | workspace:admin | Eligible/protected sessions and preview hash |
 | POST `/v1/workspace/retention/apply` | workspace:admin | Explicit selected deletion with matching preview/reason |
+| GET `/v1/workspace/retention/cleanup?limit=&offset=` | workspace:admin | Durable cleanup history; bounded `{tasks,hasMore,nextOffset}` pages |
+| POST `/v1/workspace/retention/cleanup/:id/retry` | workspace:admin | Explicit audited retry with `{reason}`; inspect returned task state |
 | GET/POST `/v1/workspace/cases/:case/access` | workspace:admin | Restricted case policy and member grants |
 | GET `/v1/agent` | sessions:read | Scoped adapter manifest; registration remains false |
 
@@ -150,6 +160,40 @@ when governance is enabled. Stop/restore/run endpoints expect the empty JSON
 object `{}` unless their route defines a configuration body.
 
 ## Evidence and operation contracts
+
+### Operations and retention recovery
+
+The [Operations guide](../../docs/livelens/OPERATIONS.md) describes the workspace
+screen and recovery procedure. `/v1/workspace/operations` requires current
+membership as well as `workspace:read`. Recording, scheduling and archive rows
+independently require `recordings:read`; speech requires `speech:read`. Restricted
+rows expose no counts or configured state. Cleanup management also requires an
+owner/admin role and `workspace:admin`.
+
+`workers[].state` observes configuration, loop lifecycle and this workspace's
+persisted active work. Idle or configured does not certify provider health.
+Counts aggregate the complete scoped queue before the latest 20 attention items
+are selected. `pending` includes all unfinished work, including active/retrying.
+Attention errors use fixed safe codes; raw exceptions and paths are not exposed.
+
+Capacity meters include `used`, `reserved`, `committed`, `limit`, `remaining` and
+`overLimit`. Usage is logical retained media/speech/archive accounting; pending
+physical cleanup remains a storage reservation. Recorder admission separately
+reserves a conservative per-job allocation and known unfinished local cleanup,
+exposed in the recording worker's `recordingBudget`. Its `reservedBytes` includes
+both, with `pendingCleanupBytes` identifying the latter. Both constraints must
+admit a new capture. Physical disk guards remain independent. Failed usage reads
+return `capacity.available=false`, never invented zero usage.
+
+Retention applies record deletion and durable per-job cleanup tasks in one
+transaction before filesystem work. Its compatible response retains `receipts`,
+`cleanupFailures` and `deletedSessions`, and adds `cleanupTasks`. A successful HTTP
+response can contain a failed cleanup task: check its actual `state`. Retry is
+explicit and reasoned, and completed retries are idempotent. Tasks bind the
+original root/directory identities, refuse replaced paths or reused jobs, and
+reserve known bytes until removal is confirmed. A recording ID with unfinished
+cleanup is refused with HTTP 409 `recording_cleanup_pending`. Nothing here starts
+automatic retention, a retry loop or source monitoring.
 
 Create sessions with `{id?, platform, account?, sourceUrl, title, startedAtMs}`.
 Ingest `{events:[...]}` atomically, with at most 200 original events:
@@ -173,7 +217,97 @@ receipt; conflicting content under the same identity refuses the batch.
 Speech carries no inferred account identity. An operator assertion is a separate
 labelled revision, not a rewrite of the original evidence.
 
+Session event reads accept `q` (up to 512 characters) and `kind` (`chat`, `caption`,
+`transcript`, `observation`, `gap`, or `all`; omitted means `all`). Filtering runs
+over the retained session before the bounded page is selected. The literal query
+matches captured text and the current displayed account attribution, including
+the latest operator assertion; prior assertions and anonymous speaker IDs are not
+account matches. `%`, `_` and backslash are literal characters. Matching folds
+ASCII letter case in both SQLite and PostgreSQL. Source, collector and receipt
+clocks remain untouched.
+
+The response remains `{events,nextAfter}`. Pages follow ascending journal
+sequence, with `after` (default `0`) as an exclusive cursor and `limit` (default
+`100`, maximum `200`). `nextAfter` is the last returned event's actual sequence,
+or `null` for an empty page; it is not a total or a promise of a further match.
+Carry the same `q`/`kind` when continuing; reset `after` when changing either.
+This is a live retained-data query, not a snapshot: later appends can appear on
+subsequent pages and a later attribution correction can change account matches.
+
+Session library reads accept the same literal `q` over title, displayed `@account`
+(both `@handle` and `handle` match) and raw platform identifier before applying
+`limit` (default `100`, maximum `200`) and
+`offset` (default `0`). The response remains `{sessions}`, ordered by newest
+session start, then ID. Reset the offset when changing the query. Offset pages
+can shift when sessions are added or removed; no total or snapshot is implied.
+
+### Investigation intake
+
+Workspace evidence discovery uses `GET /v1/evidence/search` with `q` (maximum
+512 characters), exact normalized `account`, exact `session`, `kind` (`all` or
+one of the event kinds), `limit` (default 100, maximum 200) and `offset` (default
+0). The query remains captured-text search; use `account` for current attribution,
+including the latest operator assertion. Earlier assertions and anonymous track
+IDs do not become account matches. `%`, `_` and backslash remain literal and ASCII
+text matching folds case. Every filter applies before pagination; newest journal
+sequence comes first. The response is `{evidence,hasMore,nextOffset}`. One extra
+row determines whether a next page actually exists; `nextOffset` is null on the
+last page, including a full last page. Existing evidence shapes and clocks remain
+unchanged. No session metadata permission is added by this evidence-only route.
+
+`GET /v1/bookmarks` accepts the same filters, with `q` matching either the saved
+label or captured text. It returns `{bookmarks,hasMore,nextOffset}`, ordered by
+newest save time and then bookmark ID. Bookmark objects retain their existing
+shape unless `includeEvidence=true` is supplied; that exact boolean option adds
+the original event and current attribution as `bookmark.evidence`. Different
+bookmarks can reference the same original; consumers must select original IDs
+once. The existing pilot cap of 200 saved moments per workspace remains in force.
+
+`GET /v1/cases` accepts literal `q` over title/question and the same limit/offset
+pagination. Workspace visibility, creator access and current case grants apply
+before the page is selected, so newer inaccessible cases cannot hide accessible
+older ones. It returns `{cases,hasMore,nextOffset}`. Case list/detail and the case
+inside investigation detail include `canWrite`, computed from the caller's
+current token scopes, membership role and exact case grants. Capabilities also
+include `permissions.createCases` for current scope and role. These receipts help
+the UI explain available actions; every mutation rechecks current authority.
+
+All of these offset pages are live retained-data queries rather than snapshots.
+New records, attribution changes, saves or access changes can shift later pages.
+Keep the filters unchanged when advancing and reset offset when changing them.
+
+`POST /v1/cases/:id/evidence` accepts `{evidenceIds}` with 1–200 supplied IDs and
+returns `{linked,total,existing}`. Counts refer to distinct original IDs:
+`linked` is newly added, `existing` was already in this case, and `total` is the
+case's resulting retained-evidence count. Duplicate input IDs never add duplicate
+links. Invalid, missing or foreign-workspace evidence refuses the entire batch;
+the existing 1,000-original case cap also refuses atomically. Operator review
+requests additionally set `forReview:true` (an exact boolean), which limits the
+resulting distinct evidence count to 200 in the same transaction. This matches
+the existing investigation review and analysis budgets. Two requests competing
+for the final slot cannot both add another original; duplicate retries at 200
+remain accepted. Omitting the flag or setting it false preserves the original
+1,000-evidence export contract. Investigation detail exposes `totalEvidence` and
+`reviewEvidenceLimit:200`; a legacy case above that review limit needs a smaller
+review case rather than pretending every original is available to this workflow.
+Linking validates
+workspace and original IDs; report generation separately verifies the referenced
+journals and refuses damaged integrity. A link receipt is not an integrity report.
+
+`POST /v1/cases` additionally accepts optional `evidenceIds` (up to 200, including
+an empty array). Creating the case and linking its originals is one transaction:
+a failed link leaves no empty case. A nonempty selection requires `evidence:read`
+in addition to `cases:write`, with the existing current-role checks. The response
+retains the existing created-case shape. Ordinary question-only creation and all
+existing case/report permissions remain available.
+
 Recording creation is `{id?,sessionId,sourceId,maxDurationSeconds?,segmentSeconds?}`.
+Recorder listings accept `limit` up to 200 and an optional exact boolean query
+`active=true` or `active=false`. The active filter excludes completed, stopped
+and failed jobs before applying the page limit, keeping older active captures
+visible even when newer terminal jobs fill a recent page. It remains bound to
+the authenticated workspace.
+
 Only a configured source ID selects media. Default recording duration is 60 seconds;
 segments are 2–30 seconds and jobs are capped at one hour. The Linux recorder
 uses job leases, bounded retries, byte reservations, workspace limits and a
@@ -211,6 +345,14 @@ unreviewed suggestions. Captured text cannot invoke tools, grant access or becom
 accepted agent memory. [The ALFRED gateway](../../integrations/alfred/GATEWAY.md)
 rechecks source-read, collection-control and model-egress permissions separately;
 it does not register tools in the separate ALFRED repository.
+
+Actual optional ALFRED HTTP/CLI tools are implemented in
+[ALFRED draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20), separately
+installed with private configuration and current grants. The
+[integration guide](../../docs/livelens/ALFRED_INTEGRATION.md) records its exact
+tested revision and fixture transport/capture receipts. LiveLens's `/v1/agent`
+does not infer that another host is configured; the installed ALFRED runtime's
+authenticated `/desk/livelens` discovery supplies that registration truth.
 
 ## Operational boundaries
 

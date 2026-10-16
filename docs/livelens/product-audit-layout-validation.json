@@ -1,0 +1,46 @@
+{
+  "renderer": "index-Ch5jfvlq.js",
+  "stylesheet": "index-CepzgEEN.css",
+  "shells": {
+    "sessions": [
+      {
+        "class": "ll-sidebar ",
+        "width": 184,
+        "height": 1024
+      },
+      {
+        "class": "ll-top",
+        "width": 1256,
+        "height": 56
+      }
+    ],
+    "review": [
+      {
+        "class": "ll-sidebar ",
+        "width": 184,
+        "height": 1024
+      },
+      {
+        "class": "ll-top",
+        "width": 1256,
+        "height": 56
+      }
+    ],
+    "agent": [
+      {
+        "class": "ll-sidebar ",
+        "width": 184,
+        "height": 1024
+      },
+      {
+        "class": "ll-top",
+        "width": 1256,
+        "height": 56
+      }
+    ]
+  },
+  "desktopAccountEntryWidth": 176,
+  "alfredGuideVisibleOnManifestFailure": true,
+  "settingsOpensAlfredSetup": true,
+  "uncaughtPageErrors": []
+}

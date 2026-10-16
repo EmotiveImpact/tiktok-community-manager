@@ -1,0 +1,93 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "rendererAssetsSha256": {
+    "index-CBq7TQKy.js": "48663b41f80e0611d80bda1a7c42f8068d3512d46e76b4597186d8de0bd8194b",
+    "index-uQ3gdMnf.css": "6f073510e9ec24af6654ce7f08219b99df4ca8465087ac7f94e6edecfadb8caa",
+    "inter-latin-wght-normal-Dx4kXJAl.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62"
+  },
+  "journeys": {
+    "monitor": {
+      "passed": true,
+      "receipt": "aperture-studio-monitor-validation.json",
+      "screenshots": [
+        "01-desktop-live-monitor-ready.png",
+        "02-desktop-configured-account-unchecked.png",
+        "03-desktop-fixture-check-without-recording.png",
+        "04-desktop-actual-fixture-recording.png",
+        "05-desktop-stopped-recording-replay.png",
+        "06-desktop-late-chat-after-100-events.png",
+        "07-phone-live-monitor.png",
+        "08-desktop-read-only-live-monitor.png"
+      ],
+      "screenshotCount": 8,
+      "uncaughtPageErrors": 0
+    },
+    "original": {
+      "passed": true,
+      "receipt": "aperture-studio-original-validation.json",
+      "screenshots": [
+        "desktop-replay.png",
+        "phone-replay.png"
+      ],
+      "screenshotCount": 2,
+      "uncaughtPageErrors": 0
+    },
+    "full": {
+      "passed": true,
+      "receipt": "aperture-studio-full-validation.json",
+      "screenshots": [
+        "01-desktop-overview.png",
+        "02-desktop-conversation.png",
+        "02a-desktop-recording-library.png",
+        "03-desktop-investigation.png",
+        "04-desktop-reviewed-report.png",
+        "04a-desktop-comparison.png",
+        "04b-desktop-observed-account.png",
+        "05-desktop-context-graph.png",
+        "05a-desktop-identity-boundaries.png",
+        "06-desktop-missions.png",
+        "07-desktop-reviewed-alert.png",
+        "08-desktop-workspace-audit.png",
+        "09-phone-investigation.png",
+        "10-phone-context-graph.png"
+      ],
+      "screenshotCount": 14,
+      "uncaughtPageErrors": 0
+    },
+    "review": {
+      "passed": true,
+      "receipt": "aperture-studio-review-validation.json",
+      "screenshots": [
+        "01-desktop-source-linked-finding-viewport.png",
+        "01-desktop-source-linked-finding.png",
+        "02-desktop-acknowledged-signal.png",
+        "02a-desktop-after-acknowledgement-selection.png",
+        "03-phone-selected-source.png",
+        "04-phone-review-inbox.png",
+        "05-desktop-persisted-review-desk.png",
+        "06-desktop-read-only-desk.png"
+      ],
+      "screenshotCount": 8,
+      "uncaughtPageErrors": 0
+    },
+    "onboarding": {
+      "passed": true,
+      "receipt": "aperture-studio-onboarding-validation.json",
+      "screenshots": [
+        "01-desktop-owner-invitation-form.png",
+        "02-phone-invitation-empty-password.png",
+        "03-phone-viewer-workspace.png",
+        "04-desktop-invited-analyst-investigation.png",
+        "05-desktop-role-downgrade.png",
+        "06-desktop-reset-empty-password.png",
+        "07-desktop-persisted-accounts.png"
+      ],
+      "screenshotCount": 7,
+      "uncaughtPageErrors": 0
+    }
+  },
+  "browserJourneyCount": 5,
+  "allPassed": true,
+  "maximumConcurrentBrowserJourneys": 2
+}

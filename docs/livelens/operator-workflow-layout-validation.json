@@ -1,0 +1,133 @@
+{
+  "geometry": [
+    {
+      "class": "ll-sidebar ",
+      "top": 0,
+      "left": 0,
+      "width": 72,
+      "height": 1058
+    },
+    {
+      "class": "ll-top",
+      "top": 0,
+      "left": 72,
+      "width": 1415,
+      "height": 72
+    },
+    {
+      "class": "ll-heading",
+      "top": 92,
+      "left": 100,
+      "width": 1359,
+      "height": 100.59375
+    },
+    {
+      "class": "ll-conversation-player",
+      "top": 204.59375,
+      "left": 100,
+      "width": 869.171875,
+      "height": 866.09375
+    },
+    {
+      "class": "ll-saved-moments",
+      "top": 813.09375,
+      "left": 100,
+      "width": 869.171875,
+      "height": 189
+    },
+    {
+      "class": "ll-recording-tools",
+      "top": 1022.09375,
+      "left": 100,
+      "width": 869.171875,
+      "height": 48.59375
+    },
+    {
+      "class": "ll-conversation-timeline ",
+      "top": 204.59375,
+      "left": 989.171875,
+      "width": 469.828125,
+      "height": 613.390625
+    }
+  ],
+  "uncaughtPageErrors": [],
+  "renderer": "./assets/index-Bi3d_2-c.js",
+  "fixture": true,
+  "generatedStudioMediaSeconds": 6.023,
+  "stylesheet": "index-BUy4-zTR.css",
+  "browserViewport": {
+    "desktop": [
+      1487,
+      1058
+    ],
+    "phone": [
+      390,
+      844
+    ],
+    "deviceScaleFactor": 1,
+    "timezone": "Europe/London"
+  },
+  "screenshots": [
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/01-conversation-desktop.png",
+      "sha256": "f4dddda665f8b35c152ed6a1165a917c638b3e4d7c24b637f618eff58a5411da",
+      "bytes": 653647
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/01-conversation-full.png",
+      "sha256": "1556a1093e8929523f891e829245e31c60a3ce27b95252f3860a7658e0384113",
+      "bytes": 745016
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/02-monitor-desktop.png",
+      "sha256": "223c4d2ef19fa499a4f400df8596865051e46d550bc7f44cf1658bb667ebb1c8",
+      "bytes": 578092
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/03-library-desktop.png",
+      "sha256": "6a214f78575d38d7c100c5bcbc34736698f6f64954cfc792e310bd1c8e9a672b",
+      "bytes": 84816
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/04-conversation-phone.png",
+      "sha256": "261cd16fc7f9d8c2475a7c0bfeae7c56f318107ad4abe08574faceab4936954d",
+      "bytes": 207273
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/05-navigation-phone.png",
+      "sha256": "c6bf8c7eb230e5ddf2012cd736124fdb9053b05a1f65faebb530cff75f191541",
+      "bytes": 56299
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/06-monitor-phone.png",
+      "sha256": "3c247a21c10b80b3c1cb832d9f42d483afb7a2c2890a09b36d34eab632aa4e8a",
+      "bytes": 193460
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/07-alfred-access-desktop.png",
+      "sha256": "0321a848507427a1b267d6b66dc0f64b84f56c369016d6e999ebda3abbcc4d7f",
+      "bytes": 173272
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/08-alfred-host-desktop.png",
+      "sha256": "121eb750d33181672035f991f790e7852bed05537b9cd6cdbc2284eb74ebfa7c",
+      "bytes": 172848
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/09-alfred-recipe-desktop.png",
+      "sha256": "858efb509e7f44766f564581c454c86e20cbe1e1fd7f8dc20f73af71dc49a07b",
+      "bytes": 220199
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/10-alfred-recipe-phone.png",
+      "sha256": "f736d375b742873ab4372597c2212d62e6d8aa0e48cb5d8eb6ef9729b47f28e0",
+      "bytes": 178564
+    },
+    {
+      "path": "docs/livelens/screenshots/operator-workflow/11-alfred-host-phone.png",
+      "sha256": "d47f39aa549d09c54d28b55af9f7c2d923a7a1155c0598178046cc20cb130646",
+      "bytes": 144118
+    }
+  ],
+  "description": "Actual authenticated synthetic studio demo. Generated still and tone recorded through FFmpeg; illustrative API captions, not recognition or LIVE. ALFRED host paths/origin are example inputs only; no host request or installation."
+}

@@ -1,5 +1,5 @@
 .ll-app .aw-workspace {
-  color: #f1f0ed;
+  color: var(--ll-text, #f1f0ed);
   font-size: 14px;
   line-height: 1.55;
   min-width: 0;
@@ -71,7 +71,7 @@
   border-bottom: 1px solid var(--ll-line, #31343a);
 }
 .ll-app .aw-workspace .aw-section-head p {
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   margin-top: 4px;
   max-width: 72ch;
   font-size: 13px;
@@ -93,7 +93,7 @@
   align-items: center;
   gap: 14px;
   max-width: 75ch;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
 }
 .ll-app .aw-workspace .aw-intro svg {
   color: var(--ll-accent, #9eadc1);
@@ -121,16 +121,16 @@
   color: var(--ll-action-text, #181a1d);
 }
 .ll-app .aw-workspace .aw-primary:hover:not(:disabled) {
-  background: #f1f0ed;
+  background: var(--ll-text, #f1f0ed);
 }
 .ll-app .aw-workspace .aw-secondary {
-  background: #25292e;
-  border-color: #31343a;
-  color: #f1f0ed;
+  background: var(--ll-surface-raised, #25292e);
+  border-color: var(--ll-line, #31343a);
+  color: var(--ll-text, #f1f0ed);
 }
 .ll-app .aw-workspace .aw-secondary:hover:not(:disabled) {
-  background: #29313c;
-  border-color: #515b69;
+  background: var(--ll-selected, #29313c);
+  border-color: var(--ll-line-strong, #515b69);
 }
 .ll-app .aw-workspace .aw-danger {
   color: #d1aaa5;
@@ -140,7 +140,7 @@
 .ll-app .aw-workspace .aw-icon-button {
   padding: 7px;
   min-height: 30px;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
   background: transparent;
   border-color: var(--ll-line, #31343a);
 }
@@ -157,7 +157,7 @@
   text-align: left;
 }
 .ll-app .aw-workspace .aw-text-button:hover:not(:disabled) {
-  color: #f1f0ed;
+  color: var(--ll-text, #f1f0ed);
 }
 .ll-app .aw-workspace .aw-button-row {
   display: flex;
@@ -169,7 +169,7 @@
   display: inline-flex;
   gap: 3px;
   padding: 4px;
-  background: #202328;
+  background: var(--ll-surface, #202328);
   border: 1px solid var(--ll-line, #31343a);
   border-radius: 8px;
   max-width: 100%;
@@ -177,7 +177,7 @@
 .ll-app .aw-workspace .aw-segmented button {
   border: none;
   background: transparent;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   font-size: 13px;
   padding: 7px 11px;
   border-radius: 4px;
@@ -185,8 +185,8 @@
   text-transform: capitalize;
 }
 .ll-app .aw-workspace .aw-segmented button.is-active {
-  background: #31343a;
-  color: #f1f0ed;
+  background: var(--ll-line, #31343a);
+  color: var(--ll-text, #f1f0ed);
 }
 .ll-app .aw-workspace .aw-detail-tabs {
   margin-bottom: 20px;
@@ -197,10 +197,10 @@
   align-items: flex-start;
   padding: 12px 14px;
   font-size: 13px;
-  color: #d2d5db;
-  border: 1px solid #3e4652;
+  color: var(--ll-text-soft, #d2d5db);
+  border: 1px solid var(--ll-line-strong, #3e4652);
   border-radius: 6px;
-  background: #25292e;
+  background: var(--ll-surface-raised, #25292e);
   margin-bottom: 16px;
 }
 .ll-app .aw-workspace .aw-notice svg {
@@ -214,8 +214,8 @@
 }
 .ll-app .aw-workspace .aw-success {
   color: #c4cbc5;
-  border-color: #3e4652;
-  background: #25292e;
+  border-color: var(--ll-line-strong, #3e4652);
+  background: var(--ll-surface-raised, #25292e);
 }
 .ll-app .aw-workspace .aw-empty {
   min-height: 175px;
@@ -226,14 +226,14 @@
   gap: 8px;
   padding: 32px 26px;
   text-align: center;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
 }
 .ll-app .aw-workspace .aw-empty strong {
   font-size: 15px;
   font-weight: 500;
 }
 .ll-app .aw-workspace .aw-empty p {
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
   font-size: 13px;
   max-width: 50ch;
 }
@@ -242,7 +242,7 @@
   align-items: center;
   gap: 10px;
   padding: 32px 20px;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
 }
 .ll-app .aw-workspace .aw-spin {
   animation: aw-spin 1.5s linear infinite;
@@ -256,10 +256,10 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 7px;
-  border: 1px solid #3e4652;
+  border: 1px solid var(--ll-line-strong, #3e4652);
   border-radius: 4px;
-  background: #29313c;
-  color: #d2d5db;
+  background: var(--ll-selected, #29313c);
+  color: var(--ll-text-soft, #d2d5db);
   font-size: 11px;
   font-weight: 500;
   line-height: 1.4;
@@ -270,8 +270,8 @@
 .ll-app .aw-workspace .aw-status-operatorreviewed,
 .ll-app .aw-workspace .aw-status-acknowledged {
   color: #c4cbc5;
-  border-color: #515b69;
-  background: #29313c;
+  border-color: var(--ll-line-strong, #515b69);
+  background: var(--ll-selected, #29313c);
 }
 .ll-app .aw-workspace .aw-status-pending,
 .ll-app .aw-workspace .aw-status-draft,
@@ -287,9 +287,9 @@
   background: #2d2424;
 }
 .ll-app .aw-workspace .aw-status-observed {
-  color: #e5e8ed;
-  border-color: #515b69;
-  background: #29313c;
+  color: var(--ll-text, #e5e8ed);
+  border-color: var(--ll-line-strong, #515b69);
+  background: var(--ll-selected, #29313c);
 }
 .ll-app .aw-workspace .aw-form {
   padding: 20px;
@@ -309,7 +309,7 @@
   gap: 7px;
   font-size: 13px;
   font-weight: 500;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
   min-width: 0;
 }
 .ll-app .aw-workspace input:not([type="checkbox"]),
@@ -317,9 +317,9 @@
 .ll-app .aw-workspace select {
   width: 100%;
   min-height: 38px;
-  border: 1px solid #31343a;
-  background: #181a1d;
-  color: #f1f0ed;
+  border: 1px solid var(--ll-line, #31343a);
+  background: var(--ll-bg, #181a1d);
+  color: var(--ll-text, #f1f0ed);
   border-radius: 6px;
   padding: 9px 11px;
   font-weight: 400;
@@ -334,7 +334,7 @@
 }
 .ll-app .aw-workspace input::placeholder,
 .ll-app .aw-workspace textarea::placeholder {
-  color: #939eac;
+  color: var(--ll-subtle, #939eac);
 }
 .ll-app .aw-workspace input[type="checkbox"] {
   padding: 0;
@@ -357,22 +357,22 @@
   padding: 0 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #e5e8ed;
+  color: var(--ll-text, #e5e8ed);
 }
 .ll-app .aw-workspace .aw-optional {
   font-size: 11px;
   font-weight: 400;
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
 }
 .ll-app .aw-workspace .aw-help {
   font-size: 12px;
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
   display: inline-flex;
   gap: 6px;
   align-items: center;
 }
 .ll-app .aw-workspace .aw-form-footer {
-  border-top: 1px solid #29313c;
+  border-top: 1px solid var(--ll-line, #29313c);
   padding-top: 16px;
   margin: 2px 0 0;
 }
@@ -392,7 +392,7 @@
   align-items: flex-start;
   gap: 11px;
   padding: 11px 7px;
-  border-bottom: 1px solid #29313c;
+  border-bottom: 1px solid var(--ll-line, #29313c);
   font-weight: 400;
   cursor: pointer;
 }
@@ -416,7 +416,7 @@
   flex-direction: column;
   gap: 14px;
   padding-bottom: 18px;
-  border-bottom: 1px solid #29313c;
+  border-bottom: 1px solid var(--ll-line, #29313c);
 }
 .ll-app .aw-workspace .aw-rule-editor:last-child {
   border-bottom: none;
@@ -440,14 +440,14 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  border: 1px solid #3e4652;
-  background: #25292e;
+  border: 1px solid var(--ll-line-strong, #3e4652);
+  background: var(--ll-surface-raised, #25292e);
   border-radius: 7px;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
 }
 .ll-app .aw-workspace .aw-mission p {
   font-size: 13px;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   margin-top: 4px;
 }
 .ll-app .aw-workspace .aw-tag-list {
@@ -461,7 +461,7 @@
   font-size: 13px;
 }
 .ll-app .aw-workspace .aw-details summary {
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
   cursor: pointer;
   padding: 4px 0;
 }
@@ -491,8 +491,8 @@
   padding: 16px 20px;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #29313c;
-  color: #e5e8ed;
+  border-bottom: 1px solid var(--ll-line, #29313c);
+  color: var(--ll-text, #e5e8ed);
   text-align: left;
 }
 .ll-app .aw-workspace .aw-select-row:last-child {
@@ -500,7 +500,7 @@
 }
 .ll-app .aw-workspace .aw-select-row:hover,
 .ll-app .aw-workspace .aw-select-row.is-selected {
-  background: #25292e;
+  background: var(--ll-surface-raised, #25292e);
 }
 .ll-app .aw-workspace .aw-select-row.is-selected {
   box-shadow: inset 3px 0 0 var(--ll-accent, #9eadc1);
@@ -549,17 +549,17 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  color: #e5e8ed;
+  color: var(--ll-text, #e5e8ed);
   font-size: 12px;
 }
 .ll-app .aw-workspace .aw-evidence-meta time {
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
   font-size: 11px;
   margin-left: auto;
 }
 .ll-app .aw-workspace .aw-evidence p {
   margin: 10px 0;
-  color: #e5e8ed;
+  color: var(--ll-text, #e5e8ed);
   font-size: 14px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -569,40 +569,40 @@
   gap: 16px;
   justify-content: space-between;
   padding: 13px 16px;
-  border: 1px solid #3e4652;
-  background: #25292e;
+  border: 1px solid var(--ll-line-strong, #3e4652);
+  background: var(--ll-surface-raised, #25292e);
   border-radius: 7px;
   margin-bottom: 16px;
   font-size: 13px;
 }
 .ll-app .aw-workspace .aw-receipt span {
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
 }
 .ll-app .aw-workspace .aw-history {
   margin-top: 22px;
-  border-top: 1px solid #31343a;
+  border-top: 1px solid var(--ll-line, #31343a);
   padding-top: 15px;
 }
 .ll-app .aw-workspace .aw-history > p {
   padding: 12px 0;
   font-size: 13px;
-  border-bottom: 1px solid #29313c;
+  border-bottom: 1px solid var(--ll-line, #29313c);
 }
 .ll-app .aw-workspace .aw-history small {
   margin-top: 6px;
 }
 .ll-app .aw-workspace .aw-note {
   padding: 14px 0;
-  border-bottom: 1px solid #29313c;
+  border-bottom: 1px solid var(--ll-line, #29313c);
 }
 .ll-app .aw-workspace .aw-note p {
   white-space: pre-wrap;
   margin-bottom: 6px;
 }
 .ll-app .aw-workspace .aw-source-chip {
-  color: #d2d5db;
-  background: #29313c;
-  border: 1px solid #3e4652;
+  color: var(--ll-text-soft, #d2d5db);
+  background: var(--ll-selected, #29313c);
+  border: 1px solid var(--ll-line-strong, #3e4652);
   border-radius: 4px;
   padding: 4px 7px;
   font-size: 11px !important;
@@ -620,20 +620,20 @@
   margin: 5px 0 8px;
 }
 .ll-app .aw-workspace .aw-case-heading p {
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
   max-width: 75ch;
 }
 .ll-app .aw-workspace .aw-eyebrow {
   letter-spacing: 0.13em;
   font-size: 11px;
   font-weight: 600;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
 }
 .ll-app .aw-workspace .aw-back {
   margin-top: -4px;
 }
 .ll-app .aw-workspace .aw-evidence-choice {
-  border: 1px solid #31343a;
+  border: 1px solid var(--ll-line, #31343a);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -647,17 +647,17 @@
   font-size: 12px;
 }
 .ll-app .aw-workspace .aw-choice-head {
-  background: #25292e;
-  color: #b9bfc8;
+  background: var(--ll-surface-raised, #25292e);
+  color: var(--ll-muted, #b9bfc8);
 }
 .ll-app .aw-workspace .aw-choice-row {
-  border-top: 1px solid #31343a;
+  border-top: 1px solid var(--ll-line, #31343a);
 }
 .ll-app .aw-workspace .aw-choice-row > button {
   border: 0;
   background: transparent;
   text-align: left;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
   padding: 0;
   font-size: 13px;
 }
@@ -665,7 +665,7 @@
   margin-left: 22px;
 }
 .ll-app .aw-workspace .aw-finding {
-  border-bottom: 1px solid #31343a;
+  border-bottom: 1px solid var(--ll-line, #31343a);
   padding: 0 0 23px;
   margin-bottom: 23px;
 }
@@ -679,7 +679,7 @@
   margin-bottom: 12px;
 }
 .ll-app .aw-workspace .aw-finding > p {
-  color: #e5e8ed;
+  color: var(--ll-text, #e5e8ed);
   white-space: pre-wrap;
 }
 .ll-app .aw-workspace .aw-finding-sources {
@@ -691,7 +691,7 @@
 }
 .ll-app .aw-workspace .aw-finding-sources > strong {
   min-width: 70px;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   font-weight: 500;
 }
 .ll-app .aw-workspace .aw-finding-sources .aw-tag-list {
@@ -699,7 +699,7 @@
 }
 .ll-app .aw-workspace .aw-prior-statement {
   display: block;
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
   padding-top: 8px;
   font-size: 12px;
 }
@@ -717,9 +717,9 @@
   align-items: center;
   gap: 20px;
   padding: 17px 20px;
-  border: 1px solid #3e4652;
+  border: 1px solid var(--ll-line-strong, #3e4652);
   border-radius: 7px;
-  background: #25292e;
+  background: var(--ll-surface-raised, #25292e);
   margin-bottom: 18px;
 }
 .ll-app .aw-workspace .aw-analysis-strip > div:first-child {
@@ -727,7 +727,7 @@
   min-width: 230px;
 }
 .ll-app .aw-workspace .aw-analysis-strip p {
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   margin-top: 4px;
   font-size: 13px;
 }
@@ -740,8 +740,8 @@
   align-items: center;
   gap: 12px;
   border: 0;
-  border-right: 1px solid #29313c;
-  color: #e5e8ed;
+  border-right: 1px solid var(--ll-line, #29313c);
+  color: var(--ll-text, #e5e8ed);
   background: transparent;
   padding: 22px 20px;
   text-align: left;
@@ -750,7 +750,7 @@
   border-right: 0;
 }
 .ll-app .aw-workspace .aw-export-option:hover {
-  background: #25292e;
+  background: var(--ll-surface-raised, #25292e);
 }
 .ll-app .aw-workspace .aw-export-option > span {
   flex: 1;
@@ -769,17 +769,17 @@
   display: flex;
   gap: 12px;
   padding: 17px 20px;
-  border-bottom: 1px solid #29313c;
+  border-bottom: 1px solid var(--ll-line, #29313c);
   align-items: flex-start;
 }
 .ll-app .aw-workspace .aw-bookmark > svg {
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
   margin-top: 3px;
   flex-shrink: 0;
 }
 .ll-app .aw-workspace .aw-bookmark p {
   margin-top: 5px;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
 }
 .ll-app .aw-workspace .aw-inline-form {
   display: grid;
@@ -787,11 +787,11 @@
   align-items: end;
 }
 .ll-app .aw-workspace .aw-comparison-group {
-  border-bottom: 1px solid #31343a;
+  border-bottom: 1px solid var(--ll-line, #31343a);
   margin-bottom: 20px;
 }
 .ll-app .aw-workspace .aw-comparison-group h3 {
-  color: #e5e8ed;
+  color: var(--ll-text, #e5e8ed);
 }
 .ll-app .aw-workspace .aw-access-row {
   display: flex;
@@ -808,7 +808,7 @@
 .ll-app .aw-workspace .aw-graph-canvas {
   overflow: auto;
   max-height: 530px;
-  background: #181a1d;
+  background: var(--ll-bg, #181a1d);
 }
 .ll-app .aw-workspace .aw-graph-view-toolbar {
   display: flex;
@@ -816,7 +816,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #29313c;
+  border-bottom: 1px solid var(--ll-line, #29313c);
 }
 .ll-app .aw-workspace .aw-graph-view-toolbar .aw-segmented {
   padding: 2px;
@@ -829,8 +829,8 @@
   flex-wrap: wrap;
   gap: 20px;
   padding: 8px 18px;
-  border-bottom: 1px solid #29313c;
-  background: #202328;
+  border-bottom: 1px solid var(--ll-line, #29313c);
+  background: var(--ll-surface, #202328);
 }
 .ll-app .aw-workspace .aw-graph-column-nav button {
   font-size: 11px !important;
@@ -843,13 +843,13 @@
   display: block;
   margin-top: 5px;
   font-size: 13px;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
 }
 .ll-app .aw-workspace .aw-graph-canvas svg {
   display: block;
 }
 .ll-app .aw-workspace .aw-graph-column {
-  fill: #a6abb3;
+  fill: var(--ll-muted, #a6abb3);
   font-family: inherit;
   font-size: 11px;
   letter-spacing: 0.13em;
@@ -863,7 +863,7 @@
   fill: none;
 }
 .ll-app .aw-workspace .aw-edge-line {
-  stroke: #515b69;
+  stroke: var(--ll-line-strong, #515b69);
   stroke-width: 1.5;
   fill: none;
   pointer-events: none;
@@ -878,30 +878,30 @@
 .ll-app .aw-workspace .aw-graph-edge.is-selected .aw-edge-line,
 .ll-app .aw-workspace .aw-graph-edge:hover .aw-edge-line,
 .ll-app .aw-workspace .aw-graph-edge:focus-visible .aw-edge-line {
-  stroke: #b5c4d8;
+  stroke: var(--ll-focus, #b5c4d8);
   stroke-width: 2.5;
 }
 .ll-app .aw-workspace .aw-graph-node {
   cursor: pointer;
 }
 .ll-app .aw-workspace .aw-graph-node rect {
-  fill: #29313c;
-  stroke: #515b69;
+  fill: var(--ll-selected, #29313c);
+  stroke: var(--ll-line-strong, #515b69);
   stroke-width: 1;
 }
 .ll-app .aw-workspace .aw-graph-node text {
-  fill: #e5e8ed;
+  fill: var(--ll-text, #e5e8ed);
   font-family: inherit;
   font-size: 11px;
   pointer-events: none;
 }
 .ll-app .aw-workspace .aw-node-session rect {
-  fill: #29313c;
-  stroke: #515b69;
+  fill: var(--ll-selected, #29313c);
+  stroke: var(--ll-line-strong, #515b69);
 }
 .ll-app .aw-workspace .aw-node-account rect {
-  fill: #29313c;
-  stroke: #7d8897;
+  fill: var(--ll-selected, #29313c);
+  stroke: var(--ll-subtle, #7d8897);
 }
 .ll-app .aw-workspace .aw-node-topic rect {
   fill: #38312a;
@@ -917,7 +917,7 @@
 }
 .ll-app .aw-workspace .aw-entity-kind {
   display: inline-block;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   font-size: 11px;
   font-weight: 400;
   margin-right: 8px;
@@ -925,12 +925,12 @@
 .ll-app .aw-workspace .aw-track-provenance {
   margin-bottom: 18px;
   padding-bottom: 18px;
-  border-bottom: 1px solid #31343a;
+  border-bottom: 1px solid var(--ll-line, #31343a);
 }
 .ll-app .aw-workspace .aw-track-scope {
   overflow-wrap: anywhere;
   font-size: 11px;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
 }
 .ll-app .aw-workspace .aw-person-declaration {
   display: flex;
@@ -940,11 +940,11 @@
   flex-wrap: wrap;
 }
 .ll-app .aw-workspace .aw-identity-endpoint {
-  border-top: 1px solid #31343a;
+  border-top: 1px solid var(--ll-line, #31343a);
   padding-top: 12px;
   margin-top: 13px;
   font-size: 13px;
-  color: #d2d5db;
+  color: var(--ll-text-soft, #d2d5db);
 }
 .ll-app .aw-workspace .aw-identity-endpoint > button {
   margin-top: 6px;
@@ -952,26 +952,26 @@
 .ll-app .aw-workspace .aw-graph-node.is-selected rect,
 .ll-app .aw-workspace .aw-graph-node:hover rect,
 .ll-app .aw-workspace .aw-graph-node:focus-visible rect {
-  stroke: #b5c4d8;
+  stroke: var(--ll-focus, #b5c4d8);
   stroke-width: 2;
 }
 .ll-app .aw-workspace .aw-graph-legend {
   display: flex;
   gap: 20px;
   padding: 12px 18px;
-  border-top: 1px solid #29313c;
+  border-top: 1px solid var(--ll-line, #29313c);
 }
 .ll-app .aw-workspace .aw-graph-legend span {
   display: flex;
   align-items: center;
   gap: 7px;
   font-size: 11px;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
 }
 .ll-app .aw-workspace .aw-graph-legend i {
   width: 15px;
   height: 1px;
-  background: #939eac;
+  background: var(--ll-subtle, #939eac);
 }
 .ll-app .aw-workspace .aw-graph-legend .aw-legend-reviewed {
   background: #8a9d90;
@@ -1005,21 +1005,21 @@
 .ll-app .aw-workspace .aw-meter-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border: 1px solid #29313c;
+  border: 1px solid var(--ll-line, #29313c);
   border-radius: 9px;
   margin-bottom: 12px;
   overflow: hidden;
 }
 .ll-app .aw-workspace .aw-meter {
   padding: 22px 20px;
-  border-right: 1px solid #29313c;
-  background: #202328;
+  border-right: 1px solid var(--ll-line, #29313c);
+  background: var(--ll-surface, #202328);
 }
 .ll-app .aw-workspace .aw-meter:last-child {
   border: 0;
 }
 .ll-app .aw-workspace .aw-meter h3 {
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   font-size: 12px;
   font-weight: 500;
 }
@@ -1032,21 +1032,21 @@
 }
 .ll-app .aw-workspace .aw-meter > span {
   font-size: 12px;
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
 }
 .ll-app .aw-workspace .aw-meter meter {
   display: block;
   margin-top: 16px;
   width: 100%;
   height: 5px;
-  background: #31343a;
+  background: var(--ll-line, #31343a);
 }
 .ll-app .aw-workspace .aw-meter meter::-webkit-meter-bar {
   border: 0;
-  background: #31343a;
+  background: var(--ll-line, #31343a);
 }
 .ll-app .aw-workspace .aw-meter meter::-webkit-meter-optimum-value {
-  background: #9eadc1;
+  background: var(--ll-accent, #9eadc1);
 }
 .ll-app .aw-workspace .aw-meter-grid + .aw-help {
   margin-bottom: 20px;
@@ -1057,12 +1057,12 @@
   align-items: flex-start;
 }
 .ll-app .aw-workspace .aw-inline-info > svg {
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   flex-shrink: 0;
   margin-top: 3px;
 }
 .ll-app .aw-workspace .aw-inline-info p {
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   margin-top: 4px;
 }
 .ll-app .aw-workspace .aw-table-scroll {
@@ -1075,9 +1075,9 @@
   font-size: 13px;
 }
 .ll-app .aw-workspace .aw-table th {
-  background: #202328;
+  background: var(--ll-surface, #202328);
   padding: 10px 20px;
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
   font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
@@ -1085,7 +1085,7 @@
 }
 .ll-app .aw-workspace .aw-table td {
   padding: 16px 20px;
-  border-top: 1px solid #29313c;
+  border-top: 1px solid var(--ll-line, #29313c);
   vertical-align: top;
 }
 .ll-app .aw-workspace .aw-table td strong {
@@ -1112,12 +1112,12 @@
   min-width: 0;
 }
 .ll-app .aw-workspace .aw-key-values dt {
-  color: #a6abb3;
+  color: var(--ll-muted, #a6abb3);
 }
 .ll-app .aw-workspace .aw-key-values dd {
   min-width: 0;
   margin: 0;
-  color: #e5e8ed;
+  color: var(--ll-text, #e5e8ed);
   overflow-wrap: anywhere;
 }
 .ll-app .aw-workspace .aw-hash {
@@ -1125,10 +1125,10 @@
   overflow-wrap: anywhere;
   font-family: monospace;
   font-size: 11px;
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
 }
 .ll-app .aw-workspace .aw-delete-confirm {
-  border-top: 1px solid #3e4652;
+  border-top: 1px solid var(--ll-line-strong, #3e4652);
   margin-top: 18px;
   padding: 20px;
   display: flex;
@@ -1146,8 +1146,8 @@
   gap: 20px;
   align-items: center;
   padding: 25px;
-  border: 1px solid #3e4652;
-  background: #202328;
+  border: 1px solid var(--ll-line-strong, #3e4652);
+  background: var(--ll-surface, #202328);
   border-radius: 9px;
   margin-bottom: 20px;
 }
@@ -1157,10 +1157,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #515b69;
+  border: 1px solid var(--ll-line-strong, #515b69);
   border-radius: 10px;
-  background: #29313c;
-  color: #d2d5db;
+  background: var(--ll-selected, #29313c);
+  color: var(--ll-text-soft, #d2d5db);
   flex-shrink: 0;
 }
 .ll-app .aw-workspace .aw-agent-banner h2 {
@@ -1169,7 +1169,7 @@
   margin: 4px 0 8px;
 }
 .ll-app .aw-workspace .aw-agent-banner p {
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   font-size: 13px;
 }
 .ll-app .aw-workspace .aw-info-grid {
@@ -1182,13 +1182,13 @@
   display: flex;
   gap: 20px;
   justify-content: space-between;
-  border-bottom: 1px solid #31343a;
+  border-bottom: 1px solid var(--ll-line, #31343a);
 }
 .ll-app .aw-workspace .aw-tool:last-child {
   border: 0;
 }
 .ll-app .aw-workspace .aw-tool p {
-  color: #b9bfc8;
+  color: var(--ll-muted, #b9bfc8);
   font-size: 13px;
   margin-top: 6px;
 }
@@ -1210,7 +1210,7 @@
     border-right: 0;
   }
   .ll-app .aw-workspace .aw-meter:nth-child(-n + 2) {
-    border-bottom: 1px solid #29313c;
+    border-bottom: 1px solid var(--ll-line, #29313c);
   }
 }
 @media (max-width: 850px) {
@@ -1239,7 +1239,7 @@
   }
   .ll-app .aw-workspace .aw-export-option {
     border-right: 0;
-    border-bottom: 1px solid #29313c;
+    border-bottom: 1px solid var(--ll-line, #29313c);
   }
   .ll-app .aw-workspace .aw-export-option:last-child {
     border-bottom: 0;

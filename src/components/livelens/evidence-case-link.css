@@ -1,0 +1,296 @@
+.ll-app .ec-dialog {
+  color: #e7e5df;
+  background: #222321;
+  border: 1px solid #4a4b46;
+  border-radius: 16px;
+  padding: 0;
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  box-shadow: 0 24px 100px #0009;
+}
+.ll-app .ec-dialog::backdrop {
+  background: #090a09b8;
+  backdrop-filter: blur(4px);
+}
+.ll-app .ec-dialog button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #4c4d46;
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: transparent;
+  color: #e7e5df;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ll-app .ec-dialog button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ll-app .ec-dialog :focus-visible {
+  outline: 2px solid #dad2bd;
+  outline-offset: 3px;
+}
+.ll-app .ec-heading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 18px;
+}
+.ll-app .ec-heading h2 {
+  margin: 8px 0 0;
+  font-size: 23px;
+  font-weight: 550;
+  letter-spacing: -0.6px;
+}
+.ll-app .ec-eyebrow {
+  font-size: 10px;
+  color: #aaa99e;
+  letter-spacing: 1.7px;
+}
+.ll-app .ec-original {
+  margin: 0 24px 22px;
+  border-left: 2px solid #99917d;
+  padding: 4px 0 4px 15px;
+}
+.ll-app .ec-original > span {
+  color: #c0bdaf;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.ll-app .ec-dialog .ec-original blockquote {
+  background: transparent;
+  padding: 0;
+  border: 0;
+  margin: 9px 0;
+  max-height: 110px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.ll-app .ec-original small,
+.ll-app .ec-help {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #a8a99f;
+}
+.ll-app .ec-dialog form {
+  padding: 0 24px 24px;
+}
+.ll-app .ec-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #42443d;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+.ll-app .ec-tabs button {
+  border-color: transparent;
+}
+.ll-app .ec-tabs button[aria-pressed="true"] {
+  background: #363831;
+  border-color: #4e5146;
+}
+.ll-app .ec-dialog label {
+  display: block;
+  color: #bbbdb1;
+  font-size: 12px;
+}
+.ll-app .ec-search > div {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+.ll-app .ec-search svg {
+  position: absolute;
+  left: 12px;
+  color: #9da190;
+}
+.ll-app .ec-dialog input:not([type="radio"]),
+.ll-app .ec-dialog textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #4d5046;
+  background: #1a1c18;
+  color: #eeeae1;
+  padding: 11px 12px;
+  border-radius: 7px;
+  margin-top: 7px;
+  font: inherit;
+  font-size: 14px;
+}
+.ll-app .ec-search input:not([type="radio"]) {
+  margin-top: 0;
+  padding-left: 38px;
+}
+.ll-app .ec-cases {
+  margin: 16px 0 10px;
+  max-height: 240px;
+  overflow: auto;
+}
+.ll-app label.ec-case {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 10px;
+  border-bottom: 1px solid #383a33;
+  cursor: pointer;
+}
+.ll-app .ec-case.is-selected {
+  background: #33362d;
+  border-radius: 6px;
+}
+.ll-app .ec-case input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  flex: 0 0 16px;
+  accent-color: #ded9c8;
+  margin: 3px 0 0;
+}
+.ll-app .ec-case span {
+  min-width: 0;
+}
+.ll-app .ec-case strong {
+  display: block;
+  color: #e5e4db;
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.ll-app .ec-case small {
+  display: block;
+  line-height: 1.5;
+  color: #a5a99a;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+.ll-app .ec-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #acb09f;
+}
+.ll-app .ec-pagination button {
+  border: 0;
+  min-height: 36px;
+}
+.ll-app .ec-chosen {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #b9bdac;
+  border-top: 1px solid #41443a;
+  padding-top: 10px;
+}
+.ll-app .ec-chosen strong {
+  overflow-wrap: anywhere;
+}
+.ll-app .ec-chosen button {
+  min-height: 28px;
+  padding: 4px;
+  border: 0;
+  margin-left: auto;
+}
+.ll-app .ec-create label + label {
+  margin-top: 16px;
+}
+.ll-app .ec-footer {
+  border-top: 1px solid #41443a;
+  margin-top: 18px;
+  padding-top: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #b4b8a7;
+}
+.ll-app .ec-dialog .ec-primary {
+  color: #252721;
+  background: #e3dfd0;
+  border-color: #e3dfd0;
+  font-weight: 600;
+}
+.ll-app .ec-error {
+  color: #e3ada1;
+  line-height: 1.6;
+  font-size: 13px;
+}
+.ll-app .ec-error button {
+  margin-left: 8px;
+}
+.ll-app .ec-saved {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 8px 24px 28px;
+}
+.ll-app .ec-saved h3 {
+  font-size: 20px;
+  margin: 4px 0;
+}
+.ll-app .ec-saved p {
+  margin: 0 0 8px;
+  color: #b8bdad;
+  overflow-wrap: anywhere;
+}
+.ll-app .ll-return-investigation {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  margin: 0 0 18px;
+  color: #d6d1bd;
+  background: transparent;
+  border: 1px solid #505044;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .ll-app .ec-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .ll-app .ec-heading {
+    padding: 20px 16px 16px;
+    align-items: flex-start;
+  }
+  .ll-app .ec-heading h2 {
+    font-size: 20px;
+  }
+  .ll-app .ec-dialog form {
+    padding: 0 16px 18px;
+  }
+  .ll-app .ec-original {
+    margin: 0 16px 18px;
+  }
+  .ll-app .ec-tabs {
+    gap: 0;
+  }
+  .ll-app .ec-tabs button {
+    flex: 1;
+    padding: 8px;
+    font-size: 12px;
+  }
+  .ll-app .ec-dialog button {
+    min-height: 44px;
+  }
+  .ll-app .ec-cases {
+    max-height: 200px;
+  }
+}

@@ -1,5 +1,376 @@
 # Validation receipt
 
+## Aperture Operations & Recovery — 16 October 2026
+
+O01 implements stage 2 of the [standing programme](MASTER_PLAN.md). The
+[operating guide and actual screenshots](OPERATIONS.md) cover workspace worker
+observations, reservation-aware capacity and durable retention cleanup.
+
+- [Application/build](operations-build-validation.json): **127 tests / 14 files**
+  pass; TypeScript, renderer and Electron main/preload production builds pass.
+  Final renderer `index-CrYZznnn.js`, stylesheet `index-Brl14Sbd.css`. Existing
+  Browserslist age and bundle-size notices remain.
+- [Service](operations-service-validation.json): **165/165, zero skips**, including
+  actual PostgreSQL 17.6, SQLite, FFmpeg, pinned PocketSphinx and Chromium PDF.
+  Sixteen new Operations checks run across both databases; one backup cleanup
+  contract verifies refusal of unfinished tasks and restored completed history.
+- [Browser](operations-browser-validation.json): **seven journeys pass**, 70
+  screenshots and zero uncaught page errors. All actual served renderer/CSS hashes
+  match the final build. The six existing journeys were rerun after the recovery
+  entry fix; no existing assertion was weakened.
+- [New Operations journey](operations-journey-validation.json): actual generated
+  media, queued reservations, restricted workers and workspace denial; real
+  filesystem permission failure; partial cleanup and byte reservations after
+  record deletion; restart, failed retry and successful retry of the same task;
+  unconfigured workers; original-conversation navigation; fresh browser entry
+  with a deliberately corrupt archive manifest and unavailable capacity.
+- [Pilot drill](pilot-drill-validation.json): 600 mixed requests, zero unexpected
+  errors, six actually in flight; p50/p95/p99 **13.744/36.596/63.863 ms** during
+  this paced 12-second fixture. Two actual synthetic captures overlap for 11.910
+  seconds. After removing its own original data, a fresh restored API reopens
+  **2,240 exact originals**, notes, bookmarks, findings/reviews, report/redactions,
+  grants and audit. All **16 segments / 630,730 bytes** match original hashes and
+  actually decode to 32 seconds / 320 frames. Restore plus reopen/verification
+  takes 2,331.164 ms. Seven access/isolation checks pass before and after recovery.
+- [Visual inspection](operations-layout-validation.json): 12 actual desktop/phone
+  captures, no horizontal page overflow or blank footer tails. Aperture styling
+  and visible keyboard focus remain. [Design QA](../../design-qa.md) records scope.
+
+Independent review caught and fixed a fresh-entry failure: workspace usage errors
+hid the entire Operations view. Its navigation now works independently of the
+failed metadata request. Actual corrupted archive usage returns a refused
+workspace response while Operations displays worker failures and unavailable
+capacity; it never substitutes zero. Durable cleanup also refuses replaced
+directories, symlinks and reused recording IDs, and reserves known bytes until
+actual removal. Backup checks unfinished cleanup on both its source database and
+the completed snapshot. No automatic retry, retention or provider polling starts.
+
+These are exercised local pilot contracts. The workload is short and paced, not
+a saturation or hundreds-of-users result. Recovery uses a quiesced SQLite/local
+snapshot, not crash RPO, PostgreSQL or external-bucket recovery. Missing original
+cleanup identities have no force-resolve operation. External LIVE, private ALFRED,
+representative speech/context quality, production migration/deployment and
+commercial acceptance remain separate gates. ALFRED source is unchanged; its
+earlier full suite is not claimed as a new private-host test. The dedicated
+PostgreSQL fixture is stopped and private credential files removed. Hosted CI is
+reported separately on the exact pushed PR head.
+
+Hosted follow-up: the first push run passed service/build/recovery but timed out
+in the monitor's held-response test. Its duplicate PR run passed the monitor,
+then exposed an Operations keyboard focus-order race after restart. The harness
+now waits for actual navigation focus before selecting Operations. The monitor
+keeps its one-shot interception through page close, so releasing the real POST
+cannot race interception removal; an added check verifies exactly one schedule.
+Four old-order local probes did not reproduce the hosted timeout, although traces
+showed the teardown overlap. Both complete revised journeys pass on the exact
+hosted Chromium 151/revision 1234, with all original assertions and unchanged
+production assets. [Follow-up evidence and diagnosis limits](operations-browser-followup-validation.json)
+preserve the failed runs. The gallery contains the pinned-browser Operations
+recapture; latest hosted confirmation is recorded on PR #5.
+
+Final allocation review found that deleting segment metadata during failed cleanup
+released apparent space in the separate recorder budget, even though governance
+still reserved it. Recorder admission and Operations now include unfinished cleanup
+in that budget too. SQLite and PostgreSQL checks refuse a distinct new job until
+actual removal, permit another workspace independently, and admit recording after
+cleanup. The final Operations browser run proves that available recording space
+stays unchanged through failure/restart and increases by exactly the removed bytes
+on completion. All 165 service tests and the full recovery drill were rerun on these
+source hashes. Both earlier browser-harness follow-up CI runs passed; final-head
+hosted results are recorded separately on PR #5.
+
+## Aperture Investigation Desk — 16 October 2026
+
+The [goal, implementation and screenshots](INVESTIGATION_DESK.md) connect retained
+statements and saved moments to reviewed cases and reports. This receipt describes
+its checkpoint; Operations & Recovery above is the latest continuation.
+
+- Application: 127 tests in 14 files; TypeScript and renderer/Electron production
+  build pass. Final renderer `index-Cuq1l9vc.js`, stylesheet `index-BZbmVy_B.css`.
+- Service: [148/148, zero skips](investigation-desk-service-validation.json),
+  including actual PostgreSQL 17.6, FFmpeg, PocketSphinx and Chromium PDF. Eighteen
+  intake contracts across SQLite / PostgreSQL are included in that total. They cover
+  full-journal search, saved-label pages, current attribution, ACL-before-page,
+  scope/role checks, atomic create/link/rollback, duplicates and both source bounds.
+- Browser: [all six journeys pass](investigation-desk-browser-validation.json),
+  producing 58 screenshots with zero uncaught page errors or horizontal overflow.
+  Fifteen investigation captures include phone footer/document geometry and opened
+  provenance. Every journey hashes the actual final renderer/CSS responses.
+  Existing five journeys and the new investigation journey use authenticated HTTP. Controlled lost-response tests commit on the real service before dropping
+  a browser response; no successful payload is fabricated.
+
+Independent review found and fixed: a blank account filter refusing source reads;
+shared form CSS overriding the search layout; duplicate bookmark row identities;
+reviewed-case / original-case capacity mismatch; dirty report overwrite on refresh; and
+ambiguous case-creation retries; and hidden absolute labels causing phone scroll
+overflow. A new-case retry reuses its exact ID/question and
+verifies the retained original before accepting recovery. No existing assertion
+was weakened: legacy link selectors now use the real destination picker, and
+source-free decorative row numbers are hidden from accessible names.
+
+Limits remain explicit: 50 selected originals per tray, 200 per reviewed case;
+legacy original-evidence cases retain 1,000. Linking is not journal certification;
+exports verify source journals. Unsaved drafts are held in memory for temporary
+source detours, not persisted across page reload or explicit navigation. External
+LIVE, private ALFRED installation, representative speech/model quality and customer
+production capacity remain separate gates.
+
+Hosted application, service and all six browser jobs passed at implementation
+`52aa0ac72c6b6bc7f8a2205ae94858d301eb0738` in [PR run 38886782136](https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38886782136).
+The duplicate push run exposed a keyboard-test ordering race in the existing
+review desk: navigation schedules main focus on an animation frame, which could
+arrive after the harness focused a disclosure but before Enter. The failure
+artifact showed the loaded, closed disclosure. A controlled browser probe now
+holds and releases the actual navigation focus to reproduce that ordering. The
+harness waits for navigation focus before targeting the disclosure and verifies
+both focused summary and open state. Its full journey passes with unchanged
+renderer bytes and all schedule, media, permission and restart assertions intact.
+This follow-up changes validation only; later hosted results are recorded on PR #5.
+
+## Aperture workflows — 11 October 2026
+
+The [current application and gallery](APERTURE_WORKFLOWS.md) preserve the approved
+Aperture Studio design while adding per-recording transport, complete retained
+search, stable saved originals and guided private ALFRED setup. Final renderer:
+`index-Bi3d_2-c.js`; stylesheet: `index-BUy4-zTR.css`.
+
+| Check | Actual result |
+|---|---|
+| Application tests and production build | [127 tests in 14 files pass](operator-workflow-build-validation.json); TypeScript, renderer, Electron main/preload build. Nine new transport model cases and 23 ALFRED setup cases. Existing Browserslist/chunk-size notices remain. |
+| Full service suite | [130/130 pass, zero skips](operator-workflow-service-validation.json), including actual PostgreSQL 17.6, FFmpeg, offline Chromium PDF and pinned PocketSphinx recognition. No service source changed after this run. |
+| Search contracts | [25 focused checks pass](operator-workflow-search-validation.json): SQLite and actual PostgreSQL, 300-event journals, 225-session libraries, literal metacharacters, current assertions, stable sequence pages, actual HTTP scope/workspace boundaries and older @handle matches. Included in the full service suite, not 25 additional unique tests. |
+| Monitor browser journey | [Pass](operator-workflow-monitor-validation.json): cross-segment range/skip/rate, job isolation and auto-advance, provider-only clocks/gaps, older event/session search, stale-response refusal, off-page original hydration and exact 100/200 terminal-page return. All prior capture/hash/range/stop/read-only/keyboard assertions retained. |
+| Full application journey | [Pass](operator-workflow-full-validation.json): exact ALFRED selected-session/read-only JSON, actual downloads, keyboard tabs, explicit bounded source option, invalid origin focus, no supplied-endpoint call/install/browser storage. Existing bookmarks, original clocks/frames/repeated seeking, review, exports, actual PDF and restart assertions retained. |
+| Original / review / onboarding journeys | [Original](operator-workflow-original-validation.json), [review](operator-workflow-review-validation.json) and [onboarding](operator-workflow-onboarding-validation.json) pass; real cookie/scopes, invites, revocation, schedule bounds and persisted reopen remain intact. |
+| Actual desktop / phone visual inspection | [12 final studio captures and geometry](operator-workflow-layout-validation.json); shared-form CSS conflicts and squeezed phone ALFRED introduction fixed and recaptured. [Design QA](../../design-qa.md) records scope and remaining acceptance. |
+| Pinned source inventory | Eight research gitlinks verify. Nested research checkouts are not present or claimed as executed applications; adoption remains research-only. |
+
+All five final browser journeys ran with at most two concurrent QA browsers,
+generated **43 screenshots**, and reported **zero uncaught page errors or horizontal
+page overflow**. Each receipt hashes the actual authenticated renderer/CSS response
+bytes; the [aggregate receipt](operator-workflow-browser-validation.json) matches
+the final build. Published functional captures include [whole-session search](screenshots/operator-workflow/verification-whole-session-search.png),
+[recording transport](screenshots/operator-workflow/verification-recording-transport.png),
+[ALFRED recipe](screenshots/operator-workflow/verification-alfred-recipe.png) and
+[phone access](screenshots/operator-workflow/verification-alfred-phone.png).
+
+Review caught misleading empty-page copy at exact page boundaries. The final UI
+says the results have ended without denying earlier matches; new browser checks
+exercise Next into an empty page and Previous back to those matches. An initial
+new ALFRED assertion used a label locator that included select option text; the
+harness now uses the actual named combobox role. No access, collection, persistence
+or original workflow assertion was removed or weakened. Earlier browser passes
+were repeated on the final asset hashes after visual/copy corrections.
+
+A hosted duplicate push run exposed a timing race after the first successful local
+and PR runs: receiving the initial event page cancelled an unrelated pending
+bookmark-original GET, which was then requested twice. Per-evidence request
+lifetimes now preserve unchanged reads while cancelling removed/supplied rows and
+session/scope teardown. Aborted requests retain their slot until settled, keeping
+the six-request maximum. The [deterministic before/after receipt](operator-workflow-hydration-validation.json)
+holds actual authenticated responses: the previous renderer requests the original
+twice; the fixed renderer keeps one request across page arrival, search and refresh,
+then resolves the exact original and decoded frame. The final journeys include
+this regression; its count assertion was retained, not relaxed.
+
+Generated ALFRED configs also passed its pinned actual in-memory validators
+without transport or installation. ALFRED source is unchanged at `5b37ba4`; its
+full prior backend/HTTP/browser suites were not rerun here. The private placement
+guard remains enforced and private-host installation remains unverified.
+
+The studio gallery's generated still/tone and illustrative captions are explicitly
+synthetic, distinct from the standard colour-bar regression fixture and actual
+PocketSphinx reference checks. These tests establish the exercised implementation,
+not external LIVE, broad speech/semantic quality, customer capacity, native GUI
+startup or production deployment. Hosted CI is checked separately on the pushed
+commit. The dedicated PostgreSQL fixture was stopped and its private credentials
+removed after validation.
+
+## Aperture Studio implementation — 11 October 2026
+
+The owner selected the Aperture Studio reference. The [implemented app](APERTURE_STUDIO.md)
+now uses its narrow rail, warm charcoal, self-hosted Inter, media-led conversation
+and source-bound saved moments. Final renderer: `index-CBq7TQKy.js`; stylesheet:
+`index-uQ3gdMnf.css`; self-hosted font: `inter-latin-wght-normal-Dx4kXJAl.woff2`.
+
+| Check | Actual result |
+|---|---|
+| Application tests and build | [95 tests pass in 12 files](aperture-studio-build-validation.json); TypeScript, renderer, Electron main/preload all build. Existing bundle-size/Browserslist warnings retained. |
+| Monitor journey | [Pass](aperture-studio-monitor-validation.json): bounded capture, exact-job replay, hash/range, later chat, independent stops, desktop/phone, viewer HTTP 403. New popover default/selection/Escape/outside dismissal and permitted read-only Saved moments assertions pass. |
+| Original operator journey | [Pass](aperture-studio-original-validation.json): existing source, replay and investigation assertions retained. |
+| Full application journey | [Pass](aperture-studio-full-validation.json): actual bookmark ID/text/original clock, decoded thumbnail, keyboard original seek, same-selected re-seek after manual playback change, cross-session isolation, explicit choose-before-write and persistence after restart. Existing saved duration/filter/search, reviewed findings, graph, exports and real PDF assertions pass. |
+| Review journey | [Pass](aperture-studio-review-validation.json): source-linked review, bounded schedule state/disclosures, selection, permissions, stop/deadline, no hidden capture and restart retained. |
+| Onboarding journey | [Pass](aperture-studio-onboarding-validation.json): real cookies, invitations, roles, session revocation, recovery and persisted restart retained. |
+| Visual comparison | [Pass](../../design-qa.md): selected 1487 × 1058 reference and equally sized actual browser state inspected together. Final [geometry and screenshot hashes](aperture-studio-layout-validation.json); 390px phone and desktop have no horizontal overflow or uncaught page errors. |
+
+All five final journeys ran with at most two concurrent QA browsers and produced
+39 screenshots with zero uncaught page errors. [Aggregate receipt and final asset
+SHA-256 hashes](aperture-studio-browser-validation.json) identify the tested build.
+The tests use the usual generated colour-bar fixture: [actual conversation](screenshots/aperture-studio/verification-conversation.png)
+and [actual monitor](screenshots/aperture-studio/verification-monitor.png).
+The separate visual demo uses a generated studio still recorded through FFmpeg
+plus explicit fictional captions; it does not establish recognised speech or LIVE.
+
+An initial visual-capture harness read a job snapshot before all three segments
+were published; it now waits for the complete real receipt. The successful visual
+recapture and final acceptance journeys above ran on the final renderer. No app
+assertion was removed or weakened. Service contracts, provider adapters, dependency
+lockfiles and ALFRED source are unchanged; their earlier complete suites were not
+rerun locally for this UI pass. Hosted checks apply only to their published commit.
+The owner approved the visual direction; final implementation, external-provider
+and production acceptance remain distinct.
+
+## Recording workspace refinement — 11 October 2026
+
+The [implemented refinement](STUDIO_REFINEMENT.md) gives the actual application six
+primary destinations, a recording library with receipt-backed metadata, a shared
+video/timeline workspace and quieter recording/review disclosures. Final renderer:
+`index-DvisZsW-.js`; stylesheet: `index-BAyBVht6.css`.
+
+| Check | Result |
+|---|---|
+| Application regression and final build | [95 tests pass in 12 files](studio-refinement-build-validation.json); TypeScript, renderer and Electron build pass. Four new library cases cover saved-capture selection, interruption, duplicate segments and duration formatting. |
+| Monitor browser journey | [Pass](studio-refinement-monitor-validation.json): six visible destinations, keyboard-operated More tools, specialist deep links and existing bounded capture, exact-job replay, source-switch, phone-focus and permission checks. |
+| Original browser journey | [Pass](studio-refinement-original-validation.json): existing original-source, media and investigation workflow assertions retained. |
+| Full application browser journey | [Pass](studio-refinement-full-validation.json): actual selected-segment SHA matches its HTTP receipt, recording tools open by keyboard, saved duration matches retained segments, video filter/search/reset/reopening work, and existing export/PDF/restart assertions pass. |
+| Review browser journey | [Pass](studio-refinement-review-validation.json): idle and stopped schedules remain collapsed, a newly discovered bounded schedule opens the disclosure, actual HTTP/UI states agree, and source context, permissions, stop/deadline/no-hidden-job and restart checks pass. |
+| Onboarding browser journey | [Pass](studio-refinement-onboarding-validation.json): existing invitation, real-cookie, role/revocation/recovery and restart assertions retained. |
+| Actual desktop and phone captures | [Pass](studio-refinement-layout-validation.json): video and timeline align at 258px on desktop; no horizontal overflow at 1440px or 390px. Main gallery uses actual generated monochrome media. |
+
+All five browser journeys ran on the final bundle with zero uncaught page errors.
+An initial new review assertion compared a pre-poll `scheduled` snapshot with the
+already-updated `discovered` interface. The harness now waits, within ten seconds,
+for the actual fixture poll receipt before comparing the two. No renderer change
+or weakening of schedule, permission or capture assertions was needed. The
+successful rerun is the linked review receipt.
+
+Backend/runtime contracts and ALFRED source are unchanged. Their earlier complete
+service and ALFRED suites below were not rerun locally for this UI pass. Hosted
+checks belong to the exact published commit. These fixture checks establish the
+exercised behavior, not external LIVE access, production readiness or final owner
+design acceptance.
+
+## Eight-step product audit and fixes — 11 October 2026
+
+The [fresh product audit](PRODUCT_AUDIT.md) records before/after evidence from eight
+actual steps. Final renderer: `index-Ch5jfvlq.js`; stylesheet: `index-CepzgEEN.css`.
+This pass fixes saved-replay actions targeting the previously selected account,
+phone navigation focus escaping behind its overlay, inconsistent application
+frames, buried ALFRED setup and misleading conversation/settings labels.
+
+| Check | Result |
+|---|---|
+| Application regression and final build | 91 tests pass in 11 files; TypeScript/renderer/Electron build passes. |
+| Final monitor browser journey | [Pass](product-audit-monitor-validation.json), including new wrong-account replay/Back and drawer keyboard/focus regressions; existing capture/media/permission assertions retained. |
+| Final original and full journeys | [Original](product-audit-original-validation.json) and [full](product-audit-full-validation.json) pass, including actual PDF and restart. |
+| Final review and onboarding journeys | [Review](product-audit-review-validation.json) and [onboarding](product-audit-onboarding-validation.json) pass, including source reset, contextual review, real cookies, permission changes, revocation and restart. |
+| Focused shell/setup checks | [Pass](product-audit-layout-validation.json): 184px sidebar/56px header across library, review and ALFRED; 176px desktop account input; setup remains available on actual intercepted HTTP 503; settings link reaches setup. |
+
+All five journeys ran against the final bundle with zero uncaught page errors.
+No assertions were weakened. Backend/runtime contracts are unchanged; earlier
+optional-service and ALFRED receipts below were not rerun locally for this UI pass.
+Hosted checks belong to their exact published head on PR #5. Remaining product,
+accessibility and provider acceptance work is explicitly listed in the audit.
+
+## Monitor layout refinement — 11 October 2026
+
+The owner rejected the crowded monitor. The revised actual app places account
+setup in Accounts, collection actions beside the selected source, a larger 16:9
+player next to chat, limits below the player and compact saved-recording rows.
+The home uses neutral charcoal/warm-white tokens and removes the redundant eyebrow.
+Final renderer: `index-BQzEr-5F.js`; stylesheet: `index-gnFuFJ2Q.css`.
+[Actual screenshots](SCREENSHOTS.md) and [design audit](../../design-qa.md) show the
+change. No service/API, provider, ALFRED policy or test assertion changed.
+
+| Check | Result | Scope |
+|---|---|---|
+| Application regression | 91 passed, 11 files | Existing application tests after the main layout edits. |
+| Final TypeScript/renderer/Electron build | Passed | Includes the final phone DOM/keyboard correction and scoped CSS. |
+| Final monitor browser journey | Passed | Real bounded check/watch, FFmpeg capture/hash/range/decoded playback/seek, exact-job replay, >100 actual chat records, source-switch receipts, independent stops, viewer HTTP 403 and desktop/phone; zero uncaught page errors. [Receipt](monitor-redesign-validation.json). |
+| Final secondary review and onboarding | Both passed | Existing complete assertions on `BQzEr-5F`; source selection, deep links, persistence, invitations, role/revocation/recovery and restart. [Review](monitor-redesign-review-validation.json), [onboarding](monitor-redesign-onboarding-validation.json). |
+| Original and full browser journeys | Both passed | Preceding `index-YCnd_bzW.js`, before the monitor-only keyboard-order correction; not relabelled as final-bundle receipts. Hosted CI re-executes all five journeys on the published commit. |
+| Actual phone keyboard and geometry | Passed | Real Tab order: recording limit → watch window → Open conversation → Chat; no horizontal overflow. Empty-player top moves from 1003.7px to 521.1px at 390px phone width; desktop from 511.9px to 255.7px. [Measured receipt](monitor-redesign-layout-validation.json). |
+
+The complete 120-test optional service receipt and ALFRED continuation below
+remain evidence for unchanged backend source. Current-head hosted results are
+reported separately in PR #5. Screenshots are actual fictional/generated fixtures;
+external LIVE access, production capacity and owner design approval remain unvalidated.
+
+## Capture-first LIVE monitor — 11 October 2026
+
+The owner requested a recognisable account monitor/recorder as the default home,
+with the review desk secondary. The final renderer is `index-hYmzztav.js`.
+[The operating guide](LIVE_MONITOR.md),
+[actual monitor screenshots](SCREENSHOTS.md),
+[browser receipt](live-monitor-validation.json) and
+[recording receipt](live-monitor-recording-validation.json) document this change.
+The [complete service receipt](live-monitor-service-validation.json) records the
+final source/test hashes and optional runtime checks.
+These are generated-media and explicitly fictional source/evidence checks. They
+do not establish real external LIVE access or final owner design acceptance.
+
+| Check | Result | Executed scope |
+|---|---|---|
+| Application regression | 91 passed, 11 files | Existing community, evidence and review-desk regressions on the final source. |
+| Complete optional-backend suite | 120 passed; zero failed/skipped | Actual PostgreSQL 17.6, offline Chromium PDF, pinned PocketSphinx, FFmpeg recording/recovery and all authenticated service contracts; 58.513 seconds. |
+| TypeScript/renderer/Electron build | Passed | Final capture-first monitor and recording-specific media preview; renderer `index-hYmzztav.js`. |
+| Capture-first browser journey | Passed | Configured public account starts no polling; actual bounded discovery-only check/watch; FFmpeg capture with hash/range verification, decoded playback/seek and source-linked chat; stop watch keeps a separately requested capture; explicit recording stop; keyboard replay; 1440-pixel desktop/390-pixel phone and actual viewer writes denied with HTTP 403. Zero uncaught page errors or overflow. |
+| Source and recording selection regressions | Passed | Delayed check receipt cannot appear under another selected account; two recordings in the same session replay only their selected job; 125 fictional records appended through actual HTTP advance the rolling window of 100 loaded events and reopen exact late-message context. |
+| Active-job HTTP projection | 2 passed | Active jobs remain returned beyond 100 newer terminal receipts; workspace/read-scope boundaries, session filter, limits and strict boolean validation. The monitor merges 100 recent with up to 200 active receipts and deduplicates job IDs. |
+| Actual PostgreSQL active projection | Passed | 115 terminal receipts plus six older active jobs; recent page remains 100 and active selection preserves all six, with session/workspace/filter/page-bound checks. Metadata fixture spawns no FFmpeg and its temporary schema is removed. |
+| Original/full/onboarding/secondary-review browser journeys | Passed | Actual replay/seek/restart, findings/counterevidence/comparison/graph, contextual reviews, redacted exports/offline PDF, persistent invited credentials, role/revocation/reset, exact source selection and deep links remain working with the capture-first entry point. |
+| Pinned source inspection | 8 Gitlinks unchanged | Exact XploitVoid/Pieter recorder/monitor source patterns read without executing upstream applications; previously audited Git blob hashes match the lock. Runtime imports remain separately inventoried. |
+
+The monitor reports availability **at last check**, with its clock; unavailable
+provider results remain distinct from offline. Preview consists of saved verified
+segments and is delayed. It implements no direct live-video feed. Stop watch
+requests a stop for its linked capture, while independent jobs keep their own
+limits. Recording-specific replay cannot continue into another job's media.
+
+Earlier validation sections below are historical receipts. Their design-reference
+comparisons do not override the owner's later direction or establish a polished
+final product. The actual ALFRED continuation has a separate application/runtime
+receipt; the standalone gateway is not evidence of registration by itself.
+No external TikTok collection, model call, email, billing change or deployment
+was performed by the monitor browser checks.
+
+The initial published head's PR browser run passed all five journeys; its push
+run failed the monitor's five-second status matcher after the backend check had
+completed. A [controlled real-read delay](live-monitor-read-sync-validation.json)
+reproduced the same `Unchecked` result while a successful browser schedule read
+was held for six seconds. After delivery, the unchanged status assertion passed
+with a bounded 15-second wait, matching the browser/API timeout. The test now
+waits for that separate browser snapshot; no application behavior, capture limit
+or permission assertion was changed.
+
+## Actual optional ALFRED tools — 11 October 2026
+
+[ALFRED PR #20](https://github.com/EmotiveImpact/Alfred/pull/20), ready for review, publishes
+branch `feat/livelens-tools-2026-10-11`, commit
+`5b37ba41353cfcd0cae4243482520e25175e21d9`. Its first-party provider is installed
+explicitly, loaded by the actual Desk runtime, and callable through authenticated
+HTTP or the ordinary operator CLI. This is not inferred from LiveLens's standalone
+manifest. See [ALFRED_INTEGRATION.md](ALFRED_INTEGRATION.md) and the immutable
+[redacted actual-transport receipt](https://github.com/EmotiveImpact/Alfred/blob/5b37ba41353cfcd0cae4243482520e25175e21d9/docs/evidence/livelens-2026-10-11/http-receipt.json).
+
+| Check | Result | Executed scope |
+|---|---|---|
+| Full ALFRED backend | 1,128 passed; zero skipped | Includes 15 focused LiveLens tool/approval/policy/token/placement/reconciliation cases; existing source, lifecycle and identity contracts remain covered. |
+| Actual ALFRED HTTP/CLI transport | 36/36 passed | Authenticated discovery/source reads, independent grants and actual denials, exact capture proposal/approval/dispatch, installed operator CLI and secret-free receipts. |
+| Actual capture through ALFRED | Passed | One explicitly approved six-second generated capture, three hashed segments, strict independent FFmpeg decoding totaling 6,000 ms. Dispatch acceptance and recording completion are separately checked. |
+| ALFRED browser regression | 58 checks passed | 33 Desk and 25 Knowledge Chromium checks. |
+| Hosted ALFRED CI | All six passed | Exact commit `5b37ba4`: original contracts, local validation, core/source checks, backend browser, console and connected console. [Unified run](https://github.com/EmotiveImpact/Alfred/actions/runs/38111995356). |
+
+G01/G02 are implemented for this optional configured runtime: source/workspace
+binding, current read/model separation, exact independently granted bounded
+collection, revocation, token rotation, timeout/reconciliation and untrusted-source
+boundaries are tested. Fourteen of nineteen milestones are implemented and five
+remain partial. The ALFRED branch is unmerged/undeployed; production configuration,
+external LIVE access and customer-scale operation remain separate gates. No NLP
+tool auto-selection, automatic memory acceptance, tool-board UI, model request,
+email or external TikTok capture is claimed. Historical registration-outstanding
+receipts below describe their earlier revisions and remain intact.
+
 ## Invited workspace continuation and merged baseline — 11 October 2026
 
 PRs #1, #2 and #3 are merged into `redesign` at `aacfb18`. Its tree matches

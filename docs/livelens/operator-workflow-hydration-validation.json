@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-11",
+  "result": "passed",
+  "scenario": "Hold actual authenticated event-page and off-page original responses; supply another bookmark, filter and refresh before releasing the original.",
+  "previousRenderer": "index-DmrWQN-8.js",
+  "previousCommit": "98aeb174562fbe3770d64ab37fb8bf5266fcc634",
+  "previousResult": "failed: unrelated page arrival restarted the pending original read",
+  "previousActualRequests": {
+    "fixture": true,
+    "heldActualServerResponses": true,
+    "stages": [
+      {
+        "stage": "original pending before initial event page",
+        "originalRequests": 1,
+        "otherBookmarkRequests": 1
+      },
+      {
+        "stage": "different visible bookmark supplied by initial page",
+        "originalRequests": 2,
+        "otherBookmarkRequests": 1
+      }
+    ]
+  },
+  "fixedRenderer": "index-Bi3d_2-c.js",
+  "fixedActualRequests": {
+    "fixture": true,
+    "heldActualServerResponses": true,
+    "stages": [
+      {
+        "stage": "original pending before initial event page",
+        "originalRequests": 1,
+        "otherBookmarkRequests": 1
+      },
+      {
+        "stage": "different visible bookmark supplied by initial page",
+        "originalRequests": 1,
+        "otherBookmarkRequests": 1
+      },
+      {
+        "stage": "unrelated filter and parent refresh while original pending",
+        "originalRequests": 1,
+        "otherBookmarkRequests": 1
+      },
+      {
+        "stage": "actual original released with decoded saved frame",
+        "originalRequests": 1,
+        "otherBookmarkRequests": 1
+      }
+    ]
+  },
+  "fix": "Per-evidence requests persist across unrelated supplied data changes; individual visibility/supply changes and lifetime teardown cancel safely, retaining aborted slots until settled under max6.",
+  "fixedSourceSha256": "d4db6e3e7aeab43f805cc0fc1e706fbebff49608a5ca46a17dad0d6ea840e26e",
+  "testSourceSha256": "2514b591774e39e93d9744ed860d33ec928f3954735a3c7146e4f9e343f163b7",
+  "hostedDiscovery": "https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38174119861",
+  "limits": "Synthetic retained media and actual local authenticated reads; no external LIVE or private ALFRED installation."
+}

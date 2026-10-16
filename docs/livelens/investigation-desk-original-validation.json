@@ -1,0 +1,21 @@
+{
+  "fixture": true,
+  "desktopAndPhone": true,
+  "keyboardNavigation": true,
+  "recordingPlaybackAndSeek": true,
+  "accountSearch": true,
+  "caseAndBothExports": true,
+  "serviceRestartReopen": true,
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-desk-publish-original",
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:46431/app/assets/index-BZbmVy_B.css",
+      "sha256": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+    },
+    {
+      "url": "http://127.0.0.1:46431/app/assets/index-Cuq1l9vc.js",
+      "sha256": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+    }
+  ]
+}

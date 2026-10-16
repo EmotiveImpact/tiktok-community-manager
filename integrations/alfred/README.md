@@ -1,4 +1,12 @@
-# ALFRED integration contract (design, not connected)
+# ALFRED integration contract
+
+Actual optional ALFRED authenticated tools/CLI are implemented and fixture-tested
+in [draft PR #20](https://github.com/EmotiveImpact/Alfred/pull/20), commit
+`5b37ba41353cfcd0cae4243482520e25175e21d9`, unmerged/undeployed. See
+[the current integration guide](../../docs/livelens/ALFRED_INTEGRATION.md).
+Installation is explicit; publishing the branch does not connect a user's host.
+
+## Historical design and standalone adapter
 
 Historical reference proposal. A standalone scoped HTTP gateway is now
 implemented and tested: see [GATEWAY.md](GATEWAY.md) and

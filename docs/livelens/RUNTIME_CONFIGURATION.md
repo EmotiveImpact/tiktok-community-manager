@@ -5,6 +5,13 @@ See [FULL_APPLICATION.md](FULL_APPLICATION.md) for acceptance and remaining gate
 [the service API catalogue](../../services/intelligence/README.md) for routes, and
 [deployment/recovery notes](../../deployment/livelens/README.md) for infrastructure.
 All paths in JSON examples are placeholders to replace with trusted absolute paths.
+
+The default console opens the capture-first [LIVE monitor](LIVE_MONITOR.md).
+Saving source configuration starts no polling. Its Check LIVE control creates a
+15-second discovery-only schedule; Watch only and Record when LIVE create explicit
+bounded schedules. Preview is delayed verified retained media, with no direct
+live-video streaming claim. The operating guide describes control and stop behavior.
+
 Keep populated settings, database connections, credentials and recordings out of
 Git. The API never accepts server executables or object-store credentials.
 
@@ -318,6 +325,13 @@ Workspace retention is manual: configure a policy, preview eligible sessions,
 then explicitly apply selected IDs with the exact preview hash and reason.
 Referenced evidence, active jobs and retained archive/source/mission references
 prevent deletion. Manual usage limits do not charge a payment provider. Backup
+is blocked while physical cleanup is unfinished. Cleanup tasks persist with the
+deletion receipt before files are removed, and known pending bytes stay reserved.
+Workspace → Operations shows independently scoped worker state and committed
+capacity; Workspace → Retention provides bounded cleanup history and explicit,
+reasoned retries. No retention or retry timer is enabled by this feature. Correct
+filesystem access before retrying; a replaced root/job directory is refused.
+See [Operations & Recovery](OPERATIONS.md) for states and escalation steps. Backup
 and restore use the separately configured `LIVELENS_BACKUP_KEY`; follow
 [the recovery instructions](../../deployment/livelens/README.md) and verify a
 stopped-service recovery before repointing a live runtime. The SQLite backup CLI

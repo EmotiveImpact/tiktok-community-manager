@@ -1,0 +1,24 @@
+{
+  "command": "python3 /tmp/livelens-session-search-with-postgres.py node --test services/intelligence/test/session-search.test.mjs services/intelligence/test/service.test.mjs",
+  "tests": 25,
+  "pass": 25,
+  "fail": 0,
+  "skipped": 0,
+  "durationMs": 1386.341532,
+  "optionalBackend": "Actual PostgreSQL17.6 loopback fixture; fresh ephemeral schema for each focused contract",
+  "contracts": [
+    "300 event journal;120 filtered matches paged in17s without gaps/duplicates; append aftercursor",
+    "Literal percent/underscore/backslash, ASCIIcase, SQL-like text",
+    "Latest operator assertion account only, original speech/clocks/integrity unchanged",
+    "225 library sessions; search older than first200 before stable filtered offsets",
+    "HTTP actualevent nextAfter, empty terminal page, >125 earlyevents/>205 newersessions, workspace andscope boundaries",
+    "Invalidkind/query/page limit/cursors",
+    "Library HTTP @handle and rawhandle match beyond first200; titleliteral @ search preserved"
+  ],
+  "sourceSha256": {
+    "services/intelligence/src/store.mjs": "5106601ccb873c5510437be76eb8e47795a86cabb800ab5119ef9c5c40d7a4c1",
+    "services/intelligence/src/server.mjs": "c8e1e11f5fe524cc2bdae912f60b47274c4c1ba1af7f58afd8a40e1007f3834f",
+    "services/intelligence/test/session-search.test.mjs": "b98f77ee52641897cbc8152686eb4eeded5f3bd75355417139f82f820a099dce",
+    "services/intelligence/README.md": "a132ee796d9167bd470edce79bf6c816fc53bf667cbb30824563e8e46d753c86"
+  }
+}

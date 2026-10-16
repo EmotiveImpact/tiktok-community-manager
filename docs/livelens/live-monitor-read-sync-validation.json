@@ -1,0 +1,10 @@
+{
+  "fixture": true,
+  "actualBackendCheckAvailableNoJob": true,
+  "selectedAccountReceiptDoesNotLeak": true,
+  "actualBrowserReadStatus": 200,
+  "controlledDelaySeconds": 6.0,
+  "old5000msWaitReproducedUncheckedFailure": true,
+  "new15000msBoundedWaitActualUiAvailable": true,
+  "pageErrors": 0
+}

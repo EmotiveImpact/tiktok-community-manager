@@ -243,21 +243,19 @@ export class Recorder {
         })),
     };
   }
-  list(workspace, { sessionId, limit = 100 } = {}) {
+  list(workspace, { sessionId, limit = 100, active = false } = {}) {
     ident(workspace);
     limit = pageLimit(limit);
+    if (typeof active !== "boolean") throw new Fault("invalid_active_filter");
     if (sessionId) this.store.session(workspace, sessionId);
-    const rows = sessionId
-      ? this.db
-          .prepare(
-            "SELECT id FROM recording_jobs WHERE workspace=? AND session_id=? ORDER BY created_at DESC LIMIT ?",
-          )
-          .all(workspace, sessionId, limit)
-      : this.db
-          .prepare(
-            "SELECT id FROM recording_jobs WHERE workspace=? ORDER BY created_at DESC LIMIT ?",
-          )
-          .all(workspace, limit);
+    const query =
+      "SELECT id FROM recording_jobs WHERE workspace=?" +
+      (sessionId ? " AND session_id=?" : "") +
+      (active ? " AND state NOT IN ('completed','stopped','failed')" : "") +
+      " ORDER BY created_at DESC LIMIT ?";
+    const rows = this.db
+      .prepare(query)
+      .all(workspace, ...(sessionId ? [sessionId] : []), limit);
     return rows.map((row) => this.job(workspace, row.id));
   }
   create(workspace, value) {
@@ -300,6 +298,10 @@ export class Recorder {
           throw new Fault("job_identity_conflict", 409);
         return this.job(workspace, id);
       }
+      if (
+        this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='retention_cleanup'").get() &&
+        this.db.prepare("SELECT 1 FROM retention_cleanup WHERE workspace=? AND job_id=? AND state!='completed' LIMIT 1").get(workspace, id)
+      ) throw new Fault("recording_cleanup_pending", 409);
       this.admission?.(workspace, { recordingSeconds: max, pendingJobs: 1 });
       const pending = this.db
         .prepare(
@@ -319,7 +321,10 @@ export class Recorder {
           "SELECT coalesce(sum(bytes),0) AS n FROM media_segments WHERE workspace=?",
         )
         .get(workspace).n;
-      const reserved = this.db
+      const pendingCleanup = this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='retention_cleanup'").get()
+        ? this.db.prepare("SELECT coalesce(sum(bytes),0) AS n FROM retention_cleanup WHERE workspace=? AND state!='completed'").get(workspace).n
+        : 0;
+      const reserved = pendingCleanup + this.db
         .prepare(
           "SELECT coalesce(sum(b.reserved_bytes),0) AS n FROM recording_budgets b JOIN recording_jobs j ON j.workspace=b.workspace AND j.id=b.job_id WHERE b.workspace=? AND j.state NOT IN ('completed','stopped','failed')",
         )

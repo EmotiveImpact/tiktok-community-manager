@@ -1,0 +1,53 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "renderer": "index-BQzEr-5F.js",
+  "stylesheet": "index-gnFuFJ2Q.css",
+  "before": {
+    "desktop": {
+      "x": 541,
+      "y": 511.90625,
+      "width": 556,
+      "height": 310
+    },
+    "phone": {
+      "x": 29,
+      "y": 1003.671875,
+      "width": 332,
+      "height": 222.359375
+    }
+  },
+  "after": {
+    "desktop": {
+      "x": 436,
+      "y": 255.71875,
+      "width": 672,
+      "height": 378
+    },
+    "phone": {
+      "x": 24,
+      "y": 521.078125,
+      "width": 342,
+      "height": 192.375
+    },
+    "phoneKeyboardCaptureSettingsBeforeChat": true,
+    "phoneNoHorizontalOverflow": true
+  },
+  "viewports": {
+    "desktop": [
+      1440,
+      1024
+    ],
+    "phone": [
+      390,
+      844
+    ]
+  },
+  "phoneKeyboardOrder": [
+    "Recording limit (seconds)",
+    "Watch window (minutes)",
+    "Open conversation",
+    "Chat"
+  ],
+  "method": "Actual authenticated browser captures and DOM geometry. Recording limit focused, followed by three real Tab keypresses. No screenshot editing."
+}

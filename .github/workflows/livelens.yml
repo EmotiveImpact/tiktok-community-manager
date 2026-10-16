@@ -92,6 +92,14 @@ jobs:
         run: npm --prefix services/intelligence run demo
       - name: Actual recording, abrupt interruption, restart and replay
         run: npm --prefix services/intelligence run demo:recording
+      - name: On-disk mixed workload and complete encrypted recovery
+        run: node deployment/livelens/pilot-drill.mjs --output /tmp/livelens-pilot-drill.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: livelens-pilot-drill
+          path: /tmp/livelens-pilot-drill.json
+          if-no-files-found: warn
   browser-journeys:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -131,6 +139,18 @@ jobs:
         run: python scripts/validation/onboarding_smoke.py
         env:
           LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/onboarding
+      - name: Capture-first monitor, bounded fixture recording, chat and exact-job replay
+        run: python scripts/validation/live_monitor_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/live-monitor
+      - name: Investigation intake, source handoff, reviewed brief and restart
+        run: python scripts/validation/investigation_desk_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/investigation-desk
+      - name: Operations, reserved capacity, partial cleanup and recovery
+        run: python scripts/validation/operations_smoke.py
+        env:
+          LIVELENS_SCREENSHOTS_DIR: /tmp/livelens-browser-artifact/operations
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-11",
+  "result": "passed",
+  "unitTests": {
+    "command": "npm test",
+    "files": 14,
+    "passed": 127,
+    "failed": 0,
+    "logSha256": "7da253ecbe30f10271468042b8cce4b97c92d25f34eb8c0e8e48b34b651a25f3"
+  },
+  "build": {
+    "command": "npm run build",
+    "typescript": true,
+    "renderer": true,
+    "electronMainAndPreload": true,
+    "logSha256": "9f5bbfcce212fb97ef04cfc2de574c564edbf280ee11c2a247d9880d5c86570d",
+    "warnings": [
+      "Existing Browserslist age notice",
+      "Existing renderer chunk size notice"
+    ]
+  },
+  "assets": [
+    {
+      "file": "index-Bi3d_2-c.js",
+      "sha256": "f4c21c84829aa5e2e9efc48706a39798cbb6206781594772b24d6d0e31ae2072"
+    },
+    {
+      "file": "index-BUy4-zTR.css",
+      "sha256": "486b3c0b375dcafd91189273ab908c08104132964183c55e756a369d0129effe"
+    }
+  ],
+  "sourceSha256": {
+    "src/pages/LiveLensConsole.tsx": "5bcabd0741e1a9d2dc0de25478d2977603b5556d5b4933a2d16d1578337c6577",
+    "src/pages/aperture-studio.css": "5cd2ef0e0ef74dbe73b6f1571290e1b8ed6b51646cf23ac53ece37cce2951048",
+    "src/components/livelens/RecordingLibrary.tsx": "5e7e0ccabe372599b756ca792827cc45f313a59da5ccdddcb5813285a4a6533b",
+    "src/components/livelens/RecordingTransport.tsx": "4d425d4fe6f04e8c8dc963eb7626fadb0bfd9c7295f3b5e60b54f44b15db99c9",
+    "src/components/livelens/recording-transport-model.ts": "dc6649113b5a214df35eadb787b96989e76bb1cbcc6028d8a7d4b43d31de73a0",
+    "src/components/livelens/recording-transport.css": "c1911fe50e5363ffad6107149c16d2456cc1c05321c11306b859c8f639db8b3e",
+    "src/components/livelens/SavedMoments.tsx": "d4db6e3e7aeab43f805cc0fc1e706fbebff49608a5ca46a17dad0d6ea840e26e",
+    "src/components/livelens/LiveMonitor.tsx": "ddfd96bb27a16bec2cce49b3d30ad1725b1f700e07479bb81dd0ce4306891ecb",
+    "src/components/livelens/live-monitor.css": "e481bc577b5a9ec68ca4ff9aed195c563eeeb16ad27e8874208e7f8a1d2d08da",
+    "src/components/livelens/advanced/Workspace.tsx": "79c5ecb86fb5509766abeda4405b9b96057b2c4a23023dfdc513719a5fd39dae",
+    "src/components/livelens/advanced/AgentConnection.tsx": "4c8b4aeb9fe379737c6eaff4c2b2c0c48fdcfd9ded3918dd2daab9ecb5e2e8a4",
+    "src/components/livelens/advanced/agent-connection.css": "11b116ebb62b7a7ee3c5c6067c3fc841049f83d396c0d51f584b2708deb2deba",
+    "src/components/livelens/advanced/agent-setup.ts": "f76144895c3026f4f2f32b4fa8a0a12218b8ef32edfb272fb4b94569f252c6e4"
+  },
+  "newFocusedTests": {
+    "recordingTransport": 9,
+    "agentSetup": 23
+  },
+  "sourceInventory": {
+    "command": "node scripts/research/verify-upstreams.mjs",
+    "repositories": 8,
+    "gitlinksVerified": true,
+    "checkoutsVerified": false,
+    "adoption": "research-only"
+  },
+  "limitations": [
+    "No native Electron GUI launch",
+    "No production deployment or external LIVE validation"
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-16",
+  "fixture": true,
+  "actualBrowserScreenshots": true,
+  "publishedCaptures": 12,
+  "geometry": {
+    "01-desktop-operations.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "scrollHeight": 1900,
+      "footerBottom": 1901,
+      "appBottom": 1901
+    },
+    "01a-desktop-operations-viewport.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "scrollHeight": 1900,
+      "footerBottom": 1901,
+      "appBottom": 1901
+    },
+    "02-desktop-restricted-workers.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "scrollHeight": 1573,
+      "footerBottom": 1573,
+      "appBottom": 1573
+    },
+    "03-desktop-retention-cleanup-failed.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "scrollHeight": 1179,
+      "footerBottom": 1180,
+      "appBottom": 1180
+    },
+    "04-desktop-pending-cleanup.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "scrollHeight": 1872,
+      "footerBottom": 1872,
+      "appBottom": 1872
+    },
+    "05-phone-pending-cleanup.png": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 2941,
+      "footerBottom": 2942,
+      "appBottom": 2942
+    },
+    "05a-phone-storage-breakdown.png": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 3046,
+      "footerBottom": 3047,
+      "appBottom": 3047
+    },
+    "06-phone-durable-retry-failed.png": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 1655,
+      "footerBottom": 1656,
+      "appBottom": 1656
+    },
+    "07-phone-cleanup-complete.png": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 1324,
+      "footerBottom": 1325,
+      "appBottom": 1325
+    },
+    "08-desktop-workers-unconfigured.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "scrollHeight": 1776,
+      "footerBottom": 1776,
+      "appBottom": 1776
+    },
+    "09-desktop-capacity-unavailable.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "scrollHeight": 1930,
+      "footerBottom": 1931,
+      "appBottom": 1931
+    },
+    "10-phone-capacity-unavailable.png": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 2617,
+      "footerBottom": 2618,
+      "appBottom": 2618
+    }
+  },
+  "screenshotSha256": {
+    "01-desktop-operations.png": "8a8a191cb5a4d752c3239bab480cd4b19939437df5bfd9688e56cc8d549521fa",
+    "01a-desktop-operations-viewport.png": "23cda755e537e5b5e80601dcd75fb41fb07899d6c419640eef2f2f72a96e1a56",
+    "02-desktop-restricted-workers.png": "1185fb237f9a9cb6e0b53dde4c93d15fca0b4eb8d9ecc2658b2f30b393e5e183",
+    "03-desktop-retention-cleanup-failed.png": "000484ed6b86d9730fb7b1e0222da331f79abdefdccbd766d8b23186c16b8d7e",
+    "04-desktop-pending-cleanup.png": "876e99e6692c7bd381a3d21c69807228b0c7151c5ed71961054cf6db7ba1fdd6",
+    "05-phone-pending-cleanup.png": "7f2e709d3b9672d907feaffc7afc331ba2205372d8fed53d7b65d5cd07c4b331",
+    "05a-phone-storage-breakdown.png": "729e46ede1cf67c47de99ff8c77a53338fa292258ab3c040d1f8ef47749d802c",
+    "06-phone-durable-retry-failed.png": "29386e7bf8d068ca8670a8778fd5e3e9b7753c195596fdb11e097e2afc17ed9c",
+    "07-phone-cleanup-complete.png": "7aa603241a89349a7a5f7a74e9310cbf80a6bf94519bd7b82c47633e53091053",
+    "08-desktop-workers-unconfigured.png": "6ef18002c4885abaa9eb1cf4558234c949f44c45f60bb40930eba405c96ffa71",
+    "09-desktop-capacity-unavailable.png": "4a0117f3c2a03855f636706b8158c2c98abab42b38c0270cd971a03fd714e578",
+    "10-phone-capacity-unavailable.png": "11d29393d1bb9ec0b01717a0f5add02a185783a9e31f5ad977325d4f39da20b1"
+  },
+  "inspected": [
+    "01a-desktop-operations-viewport.png",
+    "03-desktop-retention-cleanup-failed.png",
+    "05-phone-pending-cleanup.png",
+    "07-phone-cleanup-complete.png",
+    "10-phone-capacity-unavailable.png"
+  ],
+  "observations": [
+    "Aperture warm charcoal, off-white actions, Inter and narrow navigation retained.",
+    "Desktop work and capacity columns stack on 390px phone; no horizontal page overflow or blank document tail.",
+    "Partial cleanup and completed cleanup have distinct receipts; corrupted usage still exposes Operations with unavailable capacity.",
+    "Existing keyboard focus remains visible."
+  ],
+  "limits": [
+    "Synthetic authenticated fixture, not external LIVE.",
+    "Inspection covers these states, not comprehensive assistive-technology or owner-final acceptance."
+  ],
+  "browser": "Playwright Chromium 151.0.7922.34, revision1234 (same as hosted CI)"
+}
