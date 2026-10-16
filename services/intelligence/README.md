@@ -97,11 +97,11 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | GET `/v1/sessions/:id` | sessions:read | Session provenance |
 | GET/POST `/v1/sessions/:id/events` | evidence:read / evidence:write | Literal `q`, exact `kind`, sequence `after` and `limit` / atomic ingestion |
 | GET `/v1/sessions/:id/integrity` | evidence:read | Local journal verification |
-| GET `/v1/evidence/search?q=&account=&session=&limit=` | evidence:read | Literal text/account search |
+| GET `/v1/evidence/search?q=&account=&session=&kind=&limit=&offset=` | evidence:read | Literal captured-text search, exact current account, filtered lookahead pages |
 | GET `/v1/evidence/:id` | evidence:read | Original event and current attribution |
 | GET `/v1/evidence/:id/context` | evidence:read, sessions:read | Before/after context in the same session |
 | GET/POST `/v1/evidence/:id/assertions` | evidence:read / assertions:write | Attribution revisions / explicit account assertion |
-| GET/POST `/v1/cases` | cases:read / cases:write | Accessible cases / create question |
+| GET/POST `/v1/cases` | cases:read / cases:write; evidence:read when linking | Accessible literal `q` search and pages / create question with optional atomic evidence links |
 | GET `/v1/cases/:id` | cases:read | Accessible case |
 | POST `/v1/cases/:id/evidence` | cases:write, evidence:read | Link retained evidence |
 | GET `/v1/cases/:id/report?format=markdown` | cases:read, evidence:read | Original JSON/Markdown evidence export |
@@ -125,7 +125,7 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | POST `/v1/investigations/:case/notes` | cases:write, evidence:read | Source-linked operator note |
 | POST `/v1/investigations/:case/findings` | cases:write, evidence:read | Draft finding with supporting/counter evidence |
 | POST `/v1/investigations/:case/findings/:finding/review` | cases:write, evidence:read | Append reviewed status/reason |
-| GET/POST `/v1/bookmarks` | evidence:read / evidence:read, investigations:write | Retained evidence bookmarks |
+| GET/POST `/v1/bookmarks` | evidence:read / evidence:read, investigations:write | Filtered saved-moment pages; optional `includeEvidence=true` original hydration / save moment |
 | GET `/v1/accounts/:handle/activity` | evidence:read, sessions:read | Observed/asserted activity across retained sessions |
 | POST `/v1/comparisons` | evidence:read, sessions:read | Bounded comparison of selected sessions |
 | GET/POST `/v1/graph` | evidence:read, sessions:read / evidence:read, investigations:write | Evidence-supported graph / reviewed relation |
@@ -203,6 +203,66 @@ Session library reads accept the same literal `q` over title, displayed `@accoun
 `offset` (default `0`). The response remains `{sessions}`, ordered by newest
 session start, then ID. Reset the offset when changing the query. Offset pages
 can shift when sessions are added or removed; no total or snapshot is implied.
+
+### Investigation intake
+
+Workspace evidence discovery uses `GET /v1/evidence/search` with `q` (maximum
+512 characters), exact normalized `account`, exact `session`, `kind` (`all` or
+one of the event kinds), `limit` (default 100, maximum 200) and `offset` (default
+0). The query remains captured-text search; use `account` for current attribution,
+including the latest operator assertion. Earlier assertions and anonymous track
+IDs do not become account matches. `%`, `_` and backslash remain literal and ASCII
+text matching folds case. Every filter applies before pagination; newest journal
+sequence comes first. The response is `{evidence,hasMore,nextOffset}`. One extra
+row determines whether a next page actually exists; `nextOffset` is null on the
+last page, including a full last page. Existing evidence shapes and clocks remain
+unchanged. No session metadata permission is added by this evidence-only route.
+
+`GET /v1/bookmarks` accepts the same filters, with `q` matching either the saved
+label or captured text. It returns `{bookmarks,hasMore,nextOffset}`, ordered by
+newest save time and then bookmark ID. Bookmark objects retain their existing
+shape unless `includeEvidence=true` is supplied; that exact boolean option adds
+the original event and current attribution as `bookmark.evidence`. Different
+bookmarks can reference the same original; consumers must select original IDs
+once. The existing pilot cap of 200 saved moments per workspace remains in force.
+
+`GET /v1/cases` accepts literal `q` over title/question and the same limit/offset
+pagination. Workspace visibility, creator access and current case grants apply
+before the page is selected, so newer inaccessible cases cannot hide accessible
+older ones. It returns `{cases,hasMore,nextOffset}`. Case list/detail and the case
+inside investigation detail include `canWrite`, computed from the caller's
+current token scopes, membership role and exact case grants. Capabilities also
+include `permissions.createCases` for current scope and role. These receipts help
+the UI explain available actions; every mutation rechecks current authority.
+
+All of these offset pages are live retained-data queries rather than snapshots.
+New records, attribution changes, saves or access changes can shift later pages.
+Keep the filters unchanged when advancing and reset offset when changing them.
+
+`POST /v1/cases/:id/evidence` accepts `{evidenceIds}` with 1–200 supplied IDs and
+returns `{linked,total,existing}`. Counts refer to distinct original IDs:
+`linked` is newly added, `existing` was already in this case, and `total` is the
+case's resulting retained-evidence count. Duplicate input IDs never add duplicate
+links. Invalid, missing or foreign-workspace evidence refuses the entire batch;
+the existing 1,000-original case cap also refuses atomically. Operator review
+requests additionally set `forReview:true` (an exact boolean), which limits the
+resulting distinct evidence count to 200 in the same transaction. This matches
+the existing investigation review and analysis budgets. Two requests competing
+for the final slot cannot both add another original; duplicate retries at 200
+remain accepted. Omitting the flag or setting it false preserves the original
+1,000-evidence export contract. Investigation detail exposes `totalEvidence` and
+`reviewEvidenceLimit:200`; a legacy case above that review limit needs a smaller
+review case rather than pretending every original is available to this workflow.
+Linking validates
+workspace and original IDs; report generation separately verifies the referenced
+journals and refuses damaged integrity. A link receipt is not an integrity report.
+
+`POST /v1/cases` additionally accepts optional `evidenceIds` (up to 200, including
+an empty array). Creating the case and linking its originals is one transaction:
+a failed link leaves no empty case. A nonempty selection requires `evidence:read`
+in addition to `cases:write`, with the existing current-role checks. The response
+retains the existing created-case shape. Ordinary question-only creation and all
+existing case/report permissions remain available.
 
 Recording creation is `{id?,sessionId,sourceId,maxDurationSeconds?,segmentSeconds?}`.
 Recorder listings accept `limit` up to 200 and an optional exact boolean query

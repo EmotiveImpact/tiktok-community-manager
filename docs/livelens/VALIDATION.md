@@ -1,5 +1,41 @@
 # Validation receipt
 
+## Aperture Investigation Desk — 16 October 2026
+
+The [goal, implementation and screenshots](INVESTIGATION_DESK.md) connect retained
+statements and saved moments to reviewed cases and reports. This is the current
+continuation; earlier receipts below describe their own checkpoints.
+
+- Application: 127 tests in 14 files; TypeScript and renderer/Electron production
+  build pass. Final renderer `index-Cuq1l9vc.js`, stylesheet `index-BZbmVy_B.css`.
+- Service: [148/148, zero skips](investigation-desk-service-validation.json),
+  including actual PostgreSQL 17.6, FFmpeg, PocketSphinx and Chromium PDF. Eighteen
+  intake contracts across SQLite / PostgreSQL are included in that total. They cover
+  full-journal search, saved-label pages, current attribution, ACL-before-page,
+  scope/role checks, atomic create/link/rollback, duplicates and both source bounds.
+- Browser: [all six journeys pass](investigation-desk-browser-validation.json),
+  producing 58 screenshots with zero uncaught page errors or horizontal overflow.
+  Fifteen investigation captures include phone footer/document geometry and opened
+  provenance. Every journey hashes the actual final renderer/CSS responses.
+  Existing five journeys and the new investigation journey use authenticated HTTP. Controlled lost-response tests commit on the real service before dropping
+  a browser response; no successful payload is fabricated.
+
+Independent review found and fixed: a blank account filter refusing source reads;
+shared form CSS overriding the search layout; duplicate bookmark row identities;
+reviewed-case / original-case capacity mismatch; dirty report overwrite on refresh; and
+ambiguous case-creation retries; and hidden absolute labels causing phone scroll
+overflow. A new-case retry reuses its exact ID/question and
+verifies the retained original before accepting recovery. No existing assertion
+was weakened: legacy link selectors now use the real destination picker, and
+source-free decorative row numbers are hidden from accessible names.
+
+Limits remain explicit: 50 selected originals per tray, 200 per reviewed case;
+legacy original-evidence cases retain 1,000. Linking is not journal certification;
+exports verify source journals. Unsaved drafts are held in memory for temporary
+source detours, not persisted across page reload or explicit navigation. External
+LIVE, private ALFRED installation, representative speech/model quality and customer
+production capacity remain separate gates.
+
 ## Aperture workflows — 11 October 2026
 
 The [current application and gallery](APERTURE_WORKFLOWS.md) preserve the approved

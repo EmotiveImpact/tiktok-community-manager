@@ -1,0 +1,49 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "desktopAndPhone": true,
+  "keyboardNavigation": true,
+  "actualMediaPlaybackAndSeek": true,
+  "recordingToolsDisclosurePreservesTimelineAndVerifiedReceipt": true,
+  "sessionLibrarySavedDurationAndWithVideoFilter": true,
+  "sourceLinkedNoteAndReviewedFinding": true,
+  "counterevidenceRetained": true,
+  "bookmarkSaved": true,
+  "bookmarkOriginalReopened": true,
+  "savedMomentsExactOriginalClockFrameAndKeyboardSeek": true,
+  "savedMomentsSessionIsolationAndExplicitStatementChoice": true,
+  "savedMomentsPersistAfterServiceRestart": true,
+  "sameSelectedSavedMomentReseeksAfterManualPlaybackChange": true,
+  "crossSessionComparisonSources": true,
+  "observedAccountSearch": true,
+  "sourceConfigurationWithoutBackgroundCapture": true,
+  "graphSourcesReopened": true,
+  "syntheticGraphTranscriptFixture": true,
+  "speakerTracksRemainSourceScoped": true,
+  "operatorDeclaredUnverifiedPersonReference": true,
+  "noAutomaticIdentityLinks": true,
+  "sourceBackedRelationRestartReopen": true,
+  "phoneGraphMapAndConnections": true,
+  "missionRunAndAlertReview": true,
+  "reportRedactionAndOriginalPreserved": true,
+  "jsonMarkdownHtmlAndActualPdf": true,
+  "workspaceMembersAndAudit": true,
+  "serviceRestartReopen": true,
+  "privateAlfredRecipeUsesExactSelectedSessionAndReadOnlyDefault": true,
+  "privateAlfredRecipeActualDownloadsAndKeyboardTabs": true,
+  "privateAlfredRecipeExplicitSourceAndBoundedCollectionOption": true,
+  "privateAlfredRecipeNeverInstallsCallsEndpointOrClaimsConnection": true,
+  "privateAlfredSetupInputsNotStoredOrPutInUrl": true,
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:52747/app/assets/index-BZbmVy_B.css",
+      "sha256": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+    },
+    {
+      "url": "http://127.0.0.1:52747/app/assets/index-Cuq1l9vc.js",
+      "sha256": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+    }
+  ],
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-desk-publish-full"
+}

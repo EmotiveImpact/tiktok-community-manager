@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { REVIEW_EVIDENCE_LIMIT } from "./store.mjs";
 import {
   canonical,
   digest,
@@ -102,7 +103,7 @@ export class InvestigationEngine {
           )
           .get(workspace, caseId, id),
     );
-    if (count + additional.length > 200)
+    if (count + additional.length > REVIEW_EVIDENCE_LIMIT)
       throw new Fault("investigation_evidence_capacity", 409);
     for (const id of ids)
       this.db
@@ -207,23 +208,33 @@ export class InvestigationEngine {
       };
     });
   }
-  bookmarks(workspace, { sessionId = null, limit = 100 } = {}) {
-    ident(workspace);
-    limit = pageLimit(limit);
-    if (sessionId !== null) this.store.session(workspace, sessionId);
-    return this.db
-      .prepare(
-        `SELECT b.*,e.session_id FROM investigation_bookmarks b JOIN events e ON e.workspace=b.workspace AND e.id=b.event_id WHERE b.workspace=?${sessionId ? " AND e.session_id=?" : ""} ORDER BY b.created_at DESC,b.id LIMIT ?`,
-      )
-      .all(...(sessionId ? [workspace, sessionId, limit] : [workspace, limit]))
-      .map((row) => ({
+  bookmarks(workspace, options = {}) {
+    // Preserve the original store-facing bookmark shape for graph/report clients.
+    return this.bookmarkPage(workspace, options).bookmarks.map(({ evidence: _evidence, ...bookmark }) => bookmark);
+  }
+  bookmarkPage(workspace, { limit = 100, offset = 0, query = '', includeEvidence = false, ...filters } = {}) {
+    limit = pageLimit(limit); text(query, 512, true);
+    if (typeof includeEvidence !== 'boolean') throw new Fault('invalid_include_evidence');
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new Fault('invalid_cursor');
+    const { clauses, args } = this.store.evidenceFilter(workspace, filters);
+    if (query) {
+      // Include the operator's saved label while retaining exact original filters.
+      clauses.push("(lower(e.text) LIKE lower(?) ESCAPE '\\' OR lower(b.label) LIKE lower(?) ESCAPE '\\')");
+      const pattern = '%' + query.replace(/[\\%_]/g, '\\$&') + '%';
+      args.push(pattern, pattern);
+    }
+    const rows = this.db.prepare(`SELECT b.*,e.session_id FROM investigation_bookmarks b JOIN events e ON e.workspace=b.workspace AND e.id=b.event_id WHERE ${clauses.join(' AND ')} ORDER BY b.created_at DESC,b.id LIMIT ? OFFSET ?`)
+      .all(...args, limit + 1, offset);
+    const hasMore = rows.length > limit;
+    return { bookmarks: rows.slice(0, limit).map((row) => ({
         id: row.id,
         evidenceId: row.event_id,
         sessionId: row.session_id,
         label: row.label,
         reviewer: row.reviewer,
         createdAtMs: row.created_at,
-      }));
+        ...(includeEvidence ? { evidence: this.store.evidence(workspace, row.event_id) } : {}),
+      })), hasMore, nextOffset: hasMore ? offset + limit : null };
   }
   prepareFinding(workspace, caseId, value, options) {
     object(value, [
@@ -464,6 +475,8 @@ export class InvestigationEngine {
     return {
       case: caseRecord,
       ...evidence,
+      totalEvidence: this.db.prepare('SELECT count(*) AS n FROM case_events WHERE workspace=? AND case_id=?').get(workspace, caseId).n,
+      reviewEvidenceLimit: REVIEW_EVIDENCE_LIMIT,
       notes: this.notes(workspace, caseId),
       findings: this.findings(workspace, caseId),
       bookmarks: this.bookmarks(workspace).filter((mark) =>

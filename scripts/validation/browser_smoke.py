@@ -11,7 +11,7 @@ import traceback
 from contextlib import contextmanager
 from urllib.request import urlopen
 from playwright.sync_api import sync_playwright
-from browser_navigation import navigate, renderer_assets
+from browser_navigation import navigate, renderer_assets, link_current_evidence
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as sock:
@@ -143,9 +143,7 @@ with tempfile.TemporaryDirectory(prefix='livelens-browser-data-') as directory:
             page.evaluate('async () => { const v = document.querySelector("video"); v.muted = true; await v.play(); }')
             page.wait_for_function('() => document.querySelector("video").currentTime > 0.8')
             page.evaluate('document.querySelector("video").pause()')
-            page.get_by_label('Link to investigation').select_option(label='Fixture browser investigation')
-            page.get_by_role('button', name='Link evidence', exact=True).click()
-            page.get_by_text('Original evidence linked to case.', exact=True).wait_for()
+            link_current_evidence(page, 'Fixture browser investigation')
             page.screenshot(path=str(SCREENSHOTS / 'desktop-replay.png'), full_page=True)
 
             navigate(page, 'Observed accounts')

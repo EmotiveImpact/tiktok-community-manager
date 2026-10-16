@@ -100,7 +100,7 @@ test('cases can combine sessions but cannot link another workspace; failed links
   store.createCase('workspace_a', { id: 'case-a', title: 'Synthetic review', question: 'What happened?' }, 'operator');
   assert.throws(() => store.linkEvidence('workspace_a', 'case-a', [a.id, b.id], 'operator'), /evidence_not_found/);
   assert.equal(store.report('workspace_a', 'case-a').evidence.length, 0);
-  assert.deepEqual(store.linkEvidence('workspace_a', 'case-a', [a.id, a.id], 'operator'), { linked: 1, total: 1 });
+  assert.deepEqual(store.linkEvidence('workspace_a', 'case-a', [a.id, a.id], 'operator'), { linked: 1, total: 1, existing: 0 });
 });
 
 test('SQLite evidence, cases and attribution survive reopening the database', t => {

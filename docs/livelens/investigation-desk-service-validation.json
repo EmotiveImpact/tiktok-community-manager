@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-16",
+  "status": "passed",
+  "tests": 148,
+  "passed": 148,
+  "failed": 0,
+  "skipped": 0,
+  "durationMs": 64436.772321,
+  "command": "npm --prefix services/intelligence test",
+  "runtime": {
+    "node": "24.19.0",
+    "postgres": "17.6-bookworm",
+    "database": "actual isolated PostgreSQL and SQLite",
+    "ffmpeg": "/usr/bin/ffmpeg",
+    "speech": "pinned PocketSphinx and checksum-pinned references",
+    "pdf": "actual offline Chromium via Playwright1.62.0"
+  },
+  "focusedIntakeTests": 18,
+  "focusedTestsIncludedInTotal": true,
+  "logSha256": "fd8ccba1ce3dde49f95e71f0f13d98df06c930b4955af8194f60d336e74c6462",
+  "sourceSha256": {
+    "services/intelligence/src/store.mjs": "402129a27cbd3b01058c5365ab26c18ce7a670f74569c86ffd15134f05dcee18",
+    "services/intelligence/src/server.mjs": "7efba7a3a1616ed6e8366c71232ba2fa1e2637684f78fdd80061c667565fcc90",
+    "services/intelligence/src/investigations.mjs": "d4573d519cd385c88d28947177abacda362701c7515cfb13acbba74d6c5413ad",
+    "services/intelligence/src/advanced-routes.mjs": "8a2fec028aca4e621a63a1601c21e8cd770c4b2922982e7f5444d25251c95360",
+    "services/intelligence/test/investigation-intake.test.mjs": "f46d9f99a11501f11982e96f66b3915e5aef443bf8627a4f31a7e8fcfdc2e972"
+  },
+  "limits": [
+    "Synthetic fixtures and local PostgreSQL do not establish real external LIVE, model quality or production capacity.",
+    "Private PostgreSQL credentials and runtime data are outside Git."
+  ],
+  "cleanup": "Dedicated PostgreSQL fixture stopped; private credential files removed after validation."
+}

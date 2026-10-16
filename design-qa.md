@@ -261,3 +261,28 @@ errors or desktop/phone overflow were observed.
 The owner deferred Pinterest research after network access was blocked. This
 result validates the selected C revision and implemented interface; it does not
 claim that Pinterest has been viewed or that real LIVE capture is validated.
+
+
+## Aperture Investigation Desk — 16 October 2026
+
+The investigation extension preserves the selected Aperture Studio frame, Inter,
+warm charcoal surfaces and off-white primary actions. Actual browser inspection
+covers the case question, source browser/selection tray, statement-to-case dialog,
+reviewed findings, draft conflict and report on desktop and 390px phone.
+
+The case question now leads; the generic shell heading is visually hidden while
+its accessible h1 and compact refresh action remain. Original clocks are available
+in source disclosures. Counts, selection, review and permission states come from
+actual scoped records. Duplicate bookmarks retain their own labels and DOM keys
+while selection counts distinct originals.
+
+Inspection fixed inherited form flex direction, nested provenance grid columns,
+closed-detail vertical overflow, uncontained hidden checkbox labels and modal
+quote specificity. The final captures
+check footer/document bounds and opening/closing provenance on phone, along with
+horizontal overflow and keyboard focus. Dirty report edits survive refresh/source
+detours, with explicit discard and retained server revision conflicts.
+
+See [the delivery gallery](docs/livelens/INVESTIGATION_DESK.md) and exact-byte
+browser receipts. The evidence is fictional; acceptance of this milestone's
+appearance by the owner, external LIVE and production capacity remain separate.

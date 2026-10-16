@@ -3,7 +3,7 @@ import { renderPdf } from './pdf.mjs';
 
 // The HTTP principal supplies workspace and reviewer. Captured content never
 // selects a tenant, a command, an executable or an agent permission.
-export async function advancedRoute({ request, response, url, principal, requireScope, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive, accounts }) {
+export async function advancedRoute({ request, response, url, principal, requireScope, caseCanWrite, readBody, send, investigation, scheduler, speech, governance, analysis, recorder, pdf, mediaArchive, accounts }) {
   const workspace = principal.workspace, actor = principal.subject;
   const get = request.method === 'GET', post = request.method === 'POST';
   const match = pattern => url.pathname.match(pattern);
@@ -85,7 +85,8 @@ export async function advancedRoute({ request, response, url, principal, require
   }
   if ((route = match(/^\/v1\/investigations\/([A-Za-z0-9_-]+)$/)) && get) {
     requireScope('cases:read', { caseId: route[1] }); requireScope('evidence:read');
-    return result(investigation.caseDetail(workspace, route[1]));
+    const detail = investigation.caseDetail(workspace, route[1]);
+    return result({ ...detail, case: { ...detail.case, canWrite: caseCanWrite(route[1]) } });
   }
   if ((route = match(/^\/v1\/investigations\/([A-Za-z0-9_-]+)\/notes$/)) && post) {
     requireScope('cases:write', { caseId: route[1] }); requireScope('evidence:read');
@@ -101,7 +102,11 @@ export async function advancedRoute({ request, response, url, principal, require
   }
   if (url.pathname === '/v1/bookmarks') {
     requireScope('evidence:read');
-    if (get) return result({ bookmarks: investigation.bookmarks(workspace, { sessionId: url.searchParams.get('session') || undefined, limit: url.searchParams.get('limit') ?? 100 }) });
+    if (get) {
+      const includeEvidence = url.searchParams.get('includeEvidence') ?? 'false';
+      if (!['true', 'false'].includes(includeEvidence)) throw new Fault('invalid_include_evidence');
+      return result(investigation.bookmarkPage(workspace, { sessionId: url.searchParams.get('session') ?? null, limit: url.searchParams.get('limit') ?? 100, offset: Number(url.searchParams.get('offset') ?? 0), query: url.searchParams.get('q') ?? '', account: url.searchParams.get('account'), kind: url.searchParams.get('kind') ?? 'all', includeEvidence: includeEvidence === 'true' }));
+    }
     if (post) { requireScope('investigations:write'); const value = object(await body(), ['evidenceId', 'label']); return result(investigation.bookmark(workspace, ident(value.evidenceId), { label: value.label }, actor)); }
   }
   if ((route = match(/^\/v1\/accounts\/([A-Za-z0-9._-]+)\/activity$/)) && get) {

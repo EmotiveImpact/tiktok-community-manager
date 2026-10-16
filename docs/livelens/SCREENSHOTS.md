@@ -4,6 +4,21 @@ The owner selected **Aperture Studio** from the
 [visual concept gallery](design-concepts/visual-exploration-2026-10-11/README.md).
 The screenshots below show that language implemented in the actual app.
 
+## Investigation Desk — 16 October 2026
+
+![Actual investigation source gathering](screenshots/investigation-desk/02a-desktop-gather-viewport.png)
+
+[Full operating guide and delivery plan](INVESTIGATION_DESK.md) ·
+[Create from a statement](screenshots/investigation-desk/01-desktop-create-from-conversation.png) ·
+[Phone gathering](screenshots/investigation-desk/06a-phone-gather-viewport.png) ·
+[Reviewed finding](screenshots/investigation-desk/04-desktop-reviewed-finding.png) ·
+[Report](screenshots/investigation-desk/05-desktop-reviewed-brief.png).
+
+These are actual authenticated browser captures of explicitly fictional evidence,
+including real case writes, reviewed conflicting sources and report exports.
+They are not mockups or a real external LIVE. The prior recording and ALFRED gallery
+below remains available; this milestone extends the same Aperture design language.
+
 ## Current Aperture workflows — 11 October 2026
 
 ![Current working recording workspace](screenshots/operator-workflow/01-conversation-desktop.png)

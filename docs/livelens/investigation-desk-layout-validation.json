@@ -1,0 +1,1359 @@
+{
+  "fixture": true,
+  "actualBrowserScreenshots": true,
+  "rendererAssets": {
+    "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46",
+    "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+  },
+  "geometry": {
+    "01-desktop-create-from-conversation.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 1392,
+      "footerBottom": 0,
+      "appBottom": 1392,
+      "bodyHeight": 1000,
+      "mainHeight": 1319.984375,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture ll-session-view ",
+          "bottom": 1391.984375,
+          "height": 1391.984375,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 1391.984375,
+          "height": 1391.984375,
+          "position": "static"
+        },
+        {
+          "tag": "MAIN",
+          "classes": "",
+          "bottom": 1391.984375,
+          "height": 1319.984375,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-conversation ll-playback-workspace",
+          "bottom": 1359.984375,
+          "height": 1155.390625,
+          "position": "static"
+        },
+        {
+          "tag": "ASIDE",
+          "classes": "ll-context has-selection",
+          "bottom": 1359.984375,
+          "height": 495.875,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-evidence-list",
+          "bottom": 1338.984375,
+          "height": 1,
+          "position": "static"
+        },
+        {
+          "tag": "P",
+          "classes": "ll-muted",
+          "bottom": 1324.984375,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "H3",
+          "classes": "",
+          "bottom": 1302.9375,
+          "height": 16.796875,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 1392
+    },
+    "02-desktop-gather-across-pages.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 1372,
+      "footerBottom": 1373,
+      "appBottom": 1373,
+      "bodyHeight": 1000,
+      "mainHeight": 1250.34375,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 1372.34375,
+          "height": 1372.34375,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 1372.34375,
+          "height": 1372.34375,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 1372.34375,
+          "height": 50,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1358.34375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "KBD",
+          "classes": "",
+          "bottom": 1358.34375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1356.359375,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 1353.828125,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 1352.82958984375,
+          "height": 10.001708984375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 1372
+    },
+    "02a-desktop-gather-viewport.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 1372,
+      "footerBottom": 1373,
+      "appBottom": 1373,
+      "bodyHeight": 1000,
+      "mainHeight": 1250.34375,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 1372.34375,
+          "height": 1372.34375,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 1372.34375,
+          "height": 1372.34375,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 1372.34375,
+          "height": 50,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1358.34375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "KBD",
+          "classes": "",
+          "bottom": 1358.34375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1356.359375,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 1353.828125,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 1352.82958984375,
+          "height": 10.001708984375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 1372
+    },
+    "03-desktop-permission-selection-retained.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 1461,
+      "footerBottom": 1462,
+      "appBottom": 1462,
+      "bodyHeight": 1000,
+      "mainHeight": 1339.484375,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 1461.484375,
+          "height": 1461.484375,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 1461.484375,
+          "height": 1461.484375,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 1461.484375,
+          "height": 50,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1447.484375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "KBD",
+          "classes": "",
+          "bottom": 1447.484375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1445.5,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 1442.96875,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 1441.97021484375,
+          "height": 10.001708984375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 1461
+    },
+    "04-desktop-reviewed-finding.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 2117,
+      "footerBottom": 2117,
+      "appBottom": 2117,
+      "bodyHeight": 1000,
+      "mainHeight": 1994.796875,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "P",
+          "classes": "",
+          "bottom": 2221.953125,
+          "height": 99.578125,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "aw-prior-statement",
+          "bottom": 2208.953125,
+          "height": 26.59375,
+          "position": "static"
+        },
+        {
+          "tag": "SMALL",
+          "classes": "",
+          "bottom": 2182.359375,
+          "height": 18.59375,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "aw-status aw-status-reviewed",
+          "bottom": 2157.765625,
+          "height": 23.390625,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 2116.796875,
+          "height": 2116.796875,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 2116.796875,
+          "height": 2116.796875,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 2116.796875,
+          "height": 50,
+          "position": "static"
+        },
+        {
+          "tag": "P",
+          "classes": "",
+          "bottom": 2116.375,
+          "height": 99.578125,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2117
+    },
+    "05a-desktop-draft-conflict-preserved.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 2173,
+      "footerBottom": 2173,
+      "appBottom": 2173,
+      "bodyHeight": 1000,
+      "mainHeight": 2050.65625,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 2172.65625,
+          "height": 2172.65625,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 2172.65625,
+          "height": 2172.65625,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 2172.65625,
+          "height": 50,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 2158.65625,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "KBD",
+          "classes": "",
+          "bottom": 2158.65625,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 2156.671875,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 2154.140625,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 2153.14208984375,
+          "height": 10.001708984375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2173
+    },
+    "05-desktop-reviewed-brief.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 2075,
+      "footerBottom": 2076,
+      "appBottom": 2076,
+      "bodyHeight": 1000,
+      "mainHeight": 1953.375,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 2075.375,
+          "height": 2075.375,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 2075.375,
+          "height": 2075.375,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 2075.375,
+          "height": 50,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 2061.375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "KBD",
+          "classes": "",
+          "bottom": 2061.375,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 2059.390625,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 2056.859375,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 2055.86083984375,
+          "height": 10.001708984375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2075
+    },
+    "05b-desktop-full-review-capacity.png": {
+      "width": 1440,
+      "height": 1000,
+      "scrollHeight": 1094,
+      "footerBottom": 1094,
+      "appBottom": 1094,
+      "bodyHeight": 1000,
+      "mainHeight": 971.640625,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 1093.640625,
+          "height": 1093.640625,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 1093.640625,
+          "height": 1093.640625,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 1093.640625,
+          "height": 50,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1079.640625,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "KBD",
+          "classes": "",
+          "bottom": 1079.640625,
+          "height": 21,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 1077.65625,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 1075.125,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 1074.12646484375,
+          "height": 10.001708984375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 1094
+    },
+    "06-phone-gather.png": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2091,
+      "footerBottom": 2092,
+      "appBottom": 2092,
+      "bodyHeight": 844,
+      "mainHeight": 1989.421875,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "ARTICLE",
+          "classes": "id-source-row",
+          "bottom": 10637.609375,
+          "height": 192.28125,
+          "position": "static"
+        },
+        {
+          "tag": "LABEL",
+          "classes": "id-source-check",
+          "bottom": 10618.609375,
+          "height": 154.28125,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "id-source-content",
+          "bottom": 10618.609375,
+          "height": 154.28125,
+          "position": "static"
+        },
+        {
+          "tag": "DETAILS",
+          "classes": "id-source-preview",
+          "bottom": 10618.609375,
+          "height": 44,
+          "position": "static"
+        },
+        {
+          "tag": "SUMMARY",
+          "classes": "",
+          "bottom": 10618.609375,
+          "height": 44,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 10603.109375,
+          "height": 13,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 10598.234375,
+          "height": 3.25,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "id-source-context",
+          "bottom": 10565.609375,
+          "height": 15.5,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2091
+    },
+    "06a-phone-gather-viewport.png": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2091,
+      "footerBottom": 2092,
+      "appBottom": 2092,
+      "bodyHeight": 844,
+      "mainHeight": 1989.421875,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "ARTICLE",
+          "classes": "id-source-row",
+          "bottom": 10637.609375,
+          "height": 192.28125,
+          "position": "static"
+        },
+        {
+          "tag": "LABEL",
+          "classes": "id-source-check",
+          "bottom": 10618.609375,
+          "height": 154.28125,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "id-source-content",
+          "bottom": 10618.609375,
+          "height": 154.28125,
+          "position": "static"
+        },
+        {
+          "tag": "DETAILS",
+          "classes": "id-source-preview",
+          "bottom": 10618.609375,
+          "height": 44,
+          "position": "static"
+        },
+        {
+          "tag": "SUMMARY",
+          "classes": "",
+          "bottom": 10618.609375,
+          "height": 44,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 10603.109375,
+          "height": 13,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 10598.234375,
+          "height": 3.25,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "id-source-context",
+          "bottom": 10565.609375,
+          "height": 15.5,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2091
+    },
+    "06b-phone-original-provenance.png": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2091,
+      "footerBottom": 2092,
+      "appBottom": 2092,
+      "bodyHeight": 844,
+      "mainHeight": 1989.421875,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "ARTICLE",
+          "classes": "id-source-row",
+          "bottom": 10852.9375,
+          "height": 192.28125,
+          "position": "static"
+        },
+        {
+          "tag": "LABEL",
+          "classes": "id-source-check",
+          "bottom": 10833.9375,
+          "height": 154.28125,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "id-source-content",
+          "bottom": 10833.9375,
+          "height": 154.28125,
+          "position": "static"
+        },
+        {
+          "tag": "DETAILS",
+          "classes": "id-source-preview",
+          "bottom": 10833.9375,
+          "height": 44,
+          "position": "static"
+        },
+        {
+          "tag": "SUMMARY",
+          "classes": "",
+          "bottom": 10833.9375,
+          "height": 44,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 10818.4375,
+          "height": 13,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 10813.5625,
+          "height": 3.25,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "id-source-context",
+          "bottom": 10780.9375,
+          "height": 15.5,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2091
+    },
+    "07-phone-reviewed-finding.png": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2024,
+      "footerBottom": 2025,
+      "appBottom": 2025,
+      "bodyHeight": 844,
+      "mainHeight": 1922.265625,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "aw-history",
+          "bottom": 2239.9375,
+          "height": 321.671875,
+          "position": "static"
+        },
+        {
+          "tag": "P",
+          "classes": "",
+          "bottom": 2239.9375,
+          "height": 156.90625,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "aw-prior-statement",
+          "bottom": 2226.9375,
+          "height": 63.78125,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "aw-form",
+          "bottom": 2177.796875,
+          "height": 319.671875,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "aw-button-row",
+          "bottom": 2175.796875,
+          "height": 74.6875,
+          "position": "static"
+        },
+        {
+          "tag": "BUTTON",
+          "classes": "aw-text-button",
+          "bottom": 2175.796875,
+          "height": 28.140625,
+          "position": "static"
+        },
+        {
+          "tag": "SMALL",
+          "classes": "",
+          "bottom": 2163.15625,
+          "height": 18.59375,
+          "position": "static"
+        },
+        {
+          "tag": "BUTTON",
+          "classes": "aw-primary",
+          "bottom": 2138.65625,
+          "height": 37.546875,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2024
+    },
+    "08-phone-reviewed-brief.png": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2563,
+      "footerBottom": 2563,
+      "appBottom": 2563,
+      "bodyHeight": 844,
+      "mainHeight": 2460.453125,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 2562.5,
+          "height": 2562.5,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 2562.5,
+          "height": 2562.5,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 2562.5,
+          "height": 42.046875,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 2550.5,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 2547.96875,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 2546.97021484375,
+          "height": 10.001708984375,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 2542.96875,
+          "height": 2,
+          "position": "static"
+        },
+        {
+          "tag": "MAIN",
+          "classes": "",
+          "bottom": 2520.453125,
+          "height": 2460.453125,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2563
+    },
+    "09-phone-existing-investigation-picker.png": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 4723,
+      "footerBottom": 0,
+      "appBottom": 4724,
+      "bodyHeight": 844,
+      "mainHeight": 4663.15625,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-evidence-list",
+          "bottom": 5926.09375,
+          "height": 4993.3125,
+          "position": "static"
+        },
+        {
+          "tag": "BUTTON",
+          "classes": "ll-evidence ",
+          "bottom": 5926.09375,
+          "height": 97.75,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "ll-evidence-time",
+          "bottom": 5908.09375,
+          "height": 62.75,
+          "position": "static"
+        },
+        {
+          "tag": "SMALL",
+          "classes": "",
+          "bottom": 5908.09375,
+          "height": 27.875,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "ll-evidence-body",
+          "bottom": 5893.71875,
+          "height": 48.375,
+          "position": "static"
+        },
+        {
+          "tag": "P",
+          "classes": "",
+          "bottom": 5887.71875,
+          "height": 21.4375,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 5875.28125,
+          "height": 29.9375,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "ll-evidence-author",
+          "bottom": 5861.28125,
+          "height": 15.9375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 4723
+    },
+    "10-phone-restarted-brief.png": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2625,
+      "footerBottom": 2625,
+      "appBottom": 2625,
+      "bodyHeight": 844,
+      "mainHeight": 2522.59375,
+      "hidden": [
+        {
+          "tag": "DIV",
+          "classes": "ll-specialist-navigation",
+          "display": "none",
+          "height": 0
+        },
+        {
+          "tag": "DIV",
+          "classes": "",
+          "display": "none",
+          "height": 0
+        }
+      ],
+      "furthest": [
+        {
+          "tag": "DIV",
+          "classes": "ll-app ll-product-shell ll-aperture  ",
+          "bottom": 2624.640625,
+          "height": 2624.640625,
+          "position": "static"
+        },
+        {
+          "tag": "DIV",
+          "classes": "ll-work",
+          "bottom": 2624.640625,
+          "height": 2624.640625,
+          "position": "static"
+        },
+        {
+          "tag": "FOOTER",
+          "classes": "ll-footer",
+          "bottom": 2624.640625,
+          "height": 42.046875,
+          "position": "static"
+        },
+        {
+          "tag": "SPAN",
+          "classes": "",
+          "bottom": 2612.640625,
+          "height": 17.046875,
+          "position": "static"
+        },
+        {
+          "tag": "svg",
+          "classes": "",
+          "bottom": 2610.109375,
+          "height": 12,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 2609.11083984375,
+          "height": 10.001708984375,
+          "position": "static"
+        },
+        {
+          "tag": "path",
+          "classes": "",
+          "bottom": 2605.109375,
+          "height": 2,
+          "position": "static"
+        },
+        {
+          "tag": "MAIN",
+          "classes": "",
+          "bottom": 2582.59375,
+          "height": 2522.59375,
+          "position": "static"
+        }
+      ],
+      "scrollHeightAfterCapture": 2625
+    }
+  },
+  "screenshots": [
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/01-desktop-create-from-conversation.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 137909,
+      "sha256": "da1e7ffd8a9b4da6c1c9474ded3d5e722fdfdbdfef088bd9e77f38db074addb0"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/02-desktop-gather-across-pages.png",
+      "width": 1440,
+      "height": 1372,
+      "bytes": 175347,
+      "sha256": "fe7de96928be0da8a44f8bf0d76eb8d939ef3e5568e46d7b3b18bc6665cef325"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/02a-desktop-gather-viewport.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 139964,
+      "sha256": "f852fae8c0c8064e0fcda45beea3c2d48d5a6001c32b66fd79219e9eec0032fa"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/03-desktop-permission-selection-retained.png",
+      "width": 1440,
+      "height": 1461,
+      "bytes": 181881,
+      "sha256": "3ed4d13aa238882eeedcc788b92d3327aab532e72bf3aa297fed968e54cf6248"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/04-desktop-reviewed-finding.png",
+      "width": 1440,
+      "height": 2117,
+      "bytes": 180718,
+      "sha256": "ca7d996034a0f6cf93b2866e390ae256b6782f7f0a2afe592cdaa2494b477e95"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/05-desktop-reviewed-brief.png",
+      "width": 1440,
+      "height": 2075,
+      "bytes": 197899,
+      "sha256": "f466fcb2724d423f43af05d6e710f9d6ec1838e579c060e08dca683b750cdae8"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/05a-desktop-draft-conflict-preserved.png",
+      "width": 1440,
+      "height": 2173,
+      "bytes": 213760,
+      "sha256": "65ad27457efe45b8b6dc4da4b04b61f924df1d6c0ffd8aae8ad76422e61dcde0"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/05b-desktop-full-review-capacity.png",
+      "width": 1440,
+      "height": 1094,
+      "bytes": 145444,
+      "sha256": "612d4ecc2279dfdb16a784a0b0a4516be3a9ce189a59f5ba97a9d3f9148c1c3b"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/06-phone-gather.png",
+      "width": 390,
+      "height": 2091,
+      "bytes": 126726,
+      "sha256": "da296413ba6160a69f8b8ec3616cc252972a37101584b0c3d039c4130de2f033"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/06a-phone-gather-viewport.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 51887,
+      "sha256": "9b16601f10440ea5b3d2fb2fdc932393fe6e51af888b4a8b514ebe813bf980d7"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/06b-phone-original-provenance.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 53401,
+      "sha256": "506c345654560b9475c549199210635ef5f0d66ce673afcf3ba74af30a9ae4c8"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/07-phone-reviewed-finding.png",
+      "width": 390,
+      "height": 2024,
+      "bytes": 121394,
+      "sha256": "92ffc9f2467e172baa89c93a8dfe051d7a317f4b0817b911c9442eba0ca2e546"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/08-phone-reviewed-brief.png",
+      "width": 390,
+      "height": 2563,
+      "bytes": 156544,
+      "sha256": "8b40762ae85a30e8e0f8b644bc272814dd548d088ad32a4f04ad64570be81115"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/09-phone-existing-investigation-picker.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 58388,
+      "sha256": "33ef2cbfc7f16cd0ec4765e6058acc3ce470bfeda99dc6a650051329e06bae18"
+    },
+    {
+      "path": "docs/livelens/screenshots/investigation-desk/10-phone-restarted-brief.png",
+      "width": 390,
+      "height": 2625,
+      "bytes": 159758,
+      "sha256": "e33c0d9a87fee5e0752e37369c279ad068b87ca9d0b96adc7d362297802375cf"
+    }
+  ]
+}

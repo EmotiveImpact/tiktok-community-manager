@@ -24,6 +24,13 @@ ALFRED 200-recent-session picker bounds explicit. Generating files does not inst
 or verify a private ALFRED runtime. See the latest receipts for actual optional
 PostgreSQL/PDF/speech checks and browser behavior.
 
+The current delivered milestone is [Aperture Investigation Desk](INVESTIGATION_DESK.md):
+searchable source intake and accessible case pages, atomic case creation with a
+statement, bounded batch linking, source-return draft preservation and a clearer
+question-to-reviewed-brief workspace. Its current validation supersedes older
+workflow counts. Keep the 200-source reviewed-case bound distinct from the legacy
+1,000-source original export API, and preserve server revision checks on reports.
+
 Read [FULL_APPLICATION.md](FULL_APPLICATION.md) for the product and remaining gates,
 [VALIDATION.md](VALIDATION.md) for executed receipts,
 [RUNTIME_CONFIGURATION.md](RUNTIME_CONFIGURATION.md) for configuration, and

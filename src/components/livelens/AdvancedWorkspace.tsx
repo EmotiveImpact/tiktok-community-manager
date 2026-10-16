@@ -25,6 +25,7 @@ export default function AdvancedWorkspace({
       {view === "alerts" && <Alerts onOpenEvidence={onOpenEvidence} />}
       {view === "investigations" && (
         <Investigations
+          revision={revision}
           onOpenEvidence={onOpenEvidence}
           initialCaseId={initialCaseId}
           onSelectCase={onSelectCase}

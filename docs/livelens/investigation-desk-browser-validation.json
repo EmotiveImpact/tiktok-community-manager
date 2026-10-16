@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-16",
+  "fixture": true,
+  "externalLiveValidated": false,
+  "privateAlfredHostInstalledOrConnected": false,
+  "passedJourneys": 6,
+  "failedJourneys": 0,
+  "maxConcurrentBrowserJourneys": 3,
+  "rendererAssets": {
+    "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46",
+    "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+  },
+  "screenshots": 58,
+  "publishedInvestigationCaptures": 15,
+  "journeys": [
+    {
+      "journey": "original",
+      "passed": true,
+      "publishedReceipt": "investigation-desk-original-validation.json",
+      "receiptSha256": "5bfa38976aaf57bb01dca2f10376338ac0936406cbc6d4d4c4a06ffafc43eb0d",
+      "screenshots": 2,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b",
+        "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+      }
+    },
+    {
+      "journey": "full",
+      "passed": true,
+      "publishedReceipt": "investigation-desk-full-validation.json",
+      "receiptSha256": "b57d8a85b8ade799c121c10af8a058f01b6b2f19179d8f1009904e7a1497c286",
+      "screenshots": 16,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b",
+        "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+      }
+    },
+    {
+      "journey": "review",
+      "passed": true,
+      "publishedReceipt": "investigation-desk-review-validation.json",
+      "receiptSha256": "cf58b7f0e82192abbfe8361d54e8876f910608afd75db717d26d6d4a25995c0b",
+      "screenshots": 8,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b",
+        "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+      }
+    },
+    {
+      "journey": "monitor",
+      "passed": true,
+      "publishedReceipt": "investigation-desk-monitor-validation.json",
+      "receiptSha256": "be702a0a193255afddea1f85b2bc988b85c28b13f52aa3afa9badc5425a396c5",
+      "screenshots": 10,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b",
+        "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+      }
+    },
+    {
+      "journey": "onboarding",
+      "passed": true,
+      "publishedReceipt": "investigation-desk-onboarding-validation.json",
+      "receiptSha256": "47b6abb705e5cb00ce849ee981179f11b300e1c0bc3a6e2b12c0f3a2fcb7d0d3",
+      "screenshots": 7,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b",
+        "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+      }
+    },
+    {
+      "journey": "journey",
+      "passed": true,
+      "publishedReceipt": "investigation-desk-journey-validation.json",
+      "receiptSha256": "26b7bcad87664108f530286b46ada9da6b99666408b4526023152973dbd42843",
+      "screenshots": 15,
+      "uncaughtPageErrors": 0,
+      "rendererAssets": {
+        "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b",
+        "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "product": "LiveLens",
-  "updated": "2026-10-11",
+  "updated": "2026-10-16",
   "baseline": {
     "repository": "EmotiveImpact/tiktok-community-manager",
     "branch": "feat/livelens-evidence-timeline-2026-10-10",
@@ -415,6 +415,35 @@
       "remaining": [
         "Direct permitted HTTPS media adapter implemented alongside selected TikTok-public adapter. A second named platform and external provider failure/credential behavior have not been validated."
       ]
+    },
+    {
+      "id": "U02",
+      "title": "Aperture Investigation Desk: retained conversations to reviewed brief",
+      "status": "implemented",
+      "dependsOn": [
+        "U01",
+        "I01",
+        "R01"
+      ],
+      "implementationBrief": "docs/livelens/INVESTIGATION_DESK.md",
+      "acceptance": [
+        "Search all retained evidence and saved labels before bounded pagination; preserve explicit selection across filters and source playback",
+        "Create a case with its selected statement atomically; accessible case pagination applies scope and ACL before the page",
+        "Preserve source-linked notes, reviewed support/counterevidence, report drafts and stale-edit refusal",
+        "Actual desktop, phone, keyboard, denied-write, duplicate, capacity and restart browser/database evidence"
+      ],
+      "evidence": [
+        "src/components/livelens/advanced/EvidenceIntake.tsx",
+        "src/components/livelens/EvidenceCaseLink.tsx",
+        "services/intelligence/test/investigation-intake.test.mjs",
+        "scripts/validation/investigation_desk_smoke.py",
+        "docs/livelens/INVESTIGATION_DESK.md"
+      ],
+      "limitations": [
+        "50-source tray and 200-source reviewed investigations; legacy original-evidence API remains 1,000, larger reviewed views are explicitly bounded",
+        "Unsaved drafts survive source detours within the current page lifetime; explicit navigation or reload does not persist them",
+        "Provider, speech quality, private ALFRED and production gates remain separate"
+      ]
     }
   ],
   "productTarget": {
@@ -432,6 +461,7 @@
     "expandedBuildStatus": "capture-and-configured-ALFRED-workflows-implemented; speech-model-and-commercial-gates-partial",
     "currentOperatingGuide": "docs/livelens/LIVE_MONITOR.md",
     "designAcceptance": "Capture-first monitor replaces review-first home at owner request; prior functional receipts do not establish final visual acceptance",
-    "communityBoundary": "Native Electron CRM preserved with local fan records; browser page bridge is a development demo, not shared-server CRM"
+    "communityBoundary": "Native Electron CRM preserved with local fan records; browser page bridge is a development demo, not shared-server CRM",
+    "currentContinuation": "U02 Aperture Investigation Desk; capture-first Aperture Studio remains the main entry point"
   }
 }

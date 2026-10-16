@@ -16,7 +16,7 @@ from urllib.request import urlopen
 from urllib.parse import urlsplit
 
 from playwright.sync_api import expect, sync_playwright
-from browser_navigation import navigate, renderer_assets
+from browser_navigation import navigate, renderer_assets, link_current_evidence
 
 ROOT = Path(__file__).resolve().parents[2]
 with socket.socket() as reservation:
@@ -292,9 +292,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.evaluate('document.querySelector("video").pause()')
                 MARKER_ID = page.locator(".ll-context .ll-id").inner_text()
                 marker_text = page.locator(".ll-context blockquote").inner_text()
-                page.get_by_label("Link to investigation").select_option(label="Full application fixture review")
-                page.get_by_role("button", name="Link evidence", exact=True).click()
-                page.get_by_text("Original evidence linked to case.", exact=True).wait_for()
+                link_current_evidence(page, 'Full application fixture review')
                 with page.expect_response(lambda response: urlsplit(response.url).path == "/v1/bookmarks" and response.request.method == "POST") as bookmarked:
                     page.get_by_role("button", name="Bookmark evidence", exact=True).click()
                 assert bookmarked.value.status == 201
@@ -325,9 +323,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-full-app-data-") as directory:
                 page.locator(".ll-context blockquote").filter(has_text="Keep the original conversation with the evidence.").wait_for()
                 COUNTER_ID = page.locator(".ll-context .ll-id").inner_text()
                 counter_text = page.locator(".ll-context blockquote").inner_text()
-                page.get_by_label("Link to investigation").select_option(label="Full application fixture review")
-                page.get_by_role("button", name="Link evidence", exact=True).click()
-                page.get_by_text("Original evidence linked to case.", exact=True).wait_for()
+                link_current_evidence(page, 'Full application fixture review')
                 page.evaluate('() => { const video = document.querySelector("video"); video.pause(); video.currentTime = 0; }')
                 page.wait_for_function('() => !document.querySelector("video").seeking && document.querySelector("video").currentTime < .1')
                 saved_moment.focus()

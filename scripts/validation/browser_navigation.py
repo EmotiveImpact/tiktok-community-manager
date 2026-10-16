@@ -36,3 +36,15 @@ def navigate(page, label, *, keyboard=False):
         page.keyboard.press("Enter")
     else:
         destination.click()
+
+
+def link_current_evidence(page, case_title):
+    """Choose a real destination through the source-bound investigation picker."""
+    page.get_by_role("button", name="Add to investigation", exact=True).click()
+    dialog = page.get_by_role("dialog", name="Add evidence to investigation")
+    dialog.get_by_label("Find an investigation", exact=True).fill(case_title)
+    dialog.get_by_role("radio", name=case_title, exact=False).check()
+    dialog.get_by_role("button", name="Add evidence", exact=True).click()
+    expect(dialog.get_by_role("heading", name="Evidence added", exact=True)).to_be_visible()
+    dialog.get_by_role("button", name="Keep reviewing this conversation", exact=True).click()
+    expect(dialog).to_have_count(0)

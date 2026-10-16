@@ -206,3 +206,8 @@
   .ll-app.ll-aperture .ll-context-link { min-height: 44px; }
   .ll-app.ll-aperture .ll-result-pages > button, .ll-app.ll-aperture .ll-clear-timeline, .ll-app.ll-aperture .ll-first-events { min-height: 44px; }
 }
+
+/* The case title leads once a question is open; keep refresh beside its back link. */
+.ll-app.ll-aperture .ll-heading.ll-case-toolbar { position: relative; height: 0; min-height: 0; margin: 0; }
+.ll-app.ll-aperture .ll-case-toolbar > div:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ll-app.ll-aperture .ll-case-toolbar .ll-heading-actions { position: absolute; right: 0; top: -6px; z-index: 1; }

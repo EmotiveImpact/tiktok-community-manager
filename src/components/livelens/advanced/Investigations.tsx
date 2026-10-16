@@ -5,7 +5,7 @@ import {
   Bookmark,
   Check,
   Download,
-  FileText,
+  FolderOpen,
   Plus,
   Search,
 } from "lucide-react";
@@ -29,6 +29,15 @@ import {
   useResource,
   type OpenEvidence,
 } from "./shared";
+import EvidenceIntake from "./EvidenceIntake";
+import "./investigation-desk.css";
+
+type DeskCase = Case & { canWrite?: boolean };
+type CasePage = {
+  cases: DeskCase[];
+  hasMore: boolean;
+  nextOffset: number | null;
+};
 
 type History = {
   revision?: number;
@@ -58,8 +67,10 @@ type Finding = {
   history: History[];
 };
 type Detail = {
-  case: Case;
+  case: DeskCase;
   evidence: Evidence[];
+  totalEvidence?: number;
+  reviewEvidenceLimit?: number;
   notes: Note[];
   findings: Finding[];
   truncated?: boolean;
@@ -109,13 +120,34 @@ export default function Investigations({
   onOpenEvidence,
   initialCaseId,
   onSelectCase,
+  revision = 0,
 }: {
   onOpenEvidence: OpenEvidence;
   initialCaseId?: string | null;
   onSelectCase?: (caseId: string | null) => void;
+  revision?: number;
 }) {
-  const resource = useResource<unknown>("/v1/cases?limit=200");
-  const [currentId, setCurrentId] = useState<string | null>(initialCaseId ?? null);
+  const [search, setSearch] = useState("");
+  const [settledSearch, setSettledSearch] = useState("");
+  const [offsets, setOffsets] = useState([0]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSettledSearch(search), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+  const parameters = new URLSearchParams({
+    q: settledSearch.trim(),
+    limit: "30",
+    offset: String(offsets[offsets.length - 1]),
+  });
+  const resource = useResource<CasePage>(`/v1/cases?${parameters}`, revision);
+  const capabilities = useResource<{ permissions?: { createCases?: boolean } }>(
+    "/v1/capabilities",
+    revision,
+  );
+  const canCreate = capabilities.data?.permissions?.createCases === true;
+  const [currentId, setCurrentId] = useState<string | null>(
+    initialCaseId ?? null,
+  );
   useEffect(() => {
     setCurrentId(initialCaseId ?? null);
   }, [initialCaseId]);
@@ -124,13 +156,15 @@ export default function Investigations({
   const [question, setQuestion] = useState("");
   const [tab, setTab] = useState("cases");
   const action = useAction();
-  const items = collection<Case>(resource.data, "cases");
+  const waiting = resource.loading || search !== settledSearch;
+  const items = waiting ? [] : collection<DeskCase>(resource.data, "cases");
   const selectCase = (caseId: string | null) => {
     setCurrentId(caseId);
     onSelectCase?.(caseId);
   };
   const create = async (event: FormEvent) => {
     event.preventDefault();
+    if (!canCreate) return;
     let newId = "";
     if (
       await action.run(async () => {
@@ -153,12 +187,24 @@ export default function Investigations({
       <InvestigationDetail
         key={currentId}
         caseId={currentId}
+        revision={revision}
         onOpenEvidence={onOpenEvidence}
         onBack={() => selectCase(null)}
       />
     );
   return (
-    <>
+    <div className="id-desk id-library">
+      <header className="id-library-heading">
+        <div>
+          <span className="id-kicker">THE INVESTIGATION DESK</span>
+          <h2>From conversation to conclusion.</h2>
+          <p>
+            Gather original statements, test a question, and build a brief you
+            can stand behind.
+          </p>
+        </div>
+        <FolderOpen size={32} strokeWidth={1.25} aria-hidden="true" />
+      </header>
       <div className="aw-toolbar">
         <div className="aw-segmented" aria-label="Investigation tools">
           {[
@@ -176,13 +222,24 @@ export default function Investigations({
           ))}
         </div>
         {tab === "cases" && (
-          <button className="aw-primary" onClick={() => setEditor(!editor)}>
+          <button
+            className="aw-primary"
+            disabled={!canCreate}
+            onClick={() => setEditor(!editor)}
+          >
             <Plus size={16} />
             {editor ? "Close editor" : "New investigation"}
           </button>
         )}
       </div>
       <Notice error={resource.error || action.error} receipt={action.receipt} />
+      {tab === "cases" && !capabilities.loading && !canCreate && (
+        <p className="id-permission-note">
+          {capabilities.error
+            ? "Creation access is unavailable. Refresh to check your permissions."
+            : "Your workspace access allows you to browse existing investigations. An editor can create a new one."}
+        </p>
+      )}
       {tab === "cases" && (
         <>
           {editor && (
@@ -213,7 +270,10 @@ export default function Investigations({
                   <span className="aw-help">
                     Sources and conclusions stay separate throughout review.
                   </span>
-                  <button className="aw-primary" disabled={action.busy}>
+                  <button
+                    className="aw-primary"
+                    disabled={action.busy || !canCreate}
+                  >
                     {action.busy ? "Creating…" : "Create investigation"}
                     <ArrowRight size={15} />
                   </button>
@@ -223,47 +283,118 @@ export default function Investigations({
           )}
           <Section
             title="Investigation library"
-            description={`${items.length} retained investigations`}
+            description="Questions, original evidence and the decisions that follow."
             action={
-              <button className="aw-text-button" onClick={resource.reload}>
+              <button
+                className="aw-text-button"
+                onClick={() => {
+                  resource.reload();
+                  capabilities.reload();
+                }}
+              >
                 Refresh
               </button>
             }
           >
-            {resource.loading ? (
+            <div className="id-library-search">
+              <label className="id-search-input">
+                <Search size={17} aria-hidden="true" />
+                <input
+                  type="search"
+                  aria-label="Search investigations"
+                  value={search}
+                  maxLength={512}
+                  placeholder="Find an investigation or question"
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setOffsets([0]);
+                  }}
+                />
+              </label>
+              <span>
+                {waiting ? "Searching…" : `${items.length} shown on this page`}
+              </span>
+            </div>
+            {waiting ? (
               <Loading />
             ) : !items.length ? (
-              <Empty title="An investigation begins with a question">
-                Create one, then gather supporting and conflicting statements
-                from your session library.
+              <Empty
+                title={
+                  search.trim()
+                    ? "No matching investigations"
+                    : offsets.length > 1
+                      ? "End of these investigations"
+                      : "An investigation begins with a question"
+                }
+              >
+                {search.trim()
+                  ? "Try another phrase in the investigation name or question."
+                  : offsets.length > 1
+                    ? "Return to the previous page to continue."
+                    : "Create one, then gather supporting and conflicting statements from your session library."}
               </Empty>
             ) : (
-              <div className="aw-item-list">
-                {items.map((item) => (
+              <div className="aw-item-list id-case-list">
+                {items.map((item, index) => (
                   <button
                     className="aw-select-row"
                     key={item.id}
                     onClick={() => selectCase(item.id)}
                   >
-                    <span className="aw-list-symbol">
-                      <FileText size={18} />
+                    <span className="aw-list-symbol" aria-hidden="true">
+                      <span>
+                        {String(
+                          offsets[offsets.length - 1] + index + 1,
+                        ).padStart(2, "0")}
+                      </span>
                     </span>
                     <span className="aw-row-label">
                       <strong>{item.title}</strong>
                       <small>{item.question}</small>
-                      <small>{stamp(item.createdAtMs)}</small>
+                      <small>
+                        Opened {stamp(item.createdAtMs)}
+                        {item.canWrite === false ? " · Read-only access" : ""}
+                      </small>
                     </span>
                     <ArrowRight size={17} />
                   </button>
                 ))}
               </div>
             )}
+            <nav className="id-pagination" aria-label="Investigation pages">
+              <button
+                className="aw-text-button"
+                aria-label="Previous investigations page"
+                disabled={waiting || offsets.length === 1}
+                onClick={() => setOffsets((old) => old.slice(0, -1))}
+              >
+                <ArrowLeft size={15} />
+                Previous
+              </button>
+              <span>Page {offsets.length}</span>
+              <button
+                className="aw-text-button"
+                aria-label="Next investigations page"
+                disabled={
+                  waiting ||
+                  !resource.data?.hasMore ||
+                  resource.data.nextOffset == null
+                }
+                onClick={() => {
+                  if (resource.data?.nextOffset != null)
+                    setOffsets((old) => [...old, resource.data!.nextOffset!]);
+                }}
+              >
+                Next
+                <ArrowRight size={15} />
+              </button>
+            </nav>
           </Section>
         </>
       )}
       {tab === "bookmarks" && <Bookmarks onOpenEvidence={onOpenEvidence} />}
       {tab === "compare" && <Comparison onOpenEvidence={onOpenEvidence} />}
-    </>
+    </div>
   );
 }
 
@@ -271,13 +402,16 @@ function InvestigationDetail({
   caseId,
   onOpenEvidence,
   onBack,
+  revision,
 }: {
   caseId: string;
   onOpenEvidence: OpenEvidence;
   onBack: () => void;
+  revision: number;
 }) {
   const resource = useResource<Detail>(
     `/v1/investigations/${encodeURIComponent(caseId)}`,
+    revision,
   );
   const [tab, setTab] = useState("evidence");
   const [note, setNote] = useState("");
@@ -295,6 +429,7 @@ function InvestigationDetail({
     );
   const addNote = async (event: FormEvent) => {
     event.preventDefault();
+    if (!detail?.case.canWrite) return;
     if (
       await action.run(
         () =>
@@ -311,6 +446,7 @@ function InvestigationDetail({
   };
   const addFinding = async (event: FormEvent) => {
     event.preventDefault();
+    if (!detail?.case.canWrite) return;
     if (
       await action.run(
         () =>
@@ -332,7 +468,7 @@ function InvestigationDetail({
     }
   };
   return (
-    <>
+    <div className="id-desk id-case-detail">
       <button className="aw-text-button aw-back" onClick={onBack}>
         <ArrowLeft size={16} />
         All investigations
@@ -343,13 +479,51 @@ function InvestigationDetail({
       ) : (
         detail && (
           <>
-            <div className="aw-case-heading">
+            <div className="aw-case-heading id-case-heading">
               <div>
-                <span className="aw-eyebrow">INVESTIGATION</span>
+                <span className="aw-eyebrow">
+                  INVESTIGATION DESK{" "}
+                  <span className="id-heading-date">
+                    · Opened {stamp(detail.case.createdAtMs)}
+                  </span>
+                </span>
                 <h2>{detail.case.title}</h2>
-                <p>{detail.case.question}</p>
+                <p>
+                  <span className="id-question-label">THE QUESTION</span>
+                  {detail.case.question}
+                </p>
               </div>
-              <Status>{detail.evidence.length} sources</Status>
+              <button className="aw-primary" onClick={() => setTab("gather")}>
+                <Plus size={16} />
+                Gather evidence
+              </button>
+            </div>
+            <div className="id-case-facts">
+              <span>
+                <strong>
+                  {detail.evidence.length}
+                  {detail.truncated ? "+" : ""}
+                </strong>{" "}
+                linked sources
+              </span>
+              <span>
+                <strong>{detail.findings.length}</strong> findings
+              </span>
+              <span>
+                <strong>
+                  {
+                    detail.findings.filter(
+                      (finding) => finding.status === "reviewed",
+                    ).length
+                  }
+                </strong>{" "}
+                reviewed
+              </span>
+              <span className="id-facts-note">
+                {detail.case.canWrite === false
+                  ? "Read-only investigation"
+                  : "Original evidence stays intact"}
+              </span>
             </div>
             {detail.truncated && (
               <div className="aw-notice">
@@ -357,36 +531,73 @@ function InvestigationDetail({
                 show. Review a bounded selection before exporting.
               </div>
             )}
-            <div
-              className="aw-segmented aw-detail-tabs"
+            <nav
+              className="id-workflow aw-detail-tabs"
               aria-label="Investigation sections"
             >
               {[
-                ["evidence", "Evidence & notes"],
-                ["findings", "Findings & review"],
-                ["report", "Report editor"],
-                ["access", "Access"],
-              ].map(([value, label]) => (
+                ["gather", "Gather evidence", "01", "Find and link originals"],
+                [
+                  "evidence",
+                  "Evidence & notes",
+                  "02",
+                  `${detail.notes.length} analyst notes`,
+                ],
+                [
+                  "findings",
+                  "Findings & review",
+                  "03",
+                  `${detail.findings.filter((finding) => finding.status === "draft").length} draft findings`,
+                ],
+                ["report", "Report editor", "04", "Shape the reviewed brief"],
+                ["access", "Access", "", "Manage permissions"],
+              ].map(([value, label, number, description]) => (
                 <button
                   className={tab === value ? "is-active" : ""}
+                  aria-label={label}
+                  aria-pressed={tab === value}
                   key={value}
                   onClick={() => setTab(value)}
                 >
-                  {label}
+                  {number && <span className="id-step-number">{number}</span>}
+                  <span>
+                    <strong>{label}</strong>
+                    <small>{description}</small>
+                  </span>
                 </button>
               ))}
+            </nav>
+            <div hidden={tab !== "gather"}>
+              <EvidenceIntake
+                caseId={caseId}
+                revision={revision}
+                totalEvidence={detail.totalEvidence ?? detail.evidence.length}
+                linkedIds={detail.evidence.map((item) => item.id)}
+                canWrite={detail.case.canWrite === true}
+                onLinked={resource.reload}
+                onOpenEvidence={onOpenEvidence}
+              />
             </div>
             {tab === "evidence" && (
               <div className="aw-split aw-split-wide">
                 <Section
                   title="Linked statements"
                   description="Select statements to attach precise references to a note."
+                  action={
+                    <button
+                      className="aw-text-button"
+                      onClick={() => setTab("gather")}
+                    >
+                      <Plus size={14} />
+                      Add sources
+                    </button>
+                  }
                 >
                   <EvidenceList
                     evidence={detail.evidence}
                     onOpenEvidence={onOpenEvidence}
                     selected={selected}
-                    onSelect={toggle}
+                    onSelect={detail.case.canWrite ? toggle : undefined}
                   />
                 </Section>
                 <Section
@@ -401,6 +612,7 @@ function InvestigationDetail({
                           required
                           rows={4}
                           maxLength={8000}
+                          readOnly={!detail.case.canWrite}
                           value={note}
                           onChange={(event) => setNote(event.target.value)}
                           placeholder="Record what matters, including uncertainty or missing context."
@@ -412,7 +624,9 @@ function InvestigationDetail({
                         </span>
                         <button
                           className="aw-primary"
-                          disabled={action.busy || !note.trim()}
+                          disabled={
+                            action.busy || !note.trim() || !detail.case.canWrite
+                          }
                         >
                           <Plus size={14} />
                           Save note
@@ -445,10 +659,12 @@ function InvestigationDetail({
             )}
             {tab === "findings" && (
               <>
-                <AnalysisSuggestions
-                  caseId={caseId}
-                  onSaved={resource.reload}
-                />
+                {detail.case.canWrite && (
+                  <AnalysisSuggestions
+                    caseId={caseId}
+                    onSaved={resource.reload}
+                  />
+                )}
                 <Section
                   title="Record a finding"
                   description="Attach supporting and conflicting evidence. This creates a draft interpretation."
@@ -543,7 +759,11 @@ function InvestigationDetail({
                       </span>
                       <button
                         className="aw-primary"
-                        disabled={action.busy || !support.length}
+                        disabled={
+                          action.busy ||
+                          !support.length ||
+                          !detail.case.canWrite
+                        }
                       >
                         Save draft finding
                       </button>
@@ -578,18 +798,22 @@ function InvestigationDetail({
                 </Section>
               </>
             )}
-            {tab === "report" && (
+            <div hidden={tab !== "report"}>
               <ReportEditorView
                 caseId={caseId}
                 detail={detail}
+                revision={revision}
+                active={tab === "report"}
                 onOpenEvidence={onOpenEvidence}
               />
+            </div>
+            {tab === "access" && (
+              <CaseAccess caseId={caseId} revision={revision} />
             )}
-            {tab === "access" && <CaseAccess caseId={caseId} />}
           </>
         )
       )}
-    </>
+    </div>
   );
 }
 
@@ -677,6 +901,7 @@ function FindingReview({
   const [statement, setStatement] = useState(finding.statement);
   const action = useAction();
   const review = async (status: string) => {
+    if (!detail.case.canWrite) return;
     if (
       await action.run(
         () =>
@@ -756,7 +981,12 @@ function FindingReview({
           <div className="aw-button-row">
             <button
               className="aw-primary"
-              disabled={action.busy || !reason.trim() || !statement.trim()}
+              disabled={
+                action.busy ||
+                !reason.trim() ||
+                !statement.trim() ||
+                !detail.case.canWrite
+              }
               onClick={() => review("reviewed")}
             >
               <Check size={14} />
@@ -764,14 +994,14 @@ function FindingReview({
             </button>
             <button
               className="aw-secondary"
-              disabled={action.busy || !reason.trim()}
+              disabled={action.busy || !reason.trim() || !detail.case.canWrite}
               onClick={() => review("draft")}
             >
               Return to draft
             </button>
             <button
               className="aw-text-button"
-              disabled={action.busy || !reason.trim()}
+              disabled={action.busy || !reason.trim() || !detail.case.canWrite}
               onClick={() => review("rejected")}
             >
               Reject finding
@@ -806,13 +1036,18 @@ function ReportEditorView({
   caseId,
   detail,
   onOpenEvidence,
+  revision = 0,
+  active = true,
 }: {
   caseId: string;
   detail: Detail;
   onOpenEvidence: OpenEvidence;
+  revision?: number;
+  active?: boolean;
 }) {
   const resource = useResource<ReportEditor>(
     `/v1/investigations/${encodeURIComponent(caseId)}/report`,
+    revision,
   );
   const capabilities = useResource<{ enabled: string[] }>("/v1/capabilities");
   const [title, setTitle] = useState(detail.case.title);
@@ -820,23 +1055,50 @@ function ReportEditorView({
   const [reason, setReason] = useState("");
   const [redactions, setRedactions] = useState<string[]>([]);
   const [readyFor, setReadyFor] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [editorRevision, setEditorRevision] = useState<number | null>(null);
   const action = useAction();
   useEffect(() => {
-    if (resource.data) {
+    if (
+      resource.data &&
+      !dirty &&
+      (editorRevision === null || resource.data.revision >= editorRevision)
+    ) {
       setTitle(resource.data.title ?? detail.case.title);
       setSummary(resource.data.summary ?? "");
       setRedactions(
         (resource.data.redactions ?? []).map((item) => item.evidenceId),
       );
       setReadyFor(caseId);
+      setEditorRevision(resource.data.revision);
     }
-  }, [resource.data, detail.case.title, caseId]);
+  }, [resource.data, detail.case.title, caseId, dirty, editorRevision]);
+  const applySaved = (saved: ReportEditor) => {
+    setTitle(saved.title);
+    setSummary(saved.summary);
+    setRedactions(saved.redactions.map((item) => item.evidenceId));
+    setReason("");
+    setEditorRevision(saved.revision);
+    setReadyFor(caseId);
+    setDirty(false);
+  };
+  const discard = async () => {
+    await action.run(async () => {
+      const saved = await api<ReportEditor>(
+        `/v1/investigations/${encodeURIComponent(caseId)}/report`,
+      );
+      applySaved(saved);
+      resource.reload();
+    }, "Latest saved report loaded. Unsaved edits were discarded.");
+  };
   const save = async (event: FormEvent) => {
     event.preventDefault();
+    if (!detail.case.canWrite || editorRevision === null) return;
     if (
-      await action.run(
-        () =>
-          api(`/v1/investigations/${encodeURIComponent(caseId)}/report`, {
+      await action.run(async () => {
+        const saved = await api<ReportEditor>(
+          `/v1/investigations/${encodeURIComponent(caseId)}/report`,
+          {
             title,
             summary,
             redactions: redactions.map((evidenceId) => ({
@@ -846,12 +1108,12 @@ function ReportEditorView({
               reason,
             })),
             reason,
-            expectedRevision: resource.data?.revision,
-          }),
-        "Report revision saved. Retained originals stay available to authorised reviewers.",
-      )
+            expectedRevision: editorRevision,
+          },
+        );
+        applySaved(saved);
+      }, "Report revision saved. Retained originals stay available to authorised reviewers.")
     ) {
-      setReason("");
       resource.reload();
     }
   };
@@ -902,14 +1164,45 @@ function ReportEditorView({
       `Report exported as ${format === "html" ? "printable HTML" : format.toUpperCase()}.`,
     );
   };
+  if (!active) return null;
   return (
     <>
-      <Notice error={resource.error || action.error} receipt={action.receipt} />
+      <Notice
+        error={
+          resource.error ||
+          (action.error.includes("revision conflict")
+            ? "A newer report revision was saved. Your edits are kept. Discard changes and reload to review the latest saved brief."
+            : action.error)
+        }
+        receipt={action.receipt}
+      />
+      {dirty && (
+        <div className="id-draft-notice">
+          <div>
+            <strong>Unsaved changes</strong>
+            <p>
+              {resource.data &&
+              editorRevision !== null &&
+              resource.data.revision > editorRevision
+                ? "A newer saved revision is available. Your draft stays here until you save or discard it."
+                : "Your draft is kept while you inspect sources and refresh records."}
+            </p>
+          </div>
+          <button
+            className="aw-secondary"
+            type="button"
+            disabled={action.busy}
+            onClick={discard}
+          >
+            Discard changes and reload
+          </button>
+        </div>
+      )}
       <Section
         title="Shape the reviewed brief"
         description="Write your summary, protect sensitive quotations and keep the evidence trail."
       >
-        {resource.loading || !resource.data || readyFor !== caseId ? (
+        {readyFor !== caseId ? (
           <Loading />
         ) : (
           <form className="aw-form" onSubmit={save}>
@@ -917,22 +1210,32 @@ function ReportEditorView({
               Report title
               <input
                 required
+                disabled={action.busy}
+                readOnly={!detail.case.canWrite}
                 maxLength={200}
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  setDirty(true);
+                }}
               />
             </label>
             <label>
               Executive summary
               <textarea
+                disabled={action.busy}
+                readOnly={!detail.case.canWrite}
                 rows={5}
                 maxLength={16000}
                 value={summary}
-                onChange={(event) => setSummary(event.target.value)}
+                onChange={(event) => {
+                  setSummary(event.target.value);
+                  setDirty(true);
+                }}
                 placeholder="Describe conclusions, conflicting evidence and limitations."
               />
             </label>
-            <fieldset>
+            <fieldset disabled={action.busy}>
               <legend>Redact quotations and account labels</legend>
               <p className="aw-help">
                 Selected text and account labels are withheld in this report.
@@ -942,22 +1245,28 @@ function ReportEditorView({
                 evidence={detail.evidence}
                 onOpenEvidence={onOpenEvidence}
                 selected={redactions}
-                onSelect={(id) =>
+                onSelect={(id) => {
+                  setDirty(true);
                   setRedactions((old) =>
                     old.includes(id)
                       ? old.filter((value) => value !== id)
                       : [...old, id],
-                  )
-                }
+                  );
+                }}
               />
             </fieldset>
             <label>
               Revision reason
               <input
                 required
+                disabled={action.busy}
+                readOnly={!detail.case.canWrite}
                 maxLength={2000}
                 value={reason}
-                onChange={(event) => setReason(event.target.value)}
+                onChange={(event) => {
+                  setReason(event.target.value);
+                  setDirty(true);
+                }}
                 placeholder="Describe what changed"
               />
             </label>
@@ -967,7 +1276,12 @@ function ReportEditorView({
               </span>
               <button
                 className="aw-primary"
-                disabled={action.busy || !reason.trim()}
+                disabled={
+                  action.busy ||
+                  !reason.trim() ||
+                  !detail.case.canWrite ||
+                  editorRevision === null
+                }
               >
                 Save report revision
               </button>
@@ -1262,11 +1576,17 @@ function Comparison({ onOpenEvidence }: { onOpenEvidence: OpenEvidence }) {
   );
 }
 
-function CaseAccess({ caseId }: { caseId: string }) {
+function CaseAccess({
+  caseId,
+  revision,
+}: {
+  caseId: string;
+  revision: number;
+}) {
   const resource = useResource<{
     visibility: string;
     grants: { subject: string; permission: string }[];
-  }>(`/v1/workspace/cases/${encodeURIComponent(caseId)}/access`);
+  }>(`/v1/workspace/cases/${encodeURIComponent(caseId)}/access`, revision);
   const [subject, setSubject] = useState("");
   const [permission, setPermission] = useState("read");
   const [reason, setReason] = useState("");

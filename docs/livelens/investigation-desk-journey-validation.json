@@ -1,0 +1,67 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "mockedSuccessResponses": false,
+  "controlledLostResponses": {
+    "committedCreationPostDropped": 1,
+    "firstRecoveryGetDropped": 1,
+    "retryPostStatus": 409,
+    "sameSingleInvestigationRecovered": true
+  },
+  "createdWithEvidenceAtomicallyFromConversation": true,
+  "searchBeforePaginationAndExactKind": true,
+  "savedLabelSearchBeyondInitialPage": true,
+  "duplicateSavedLabelsShareOneOriginalSelection": true,
+  "selectionPersistsAcrossPagesAndFilters": true,
+  "sourceDetoursPreserveSelectionSearchAndUnsavedNote": true,
+  "dirtyReportSurvivesBookmarkDetourAndGlobalRefresh": true,
+  "concurrentReport409PreservesDraftUntilExplicitDiscard": true,
+  "reportRedactionPreservesOriginal": true,
+  "selectionBoundedTo50AndClearDoesNotWrite": true,
+  "actual200SourceReviewCapacityExplainedAndEnforced": true,
+  "readOnlyCaseCannotBeChosenInPicker": true,
+  "realPermissionFailurePreservesSelection": true,
+  "concurrentLinkDeduplication": {
+    "linked": 3,
+    "total": 5,
+    "existing": 1
+  },
+  "sourceLinkedNoteAndReviewedCounterevidence": true,
+  "originalReopenedAndReturnedToInvestigation": true,
+  "existingOlderCaseSearchFromConversation": true,
+  "actualDownloadedReport": true,
+  "serviceRestartRetainsReportEvidenceNotesAndFindings": true,
+  "desktopAnd390px": true,
+  "keyboardSelectionNavigationAndDialog": true,
+  "collapsedAndExpandedSourceProvenanceHasNoDocumentOverflow": true,
+  "uncaughtPageErrors": 0,
+  "duplicateKeyWarnings": 0,
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:51075/app/assets/index-BZbmVy_B.css",
+      "sha256": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+    },
+    {
+      "url": "http://127.0.0.1:51075/app/assets/index-Cuq1l9vc.js",
+      "sha256": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+    }
+  ],
+  "screenshots": "/tmp/livelens-investigation-desk-final-5",
+  "captures": [
+    "01-desktop-create-from-conversation.png",
+    "02-desktop-gather-across-pages.png",
+    "02a-desktop-gather-viewport.png",
+    "03-desktop-permission-selection-retained.png",
+    "04-desktop-reviewed-finding.png",
+    "05a-desktop-draft-conflict-preserved.png",
+    "05-desktop-reviewed-brief.png",
+    "05b-desktop-full-review-capacity.png",
+    "06-phone-gather.png",
+    "06a-phone-gather-viewport.png",
+    "06b-phone-original-provenance.png",
+    "07-phone-reviewed-finding.png",
+    "08-phone-reviewed-brief.png",
+    "09-phone-existing-investigation-picker.png",
+    "10-phone-restarted-brief.png"
+  ]
+}

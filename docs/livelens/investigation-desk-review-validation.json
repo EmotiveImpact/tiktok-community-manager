@@ -1,0 +1,31 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "desktop1440AndPhone390": true,
+  "sourceSelectionAndCounterevidence": true,
+  "sourceResetAfterFindingRevisionRefresh": true,
+  "actualPreviewPlaybackAndSeek": true,
+  "exactOriginalContextNavigation": true,
+  "correctInvestigationDeepLinkAndReload": true,
+  "investigationLibrarySelectionBackAndReload": true,
+  "signalAcknowledgementPersisted": true,
+  "acknowledgementReceiptBoundToSelectedItem": true,
+  "boundedScheduleWithoutHiddenCapture": true,
+  "collectionDisclosureQuietWhenIdleAndOpensForActualSchedule": true,
+  "phoneSelectionBackAndKeyboardFocus": true,
+  "readOnlyScopeFilteredResources": true,
+  "actualReadOnlyWriteDenied": true,
+  "serviceRestartReopen": true,
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-desk-publish-review",
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:48445/app/assets/index-BZbmVy_B.css",
+      "sha256": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b"
+    },
+    {
+      "url": "http://127.0.0.1:48445/app/assets/index-Cuq1l9vc.js",
+      "sha256": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+    }
+  ]
+}

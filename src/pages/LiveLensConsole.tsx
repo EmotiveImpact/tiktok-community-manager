@@ -58,6 +58,7 @@ import InvitationAcceptance from "../components/livelens/InvitationAcceptance";
 import RecordingLibrary from "../components/livelens/RecordingLibrary";
 import SavedMoments from "../components/livelens/SavedMoments";
 import RecordingTransport from "../components/livelens/RecordingTransport";
+import EvidenceCaseLink from "../components/livelens/EvidenceCaseLink";
 import { buildRecordingTimelines } from "../components/livelens/recording-transport-model";
 import "./livelens.css";
 import "./livelens-shell.css";
@@ -244,6 +245,9 @@ function OperatorConsole() {
     [revision, setRevision] = useState(0);
   const [investigationId, setInvestigationId] = useState<string | null>(
     new URLSearchParams(location.search).get("case"),
+  );
+  const [returnInvestigationId, setReturnInvestigationId] = useState<string | null>(
+    new URLSearchParams(location.search).get("returnCase"),
   );
   const [query, setQuery] = useState(""),
     [account, setAccount] = useState(""),
@@ -434,6 +438,7 @@ function OperatorConsole() {
     enabled: string[];
     planned: string[];
     scopes: string[];
+    permissions?: { createCases: boolean };
     workers?: { mediaArchive?: MediaArchiveConfiguration };
   }>(identity ? "/v1/capabilities" : null, revision);
   useEffect(() => {
@@ -446,6 +451,7 @@ function OperatorConsole() {
     return () => clearInterval(timer);
   }, [identity, view, jobs.data]);
   function go(next: View) {
+    setReturnInvestigationId(null);
     setView(next);
     setToolsOpen(!primaryDestinations.includes(next) && matchMedia("(max-width: 760px)").matches);
     setChoosingBookmark(false);
@@ -460,6 +466,7 @@ function OperatorConsole() {
     requestAnimationFrame(() => main.current?.focus());
   }
   function openSession(id: string) {
+    setReturnInvestigationId(null);
     setSessionId(id);
     setEvidenceId(null);
     setCursor(0);
@@ -503,7 +510,7 @@ function OperatorConsole() {
     history.replaceState(
       null,
       "",
-      `?view=sessions&session=${e.sessionId}&evidence=${e.id}`,
+      `?view=sessions&session=${encodeURIComponent(e.sessionId)}&evidence=${encodeURIComponent(e.id)}${returnInvestigationId ? `&returnCase=${encodeURIComponent(returnInvestigationId)}` : ""}`,
     );
     requestAnimationFrame(() => {
       if (matchMedia("(max-width: 760px)").matches)
@@ -534,6 +541,8 @@ function OperatorConsole() {
     });
   }
   function openEvidenceById(session: string, evidence: string) {
+    const originCase = view === "investigations" ? investigationId : view === "sessions" ? returnInvestigationId : null;
+    setReturnInvestigationId(originCase);
     setSeekRevision((value) => value + 1);
     setSessionId(session);
     setEvidenceId(evidence);
@@ -547,7 +556,7 @@ function OperatorConsole() {
     history.replaceState(
       null,
       "",
-      `?view=sessions&session=${encodeURIComponent(session)}&evidence=${encodeURIComponent(evidence)}`,
+      `?view=sessions&session=${encodeURIComponent(session)}&evidence=${encodeURIComponent(evidence)}${originCase ? `&returnCase=${encodeURIComponent(originCase)}` : ""}`,
     );
     requestAnimationFrame(() => {
       if (matchMedia("(max-width: 760px)").matches)
@@ -942,7 +951,7 @@ function OperatorConsole() {
           </button>
         </header>
         <main id="ll-main" tabIndex={-1} ref={main}>
-          <div className="ll-heading">
+          <div className={`ll-heading ${view === "investigations" && investigationId ? "ll-case-toolbar" : ""}`}>
             <div>
               {sessionId && <button className="ll-back" onClick={() => go("sessions")}><ArrowLeft size={15} />Session library</button>}
               {view !== "overview" && !sessionId && <p className="ll-eyebrow">
@@ -984,6 +993,7 @@ function OperatorConsole() {
             </button>
             </div>
           </div>
+          {view === "sessions" && returnInvestigationId && <button className="ll-return-investigation" onClick={() => openInvestigation(returnInvestigationId)}><ArrowLeft size={15} />Return to investigation</button>}
           {notice && (
             <p
               role={noticeIsError ? "alert" : "status"}
@@ -1421,44 +1431,15 @@ function OperatorConsole() {
                             <dt>Evidence ID</dt>
                             <dd className="ll-id">{context.data.event.id}</dd>
                           </dl>
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              const id = new FormData(e.currentTarget).get(
-                                "case",
-                              );
-                              if (id)
-                                mutate(
-                                  () =>
-                                    api(`/v1/cases/${id}/evidence`, {
-                                      evidenceIds: [evidenceId],
-                                    }),
-                                  "Original evidence linked to case.",
-                                );
-                            }}
-                          >
-                            <label>
-                              Link to investigation
-                              <select name="case" required>
-                                <option value="">Choose a case</option>
-                                {cases.data?.cases.map((c) => (
-                                  <option value={c.id} key={c.id}>
-                                    {c.title}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <button
-                              className="ll-primary"
-                              disabled={busy || !cases.data?.cases.length}
-                            >
-                              <FolderOpen size={16} />
-                              Link evidence
-                            </button>
-                          </form>
-                          <button onClick={() => go("cases")}>
-                            Create an investigation
-                          </button>
+                          {capabilities.data?.scopes.includes("cases:write") && (
+                            <EvidenceCaseLink
+                              key={context.data.event.id}
+                              evidence={context.data.event}
+                              canCreate={capabilities.data?.permissions?.createCases ?? false}
+                              onOpenCase={openInvestigation}
+                              onSaved={() => setRevision(value => value + 1)}
+                            />
+                          )}
                           {capabilities.data?.scopes.includes(
                             "investigations:write",
                           ) && (
@@ -1845,21 +1826,23 @@ function OperatorConsole() {
               </div>
             </>
           )}
-          {[
+          {([
             "missions",
             "investigations",
             "graph",
             "alerts",
             "workspace",
             "agent",
-          ].includes(view) && (
+          ].includes(view) || (view === "sessions" && returnInvestigationId)) && (
+            <div hidden={view === "sessions"}>
             <AdvancedWorkspace
               revision={revision}
-              view={view}
+              view={view === "sessions" ? "investigations" : view}
               onOpenEvidence={openEvidenceById}
-              initialCaseId={investigationId}
+              initialCaseId={investigationId ?? returnInvestigationId}
               onSelectCase={selectInvestigation}
             />
+            </div>
           )}
         </main>
         <footer className="ll-footer">
