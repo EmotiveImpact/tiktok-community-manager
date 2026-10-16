@@ -179,8 +179,10 @@ Attention errors use fixed safe codes; raw exceptions and paths are not exposed.
 Capacity meters include `used`, `reserved`, `committed`, `limit`, `remaining` and
 `overLimit`. Usage is logical retained media/speech/archive accounting; pending
 physical cleanup remains a storage reservation. Recorder admission separately
-reserves a conservative per-job allocation, exposed in the recording worker's
-`recordingBudget`; both constraints must admit a new capture. Failed usage reads
+reserves a conservative per-job allocation and known unfinished local cleanup,
+exposed in the recording worker's `recordingBudget`. Its `reservedBytes` includes
+both, with `pendingCleanupBytes` identifying the latter. Both constraints must
+admit a new capture. Physical disk guards remain independent. Failed usage reads
 return `capacity.available=false`, never invented zero usage.
 
 Retention applies record deletion and durable per-job cleanup tasks in one

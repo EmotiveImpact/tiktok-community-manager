@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "fixture": true,
-  "startedAt": "2026-10-16T13:27:54.569Z",
+  "startedAt": "2026-10-16T13:50:39.751Z",
   "status": "passed",
   "workload": {
     "storage": "SQLite file with WAL and synchronous FULL",
@@ -52,11 +52,11 @@
     "services/intelligence/src/governance.mjs": "f75c5c95ecf0eee260d7376edcb9ad8f4d153b9c210697444c30cb8f82e5a615",
     "services/intelligence/src/investigations.mjs": "d4573d519cd385c88d28947177abacda362701c7515cfb13acbba74d6c5413ad",
     "services/intelligence/src/media-archive.mjs": "5a79a579934759f16f1d37f24d9873ac849ea77dfc517f0953e305b6af7c453d",
-    "services/intelligence/src/operations.mjs": "576528108179a4eedfe6c8e9ef5f01f5b41f251e1232dd71fa61c50a6e7d3d30",
+    "services/intelligence/src/operations.mjs": "fb325eeace2e47d614e363fbbc20af94b93aab4c0d7abe2ef47165ce0df1f88a",
     "services/intelligence/src/pdf.mjs": "5cb1502f6ce3fab6f1f857b84ff45253f34f683fb47768bf0632aa525c69bbc9",
     "services/intelligence/src/postgres-db.mjs": "091250f51ee332868cee0601466452f574e467cb95c7885447118d7569f9764d",
     "services/intelligence/src/recorder-exec.py": "f15d402fbd215cb2f57791b6c8bbb26236548d4546c1ec853c4bf5b43c7c2ded",
-    "services/intelligence/src/recorder.mjs": "289bc7f5fc801b952c0149c9c3fdcb8f435ad66871021e8cf56a9ca7f81be30a",
+    "services/intelligence/src/recorder.mjs": "2c4f9bf5c277f25c696b61d12eb11a4b0e94e21563915a85f7c75bdb1fbcd13a",
     "services/intelligence/src/scheduler.mjs": "c308efe9d04c8d9d0547e3bb172ac7a597127d091ec3eb2b0e44845c3c30b13d",
     "services/intelligence/src/server.mjs": "7f8af6bd832dc4e0640cda77e7d1997ac509aa8d1ed47ace96789d44acfa6831",
     "services/intelligence/src/source-adapters.mjs": "42194f817598df74e553d9fdda6e6d416828aef075fb03d0565cd5ad483ab402",
@@ -92,66 +92,66 @@
     "restricted_case_reader_refused"
   ],
   "load": {
-    "elapsedMs": 11901.213,
+    "elapsedMs": 11907.812,
     "completedRequests": 600,
     "peakInFlightRequests": 6,
     "errors": 0,
     "errorCodes": {},
     "successfulAppendedEvents": 240,
-    "requestsPerSecond": 50.415,
+    "requestsPerSecond": 50.387,
     "latencyMs": {
       "count": 600,
-      "p50": 11.871,
-      "p95": 30.956,
-      "p99": 58.39,
-      "max": 65.334
+      "p50": 13.744,
+      "p95": 36.596,
+      "p99": 63.863,
+      "max": 96.956
     },
     "byOperationLatencyMs": {
       "search": {
         "count": 120,
-        "p50": 13.776,
-        "p95": 32.762,
-        "p99": 58.39,
-        "max": 64.402
+        "p50": 16.93,
+        "p95": 41.07,
+        "p99": 64.027,
+        "max": 84.144
       },
       "append": {
         "count": 120,
-        "p50": 10.272,
-        "p95": 30.179,
-        "p99": 64.371,
-        "max": 65.018
+        "p50": 11.87,
+        "p95": 36.916,
+        "p99": 58.915,
+        "max": 67.162
       },
       "sessions": {
         "count": 120,
-        "p50": 10.104,
-        "p95": 27.745,
-        "p99": 40.069,
-        "max": 64.556
+        "p50": 10.449,
+        "p95": 35.674,
+        "p99": 63.849,
+        "max": 96.956
       },
       "investigation": {
         "count": 120,
-        "p50": 11.316,
-        "p95": 31.06,
-        "p99": 64.811,
-        "max": 65.334
+        "p50": 14.299,
+        "p95": 36.393,
+        "p99": 58.912,
+        "max": 90.78
       },
       "recordings": {
         "count": 120,
-        "p50": 11.854,
-        "p95": 29.971,
-        "p99": 41.379,
-        "max": 42.644
+        "p50": 11.631,
+        "p95": 28.042,
+        "p99": 63.863,
+        "max": 87.269
       }
     },
     "server": {
-      "measuredMs": 11904.116,
+      "measuredMs": 11910.599,
       "sampleIntervalMs": 100,
-      "samples": 118,
+      "samples": 117,
       "serviceProcess": {
-        "peakRssBytes": 73871360,
-        "peakHeapUsedBytes": 16011064,
-        "cpuUserMs": 1234.696,
-        "cpuSystemMs": 252.195,
+        "peakRssBytes": 74260480,
+        "peakHeapUsedBytes": 15503272,
+        "cpuUserMs": 1352.844,
+        "cpuSystemMs": 278.135,
         "excludes": [
           "load-generator process",
           "FFmpeg child processes"
@@ -159,18 +159,18 @@
       },
       "eventLoopDelayMs": {
         "resolutionMs": 20,
-        "p50": 20.169,
-        "p95": 29.557,
-        "p99": 40.337,
-        "max": 84.017
+        "p50": 20.152,
+        "p95": 31.834,
+        "p99": 52.167,
+        "max": 91.161
       },
       "peakActiveCaptures": 2,
       "peakPendingJobs": 2,
-      "concurrentCaptureMs": 11903.3,
+      "concurrentCaptureMs": 11909.832,
       "disk": {
         "sampledEveryMs": 1000,
-        "peakRetainedBytes": 7753406,
-        "finalDatabaseBytes": 2940928,
+        "peakRetainedBytes": 7741118,
+        "finalDatabaseBytes": 2928640,
         "finalWalBytes": 4379592,
         "finalMediaBytes": 400118
       }
@@ -186,18 +186,18 @@
     "restricted_case_reader_refused"
   ],
   "recovery": {
-    "recoveryPointAt": "2026-10-16T13:28:12.795Z",
+    "recoveryPointAt": "2026-10-16T13:50:57.991Z",
     "boundary": "all acknowledged fixture writes and terminal recordings; writers and recorder stopped before snapshot",
     "unacknowledgedOrInFlightLoss": "not exercised; this is a quiesced backup restore, not crash RPO",
-    "backupMs": 164.447,
-    "restoreMs": 113.159,
-    "reopenAndVerifyMs": 2054.23,
-    "totalRestoreAndVerificationMs": 2167.389,
+    "backupMs": 122.155,
+    "restoreMs": 94.625,
+    "reopenAndVerifyMs": 2236.54,
+    "totalRestoreAndVerificationMs": 2331.164,
     "backup": {
       "schemaVersion": 1,
       "encryption": "AES-256-GCM",
       "bytes": 3676198,
-      "sha256": "a97d03469bdcd810ea813f152bda5a0bade929653b260745a60a6f510954a448",
+      "sha256": "5cc5fd966916b890a4f918d4e45248ffcc2319dafbdc8ce367410288d066bb68",
       "mediaVerified": 16,
       "restoreRequiredToProveRecovery": true
     },
@@ -206,7 +206,7 @@
       "restored": true,
       "mediaVerified": 16,
       "databaseIntegrity": "ok",
-      "encryptedBackupSha256": "a97d03469bdcd810ea813f152bda5a0bade929653b260745a60a6f510954a448"
+      "encryptedBackupSha256": "5cc5fd966916b890a4f918d4e45248ffcc2319dafbdc8ce367410288d066bb68"
     },
     "originalDatabaseRetainedDuringCheck": false,
     "originalDatabaseMediaAndGeneratedInputsRemovedBeforeRestore": true,
@@ -225,16 +225,16 @@
       "jobs"
     ],
     "preservedCategorySha256": {
-      "events": "3d1204e00b901c005e5910c9b35cbee83283749364f5aa99e0c8cd69b70ff0d0",
-      "detail": "c25e98fa4043c9a94e89ee1b226eeca2e1594b4738bd129bef62ae6a006ad86f",
-      "reportContent": "bc9aad1072ec6ccde09dbc16114bd5e7b86f1dfaa9f3033b6d971de03c33dd0d",
-      "editor": "18dad338f2a5ab6fc1928ffc12ed817bb06f9aa54d8a2c300705f4c9c53b155c",
-      "bookmarks": "97caa6b9e35bdab9004177617c12f2c100f9330157dfcfedf7c9bbed22186f3c",
-      "access": "361be6c39c3508b839a5e318aff0b816aafc26d4acf8c55f4047736df41c25f1",
-      "audit": "88cbfe03b8182c53e8e3ae0425d0f64a2c63e5b457b7652eb38fbee3f175607c",
-      "auditIntegrity": "6a82efaacc848ba2f427b666991a419092c59e18810f93cfd80be61608952cfa",
-      "sessionIntegrity": "2ba1d9ad563e7dfa65371d65f23390be02e53ce7de5dd72ef6cf80f4b01ecac3",
-      "jobs": "2e62c3148932143525272fe19de77e3ce72668b5168836180f50de931c73aa35"
+      "events": "f0de43a3bf5cf7ee41821b406ebc69a9df9a682c720a7e7ae454cc4e068b2f83",
+      "detail": "d3c5a9650505d072a875ef303bb47ab5e669b7b6f548a4efce66861350ddc6ba",
+      "reportContent": "ed774ac437b98bdfc1a1cbffd55520fb1e0061a1a4debf4c45e33fda29a26278",
+      "editor": "10d4a48e025c1ac76faacc0b23007c7bd0e0beccf9c6909ec4d9ed2a7ffb5a95",
+      "bookmarks": "81473bdacdf4fe1be9a37d17ea1aaee61529dc5c8a346088af09c0531a68672a",
+      "access": "8c57c8a9b651f8cbb0a5d86b69e9d7cb32f1e84fc2bc9be0f5c879dcb9895cea",
+      "audit": "5e177fd292cdecc1b6c6cd17be958166d4475097463065c4ad974f9862b62491",
+      "auditIntegrity": "410724a6dbfb309ca180c111bedf6be9954311600491cf9762296b2034ddc178",
+      "sessionIntegrity": "1d4666769d2cfb2f0605afb60352d398e9443218f1277e0601d6f75ed854cfeb",
+      "jobs": "fed1f944e5be347a568b963cf1b8b1a9064fe72fa301b16266e1211172204bf2"
     },
     "originalEvents": 2240,
     "acknowledgedWorkloadEvents": 240,
@@ -429,5 +429,5 @@
     "credentials": "ephemeral process memory only; omitted from receipt",
     "backupKey": "ephemeral process memory only; omitted from receipt"
   },
-  "finishedAt": "2026-10-16T13:28:15.242Z"
+  "finishedAt": "2026-10-16T13:51:00.502Z"
 }

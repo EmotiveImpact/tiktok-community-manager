@@ -20,12 +20,12 @@ run against unchanged source hashes:
 |---|---|
 | Mixed requests / unexpected failures | 600 / 0 |
 | Measured peak requests in flight | 6 |
-| Request latency p50 / p95 / p99 | 11.871 / 30.956 / 58.390 ms |
-| Actual concurrent captures | 2, overlapping for 11.903 sampled seconds |
+| Request latency p50 / p95 / p99 | 13.744 / 36.596 / 63.863 ms |
+| Actual concurrent captures | 2, overlapping for 11.910 sampled seconds |
 | Preserved original events | 2,240, including 240 acknowledged workload writes |
 | Recovered media | 16 segments, 630,730 bytes; all hashes matched and both tracks decoded |
 | Decoded media across both sources | 32 seconds and 320 video frames |
-| Backup / restore / reopen and verify | 164.447 / 113.159 / 2,054.230 ms |
+| Backup / restore / reopen and verify | 122.155 / 94.625 / 2,236.540 ms |
 | Access/isolation assertions | 7 before recovery and the same 7 after recovery |
 
 The original fixture database, media and generated inputs were removed before

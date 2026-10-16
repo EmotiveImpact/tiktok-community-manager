@@ -61,8 +61,9 @@ function workerSnapshot({ db, governance, workspace, definition, worker, allowed
     // from governance's actual retained/archive/cleanup footprint. Do not add
     // the two reservations together and present them as the same quota.
     const retainedBytes = db.prepare('SELECT coalesce(sum(bytes),0) AS n FROM media_segments WHERE workspace=?').get(workspace).n;
-    const reservedBytes = db.prepare("SELECT coalesce(sum(b.reserved_bytes),0) AS n FROM recording_budgets b JOIN recording_jobs j ON j.workspace=b.workspace AND j.id=b.job_id WHERE b.workspace=? AND j.state NOT IN ('completed','stopped','failed')").get(workspace).n;
-    recordingBudget = { retainedBytes, reservedBytes, limitBytes: worker.maxWorkspaceBytes, availableBytes: Math.max(0, worker.maxWorkspaceBytes - retainedBytes - reservedBytes), requiredForNextRecordingBytes: worker.maxJobBytes,
+    const pendingCleanupBytes = db.prepare("SELECT coalesce(sum(bytes),0) AS n FROM retention_cleanup WHERE workspace=? AND state!='completed'").get(workspace).n;
+    const reservedBytes = pendingCleanupBytes + db.prepare("SELECT coalesce(sum(b.reserved_bytes),0) AS n FROM recording_budgets b JOIN recording_jobs j ON j.workspace=b.workspace AND j.id=b.job_id WHERE b.workspace=? AND j.state NOT IN ('completed','stopped','failed')").get(workspace).n;
+    recordingBudget = { retainedBytes, reservedBytes, pendingCleanupBytes, limitBytes: worker.maxWorkspaceBytes, availableBytes: Math.max(0, worker.maxWorkspaceBytes - retainedBytes - reservedBytes), requiredForNextRecordingBytes: worker.maxJobBytes,
       maxConcurrent: worker.maxConcurrent, maxWorkspaceConcurrent: worker.maxWorkspaceConcurrent, maxWorkspacePending: worker.maxWorkspacePending };
   }
   return { worker: { id, access: 'allowed', configured: !!worker, state, error: worker?.workerError ? definition.error : null, counts, oldestPendingAtMs, ...(recordingBudget ? { recordingBudget } : {}) }, attention };

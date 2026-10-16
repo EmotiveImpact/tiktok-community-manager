@@ -321,7 +321,10 @@ export class Recorder {
           "SELECT coalesce(sum(bytes),0) AS n FROM media_segments WHERE workspace=?",
         )
         .get(workspace).n;
-      const reserved = this.db
+      const pendingCleanup = this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='retention_cleanup'").get()
+        ? this.db.prepare("SELECT coalesce(sum(bytes),0) AS n FROM retention_cleanup WHERE workspace=? AND state!='completed'").get(workspace).n
+        : 0;
+      const reserved = pendingCleanup + this.db
         .prepare(
           "SELECT coalesce(sum(b.reserved_bytes),0) AS n FROM recording_budgets b JOIN recording_jobs j ON j.workspace=b.workspace AND j.id=b.job_id WHERE b.workspace=? AND j.state NOT IN ('completed','stopped','failed')",
         )

@@ -275,6 +275,7 @@ def main():
                 assert workers["recording"]["counts"]["pending"] == 1 and workers["recording"]["counts"]["failed"] == 1
                 budget = workers["recording"]["recordingBudget"]
                 assert budget["retainedBytes"] == media_receipt["retainedBytes"] and budget["reservedBytes"] == 1024 * 1024
+                assert budget["pendingCleanupBytes"] == 0
                 assert budget["availableBytes"] == budget["limitBytes"] - budget["retainedBytes"] - budget["reservedBytes"]
                 assert budget["requiredForNextRecordingBytes"] == 1024 * 1024
                 assert workers["scheduling"]["state"] == "idle"
@@ -390,9 +391,14 @@ def main():
                 storage = next(meter for meter in pending["capacity"]["meters"] if meter["id"] == "storageBytes")
                 assert storage["used"] == 0 and storage["reserved"] == media_receipt["retainedBytes"]
                 assert pending["cleanup"]["failedCount"] == 1
+                pending_budget = next(worker for worker in pending["workers"] if worker["id"] == "recording")["recordingBudget"]
+                assert pending_budget["retainedBytes"] == 0
+                assert pending_budget["pendingCleanupBytes"] == media_receipt["retainedBytes"]
+                assert pending_budget["reservedBytes"] == budget["reservedBytes"] + media_receipt["retainedBytes"]
+                assert pending_budget["availableBytes"] == budget["availableBytes"], "Failed removal must not create apparent recorder capacity"
                 expect(page.get_by_text("1 cleanup task remains. Storage stays reserved until removal completes.", exact=True)).to_be_visible()
                 capture(page, "04-desktop-pending-cleanup.png", layouts)
-                checks.append("Real filesystem cleanup refusal remains failed, visible and quota-reserved after database deletion")
+                checks.append("Real filesystem cleanup refusal stays visible and reserved in both workspace and recorder budgets; deletion cannot create apparent recording capacity")
 
                 page.set_viewport_size({"width": 390, "height": 844})
                 capture(page, "05-phone-pending-cleanup.png", layouts)
@@ -406,6 +412,9 @@ def main():
                 durable = request(page, "/v1/workspace/retention/cleanup")["tasks"]
                 assert durable == [cleanup], "The same failed task and exact attempts must survive restart"
                 assert media_directory.stat().st_ino == identity_before
+                restarted_operations = request(page, "/v1/workspace/operations")
+                restarted_budget = next(worker for worker in restarted_operations["workers"] if worker["id"] == "recording")["recordingBudget"]
+                assert restarted_budget == pending_budget, "The recorder's cleanup reservation must survive the same restart as its durable task"
                 open_operations(page, keyboard=True)
                 page.get_by_role("button", name="Review cleanup", exact=True).click()
                 page.get_by_role("button", name="Review cleanup for retained-job", exact=True).click()
@@ -434,9 +443,16 @@ def main():
                 expect(page.get_by_text("Media cleanup completed. Its storage reservation has been released.", exact=True)).to_be_visible()
                 expect(page.get_by_text("1 session removed from the workspace.", exact=True)).to_have_count(0)
                 assert request(page, "/v1/workspace/usage")["pendingCleanupBytes"] == 0
+                released_operations = request(page, "/v1/workspace/operations")
+                released_storage = next(meter for meter in released_operations["capacity"]["meters"] if meter["id"] == "storageBytes")
+                assert released_storage["used"] == 0 and released_storage["reserved"] == 0
+                released_budget = next(worker for worker in released_operations["workers"] if worker["id"] == "recording")["recordingBudget"]
+                assert released_budget["retainedBytes"] == 0 and released_budget["pendingCleanupBytes"] == 0
+                assert released_budget["reservedBytes"] == budget["reservedBytes"]
+                assert released_budget["availableBytes"] == pending_budget["availableBytes"] + media_receipt["retainedBytes"]
                 expect(page.get_by_role("button", name="Review cleanup for retained-job", exact=True)).to_have_count(0)
                 capture(page, "07-phone-cleanup-complete.png", layouts)
-                checks.append("Failed cleanup survives restart; another actual failure preserves reason/reservation; corrected original path completes same task and releases bytes")
+                checks.append("Failed cleanup survives restart; another actual failure preserves reason/reservation; corrected original path completes same task and releases bytes in both workspace and recorder budgets")
 
                 audit = request(page, "/v1/workspace/audit?limit=100")["entries"]
                 assert any(entry["action"] == "retention.session.deleted" for entry in audit)
@@ -491,6 +507,7 @@ def main():
                 receipt = {"fixture": True, "passed": True, "externalProvidersContacted": False, "screenshots": list(layouts),
                            "rendererAssets": final_assets, "checks": checks, "media": media_receipt,
                            "cleanup": {"initial": cleanup, "afterRestartFailure": retry_failure, "completed": completed},
+                           "recordingAllocation": {"beforeRetention": budget, "cleanupFailed": pending_budget, "afterRestart": restarted_budget, "cleanupCompleted": released_budget},
                            "pageErrors": page_errors, "consoleWarnings": console_warnings,
                            "filesystemFailure": "Actual non-root directory permission denial; original directory inode preserved across restart",
                            "sourceSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}

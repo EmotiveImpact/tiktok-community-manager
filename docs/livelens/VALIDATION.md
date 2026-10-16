@@ -25,13 +25,13 @@ observations, reservation-aware capacity and durable retention cleanup.
   unconfigured workers; original-conversation navigation; fresh browser entry
   with a deliberately corrupt archive manifest and unavailable capacity.
 - [Pilot drill](pilot-drill-validation.json): 600 mixed requests, zero unexpected
-  errors, six actually in flight; p50/p95/p99 **11.871/30.956/58.390 ms** during
-  this paced 12-second fixture. Two actual synthetic captures overlap for 11.903
+  errors, six actually in flight; p50/p95/p99 **13.744/36.596/63.863 ms** during
+  this paced 12-second fixture. Two actual synthetic captures overlap for 11.910
   seconds. After removing its own original data, a fresh restored API reopens
   **2,240 exact originals**, notes, bookmarks, findings/reviews, report/redactions,
   grants and audit. All **16 segments / 630,730 bytes** match original hashes and
   actually decode to 32 seconds / 320 frames. Restore plus reopen/verification
-  takes 2,167.389 ms. Seven access/isolation checks pass before and after recovery.
+  takes 2,331.164 ms. Seven access/isolation checks pass before and after recovery.
 - [Visual inspection](operations-layout-validation.json): 12 actual desktop/phone
   captures, no horizontal page overflow or blank footer tails. Aperture styling
   and visible keyboard focus remain. [Design QA](../../design-qa.md) records scope.
@@ -67,6 +67,17 @@ hosted Chromium 151/revision 1234, with all original assertions and unchanged
 production assets. [Follow-up evidence and diagnosis limits](operations-browser-followup-validation.json)
 preserve the failed runs. The gallery contains the pinned-browser Operations
 recapture; latest hosted confirmation is recorded on PR #5.
+
+Final allocation review found that deleting segment metadata during failed cleanup
+released apparent space in the separate recorder budget, even though governance
+still reserved it. Recorder admission and Operations now include unfinished cleanup
+in that budget too. SQLite and PostgreSQL checks refuse a distinct new job until
+actual removal, permit another workspace independently, and admit recording after
+cleanup. The final Operations browser run proves that available recording space
+stays unchanged through failure/restart and increases by exactly the removed bytes
+on completion. All 165 service tests and the full recovery drill were rerun on these
+source hashes. Both earlier browser-harness follow-up CI runs passed; final-head
+hosted results are recorded separately on PR #5.
 
 ## Aperture Investigation Desk — 16 October 2026
 

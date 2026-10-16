@@ -25,13 +25,13 @@ const members = [
 const owner = { workspace: 'alpha', subject: 'owner' };
 const session = id => ({ id, platform: 'fixture', title: 'Private fixture title', sourceUrl: 'https://example.invalid/private-source', startedAtMs: 0 });
 
-function fixture(t, backend) {
+function fixture(t, backend, recorderOptions = {}) {
   const root = mkdtempSync(join(tmpdir(), 'livelens-operations-'));
   const schema = backend === 'PostgreSQL' ? 'll_ops_' + randomUUID().replaceAll('-', '') : undefined;
   const open = () => new EvidenceStore(join(root, 'intelligence.sqlite'), { ...(schema ? { database: new PostgresDatabase({ connectionString: process.env.LIVELENS_TEST_POSTGRES_URL, schema }) } : {}), now: () => at });
   const store = open(), source = join(root, 'source'); writeFileSync(source, 'synthetic source');
   for (const workspace of ['alpha', 'beta']) store.createSession(workspace, session('room'));
-  const recorder = new Recorder({ store, mediaRoot: join(root, 'media'), ffmpeg: '/usr/bin/ffmpeg', sources: ['alpha', 'beta'].map(workspace => ({ workspace, id: 'source', sessionId: 'room', kind: 'file', input: source })) });
+  const recorder = new Recorder({ store, mediaRoot: join(root, 'media'), ffmpeg: '/usr/bin/ffmpeg', sources: ['alpha', 'beta'].map(workspace => ({ workspace, id: 'source', sessionId: 'room', kind: 'file', input: source })), ...recorderOptions });
   const governance = new Governance({ store, recorder, members, now: () => at });
   recorder.admission = (workspace, additions) => governance.checkQuota(workspace, additions);
   const setup = { root, store, recorder, governance, open, schema };
@@ -125,7 +125,7 @@ for (const backend of ['SQLite', 'PostgreSQL']) {
     const { call } = await api(t, setup), response = (await call('/v1/workspace/operations')).body;
     assert.deepEqual(response.workers[0].counts, { pending: 2, active: 0, retrying: 1, failed: 1, completed: 230, stopped: 0 });
     assert.equal(response.workers[0].oldestPendingAtMs, at - 10000);
-    assert.deepEqual(response.workers[0].recordingBudget, { retainedBytes: 0, reservedBytes: 1024, limitBytes: setup.recorder.maxWorkspaceBytes, availableBytes: setup.recorder.maxWorkspaceBytes - 1024,
+    assert.deepEqual(response.workers[0].recordingBudget, { retainedBytes: 0, reservedBytes: 1024, pendingCleanupBytes: 0, limitBytes: setup.recorder.maxWorkspaceBytes, availableBytes: setup.recorder.maxWorkspaceBytes - 1024,
       requiredForNextRecordingBytes: setup.recorder.maxJobBytes, maxConcurrent: 2, maxWorkspaceConcurrent: 2, maxWorkspacePending: 20 });
     // These conservative recording allocations are separate from governance's
     // logical storage reservation and must never be silently double counted.
@@ -273,19 +273,31 @@ for (const backend of ['SQLite', 'PostgreSQL']) {
   });
 
   test(backend + ': recorder refuses pending cleanup identity reuse until exact cleanup completes', options, async t => {
-    const setup = fixture(t, backend), { directory, bytes } = retained(setup);
+    const setup = fixture(t, backend, { maxWorkspaceBytes: 1024, maxJobBytes: 1024 }), { directory, bytes } = retained(setup);
     chmodSync(directory, 0o500);
     const { call } = await api(t, setup), task = (await retainAndDelete(call)).body.cleanupTasks[0];
+    setup.governance.setLimits('alpha', { maxStorageBytes: 10_000, reason: 'Governance allowance exceeds the recorder allocation' }, owner);
     setup.store.createSession('alpha', session('room'));
     const capture = { id: 'job', sourceId: 'source', sessionId: 'room', maxDurationSeconds: 5, segmentSeconds: 2 };
     const refused = await call('/v1/jobs', 'owner', capture);
     assert.equal(refused.status, 409); assert.equal(refused.body.error, 'recording_cleanup_pending');
     assert.deepEqual(readFileSync(join(directory, 'segment.mp4')), bytes);
     assert.equal(setup.store.db.prepare("SELECT count(*) AS n FROM recording_jobs WHERE workspace='alpha'").get().n, 0);
-    assert.equal((await call('/v1/jobs', 'owner', { ...capture, id: 'different-job' })).status, 201);
-    assert.equal((await call('/v1/jobs/different-job/stop', 'owner', {})).status, 200);
+    const allocation = (await call('/v1/workspace/operations')).body.workers[0].recordingBudget;
+    assert.equal(allocation.retainedBytes, 0); assert.equal(allocation.pendingCleanupBytes, bytes.length);
+    assert.equal(allocation.reservedBytes, bytes.length); assert.equal(allocation.availableBytes, 1024 - bytes.length);
+    assert.equal(setup.governance.checkQuota('alpha', { storageBytes: 1024 }).allowed, true);
+    const separateId = await call('/v1/jobs', 'owner', { ...capture, id: 'different-job' });
+    assert.equal(separateId.status, 409); assert.equal(separateId.body.error, 'workspace_storage_capacity');
+    assert.equal(setup.store.db.prepare("SELECT count(*) AS n FROM recording_jobs WHERE workspace='alpha'").get().n, 0);
+    assert.deepEqual(readFileSync(join(directory, 'segment.mp4')), bytes);
+    assert.equal((await call('/v1/jobs', 'beta', { ...capture, id: 'different-job' })).status, 201, 'Another workspace does not inherit cleanup reservations');
     chmodSync(directory, 0o700);
     assert.equal((await call('/v1/workspace/retention/cleanup/' + task.id + '/retry', 'owner', { reason: 'Permission restored' })).body.state, 'completed');
+    const released = (await call('/v1/workspace/operations')).body.workers[0].recordingBudget;
+    assert.equal(released.pendingCleanupBytes, 0); assert.equal(released.reservedBytes, 0); assert.equal(released.availableBytes, 1024);
+    assert.equal((await call('/v1/jobs', 'owner', { ...capture, id: 'different-job' })).status, 201);
+    assert.equal((await call('/v1/jobs/different-job/stop', 'owner', {})).status, 200);
     assert.equal((await call('/v1/jobs', 'owner', capture)).status, 201);
     assert.equal(existsSync(directory), false, 'Queued recording does not silently restore old bytes');
   });

@@ -36,8 +36,10 @@ local, archived, archive-reserved and awaiting-cleanup bytes. This is neither
 filesystem free space nor billing, and untracked files are not measured.
 
 Recorder allocation is a separate conservative guard. Each unfinished recording
-reserves the configured per-job maximum. The Recording row exposes available and
-required bytes, plus concurrent/pending bounds. Both workspace limits and recorder
+reserves the configured per-job maximum, and unfinished cleanup keeps its known
+local bytes reserved here too. Deleting segment metadata cannot make that space
+available to a new recording before physical removal completes. The Recording row
+exposes available and required bytes, plus concurrent/pending bounds. Both workspace limits and recorder
 allocation must admit the next recording. Do not add those separate budgets and
 present them as one quota. See [runtime configuration](RUNTIME_CONFIGURATION.md).
 
