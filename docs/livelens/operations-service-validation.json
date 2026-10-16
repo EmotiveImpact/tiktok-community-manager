@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-16",
+  "status": "passed",
+  "tests": 165,
+  "passed": 165,
+  "failed": 0,
+  "skipped": 0,
+  "durationMs": 72711.511927,
+  "command": "npm --prefix services/intelligence test",
+  "runtime": {
+    "node": "24.19.0",
+    "postgres": "17.6-bookworm",
+    "database": "actual isolated PostgreSQL and SQLite",
+    "ffmpeg": "/usr/bin/ffmpeg",
+    "speech": "pinned PocketSphinx and checksum-pinned references",
+    "pdf": "actual offline Chromium via Playwright 1.62.0"
+  },
+  "focusedOperationsTests": 16,
+  "backupCleanupTests": 1,
+  "focusedTestsIncludedInTotal": true,
+  "logSha256": "ecf1cbf87d476b2bf2798c5b8d6d6682c204c40e8fd35cd613e8d561e1db0a56",
+  "sourceSha256": {
+    "services/intelligence/src/operations.mjs": "576528108179a4eedfe6c8e9ef5f01f5b41f251e1232dd71fa61c50a6e7d3d30",
+    "services/intelligence/src/governance.mjs": "f75c5c95ecf0eee260d7376edcb9ad8f4d153b9c210697444c30cb8f82e5a615",
+    "services/intelligence/src/recorder.mjs": "289bc7f5fc801b952c0149c9c3fdcb8f435ad66871021e8cf56a9ca7f81be30a",
+    "services/intelligence/src/server.mjs": "7f8af6bd832dc4e0640cda77e7d1997ac509aa8d1ed47ace96789d44acfa6831",
+    "services/intelligence/src/advanced-routes.mjs": "bb7d79cc6b80f8bca048ee38a74bdabc5912255915712b8e6af68a001b12490e",
+    "services/intelligence/test/operations.test.mjs": "cd97629ecad0cecf58135b8f1cfddcfd005867126d6c0c21093b7ef3630431f2",
+    "services/intelligence/test/backup-cleanup.test.mjs": "c5addfdc353790ae10736ea17a272f89bb2fef41fc96a38261320b80d1bf0618",
+    "deployment/livelens/backup.mjs": "2db0f824f478f8806db4dea168abc4fd66c4dd46d693c3947d3a297f4b8c0c20"
+  },
+  "limits": [
+    "Synthetic fixtures and local PostgreSQL do not establish external LIVE, speech/model quality or customer production capacity.",
+    "Private database credentials and runtime media are outside Git."
+  ],
+  "cleanup": "Dedicated PostgreSQL fixture stopped; private credential files removed after validation."
+}

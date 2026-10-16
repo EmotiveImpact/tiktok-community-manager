@@ -23,6 +23,12 @@ function inactive(db) {
   for (const table of ['recording_jobs', 'speech_jobs']) if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table)) {
     if (db.prepare(`SELECT 1 FROM ${table} WHERE state NOT IN('completed','stopped','failed') LIMIT 1`).get()) throw new Error('stop_active_and_pending_jobs_before_backup');
   }
+  // Cleanup tasks bind the original filesystem identities. They cannot safely
+  // be replayed against the new root/inodes created by a restore.
+  if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='retention_cleanup'").get()
+    && db.prepare("SELECT 1 FROM retention_cleanup WHERE state!='completed' LIMIT 1").get()) {
+    throw new Error('finish_retention_cleanup_before_backup');
+  }
 }
 
 /** Consistent SQLite snapshot and verified local media, sealed with AES-256-GCM. */
@@ -35,6 +41,10 @@ export async function createBackup({ databasePath, mediaRoot, outputPath, key })
   try {
     db = new DatabaseSync(resolve(databasePath), { readOnly: true }); inactive(db);
     const snapshot = join(temp, 'intelligence.sqlite'); await backup(db, snapshot); db.close(); db = null;
+    // Recheck the actual copied state: a different process can enqueue work
+    // after the initial admission check while SQLite creates its snapshot.
+    const snapshotDb = new DatabaseSync(snapshot, { readOnly: true });
+    try { inactive(snapshotDb); } finally { snapshotDb.close(); }
     const packed = join(temp, 'snapshot.tar'); const verification = archive(['pack', snapshot, resolve(mediaRoot), packed]);
     const iv = randomBytes(12), cipher = createCipheriv('aes-256-gcm', secret, iv); cipher.setAAD(MAGIC);
     const fd = openSync(partial, 'wx', 0o600); writeSync(fd, MAGIC); writeSync(fd, iv); closeSync(fd);

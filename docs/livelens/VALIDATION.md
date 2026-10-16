@@ -1,10 +1,65 @@
 # Validation receipt
 
+## Aperture Operations & Recovery — 16 October 2026
+
+O01 implements stage 2 of the [standing programme](MASTER_PLAN.md). The
+[operating guide and actual screenshots](OPERATIONS.md) cover workspace worker
+observations, reservation-aware capacity and durable retention cleanup.
+
+- [Application/build](operations-build-validation.json): **127 tests / 14 files**
+  pass; TypeScript, renderer and Electron main/preload production builds pass.
+  Final renderer `index-CrYZznnn.js`, stylesheet `index-Brl14Sbd.css`. Existing
+  Browserslist age and bundle-size notices remain.
+- [Service](operations-service-validation.json): **165/165, zero skips**, including
+  actual PostgreSQL 17.6, SQLite, FFmpeg, pinned PocketSphinx and Chromium PDF.
+  Sixteen new Operations checks run across both databases; one backup cleanup
+  contract verifies refusal of unfinished tasks and restored completed history.
+- [Browser](operations-browser-validation.json): **seven journeys pass**, 70
+  screenshots and zero uncaught page errors. All actual served renderer/CSS hashes
+  match the final build. The six existing journeys were rerun after the recovery
+  entry fix; no existing assertion was weakened.
+- [New Operations journey](operations-journey-validation.json): actual generated
+  media, queued reservations, restricted workers and workspace denial; real
+  filesystem permission failure; partial cleanup and byte reservations after
+  record deletion; restart, failed retry and successful retry of the same task;
+  unconfigured workers; original-conversation navigation; fresh browser entry
+  with a deliberately corrupt archive manifest and unavailable capacity.
+- [Pilot drill](pilot-drill-validation.json): 600 mixed requests, zero unexpected
+  errors, six actually in flight; p50/p95/p99 **11.871/30.956/58.390 ms** during
+  this paced 12-second fixture. Two actual synthetic captures overlap for 11.903
+  seconds. After removing its own original data, a fresh restored API reopens
+  **2,240 exact originals**, notes, bookmarks, findings/reviews, report/redactions,
+  grants and audit. All **16 segments / 630,730 bytes** match original hashes and
+  actually decode to 32 seconds / 320 frames. Restore plus reopen/verification
+  takes 2,167.389 ms. Seven access/isolation checks pass before and after recovery.
+- [Visual inspection](operations-layout-validation.json): 12 actual desktop/phone
+  captures, no horizontal page overflow or blank footer tails. Aperture styling
+  and visible keyboard focus remain. [Design QA](../../design-qa.md) records scope.
+
+Independent review caught and fixed a fresh-entry failure: workspace usage errors
+hid the entire Operations view. Its navigation now works independently of the
+failed metadata request. Actual corrupted archive usage returns a refused
+workspace response while Operations displays worker failures and unavailable
+capacity; it never substitutes zero. Durable cleanup also refuses replaced
+directories, symlinks and reused recording IDs, and reserves known bytes until
+actual removal. Backup checks unfinished cleanup on both its source database and
+the completed snapshot. No automatic retry, retention or provider polling starts.
+
+These are exercised local pilot contracts. The workload is short and paced, not
+a saturation or hundreds-of-users result. Recovery uses a quiesced SQLite/local
+snapshot, not crash RPO, PostgreSQL or external-bucket recovery. Missing original
+cleanup identities have no force-resolve operation. External LIVE, private ALFRED,
+representative speech/context quality, production migration/deployment and
+commercial acceptance remain separate gates. ALFRED source is unchanged; its
+earlier full suite is not claimed as a new private-host test. The dedicated
+PostgreSQL fixture is stopped and private credential files removed. Hosted CI is
+reported separately on the exact pushed PR head.
+
 ## Aperture Investigation Desk — 16 October 2026
 
 The [goal, implementation and screenshots](INVESTIGATION_DESK.md) connect retained
-statements and saved moments to reviewed cases and reports. This is the current
-continuation; earlier receipts below describe their own checkpoints.
+statements and saved moments to reviewed cases and reports. This receipt describes
+its checkpoint; Operations & Recovery above is the latest continuation.
 
 - Application: 127 tests in 14 files; TypeScript and renderer/Electron production
   build pass. Final renderer `index-Cuq1l9vc.js`, stylesheet `index-BZbmVy_B.css`.

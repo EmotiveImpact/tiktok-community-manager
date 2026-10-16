@@ -9,12 +9,14 @@ export { ReviewedReport } from "./advanced/Investigations";
 export default function AdvancedWorkspace({
   view,
   onOpenEvidence,
+  onOpenSession,
   initialCaseId,
   onSelectCase,
   revision = 0,
 }: {
   view: string;
   onOpenEvidence: OpenEvidence;
+  onOpenSession?: (sessionId: string) => void;
   initialCaseId?: string | null;
   onSelectCase?: (caseId: string | null) => void;
   revision?: number;
@@ -32,7 +34,7 @@ export default function AdvancedWorkspace({
         />
       )}
       {view === "graph" && <ContextGraph onOpenEvidence={onOpenEvidence} />}
-      {view === "workspace" && <Workspace revision={revision} />}
+      {view === "workspace" && <Workspace revision={revision} onOpenSession={onOpenSession} />}
       {view === "agent" && <AgentConnection />}
     </div>
   );

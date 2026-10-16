@@ -1,5 +1,6 @@
 # LiveLens full application blueprint
 
+The [standing product goal and current delivery programme](MASTER_PLAN.md) supersede historical next-step wording in this document.
 The operator implementation follows this application map. Current code/acceptance receipts
 are in [FULL_APPLICATION.md](FULL_APPLICATION.md), [VALIDATION.md](VALIDATION.md) and the backlog.
 The starting-boundary table and first-build sequence below describe the historical brief;

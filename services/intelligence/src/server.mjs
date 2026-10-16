@@ -17,6 +17,7 @@ import { AnalysisProvider } from './analysis.mjs';
 import { SourceCatalog } from './source-catalog.mjs';
 import { PostgresDatabase } from './postgres-db.mjs';
 import { MediaArchive } from './media-archive.mjs';
+import { workspaceOperations } from './operations.mjs';
 import { objectStorageFromEnvironment } from './storage-config.mjs';
 import { AccountDirectory } from './accounts.mjs';
 
@@ -85,6 +86,10 @@ export function createIntelligenceServer({ store, keys: configuredKeys, browser:
       const caseCanWrite = caseId => allowed('cases:write', { caseId });
       const match = pattern => url.pathname.match(pattern);
       let route;
+      if (request.method === 'GET' && url.pathname === '/v1/workspace/operations') {
+        requireScope('workspace:read');
+        return send(response, 200, workspaceOperations({ store, governance, principal, allowed, recorder, scheduler, speech, mediaArchive }));
+      }
       if (request.method === 'GET' && url.pathname === '/v1/capabilities') return send(response, 200, {
         schemaVersion: 1, workspace, subject: principal.subject, scopes: [...principal.scopes],
         permissions: { createCases: allowed('cases:write') },

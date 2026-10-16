@@ -4,6 +4,26 @@ The owner selected **Aperture Studio** from the
 [visual concept gallery](design-concepts/visual-exploration-2026-10-11/README.md).
 The screenshots below show that language implemented in the actual app.
 
+## Operations & Recovery — 16 October 2026
+
+![Actual workspace Operations](screenshots/operations/01a-desktop-operations-viewport.png)
+
+[Operating guide](OPERATIONS.md) ·
+[Full desktop](screenshots/operations/01-desktop-operations.png) ·
+[Restricted access](screenshots/operations/02-desktop-restricted-workers.png) ·
+[Partial cleanup](screenshots/operations/03-desktop-retention-cleanup-failed.png) ·
+[Phone capacity](screenshots/operations/05-phone-pending-cleanup.png) ·
+[Phone retry failure](screenshots/operations/06-phone-durable-retry-failed.png) ·
+[Completed cleanup](screenshots/operations/07-phone-cleanup-complete.png) ·
+[Corrupt usage recovery](screenshots/operations/10-phone-capacity-unavailable.png).
+
+Twelve captures show the actual authenticated app with fictional workspace data,
+real generated-media recording and a real filesystem permission failure. Cleanup
+survives restart, retries the original task and releases its reservation only on
+completion. The final failure screen uses an actual damaged archive manifest;
+Operations remains available while capacity cannot be measured. These are neither
+mockups nor evidence of external LIVE. [Geometry and screenshot hashes](operations-layout-validation.json).
+
 ## Investigation Desk — 16 October 2026
 
 ![Actual investigation source gathering](screenshots/investigation-desk/02a-desktop-gather-viewport.png)

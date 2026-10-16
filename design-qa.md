@@ -1,5 +1,34 @@
 # LiveLens design QA
 
+## Operations & Recovery — 16 October 2026
+
+Passed for the inspected desktop/390px states. Operations lives inside the
+existing Workspace & access destination and preserves its Usage default. The
+warm charcoal, off-white actions, self-hosted Inter and narrow rail continue the
+owner-selected Aperture language. Worker rows and capacity columns stack on the
+phone; the existing tab strip scrolls within its container.
+
+Opened and inspected the actual final [desktop](docs/livelens/screenshots/operations/01a-desktop-operations-viewport.png),
+[partial cleanup](docs/livelens/screenshots/operations/03-desktop-retention-cleanup-failed.png),
+[completed phone cleanup](docs/livelens/screenshots/operations/07-phone-cleanup-complete.png)
+and [unavailable capacity](docs/livelens/screenshots/operations/10-phone-capacity-unavailable.png).
+The browser agent also inspected the final pending-cleanup phone state. Twelve
+captures have zero horizontal page overflow or blank footer tails; keyboard
+focus remains visible. [Geometry/hashes](docs/livelens/operations-layout-validation.json).
+
+Review found a material recovery problem: failed workspace usage hid the entire
+Operations entry on first load. Navigation and Operations now render independently
+of successful usage metadata; stale meters and privileged editors stay hidden.
+An actual corrupt archive manifest reproduces the refused workspace read, then
+the fresh browser opens Operations and sees retained failures plus unavailable
+capacity. No zero-usage payload is substituted. The final asset hashes are
+`index-CrYZznnn.js` / `index-Brl14Sbd.css`.
+
+The screenshot harness initially left a rail hover tooltip over the heading;
+moving its pointer before capture resolved that artifact. Remaining broad
+assistive-technology and owner-final acceptance are separate from this scoped
+inspection. All evidence is fictional/generated; no external LIVE is claimed.
+
 ## Aperture workflows — 11 October 2026
 
 Visual result: passed for the inspected desktop and phone surfaces.

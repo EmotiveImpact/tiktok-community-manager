@@ -1,5 +1,20 @@
 # LiveLens development handoff
 
+The owner set the [complete programme](MASTER_PLAN.md) as the standing goal on
+16 October 2026 and authorised autonomous continuation. **O01 Operations & Recovery
+is implemented and locally verified**: scoped diagnostics/capacity, durable
+cleanup and explicit retries, plus a complete encrypted SQLite/media restore
+drill. Read [OPERATIONS.md](OPERATIONS.md) and the [latest receipts](VALIDATION.md):
+127 app tests, 165 service tests with zero skips, seven browser journeys and 70
+captures. Twelve new Operations screens are published. Actual-head hosted results
+are reported on PR #5; publication is separate from merge/deployment.
+
+The next queued milestone is **A02 speech-quality evaluation**, followed by I03
+grounded-analysis evaluation and I04/R02 product depth. Read the
+[goal record](../../plans/livelens-goal.json) and master plan, then continue the
+highest-priority unblocked work. Real-source C05 and private-host G03 require their
+actual prerequisites. Existing delivered checkpoints below retain their evidence.
+
 PRs #1, #2 and #3 were merged into `redesign` on 11 October 2026 at the
 owner's request. Merged baseline `aacfb18` has the same tree as `53267ed`,
 which passed both hosted application/service/browser runs and source inventory.
@@ -24,10 +39,10 @@ ALFRED 200-recent-session picker bounds explicit. Generating files does not inst
 or verify a private ALFRED runtime. See the latest receipts for actual optional
 PostgreSQL/PDF/speech checks and browser behavior.
 
-The current delivered milestone is [Aperture Investigation Desk](INVESTIGATION_DESK.md):
+The preceding [Aperture Investigation Desk](INVESTIGATION_DESK.md) milestone adds:
 searchable source intake and accessible case pages, atomic case creation with a
 statement, bounded batch linking, source-return draft preservation and a clearer
-question-to-reviewed-brief workspace. Its current validation supersedes older
+question-to-reviewed-brief workspace. Its checkpoint validation supersedes older
 workflow counts. Keep the 200-source reviewed-case bound distinct from the legacy
 1,000-source original export API, and preserve server revision checks on reports.
 

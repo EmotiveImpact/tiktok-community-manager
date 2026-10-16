@@ -141,12 +141,15 @@ searches use bounded `limit`; session/case lists also support `offset`.
 | POST `/v1/analysis` | analysis:write, investigations:write, evidence:read, cases:write | Explicit model request producing unreviewed findings |
 | GET `/v1/workspace` | workspace:read | Role, members, limits, usage and retention |
 | GET `/v1/workspace/usage` | workspace:read | Retained-media/speech metering |
+| GET `/v1/workspace/operations` | workspace:read | Workspace capacity and independently scope-filtered worker observations; reads start no work |
 | POST `/v1/workspace/limits` | workspace:admin | Manual entitlement changes with reason |
 | GET/POST `/v1/workspace/members` | workspace:read / workspace:admin | Membership / role changes |
 | GET `/v1/workspace/audit` | workspace:admin | Local hash-chained audit receipts |
 | POST `/v1/workspace/retention` | workspace:admin | Retention policy; no automatic deletion |
 | GET `/v1/workspace/retention/preview` | workspace:admin | Eligible/protected sessions and preview hash |
 | POST `/v1/workspace/retention/apply` | workspace:admin | Explicit selected deletion with matching preview/reason |
+| GET `/v1/workspace/retention/cleanup?limit=&offset=` | workspace:admin | Durable cleanup history; bounded `{tasks,hasMore,nextOffset}` pages |
+| POST `/v1/workspace/retention/cleanup/:id/retry` | workspace:admin | Explicit audited retry with `{reason}`; inspect returned task state |
 | GET/POST `/v1/workspace/cases/:case/access` | workspace:admin | Restricted case policy and member grants |
 | GET `/v1/agent` | sessions:read | Scoped adapter manifest; registration remains false |
 
@@ -157,6 +160,38 @@ when governance is enabled. Stop/restore/run endpoints expect the empty JSON
 object `{}` unless their route defines a configuration body.
 
 ## Evidence and operation contracts
+
+### Operations and retention recovery
+
+The [Operations guide](../../docs/livelens/OPERATIONS.md) describes the workspace
+screen and recovery procedure. `/v1/workspace/operations` requires current
+membership as well as `workspace:read`. Recording, scheduling and archive rows
+independently require `recordings:read`; speech requires `speech:read`. Restricted
+rows expose no counts or configured state. Cleanup management also requires an
+owner/admin role and `workspace:admin`.
+
+`workers[].state` observes configuration, loop lifecycle and this workspace's
+persisted active work. Idle or configured does not certify provider health.
+Counts aggregate the complete scoped queue before the latest 20 attention items
+are selected. `pending` includes all unfinished work, including active/retrying.
+Attention errors use fixed safe codes; raw exceptions and paths are not exposed.
+
+Capacity meters include `used`, `reserved`, `committed`, `limit`, `remaining` and
+`overLimit`. Usage is logical retained media/speech/archive accounting; pending
+physical cleanup remains a storage reservation. Recorder admission separately
+reserves a conservative per-job allocation, exposed in the recording worker's
+`recordingBudget`; both constraints must admit a new capture. Failed usage reads
+return `capacity.available=false`, never invented zero usage.
+
+Retention applies record deletion and durable per-job cleanup tasks in one
+transaction before filesystem work. Its compatible response retains `receipts`,
+`cleanupFailures` and `deletedSessions`, and adds `cleanupTasks`. A successful HTTP
+response can contain a failed cleanup task: check its actual `state`. Retry is
+explicit and reasoned, and completed retries are idempotent. Tasks bind the
+original root/directory identities, refuse replaced paths or reused jobs, and
+reserve known bytes until removal is confirmed. A recording ID with unfinished
+cleanup is refused with HTTP 409 `recording_cleanup_pending`. Nothing here starts
+automatic retention, a retry loop or source monitoring.
 
 Create sessions with `{id?, platform, account?, sourceUrl, title, startedAtMs}`.
 Ingest `{events:[...]}` atomically, with at most 200 original events:

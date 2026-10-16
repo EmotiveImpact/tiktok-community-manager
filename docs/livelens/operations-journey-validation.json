@@ -1,0 +1,83 @@
+{
+  "fixture": true,
+  "passed": true,
+  "externalProvidersContacted": false,
+  "screenshots": [
+    "01-desktop-operations.png",
+    "01a-desktop-operations-viewport.png",
+    "02-desktop-restricted-workers.png",
+    "03-desktop-retention-cleanup-failed.png",
+    "04-desktop-pending-cleanup.png",
+    "05-phone-pending-cleanup.png",
+    "05a-phone-storage-breakdown.png",
+    "06-phone-durable-retry-failed.png",
+    "07-phone-cleanup-complete.png",
+    "08-desktop-workers-unconfigured.png",
+    "09-desktop-capacity-unavailable.png",
+    "10-phone-capacity-unavailable.png"
+  ],
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:54101/app/assets/index-Brl14Sbd.css",
+      "sha256": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf"
+    },
+    {
+      "url": "http://127.0.0.1:54101/app/assets/index-CrYZznnn.js",
+      "sha256": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+    }
+  ],
+  "checks": [
+    "Actual generated media, actual failed capture, queued reservation and redacted persisted diagnostic",
+    "Workspace retains Usage default; keyboard Operations and refresh report actual stopped, idle and unconfigured workers",
+    "Independent scope and workspace boundaries; restricted worker details omitted from API and interface",
+    "Real filesystem cleanup refusal remains failed, visible and quota-reserved after database deletion",
+    "Failed cleanup survives restart; another actual failure preserves reason/reservation; corrected original path completes same task and releases bytes",
+    "Removed runtime configuration is explicitly unconfigured; successful durable cleanup receipt persists on later restart",
+    "Fresh workspace entry survives actual corrupt archive usage: workspace metadata refuses409 while Operations shows failures and unavailable capacity, never zero"
+  ],
+  "media": {
+    "retainedBytes": 82064,
+    "retainedSeconds": 3.023,
+    "retainedSegments": 2,
+    "actualFailedJob": "failed"
+  },
+  "cleanup": {
+    "initial": {
+      "id": "f519788b-f33e-4ce3-8daa-a0a200e72b53",
+      "sessionId": "retained-fixture",
+      "jobId": "retained-job",
+      "state": "failed",
+      "bytes": 82064,
+      "createdAtMs": 1792157538811,
+      "updatedAtMs": 1792157538812,
+      "attempts": 1,
+      "error": "cleanup_filesystem_failed"
+    },
+    "afterRestartFailure": {
+      "id": "f519788b-f33e-4ce3-8daa-a0a200e72b53",
+      "sessionId": "retained-fixture",
+      "jobId": "retained-job",
+      "state": "failed",
+      "bytes": 82064,
+      "createdAtMs": 1792157538811,
+      "updatedAtMs": 1792157541554,
+      "attempts": 2,
+      "error": "cleanup_filesystem_failed"
+    },
+    "completed": {
+      "id": "f519788b-f33e-4ce3-8daa-a0a200e72b53",
+      "sessionId": "retained-fixture",
+      "jobId": "retained-job",
+      "state": "completed",
+      "bytes": 82064,
+      "createdAtMs": 1792157538811,
+      "updatedAtMs": 1792157541739,
+      "attempts": 3,
+      "error": null
+    }
+  },
+  "pageErrors": [],
+  "consoleWarnings": [],
+  "filesystemFailure": "Actual non-root directory permission denial; original directory inode preserved across restart",
+  "sourceSha256": "6060d43ffdd5961b3d7a4dea0e3bb9896a4ec03712f605b716e7a2a0e5b971fe"
+}

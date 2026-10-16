@@ -1,5 +1,6 @@
 # LiveLens: live conversation intelligence
 
+The [standing product goal and current delivery programme](MASTER_PLAN.md) supersede historical next-step wording in this document.
 Current implementation and measured limits are recorded in [FULL_APPLICATION.md](FULL_APPLICATION.md),
 [VALIDATION.md](VALIDATION.md) and the backlog. This document retains the full target architecture;
 the build-order sections are a programme rather than an assertion of production readiness.

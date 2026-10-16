@@ -174,6 +174,10 @@ export async function advancedRoute({ request, response, url, principal, require
     if (url.pathname === '/v1/workspace/retention' && post) { requireScope('workspace:admin'); return result(governance.configureRetention(workspace, await body(), actor)); }
     if (url.pathname === '/v1/workspace/retention/preview' && get) { requireScope('workspace:admin'); return result(governance.previewRetention(workspace)); }
     if (url.pathname === '/v1/workspace/retention/apply' && post) { requireScope('workspace:admin'); return result(await governance.runRetention(workspace, await body(), actor)); }
+    if (url.pathname === '/v1/workspace/retention/cleanup' && get) { requireScope('workspace:admin'); return result(governance.cleanupPage(workspace, { limit: url.searchParams.get('limit') ?? 50, offset: Number(url.searchParams.get('offset') ?? 0) })); }
+    if ((route = match(/^\/v1\/workspace\/retention\/cleanup\/([A-Za-z0-9_-]+)\/retry$/)) && post) {
+      requireScope('workspace:admin'); return result(governance.retryCleanup(workspace, route[1], await body(), actor));
+    }
     if ((route = match(/^\/v1\/workspace\/cases\/([A-Za-z0-9_-]+)\/access$/))) {
       requireScope('workspace:admin');
       if (get) return result(governance.caseAccess(workspace, route[1]));

@@ -298,6 +298,10 @@ export class Recorder {
           throw new Fault("job_identity_conflict", 409);
         return this.job(workspace, id);
       }
+      if (
+        this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='retention_cleanup'").get() &&
+        this.db.prepare("SELECT 1 FROM retention_cleanup WHERE workspace=? AND job_id=? AND state!='completed' LIMIT 1").get(workspace, id)
+      ) throw new Fault("recording_cleanup_pending", 409);
       this.admission?.(workspace, { recordingSeconds: max, pendingJobs: 1 });
       const pending = this.db
         .prepare(

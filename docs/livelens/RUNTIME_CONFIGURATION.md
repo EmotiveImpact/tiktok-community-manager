@@ -325,6 +325,13 @@ Workspace retention is manual: configure a policy, preview eligible sessions,
 then explicitly apply selected IDs with the exact preview hash and reason.
 Referenced evidence, active jobs and retained archive/source/mission references
 prevent deletion. Manual usage limits do not charge a payment provider. Backup
+is blocked while physical cleanup is unfinished. Cleanup tasks persist with the
+deletion receipt before files are removed, and known pending bytes stay reserved.
+Workspace → Operations shows independently scoped worker state and committed
+capacity; Workspace → Retention provides bounded cleanup history and explicit,
+reasoned retries. No retention or retry timer is enabled by this feature. Correct
+filesystem access before retrying; a replaced root/job directory is refused.
+See [Operations & Recovery](OPERATIONS.md) for states and escalation steps. Backup
 and restore use the separately configured `LIVELENS_BACKUP_KEY`; follow
 [the recovery instructions](../../deployment/livelens/README.md) and verify a
 stopped-service recovery before repointing a live runtime. The SQLite backup CLI

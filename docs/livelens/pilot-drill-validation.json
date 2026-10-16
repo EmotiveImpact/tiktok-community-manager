@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 1,
+  "fixture": true,
+  "startedAt": "2026-10-16T13:27:54.569Z",
+  "status": "passed",
+  "workload": {
+    "storage": "SQLite file with WAL and synchronous FULL",
+    "transport": "actual loopback HTTP bearer API",
+    "serviceProcess": "separate child process",
+    "durationSeconds": 12,
+    "requestConcurrency": 6,
+    "requestCount": 600,
+    "seededEvidence": 2000,
+    "workspaceCount": 2,
+    "principalCount": 6,
+    "workloadPrincipalCount": 3,
+    "recordingConcurrency": 2,
+    "recordingCapSeconds": 16,
+    "requestTimeoutMs": 5000,
+    "workloadDeadlineSeconds": 42,
+    "pacing": "concurrent client waves evenly scheduled over duration; no retries",
+    "mix": [
+      "nominal 20% append two original events",
+      "nominal 20% literal evidence search",
+      "nominal 20% session listing",
+      "nominal 20% reviewed investigation detail",
+      "nominal 20% recording receipts"
+    ],
+    "scheduledTasks": false
+  },
+  "runtime": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "visibleLogicalCpus": 5,
+    "visibleMemoryBytes": 35743784960,
+    "ffmpegVersion": "ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffmpegExecutableSha256": "e8a8d46f5225f3062cec7c07fb145d58ae73c603cb740dcd5bad34bfb54e455a"
+  },
+  "sourceSha256": {
+    "deployment/livelens/backup.mjs": "2db0f824f478f8806db4dea168abc4fd66c4dd46d693c3947d3a297f4b8c0c20",
+    "deployment/livelens/backup_archive.py": "6280a68c59a7624f04dda2c5b279aa8b92b94dd0b16b36a2fca41825f23a888c",
+    "deployment/livelens/pilot-drill.mjs": "4fcbc03e9601b379792c7ee93c0809588db9af1afff189b8d2294034d5a62e0b",
+    "package-lock.json": "5c26bac91d60030d4c3cb92a89bdf9f40cbdb3c5e25275681a011caea9b7a74c",
+    "services/intelligence/package-lock.json": "1bd2c2a5c208ecece4db1b5ae0781bec3b6f7f02e60d4bce6f4ab4c080e6cca0",
+    "services/intelligence/src/accounts.mjs": "5afd52b6565c2bfafcb5b83ec5f016922c4ae6f14c87911ddf1cbf29f400ce5f",
+    "services/intelligence/src/advanced-routes.mjs": "bb7d79cc6b80f8bca048ee38a74bdabc5912255915712b8e6af68a001b12490e",
+    "services/intelligence/src/analysis.mjs": "7e268a73e3ea6964e817067294c3f09da71759445ed26e34135bb7b7058faf8e",
+    "services/intelligence/src/archive-usage.mjs": "dbdc272fc58449521e19dbffcbd65efb9dbce5eb4289b4808882b6707cf7b77c",
+    "services/intelligence/src/browser.mjs": "7cdc347bd169490fe25a6accfef2a910bc9ba2d73a4a16488184b46227b5233e",
+    "services/intelligence/src/client.mjs": "7536940b0590f285d620e7468c511a3cf96e25b59a92ad124f67c34d865b819e",
+    "services/intelligence/src/governance.mjs": "f75c5c95ecf0eee260d7376edcb9ad8f4d153b9c210697444c30cb8f82e5a615",
+    "services/intelligence/src/investigations.mjs": "d4573d519cd385c88d28947177abacda362701c7515cfb13acbba74d6c5413ad",
+    "services/intelligence/src/media-archive.mjs": "5a79a579934759f16f1d37f24d9873ac849ea77dfc517f0953e305b6af7c453d",
+    "services/intelligence/src/operations.mjs": "576528108179a4eedfe6c8e9ef5f01f5b41f251e1232dd71fa61c50a6e7d3d30",
+    "services/intelligence/src/pdf.mjs": "5cb1502f6ce3fab6f1f857b84ff45253f34f683fb47768bf0632aa525c69bbc9",
+    "services/intelligence/src/postgres-db.mjs": "091250f51ee332868cee0601466452f574e467cb95c7885447118d7569f9764d",
+    "services/intelligence/src/recorder-exec.py": "f15d402fbd215cb2f57791b6c8bbb26236548d4546c1ec853c4bf5b43c7c2ded",
+    "services/intelligence/src/recorder.mjs": "289bc7f5fc801b952c0149c9c3fdcb8f435ad66871021e8cf56a9ca7f81be30a",
+    "services/intelligence/src/scheduler.mjs": "c308efe9d04c8d9d0547e3bb172ac7a597127d091ec3eb2b0e44845c3c30b13d",
+    "services/intelligence/src/server.mjs": "7f8af6bd832dc4e0640cda77e7d1997ac509aa8d1ed47ace96789d44acfa6831",
+    "services/intelligence/src/source-adapters.mjs": "42194f817598df74e553d9fdda6e6d416828aef075fb03d0565cd5ad483ab402",
+    "services/intelligence/src/source-catalog.mjs": "4b234ffbf0999434fc29165d83f18c5ec345f94eb57f99cac3370ba0768524c4",
+    "services/intelligence/src/speech.mjs": "eff6f676a03a3b5dbef74348de5ffb4b1163c769e8303263c4a398b02898760d",
+    "services/intelligence/src/storage-config.mjs": "53f32ba7ef1d05efb342081fa0ecba7a56fbbd48dfd51c8622d23d83506b424f",
+    "services/intelligence/src/store.mjs": "402129a27cbd3b01058c5365ab26c18ce7a670f74569c86ffd15134f05dcee18",
+    "services/intelligence/src/validation.mjs": "29bfba60de794fa7f3d299e1d33a7a6f612bb84eeebdcc1a5784b66a526f791c"
+  },
+  "boundaries": {
+    "provider": "none; generated distinct bars/tone files",
+    "customerCapacity": "not established",
+    "liveSourceQuality": "not measured",
+    "speechConcurrency": "not measured",
+    "browserUserLoad": "not measured",
+    "externalStorage": "not measured",
+    "postgresRecovery": "not measured",
+    "distributedQueue": "not measured",
+    "billedCost": "not measured",
+    "longDurationSoak": "not measured"
+  },
+  "generatedSourceSha256": [
+    "8acb1fec4e835b0c6fe73776a79b6c7eef5a8b8db4453a42adc1b1075649bc26",
+    "0a3f55de132d87ff165abd60b38ccf2a909c8f0731520b958213e1b15bb3e613"
+  ],
+  "accessBeforeRestore": [
+    "anonymous_refused",
+    "other_workspace_case_refused",
+    "other_workspace_recording_refused",
+    "unconfigured_read_scope_refused",
+    "unconfigured_write_scope_refused",
+    "other_workspace_search_empty",
+    "restricted_case_reader_refused"
+  ],
+  "load": {
+    "elapsedMs": 11901.213,
+    "completedRequests": 600,
+    "peakInFlightRequests": 6,
+    "errors": 0,
+    "errorCodes": {},
+    "successfulAppendedEvents": 240,
+    "requestsPerSecond": 50.415,
+    "latencyMs": {
+      "count": 600,
+      "p50": 11.871,
+      "p95": 30.956,
+      "p99": 58.39,
+      "max": 65.334
+    },
+    "byOperationLatencyMs": {
+      "search": {
+        "count": 120,
+        "p50": 13.776,
+        "p95": 32.762,
+        "p99": 58.39,
+        "max": 64.402
+      },
+      "append": {
+        "count": 120,
+        "p50": 10.272,
+        "p95": 30.179,
+        "p99": 64.371,
+        "max": 65.018
+      },
+      "sessions": {
+        "count": 120,
+        "p50": 10.104,
+        "p95": 27.745,
+        "p99": 40.069,
+        "max": 64.556
+      },
+      "investigation": {
+        "count": 120,
+        "p50": 11.316,
+        "p95": 31.06,
+        "p99": 64.811,
+        "max": 65.334
+      },
+      "recordings": {
+        "count": 120,
+        "p50": 11.854,
+        "p95": 29.971,
+        "p99": 41.379,
+        "max": 42.644
+      }
+    },
+    "server": {
+      "measuredMs": 11904.116,
+      "sampleIntervalMs": 100,
+      "samples": 118,
+      "serviceProcess": {
+        "peakRssBytes": 73871360,
+        "peakHeapUsedBytes": 16011064,
+        "cpuUserMs": 1234.696,
+        "cpuSystemMs": 252.195,
+        "excludes": [
+          "load-generator process",
+          "FFmpeg child processes"
+        ]
+      },
+      "eventLoopDelayMs": {
+        "resolutionMs": 20,
+        "p50": 20.169,
+        "p95": 29.557,
+        "p99": 40.337,
+        "max": 84.017
+      },
+      "peakActiveCaptures": 2,
+      "peakPendingJobs": 2,
+      "concurrentCaptureMs": 11903.3,
+      "disk": {
+        "sampledEveryMs": 1000,
+        "peakRetainedBytes": 7753406,
+        "finalDatabaseBytes": 2940928,
+        "finalWalBytes": 4379592,
+        "finalMediaBytes": 400118
+      }
+    }
+  },
+  "accessAfterRestore": [
+    "anonymous_refused",
+    "other_workspace_case_refused",
+    "other_workspace_recording_refused",
+    "unconfigured_read_scope_refused",
+    "unconfigured_write_scope_refused",
+    "other_workspace_search_empty",
+    "restricted_case_reader_refused"
+  ],
+  "recovery": {
+    "recoveryPointAt": "2026-10-16T13:28:12.795Z",
+    "boundary": "all acknowledged fixture writes and terminal recordings; writers and recorder stopped before snapshot",
+    "unacknowledgedOrInFlightLoss": "not exercised; this is a quiesced backup restore, not crash RPO",
+    "backupMs": 164.447,
+    "restoreMs": 113.159,
+    "reopenAndVerifyMs": 2054.23,
+    "totalRestoreAndVerificationMs": 2167.389,
+    "backup": {
+      "schemaVersion": 1,
+      "encryption": "AES-256-GCM",
+      "bytes": 3676198,
+      "sha256": "a97d03469bdcd810ea813f152bda5a0bade929653b260745a60a6f510954a448",
+      "mediaVerified": 16,
+      "restoreRequiredToProveRecovery": true
+    },
+    "restore": {
+      "schemaVersion": 1,
+      "restored": true,
+      "mediaVerified": 16,
+      "databaseIntegrity": "ok",
+      "encryptedBackupSha256": "a97d03469bdcd810ea813f152bda5a0bade929653b260745a60a6f510954a448"
+    },
+    "originalDatabaseRetainedDuringCheck": false,
+    "originalDatabaseMediaAndGeneratedInputsRemovedBeforeRestore": true,
+    "target": "new directory and fresh API process without capture sources",
+    "restoredDatabaseBytes": 2994176,
+    "comparedCategories": [
+      "events",
+      "detail",
+      "reportContent",
+      "editor",
+      "bookmarks",
+      "access",
+      "audit",
+      "auditIntegrity",
+      "sessionIntegrity",
+      "jobs"
+    ],
+    "preservedCategorySha256": {
+      "events": "3d1204e00b901c005e5910c9b35cbee83283749364f5aa99e0c8cd69b70ff0d0",
+      "detail": "c25e98fa4043c9a94e89ee1b226eeca2e1594b4738bd129bef62ae6a006ad86f",
+      "reportContent": "bc9aad1072ec6ccde09dbc16114bd5e7b86f1dfaa9f3033b6d971de03c33dd0d",
+      "editor": "18dad338f2a5ab6fc1928ffc12ed817bb06f9aa54d8a2c300705f4c9c53b155c",
+      "bookmarks": "97caa6b9e35bdab9004177617c12f2c100f9330157dfcfedf7c9bbed22186f3c",
+      "access": "361be6c39c3508b839a5e318aff0b816aafc26d4acf8c55f4047736df41c25f1",
+      "audit": "88cbfe03b8182c53e8e3ae0425d0f64a2c63e5b457b7652eb38fbee3f175607c",
+      "auditIntegrity": "6a82efaacc848ba2f427b666991a419092c59e18810f93cfd80be61608952cfa",
+      "sessionIntegrity": "2ba1d9ad563e7dfa65371d65f23390be02e53ce7de5dd72ef6cf80f4b01ecac3",
+      "jobs": "2e62c3148932143525272fe19de77e3ce72668b5168836180f50de931c73aa35"
+    },
+    "originalEvents": 2240,
+    "acknowledgedWorkloadEvents": 240,
+    "reportComparisonExclusions": [
+      "generatedAtMs",
+      "reportSha256 (each full export verified independently)",
+      "manifest.originalReportSha256 (includes export-generation timestamp)"
+    ],
+    "media": [
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00000",
+        "bytes": 22146,
+        "sha256": "d7bfd1bce08d863da9574844a73e84719fb265e2f72b6fa7eb8a6e67493cc844",
+        "decoded": true,
+        "receiptDurationMs": 2023,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00001",
+        "bytes": 20846,
+        "sha256": "1935039ace774a34e4ee767300c02dd96116a0425c9ae2ef098e3aa06ccfcc3e",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00002",
+        "bytes": 20909,
+        "sha256": "ec8d17329233fa3467695f232a081cc923e7ef790bd2f78b6fd917bf3aaf5a2a",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00003",
+        "bytes": 20889,
+        "sha256": "bc80403b7b5d1879f4b4defa32cb91b1ff7901f030fe243bdf03ba2a14e8a753",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00004",
+        "bytes": 20879,
+        "sha256": "3831f975c274025e45dd82d869c90f7d8001261bb0fa7d3862a1bef8dad54d32",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00005",
+        "bytes": 20933,
+        "sha256": "15828f3517f1823945e54edae3b6bff999d04ace7e9acfc3b6dcb1595b30f9c8",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00006",
+        "bytes": 20859,
+        "sha256": "f2d9a558bb0fc77bd5319684cc4186a1353ce7a9c782237ce98723232504191e",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-1",
+        "sessionId": "session-1",
+        "segmentId": "a1-segment-00007",
+        "bytes": 21025,
+        "sha256": "806e1f82c29cfa87c7ce88d891a8e08282f9674faa6cbc3b266c10f3c71a5a6c",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00000",
+        "bytes": 56242,
+        "sha256": "5fc07b7355b8f6838dbaa5ed9cc4a50edae95010e68a9d6b0b766b0d9b5ada74",
+        "decoded": true,
+        "receiptDurationMs": 2023,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00001",
+        "bytes": 59363,
+        "sha256": "4e4ef067f77cbfefa498d20c091a959eec29aecd485b80a336aa93fe6c46b324",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00002",
+        "bytes": 58942,
+        "sha256": "22cec8dd730d84d9df8c32a4b5bb3b9a957780fa96e0864528a140fd051d0cbf",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00003",
+        "bytes": 59570,
+        "sha256": "9e481289c4d721ef2c0ebbe67f6a27858a09d7950fa9f61b0c6df9a532ceec0b",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00004",
+        "bytes": 55878,
+        "sha256": "82322bae8240990143678d7d50218474a4fe77e24342186883147d71e56c0951",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00005",
+        "bytes": 56250,
+        "sha256": "28bbd45e458ff6df278a39ac6ecae067bf24697fda833f77c4835e0de5e800b6",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00006",
+        "bytes": 56109,
+        "sha256": "c19dd6a9d1c6d154830e3b42cad83a29f3b417c59500c5fb12d0b5e03d0706bb",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      },
+      {
+        "jobId": "capture-0",
+        "sessionId": "session-0",
+        "segmentId": "a1-segment-00007",
+        "bytes": 59890,
+        "sha256": "410d54d96556031a78b1fbc41e7d0152a4b8892ad2012ec69d20db0a9f7ecbac",
+        "decoded": true,
+        "receiptDurationMs": 2000,
+        "decodedDurationMs": 2000,
+        "decodedVideoFrames": 20
+      }
+    ]
+  },
+  "sourceFilesUnchangedDuringRun": true,
+  "cleanup": {
+    "fixtureProcessesStopped": true,
+    "temporaryDatabaseMediaAndEncryptedArchiveRemoved": true,
+    "credentials": "ephemeral process memory only; omitted from receipt",
+    "backupKey": "ephemeral process memory only; omitted from receipt"
+  },
+  "finishedAt": "2026-10-16T13:28:15.242Z"
+}

@@ -1,0 +1,49 @@
+{
+  "fixture": true,
+  "externalLiveValidated": false,
+  "desktopAndPhone": true,
+  "keyboardNavigation": true,
+  "actualMediaPlaybackAndSeek": true,
+  "recordingToolsDisclosurePreservesTimelineAndVerifiedReceipt": true,
+  "sessionLibrarySavedDurationAndWithVideoFilter": true,
+  "sourceLinkedNoteAndReviewedFinding": true,
+  "counterevidenceRetained": true,
+  "bookmarkSaved": true,
+  "bookmarkOriginalReopened": true,
+  "savedMomentsExactOriginalClockFrameAndKeyboardSeek": true,
+  "savedMomentsSessionIsolationAndExplicitStatementChoice": true,
+  "savedMomentsPersistAfterServiceRestart": true,
+  "sameSelectedSavedMomentReseeksAfterManualPlaybackChange": true,
+  "crossSessionComparisonSources": true,
+  "observedAccountSearch": true,
+  "sourceConfigurationWithoutBackgroundCapture": true,
+  "graphSourcesReopened": true,
+  "syntheticGraphTranscriptFixture": true,
+  "speakerTracksRemainSourceScoped": true,
+  "operatorDeclaredUnverifiedPersonReference": true,
+  "noAutomaticIdentityLinks": true,
+  "sourceBackedRelationRestartReopen": true,
+  "phoneGraphMapAndConnections": true,
+  "missionRunAndAlertReview": true,
+  "reportRedactionAndOriginalPreserved": true,
+  "jsonMarkdownHtmlAndActualPdf": true,
+  "workspaceMembersAndAudit": true,
+  "serviceRestartReopen": true,
+  "privateAlfredRecipeUsesExactSelectedSessionAndReadOnlyDefault": true,
+  "privateAlfredRecipeActualDownloadsAndKeyboardTabs": true,
+  "privateAlfredRecipeExplicitSourceAndBoundedCollectionOption": true,
+  "privateAlfredRecipeNeverInstallsCallsEndpointOrClaimsConnection": true,
+  "privateAlfredSetupInputsNotStoredOrPutInUrl": true,
+  "rendererAssets": [
+    {
+      "url": "http://127.0.0.1:47639/app/assets/index-Brl14Sbd.css",
+      "sha256": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf"
+    },
+    {
+      "url": "http://127.0.0.1:47639/app/assets/index-CrYZznnn.js",
+      "sha256": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
+    }
+  ],
+  "uncaughtPageErrors": 0,
+  "screenshots": "/tmp/livelens-o01-browser-final/full_app"
+}

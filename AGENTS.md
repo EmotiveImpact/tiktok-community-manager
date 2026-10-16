@@ -4,6 +4,10 @@ This repository is becoming a livestream intelligence platform. Preserve the
 existing Electron/React community manager while extracting platform-neutral
 collection, evidence, investigation and agent interfaces.
 
+Read the standing goal `docs/livelens/MASTER_PLAN.md` and `plans/livelens-goal.json`
+first. Resume the highest-priority unblocked milestone through implementation,
+validation and reviewable publication; keep its state and evidence current.
+
 Read `docs/livelens/HANDOFF.md`, `docs/livelens/PLATFORM.md`,
 `docs/livelens/APP_BLUEPRINT.md`,
 `plans/livelens-backlog.json`, `research/REUSE_REGISTER.md` and the service README

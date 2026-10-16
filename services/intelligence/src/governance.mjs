@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync, realpathSync, rmSync } from 'node:fs';
-import { resolve, sep } from 'node:path';
+import { lstatSync, realpathSync, rmSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { canonical, digest, Fault, ident, object, pageLimit, text } from './validation.mjs';
 import { archiveStorageUsage } from './archive-usage.mjs';
 
@@ -26,7 +26,21 @@ CREATE INDEX IF NOT EXISTS audit_workspace ON workspace_audit(workspace,seq);
 CREATE TABLE IF NOT EXISTS retention_receipts(
  workspace TEXT NOT NULL,id TEXT NOT NULL,session_id TEXT NOT NULL,actor TEXT NOT NULL,reason TEXT NOT NULL,deleted_at INTEGER NOT NULL,
  evidence_count INTEGER NOT NULL,storage_bytes INTEGER NOT NULL,PRIMARY KEY(workspace,id));
+CREATE TABLE IF NOT EXISTS retention_cleanup(
+ workspace TEXT NOT NULL,id TEXT NOT NULL,receipt_id TEXT NOT NULL,session_id TEXT NOT NULL,job_id TEXT NOT NULL,
+ bytes INTEGER NOT NULL,state TEXT NOT NULL,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,
+ attempts INTEGER NOT NULL DEFAULT 0,error TEXT,root_identity TEXT,workspace_identity TEXT,target_identity TEXT,
+ PRIMARY KEY(workspace,id),FOREIGN KEY(workspace,receipt_id) REFERENCES retention_receipts(workspace,id));
+CREATE INDEX IF NOT EXISTS cleanup_workspace ON retention_cleanup(workspace,created_at,id);
 `;
+
+const CLEANUP_ERRORS = new Set(['cleanup_media_unavailable', 'cleanup_target_unsafe', 'cleanup_target_changed', 'cleanup_target_in_use', 'cleanup_filesystem_failed']);
+function directoryIdentity(path, allowAbsent = false) {
+  let stat;
+  try { stat = lstatSync(path); } catch (error) { if (allowAbsent && error.code === 'ENOENT') return 'absent'; throw new Fault('cleanup_filesystem_failed', 409); }
+  if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Fault('cleanup_target_unsafe', 409);
+  return digest({ path, device: stat.dev, inode: stat.ino });
+}
 
 /** Optional role/ACL layer. API scope checks remain independently required. */
 export class Governance {
@@ -173,10 +187,12 @@ export class Governance {
     const archived = this.hasTable('media_archives')
       ? archiveStorageUsage(this.db, workspace)
       : { archivedStorageBytes: 0, reservedStorageBytes: 0, pendingJobs: 0, uniqueObjectKeys: 0 };
+    const pendingCleanupBytes = this.db.prepare("SELECT coalesce(sum(bytes),0) AS n FROM retention_cleanup WHERE workspace=? AND state!='completed'").get(workspace).n;
     storageBytes += archived.archivedStorageBytes;
     pendingJobs += archived.pendingJobs;
     return { recordingSeconds: recordingMs / 1000, storageBytes, localStorageBytes,
-      archivedStorageBytes: archived.archivedStorageBytes, reservedStorageBytes: archived.reservedStorageBytes,
+      archivedStorageBytes: archived.archivedStorageBytes, reservedStorageBytes: archived.reservedStorageBytes + pendingCleanupBytes,
+      reservedArchiveStorageBytes: archived.reservedStorageBytes, pendingCleanupBytes,
       archivedObjectKeys: archived.uniqueObjectKeys, speechSeconds: speechMs / 1000, pendingJobs,
       reservedRecordingSeconds, reservedSpeechSeconds, measurement: 'retained-media-speech-and-logical-encrypted-archive', billedAmount: null };
   }
@@ -219,7 +235,7 @@ export class Governance {
     if (this.hasTable('recording_jobs') && this.db.prepare("SELECT 1 FROM recording_jobs WHERE workspace=? AND session_id=? AND state NOT IN('completed','stopped','failed') LIMIT 1").get(workspace, sessionId)) return 'Recording job is active or pending';
     if (this.hasTable('speech_jobs') && this.db.prepare("SELECT 1 FROM speech_jobs WHERE workspace=? AND session_id=? AND state NOT IN('completed','stopped','failed') LIMIT 1").get(workspace, sessionId)) return 'Speech job is active or pending';
     // Refuse extension-owned relations rather than silently breaking their provenance.
-    const safe = new Set(['sessions', 'events', 'assertions', 'recording_jobs', 'media_segments', 'recording_budgets', 'recording_job_leases', 'retention_receipts', 'speech_jobs', 'speech_inputs']);
+    const safe = new Set(['sessions', 'events', 'assertions', 'recording_jobs', 'media_segments', 'recording_budgets', 'recording_job_leases', 'retention_receipts', 'retention_cleanup', 'speech_jobs', 'speech_inputs']);
     const referencedIds = new Set([sessionId, ...this.db.prepare('SELECT id FROM events WHERE workspace=? AND session_id=?').all(workspace, sessionId).map(row => row.id)]);
     const containsReference = value => typeof value === 'string' ? referencedIds.has(value) : Array.isArray(value) ? value.some(containsReference) : value && typeof value === 'object' ? Object.values(value).some(containsReference) : false;
     for (const { name } of this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all()) {
@@ -252,12 +268,14 @@ export class Governance {
     const subject = this.actor(workspace, actor); object(value, ['previewHash', 'sessionIds', 'reason']); text(value.reason, 1000);
     if (!Array.isArray(value.sessionIds) || !value.sessionIds.length || value.sessionIds.length > 100 || new Set(value.sessionIds).size !== value.sessionIds.length) throw new Fault('invalid_retention_selection');
     value.sessionIds.forEach(ident);
-    const directories = [], receipts = this.store.transaction(() => {
+    const cleanupIds = [], receipts = this.store.transaction(() => {
       const preview = this.previewRetention(workspace);
       if (value.previewHash !== preview.previewHash) throw new Fault('retention_preview_changed', 409);
       for (const id of value.sessionIds) if (!preview.eligibleSessionIds.includes(id)) throw new Fault('retention_session_protected', 409);
       return value.sessionIds.map(sessionId => {
         const session = preview.sessions.find(s => s.id === sessionId);
+        const receipt = { id: randomUUID(), sessionId, deletedAtMs: this.now(), evidenceCount: session.evidenceCount, storageBytes: session.storageBytes, reason: value.reason };
+        this.db.prepare('INSERT INTO retention_receipts VALUES(?,?,?,?,?,?,?,?)').run(workspace, receipt.id, sessionId, subject, value.reason, receipt.deletedAtMs, receipt.evidenceCount, receipt.storageBytes);
         if (this.hasTable('speech_jobs')) {
           if (this.hasTable('speech_inputs')) this.db.prepare('DELETE FROM speech_inputs WHERE workspace=? AND job_id IN(SELECT id FROM speech_jobs WHERE workspace=? AND session_id=?)').run(workspace, workspace, sessionId);
           this.db.prepare('DELETE FROM speech_jobs WHERE workspace=? AND session_id=?').run(workspace, sessionId);
@@ -265,30 +283,77 @@ export class Governance {
         if (this.hasTable('recording_jobs')) {
           const jobs = this.db.prepare('SELECT id FROM recording_jobs WHERE workspace=? AND session_id=?').all(workspace, sessionId);
           for (const job of jobs) {
+            const bytes = this.hasTable('media_segments') ? this.db.prepare('SELECT coalesce(sum(bytes),0) AS n FROM media_segments WHERE workspace=? AND job_id=?').get(workspace, job.id).n : 0;
+            const id = randomUUID(); let identity = {}, error = null;
+            try { identity = this.cleanupIdentity(workspace, job.id); } catch (failure) { error = CLEANUP_ERRORS.has(failure.code) ? failure.code : 'cleanup_filesystem_failed'; }
+            this.db.prepare('INSERT INTO retention_cleanup(workspace,id,receipt_id,session_id,job_id,bytes,state,created_at,updated_at,error,root_identity,workspace_identity,target_identity) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').run(workspace, id, receipt.id, sessionId, job.id, bytes, 'pending', this.now(), this.now(), error, identity.root ?? null, identity.workspace ?? null, identity.target ?? null);
+            cleanupIds.push(id);
             for (const table of ['media_segments', 'recording_budgets', 'recording_job_leases']) if (this.hasTable(table)) this.db.prepare(`DELETE FROM ${table} WHERE workspace=? AND job_id=?`).run(workspace, job.id);
-            if (this.recorder) directories.push(resolve(this.recorder.root, workspace, job.id));
           }
           this.db.prepare('DELETE FROM recording_jobs WHERE workspace=? AND session_id=?').run(workspace, sessionId);
         }
         this.db.prepare('DELETE FROM assertions WHERE workspace=? AND event_id IN(SELECT id FROM events WHERE workspace=? AND session_id=?)').run(workspace, workspace, sessionId);
         this.db.prepare('DELETE FROM events WHERE workspace=? AND session_id=?').run(workspace, sessionId);
         this.db.prepare('DELETE FROM sessions WHERE workspace=? AND id=?').run(workspace, sessionId);
-        const receipt = { id: randomUUID(), sessionId, deletedAtMs: this.now(), evidenceCount: session.evidenceCount, storageBytes: session.storageBytes, reason: value.reason };
-        this.db.prepare('INSERT INTO retention_receipts VALUES(?,?,?,?,?,?,?,?)').run(workspace, receipt.id, sessionId, subject, value.reason, receipt.deletedAtMs, receipt.evidenceCount, receipt.storageBytes);
         this.recordAudit(workspace, 'retention.session.deleted', sessionId, subject, receipt); return receipt;
       });
     });
-    // Data deletion commits first. Failed filesystem cleanup is explicit and recoverable, never hidden.
-    const cleanupFailures = [];
-    for (const directory of directories) {
-      try {
-        if (!existsSync(directory)) continue;
-        const root = realpathSync(this.recorder.root), target = realpathSync(directory);
-        if (!target.startsWith(root + sep)) throw new Error('outside_media_root');
-        rmSync(target, { recursive: true, force: true });
-      } catch { cleanupFailures.push(directory.split(sep).slice(-1)[0]); }
-    }
+    // The durable task commits with deletion, before any filesystem work. A crash
+    // or failed unlink keeps its byte reservation until an explicit retry proves completion.
+    const cleanupTasks = cleanupIds.map(id => this.performCleanup(workspace, id, subject, 'Initial retention cleanup'));
+    const cleanupFailures = cleanupTasks.filter(task => task.state !== 'completed').map(task => task.jobId);
     if (cleanupFailures.length) this.recordAudit(workspace, 'retention.cleanup.failed', workspace, subject, { jobIds: cleanupFailures });
-    return { receipts, cleanupFailures, deletedSessions: receipts.length };
+    return { receipts, cleanupFailures, cleanupTasks, deletedSessions: receipts.length };
+  }
+  cleanupIdentity(workspace, jobId) {
+    ident(workspace); ident(jobId);
+    if (!this.recorder?.root) throw new Fault('cleanup_media_unavailable', 503);
+    const root = resolve(this.recorder.root);
+    // The configured root is canonical at Recorder construction. Refuse a
+    // subsequently replaced symlink rather than following it to another tree.
+    if (realpathSync(root) !== root) throw new Fault('cleanup_target_unsafe', 409);
+    const rootIdentity = directoryIdentity(root), workspacePath = resolve(root, workspace);
+    const workspaceIdentity = directoryIdentity(workspacePath, true);
+    const targetIdentity = workspaceIdentity === 'absent' ? 'absent' : directoryIdentity(resolve(workspacePath, jobId), true);
+    return { root: rootIdentity, workspace: workspaceIdentity, target: targetIdentity };
+  }
+  cleanupTask(workspace, id) {
+    const row = this.db.prepare('SELECT * FROM retention_cleanup WHERE workspace=? AND id=?').get(ident(workspace), ident(id));
+    if (!row) throw new Fault('cleanup_task_not_found', 404);
+    return { id: row.id, sessionId: row.session_id, jobId: row.job_id, state: row.state, bytes: row.bytes, createdAtMs: row.created_at, updatedAtMs: row.updated_at, attempts: row.attempts, error: CLEANUP_ERRORS.has(row.error) ? row.error : row.error ? 'cleanup_filesystem_failed' : null };
+  }
+  cleanupPage(workspace, { limit = 50, offset = 0 } = {}) {
+    ident(workspace); limit = pageLimit(limit);
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1_000_000) throw new Fault('invalid_offset');
+    const rows = this.db.prepare('SELECT id FROM retention_cleanup WHERE workspace=? ORDER BY created_at DESC,id LIMIT ? OFFSET ?').all(workspace, limit + 1, offset);
+    const hasMore = rows.length > limit;
+    return { tasks: rows.slice(0, limit).map(row => this.cleanupTask(workspace, row.id)), hasMore, nextOffset: hasMore ? offset + limit : null };
+  }
+  retryCleanup(workspace, id, value, actor) {
+    const subject = this.actor(workspace, actor); object(value, ['reason']); text(value.reason, 1000); ident(id);
+    return this.performCleanup(workspace, id, subject, value.reason);
+  }
+  performCleanup(workspace, id, subject, reason) {
+    return this.store.transaction(() => {
+      this.cleanupTask(workspace, id);
+      const row = this.db.prepare('SELECT * FROM retention_cleanup WHERE workspace=? AND id=?').get(workspace, id);
+      if (row.state === 'completed') return this.cleanupTask(workspace, id);
+      let error = null;
+      try {
+        // The pilot writer transaction also fences a concurrent recorder create.
+        // Reused IDs and replacement directories can never be consumed by an old task.
+        if (this.hasTable('recording_jobs') && this.db.prepare('SELECT 1 FROM recording_jobs WHERE workspace=? AND id=?').get(workspace, row.job_id)) throw new Fault('cleanup_target_in_use', 409);
+        const identity = this.cleanupIdentity(workspace, row.job_id);
+        if (!row.root_identity || identity.root !== row.root_identity) throw new Fault('cleanup_target_changed', 409);
+        if (identity.target !== 'absent') {
+          if (identity.workspace !== row.workspace_identity || identity.target !== row.target_identity) throw new Fault('cleanup_target_changed', 409);
+          rmSync(resolve(this.recorder.root, workspace, row.job_id), { recursive: true, force: false });
+        }
+      } catch (failure) { error = CLEANUP_ERRORS.has(failure.code) ? failure.code : 'cleanup_filesystem_failed'; }
+      const state = error ? 'failed' : 'completed';
+      this.db.prepare('UPDATE retention_cleanup SET state=?,updated_at=?,attempts=attempts+1,error=? WHERE workspace=? AND id=?').run(state, this.now(), error, workspace, id);
+      this.recordAudit(workspace, 'retention.cleanup.' + state, id, subject, { jobId: row.job_id, state, error, reason });
+      return this.cleanupTask(workspace, id);
+    });
   }
 }

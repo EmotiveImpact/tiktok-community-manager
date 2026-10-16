@@ -1839,6 +1839,7 @@ function OperatorConsole() {
               revision={revision}
               view={view === "sessions" ? "investigations" : view}
               onOpenEvidence={openEvidenceById}
+              onOpenSession={openSession}
               initialCaseId={investigationId ?? returnInvestigationId}
               onSelectCase={selectInvestigation}
             />

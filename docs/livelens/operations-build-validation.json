@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-16",
+  "result": "passed",
+  "unitTests": {
+    "command": "npm test -- --reporter=dot",
+    "files": 14,
+    "passed": 127,
+    "failed": 0,
+    "logSha256": "3e95578b1b770794e6b14e346ebce7962118d5d940903534117425fd50be4bc6"
+  },
+  "build": {
+    "command": "npm run build",
+    "typescript": true,
+    "renderer": true,
+    "electronMainAndPreload": true,
+    "logSha256": "5147da0e3d66ebf61374984101efe8f3b2c77d76eff254bdf8586c90cb3ff006",
+    "warnings": [
+      "Existing Browserslist age notice",
+      "Existing renderer chunk size notice"
+    ]
+  },
+  "assets": {
+    "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb",
+    "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf"
+  },
+  "sourceSha256": {
+    "src/pages/LiveLensConsole.tsx": "cf010d1f7c19b9f232d045130c081050343ba6fae8beb31400a383f7e561a8b0",
+    "src/components/livelens/AdvancedWorkspace.tsx": "937ef8319372ddd10854b1fc8b9621d4c640b0432b8619772d5cb8686738f1b7",
+    "src/components/livelens/advanced/Workspace.tsx": "13c7c1e038a1eeb0fb4e142a92dd8bef29744436c8b3c596488c8b11e83678f8",
+    "src/components/livelens/advanced/Operations.tsx": "3896ac55fd9a8f44cfc32c17888eca23a6325f29f9f92b6ad25483b7342d8d26",
+    "src/components/livelens/advanced/operations.css": "96ba411d2811decbc86f71cc1c58e5c2d30428b4c86ca92f05503e132420b5a3"
+  },
+  "sourceInventory": {
+    "repositories": 8,
+    "gitlinksVerified": true,
+    "checkoutsVerified": false,
+    "adoption": "research-only"
+  },
+  "limitations": [
+    "No native Electron GUI launch",
+    "No production deployment or external LIVE validation"
+  ]
+}
