@@ -55,6 +55,19 @@ earlier full suite is not claimed as a new private-host test. The dedicated
 PostgreSQL fixture is stopped and private credential files removed. Hosted CI is
 reported separately on the exact pushed PR head.
 
+Hosted follow-up: the first push run passed service/build/recovery but timed out
+in the monitor's held-response test. Its duplicate PR run passed the monitor,
+then exposed an Operations keyboard focus-order race after restart. The harness
+now waits for actual navigation focus before selecting Operations. The monitor
+keeps its one-shot interception through page close, so releasing the real POST
+cannot race interception removal; an added check verifies exactly one schedule.
+Four old-order local probes did not reproduce the hosted timeout, although traces
+showed the teardown overlap. Both complete revised journeys pass on the exact
+hosted Chromium 151/revision 1234, with all original assertions and unchanged
+production assets. [Follow-up evidence and diagnosis limits](operations-browser-followup-validation.json)
+preserve the failed runs. The gallery contains the pinned-browser Operations
+recapture; latest hosted confirmation is recorded on PR #5.
+
 ## Aperture Investigation Desk — 16 October 2026
 
 The [goal, implementation and screenshots](INVESTIGATION_DESK.md) connect retained

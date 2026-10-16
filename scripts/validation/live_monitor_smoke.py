@@ -636,7 +636,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             held = []
 
             def hold_check(route):
-                if route.request.method == "POST":
+                if route.request.method == "POST" and not held:
                     held.append((route, route.fetch()))
                 else:
                     route.continue_()
@@ -649,11 +649,18 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
             assert len(held) == 1, "The actual fixture check response must be held"
             source_row("@" + account).click()
             expect(source_row("@" + account)).to_have_attribute("aria-pressed", "true")
+            held_check = held[0][1].json()
+            assert [item["id"] for item in read(page, "/v1/schedules")["schedules"]] == [held_check["id"]]
+            # Keep this one-shot interceptor until page close. Removing it while
+            # the receipt triggers snapshot GETs races routing teardown; removing
+            # it before fulfillment can forward the original POST again. Later
+            # GETs and POSTs pass through unchanged above.
             with page.expect_response(lambda response: response.url.endswith("/v1/schedules") and response.request.method == "POST") as checked:
                 held[0][0].fulfill(response=held[0][1])
-            page.unroute("**/v1/schedules", hold_check)
             assert checked.value.status == 201
             check = checked.value.json()
+            assert check["id"] == held_check["id"]
+            assert [item["id"] for item in read(page, "/v1/schedules")["schedules"]] == [check["id"]], "Releasing the held response must not forward or create a second schedule"
             assert check["sourceId"] == fixture["id"] and check["autoRecord"] is False
             assert 0 < check["endAtMs"] - check["startAtMs"] <= 15000
             check = eventually(lambda: schedule(check["id"]), lambda item: item["status"] == "available" and item["pollCount"] >= 1 and item["lastCheckedAtMs"] is not None)
@@ -925,6 +932,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-monitor-data-") as directory:
                 "specialistPopoverClosesOnSelectionEscapeAndOutsideClick": True,
                 "boundedFixtureCheckWithoutRecording": True, "boundedWatchWithoutHiddenCapture": True,
                 "delayedCheckReceiptDoesNotLeakToAnotherAccount": True,
+                "heldCheckCreatesExactlyOneSchedule": True,
                 "actualFixtureCaptureAndVerifiedMediaHashRange": True,
                 "actualVideoPlaybackAndSeek": True, "capturedChatAndSeparateClocks": True,
                 "stopWatchKeepsIndependentCapture": True, "explicitRecordingStop": True,

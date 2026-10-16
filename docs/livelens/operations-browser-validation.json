@@ -65,13 +65,14 @@
       "journey": "monitor",
       "passed": true,
       "publishedReceipt": "operations-monitor-validation.json",
-      "receiptSha256": "cdf43f830233429f68668d7283292270d1f729004092e4be40142f6a512e74a0",
+      "receiptSha256": "f5d5b89192015ae36700b02a9d8a99004fd62b02b9ef21cf649f5f34a742e6a0",
       "screenshots": 10,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
         "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
-      }
+      },
+      "followup": "Repeated with pinned hosted-CI Chromium1234 after retaining the one-shot response interceptor; exact-one schedule assertion added."
     },
     {
       "journey": "investigation",
@@ -89,13 +90,15 @@
       "journey": "journey",
       "passed": true,
       "publishedReceipt": "operations-journey-validation.json",
-      "receiptSha256": "d8ccad95518ff03b5a8270b9d57844508c7e5c179d0f5d00bdc7d2990e32b15d",
+      "receiptSha256": "af332d73a853ab3955276fb993663c224b31c707d0737cc1235a2497ad58bfae",
       "screenshots": 12,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf",
         "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
-      }
+      },
+      "followup": "Repeated after awaiting actual navigation focus, with pinned hosted-CI Chromium1234; all original assertions retained."
     }
-  ]
+  ],
+  "maxConcurrentBrowserProcessesIncludingFollowupProbes": 4
 }

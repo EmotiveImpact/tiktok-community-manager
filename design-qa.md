@@ -29,6 +29,12 @@ moving its pointer before capture resolved that artifact. Remaining broad
 assistive-technology and owner-final acceptance are separate from this scoped
 inspection. All evidence is fictional/generated; no external LIVE is claimed.
 
+Hosted follow-up exposed a harness focus-order race after phone restart. The
+Operations journey now waits for the application's navigation focus before
+focusing and pressing its tab. It passes with the exact hosted Chromium151/1234;
+the gallery was recaptured and inspected on that browser. Production renderer
+bytes and the layout are unchanged. See the [follow-up receipt](docs/livelens/operations-browser-followup-validation.json).
+
 ## Aperture workflows — 11 October 2026
 
 Visual result: passed for the inspected desktop and phone surfaces.

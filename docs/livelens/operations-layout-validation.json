@@ -102,18 +102,18 @@
     }
   },
   "screenshotSha256": {
-    "01-desktop-operations.png": "456cafb9aa719362a9d27aecb2d519c6879180c44e2eeb26c2ac0a7687b309ca",
-    "01a-desktop-operations-viewport.png": "d17b9536bd526ae5d85d756065268aa730e85f60794581ddfa2b0c14fad846b6",
-    "02-desktop-restricted-workers.png": "fdf2bb1f449ab06e2f57d4b5f90bfaff6ba74dc0c6b3e17a403e3b86c4d64c87",
-    "03-desktop-retention-cleanup-failed.png": "9d7293b9ab2f3ac3e66a5b89b17037f4612371d033789f91b27d7e558a17a66d",
-    "04-desktop-pending-cleanup.png": "1d9146201d15c343d1eef05ce92fa3bb2150935069abf672650c0b64c20e4596",
-    "05-phone-pending-cleanup.png": "0718bdc17c5639c6b1aadcc3888dae8f4744c1ed262464552e01ff53ff5c1aae",
-    "05a-phone-storage-breakdown.png": "0aae2920735b91ffc49ab4f1be26435c73ec86381f16cdb5bdd846cb3f243062",
-    "06-phone-durable-retry-failed.png": "77d64edbf8fcd4523c1817fc33f7cc729e3cf26793a83f36c0a5ae525ecacd1c",
-    "07-phone-cleanup-complete.png": "7a2ffdec7bc0b18ef436887466d6e82143e6774e3a0a9df101b171e79d838334",
-    "08-desktop-workers-unconfigured.png": "43213006d6d83990650104855fa1eac80238a487a59eced0507fb9b5ef583d0a",
-    "09-desktop-capacity-unavailable.png": "819d6f4eda17800522af40fe7f18ecc7840282c6c454a3bbc6e7e9e8cabb3c78",
-    "10-phone-capacity-unavailable.png": "79553ed98fa52a828ae21c82bdbe7083d8215dbf73f4460e36e755e8485daed5"
+    "01-desktop-operations.png": "9051c309752cc66ef2733040fe9b4b2893c759d3f6f87d0d836a64621b945c65",
+    "01a-desktop-operations-viewport.png": "c5f47c1d4279dfe5413af51f15481bcf30897eeee20847828a1497213fdcf8c6",
+    "02-desktop-restricted-workers.png": "a45425c834f9464928c9c33c72342bada35c77b6e9174fc390a2459d4b7e295e",
+    "03-desktop-retention-cleanup-failed.png": "dac623cc9531564d008ddc4cdc10c15f090015b64dea08da7b1bbc43168d367d",
+    "04-desktop-pending-cleanup.png": "837bab662c80a9db793eaba32719d04e867a153af537cebd1b4508e0c546d699",
+    "05-phone-pending-cleanup.png": "0001ef14a86d9cbe3b2e3525760e323fad6c87a7622d2158e4c15e2f3b7dd4ac",
+    "05a-phone-storage-breakdown.png": "bc411ff4cdd104868d30bc5f86082514e8000a544eeea983a432aa21616a6067",
+    "06-phone-durable-retry-failed.png": "795079f91c6871ba3902e4192a85004936c11e263dfb42bf92e17c0781282b9e",
+    "07-phone-cleanup-complete.png": "1e0f1c198add3081b86307110fde0624822545e64e7414083570dfd17ff0e0e4",
+    "08-desktop-workers-unconfigured.png": "0bc5df765fcbfc523337e2783059a353dbebe8ea626255e27d764be8dfb8de7a",
+    "09-desktop-capacity-unavailable.png": "8967cb0674274f245beda569d28faf37c267ff64796731300d9b42f79fba64f4",
+    "10-phone-capacity-unavailable.png": "8bf8ea0c25988bfb1342b3e9e8e4ede03354785928061d91838ef5bdee4e52ab"
   },
   "inspected": [
     "01a-desktop-operations-viewport.png",
@@ -131,5 +131,6 @@
   "limits": [
     "Synthetic authenticated fixture, not external LIVE.",
     "Inspection covers these states, not comprehensive assistive-technology or owner-final acceptance."
-  ]
+  ],
+  "browser": "Playwright Chromium 151.0.7922.34, revision1234 (same as hosted CI)"
 }

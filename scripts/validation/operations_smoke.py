@@ -223,8 +223,13 @@ def open_operations(page, *, keyboard=False):
     navigate(page, "Workspace & access", keyboard=keyboard)
     control = page.get_by_role("button", name="Operations", exact=True)
     if keyboard:
+        # Navigation schedules main focus on an animation frame. Let that real
+        # focus arrive before targeting a tab, including after phone restart.
+        expect(page.locator("#ll-main")).to_be_focused()
         control.focus()
+        expect(control).to_be_focused()
         page.keyboard.press("Enter")
+        expect(control).to_have_attribute("aria-pressed", "true")
     else:
         control.click()
     expect(page.get_by_role("heading", name="Keep the work moving.", exact=True)).to_be_visible()

@@ -18,11 +18,11 @@
   ],
   "rendererAssets": [
     {
-      "url": "http://127.0.0.1:54101/app/assets/index-Brl14Sbd.css",
+      "url": "http://127.0.0.1:60219/app/assets/index-Brl14Sbd.css",
       "sha256": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf"
     },
     {
-      "url": "http://127.0.0.1:54101/app/assets/index-CrYZznnn.js",
+      "url": "http://127.0.0.1:60219/app/assets/index-CrYZznnn.js",
       "sha256": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb"
     }
   ],
@@ -43,35 +43,35 @@
   },
   "cleanup": {
     "initial": {
-      "id": "f519788b-f33e-4ce3-8daa-a0a200e72b53",
+      "id": "53f771af-bdbb-406b-8f74-5802b92770ad",
       "sessionId": "retained-fixture",
       "jobId": "retained-job",
       "state": "failed",
       "bytes": 82064,
-      "createdAtMs": 1792157538811,
-      "updatedAtMs": 1792157538812,
+      "createdAtMs": 1792158156780,
+      "updatedAtMs": 1792158156781,
       "attempts": 1,
       "error": "cleanup_filesystem_failed"
     },
     "afterRestartFailure": {
-      "id": "f519788b-f33e-4ce3-8daa-a0a200e72b53",
+      "id": "53f771af-bdbb-406b-8f74-5802b92770ad",
       "sessionId": "retained-fixture",
       "jobId": "retained-job",
       "state": "failed",
       "bytes": 82064,
-      "createdAtMs": 1792157538811,
-      "updatedAtMs": 1792157541554,
+      "createdAtMs": 1792158156780,
+      "updatedAtMs": 1792158159122,
       "attempts": 2,
       "error": "cleanup_filesystem_failed"
     },
     "completed": {
-      "id": "f519788b-f33e-4ce3-8daa-a0a200e72b53",
+      "id": "53f771af-bdbb-406b-8f74-5802b92770ad",
       "sessionId": "retained-fixture",
       "jobId": "retained-job",
       "state": "completed",
       "bytes": 82064,
-      "createdAtMs": 1792157538811,
-      "updatedAtMs": 1792157541739,
+      "createdAtMs": 1792158156780,
+      "updatedAtMs": 1792158159313,
       "attempts": 3,
       "error": null
     }
@@ -79,5 +79,5 @@
   "pageErrors": [],
   "consoleWarnings": [],
   "filesystemFailure": "Actual non-root directory permission denial; original directory inode preserved across restart",
-  "sourceSha256": "6060d43ffdd5961b3d7a4dea0e3bb9896a4ec03712f605b716e7a2a0e5b971fe"
+  "sourceSha256": "7b63920fdaf6efb4833183f0beb7422a8fe1d2aa395d5c02c418ce770678ee32"
 }

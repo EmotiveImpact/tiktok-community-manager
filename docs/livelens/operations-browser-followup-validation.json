@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-16",
+  "status": "local-followup-passed",
+  "productionCodeUnchangedFrom": "68dea5cecd6b7f63c02577aa1dba9dd9ef3b7316",
+  "browser": {
+    "playwright": "1.62.0",
+    "chromium": "151.0.7922.34",
+    "revision": "1234",
+    "matchesHostedCI": true
+  },
+  "initialHostedResults": {
+    "push": {
+      "url": "https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38909056480",
+      "serviceAndDrill": "passed",
+      "unitAndBuild": "passed",
+      "browser": "failed in monitor after actual backend check succeeded; browser snapshot timed out"
+    },
+    "pullRequest": {
+      "url": "https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38909064718",
+      "serviceAndDrill": "passed",
+      "unitAndBuild": "passed",
+      "browser": "monitor passed; Operations keyboard tab stayed on Usage after restart"
+    }
+  },
+  "corrections": {
+    "operations": "Await actual navigation focus on main, then focus/assert the tab before Enter and assert selection. Full journey passes with distro Chromium and pinned hosted Chromium.",
+    "monitor": "Keep the one-shot held-POST route until page close; subsequent GET/POST requests pass through. Assert exactly one schedule before and after release. No timeout increased or original assertion removed."
+  },
+  "diagnosisLimits": [
+    "Original hosted monitor timeout did not reproduce in four old-order local probes using pinned Chromium.",
+    "Instrumented traces showed refresh GET dispatch overlapping interception removal; final harness removes that teardown transition.",
+    "Removing interception before releasing the held POST was rejected: it handled the pending route and forwarded another POST. The final implementation retains the interceptor instead."
+  ],
+  "localFollowup": {
+    "operations": {
+      "passed": true,
+      "acceptanceGroups": 7,
+      "screenshots": 12,
+      "receipt": "operations-journey-validation.json",
+      "uncaughtPageErrors": 0
+    },
+    "monitor": {
+      "passed": true,
+      "screenshots": 10,
+      "receipt": "operations-monitor-validation.json",
+      "uncaughtPageErrors": 0,
+      "exactlyOneHeldCheckSchedule": true
+    }
+  },
+  "sourceSha256": {
+    "scripts/validation/live_monitor_smoke.py": "609d31edc0df0b0039820cc9f065c78be774c167ce0c6fd71f8d13e2b59e567d",
+    "scripts/validation/operations_smoke.py": "7b63920fdaf6efb4833183f0beb7422a8fe1d2aa395d5c02c418ce770678ee32"
+  },
+  "rendererAssets": {
+    "index-CrYZznnn.js": "17a7f1e64e2c12e255d27fb22347e2dcde92f0f49d8b7f16bbef691f7ae6afcb",
+    "index-Brl14Sbd.css": "9f961ecc1b876173508b865dfe58b3932f520ae89e6b3820607d4a2fe16919cf"
+  },
+  "hostedConfirmation": "See exact pushed-head checks on PR #5; initial failures are retained above, not described as passes."
+}
