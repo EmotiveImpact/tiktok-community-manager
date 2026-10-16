@@ -36,6 +36,18 @@ source detours, not persisted across page reload or explicit navigation. Externa
 LIVE, private ALFRED installation, representative speech/model quality and customer
 production capacity remain separate gates.
 
+Hosted application, service and all six browser jobs passed at implementation
+`52aa0ac72c6b6bc7f8a2205ae94858d301eb0738` in [PR run 38886782136](https://github.com/EmotiveImpact/tiktok-community-manager/actions/runs/38886782136).
+The duplicate push run exposed a keyboard-test ordering race in the existing
+review desk: navigation schedules main focus on an animation frame, which could
+arrive after the harness focused a disclosure but before Enter. The failure
+artifact showed the loaded, closed disclosure. A controlled browser probe now
+holds and releases the actual navigation focus to reproduce that ordering. The
+harness waits for navigation focus before targeting the disclosure and verifies
+both focused summary and open state. Its full journey passes with unchanged
+renderer bytes and all schedule, media, permission and restart assertions intact.
+This follow-up changes validation only; later hosted results are recorded on PR #5.
+
 ## Aperture workflows — 11 October 2026
 
 The [current application and gallery](APERTURE_WORKFLOWS.md) preserve the approved

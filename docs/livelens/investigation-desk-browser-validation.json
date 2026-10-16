@@ -41,12 +41,17 @@
       "journey": "review",
       "passed": true,
       "publishedReceipt": "investigation-desk-review-validation.json",
-      "receiptSha256": "cf58b7f0e82192abbfe8361d54e8876f910608afd75db717d26d6d4a25995c0b",
+      "receiptSha256": "f38f45b5e7dfc907947fd6712f1c13da2105c1dd3465e53425cc5dff00c2b805",
       "screenshots": 8,
       "uncaughtPageErrors": 0,
       "rendererAssets": {
         "index-BZbmVy_B.css": "6c5b28da74fb2b0e05fa94e82bd695d2e5dbd4c564b3a8eb6eeeb83848f3b98b",
         "index-Cuq1l9vc.js": "a35afa2a43241d7a23c09272c6eed14fdad1100939b271f8740b14bc50e88c46"
+      },
+      "controlledNavigationFocusOrdering": {
+        "pendingNavigationFocusDeliveredAfterSummaryFocus": true,
+        "enterOnMainLeavesCollectionCollapsed": true,
+        "keyboardDisclosureOpensAfterNavigationFocusSettles": true
       }
     },
     {

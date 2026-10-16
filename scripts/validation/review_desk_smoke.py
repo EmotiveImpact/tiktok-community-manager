@@ -62,6 +62,49 @@ def stop(child):
         child.wait(timeout=5)
 
 
+def verify_pending_navigation_focus(page, collection):
+    """Reproduce a navigation frame arriving after a test targets a control.
+
+    The application focuses main on its next animation frame. Hold that actual
+    focus request, target the summary, then deliver the pending request before
+    Enter. This establishes why keyboard actions must wait for navigation to
+    finish; no network response or application state is fabricated.
+    """
+    page.evaluate("""() => {
+        const original = HTMLElement.prototype.focus;
+        const probe = window.__reviewDeskFocusProbe = { intercepted: false, pending: null, released: false };
+        probe.restore = () => { HTMLElement.prototype.focus = original; };
+        HTMLElement.prototype.focus = function(...args) {
+            if (this.id === 'll-main' && !probe.intercepted) {
+                probe.intercepted = true;
+                probe.pending = () => original.apply(this, args);
+            } else original.apply(this, args);
+        };
+    }""")
+    try:
+        navigate(page, "Review desk")
+        page.wait_for_function("() => typeof window.__reviewDeskFocusProbe?.pending === 'function'")
+        summary = collection.locator("summary")
+        expect(collection).not_to_have_attribute("open", "")
+        summary.focus()
+        expect(summary).to_be_focused()
+        page.evaluate("""() => {
+            const probe = window.__reviewDeskFocusProbe;
+            probe.restore();
+            probe.pending();
+            probe.pending = null;
+            probe.released = true;
+        }""")
+        expect(page.locator("#ll-main")).to_be_focused()
+        page.keyboard.press("Enter")
+        expect(collection).not_to_have_attribute("open", "")
+        assert page.evaluate("window.__reviewDeskFocusProbe.intercepted && window.__reviewDeskFocusProbe.released")
+        return {"pendingNavigationFocusDeliveredAfterSummaryFocus": True,
+                "enterOnMainLeavesCollectionCollapsed": True}
+    finally:
+        page.evaluate("() => { window.__reviewDeskFocusProbe?.restore(); delete window.__reviewDeskFocusProbe; }")
+
+
 def launch(directory, readonly=False):
     env = {**os.environ, "LIVELENS_DEMO_DIR": str(directory), "LIVELENS_PORT": str(PORT), "LIVELENS_FFMPEG_PATH": FFMPEG}
     entry = ROOT / "services/intelligence/scripts/console-demo.mjs"
@@ -342,14 +385,21 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             capture("02a-desktop-after-acknowledgement-selection.png")
 
             # Explicit discovery without auto-recording cannot create hidden captures.
-            nav("Review desk")
             collection = page.locator("details.ll-desk-collection")
+            navigation_focus = verify_pending_navigation_focus(page, collection)
+            nav("Review desk")
+            # Re-entering an already rendered view still schedules main.focus.
+            # Wait for that actual navigation effect before targeting summary.
+            expect(page.locator("#ll-main")).to_be_focused()
             collection_summary = collection.locator("summary")
             expect(collection_summary).to_contain_text("Collection schedule")
             assert not collection.evaluate("element => element.open"), "Idle review must keep collection details collapsed"
             expect(collection.get_by_role("button", name="View schedules", exact=True)).not_to_be_visible()
             collection_summary.focus()
+            expect(collection_summary).to_be_focused()
             page.keyboard.press("Enter")
+            expect(collection).to_have_attribute("open", "")
+            navigation_focus["keyboardDisclosureOpensAfterNavigationFocusSettles"] = True
             page.get_by_role("button", name="View schedules", exact=True).click()
             page.get_by_label("Selected source", exact=True).select_option("fixture-media")
             page.get_by_label("Watch window (minutes)", exact=True).fill("1")
@@ -458,6 +508,7 @@ with tempfile.TemporaryDirectory(prefix="livelens-review-desk-data-") as directo
             assert not errors, errors
             receipt = {"fixture": True, "externalLiveValidated": False, "desktop1440AndPhone390": True, "sourceSelectionAndCounterevidence": True, "sourceResetAfterFindingRevisionRefresh": True, "actualPreviewPlaybackAndSeek": True, "exactOriginalContextNavigation": True, "correctInvestigationDeepLinkAndReload": True, "investigationLibrarySelectionBackAndReload": True, "signalAcknowledgementPersisted": True, "acknowledgementReceiptBoundToSelectedItem": True, "boundedScheduleWithoutHiddenCapture": True, "collectionDisclosureQuietWhenIdleAndOpensForActualSchedule": True, "phoneSelectionBackAndKeyboardFocus": True, "readOnlyScopeFilteredResources": True, "actualReadOnlyWriteDenied": True, "serviceRestartReopen": True, "uncaughtPageErrors": len(errors), "screenshots": str(SCREENSHOTS)}
             receipt["rendererAssets"] = renderer_assets(page)
+            receipt["controlledNavigationFocusOrdering"] = navigation_focus
             (SCREENSHOTS / "receipt.json").write_text(json.dumps(receipt, indent=2))
             print(json.dumps(receipt))
             browser.close()
