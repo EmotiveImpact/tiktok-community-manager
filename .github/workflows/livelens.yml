@@ -132,3 +132,4 @@ jobs:
         with:
           name: livelens-browser-receipt
           path: /tmp/livelens-browser-artifact
+          retention-days: 14
